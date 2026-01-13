@@ -7,7 +7,7 @@ interface IGame {
     gameMode: string;
     lastModifiedDate: Date;
     dateCreated: Date;
-    visibility: String;
+    visibility: string;
     board: IBoard;
 }
 
@@ -15,7 +15,8 @@ const gameSchema = new Schema<IGame>({
     gameTitle: {
         type: String,
         required: true,
-        maxLength: 100
+        maxLength: 100,
+        unique: true,
     },
     description: {
         type: String,
