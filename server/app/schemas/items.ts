@@ -1,0 +1,41 @@
+import { Schema } from "mongoose";
+
+
+
+interface IItem {
+    x: number;
+    y: number;
+    size: number;
+    itemType: string
+}
+
+export interface ILifeSanctuary extends IItem {
+    active: boolean;
+    itemType: 'lifeSanctuary';
+    size: 4;
+}
+
+export interface IFightSanctuary extends IItem {
+    active: boolean;
+    itemType: 'fightSanctuary';
+    size: 4;
+}
+
+export interface IStartingPosition extends IItem {
+    itemType: 'startingPosition';
+}
+
+export interface IFlag extends IItem {
+    itemType: 'flag';
+}
+
+export type GameItem = IFlag | IStartingPosition | IFightSanctuary | ILifeSanctuary;
+
+
+export const itemSchema = new Schema<GameItem>({
+    x: { type: Number, required: true },
+    y: { type: Number, required: true },
+    size: { type: Number, required: true },
+    active: { type: Boolean }
+});
+

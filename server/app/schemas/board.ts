@@ -1,0 +1,4 @@
+interface IBoard {
+    field: String[];
+
+}
