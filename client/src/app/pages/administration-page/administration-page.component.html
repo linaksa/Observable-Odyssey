@@ -1,1 +1,64 @@
-<p>administration-page works!</p>
+<div class="content">
+    <h4>Administration</h4>
+
+    <div mat-card>
+        <div mat-card-title>
+            <div>Jeux disponibles</div>
+            <button mat-button color="primary">
+                Ajouter un jeu <mat-icon fontIcon="add"></mat-icon>
+            </button>
+        </div>
+        <div mat-card-content>
+            <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+                <ng-container matColumnDef="image">
+                    <th mat-header-cell *matHeaderCellDef> Image </th>
+                    <td mat-cell *matCellDef="let element"> {{element.image}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef> Name </th>
+                    <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="size">
+                    <th mat-header-cell *matHeaderCellDef> Taille </th>
+                    <td mat-cell *matCellDef="let element"> {{element.size}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="mode">
+                    <th mat-header-cell *matHeaderCellDef> Mode </th>
+                    <td mat-cell *matCellDef="let element"> {{element.mode}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="lastEdited">
+                    <th mat-header-cell *matHeaderCellDef> Dernière modification </th>
+                    <td mat-cell *matCellDef="let element"> {{element.lastEdited}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="visibility">
+                    <th mat-header-cell *matHeaderCellDef> Public </th>
+                    <td mat-cell *matCellDef="let element">
+                        <form>
+                            <mat-checkbox name="visibility"></mat-checkbox>
+                        </form>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let element">
+                        <button mat-button>
+                            <mat-icon fontIcon="edit"></mat-icon>
+                        </button>
+                        <button mat-button color="warn">
+                            <mat-icon fontIcon="delete"></mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+    </div>
+</div>
