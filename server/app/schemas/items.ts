@@ -2,7 +2,7 @@ import { Schema } from "mongoose";
 
 
 
-interface IItem {
+export interface IItem {
     x: number;
     y: number;
     size: number;
@@ -36,6 +36,6 @@ export const itemSchema = new Schema<GameItem>({
     x: { type: Number, required: true },
     y: { type: Number, required: true },
     size: { type: Number, required: true },
+    itemType: { type: String, required: true },
     active: { type: Boolean }
-});
-
+}, { _id: false });

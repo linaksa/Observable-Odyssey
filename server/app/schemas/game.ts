@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+import { model, Schema } from "mongoose";
+import { gameBoard, IBoard } from "./board";
 
 interface IGame {
     gameTitle: string;
@@ -7,18 +8,19 @@ interface IGame {
     lastModifiedDate: Date;
     dateCreated: Date;
     visibility: String;
+    board: IBoard;
 }
-// TODO add the board
+
 const gameSchema = new Schema<IGame>({
     gameTitle: {
         type: String,
         required: true,
-        maxLenght: 100
+        maxLength: 100
     },
     description: {
         type: String,
         required: true,
-        maxLenght: 1000
+        maxLength: 1000
     },
     gameMode: {
         type: String,
@@ -37,7 +39,7 @@ const gameSchema = new Schema<IGame>({
         type: String,
         enum: ['hidden', 'viewable']
     },
-
+    board: gameBoard
 
 })
 
