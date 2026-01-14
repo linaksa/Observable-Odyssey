@@ -8,9 +8,9 @@ describe('AdministrationPageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdministrationPageComponent]
+      imports: [AdministrationPageComponent],
     })
-    .compileComponents();
+      .compileComponents();
 
     fixture = TestBed.createComponent(AdministrationPageComponent);
     component = fixture.componentInstance;
