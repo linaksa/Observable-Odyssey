@@ -1,6 +1,6 @@
-import { CellType } from "@app/constants";
-import { Schema } from "mongoose";
-import { IItem, itemSchema } from "./items";
+import { CellType } from '@app/constants';
+import { Schema } from 'mongoose';
+import { IItem, itemSchema } from './items';
 
 
 export interface IBoard {
@@ -13,6 +13,6 @@ export const gameBoard = new Schema<IBoard>({
         type: [String],
         required: true,
     },
-    items: [itemSchema]
+    items: [itemSchema],
 }, { _id: false });
 

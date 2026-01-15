@@ -1,20 +1,20 @@
-import { Avatar, DiceType } from "@app/constants";
-import { Schema } from "mongoose";
+import { Avatar, DiceType } from '@app/constants';
+import { Schema } from 'mongoose';
 
 export interface ICharacter {
     name: string;
     avatar: Avatar;
-    initialHealth: Number;
-    currentHealth: Number;
+    initialHealth: number;
+    currentHealth: number;
     attackBonusDiceType: DiceType;
     defenseBonusDiceType: DiceType;
-    rapidityPoints: Number;
-    attackPoints: Number;
-    defensePoints: Number;
-    actionsLeft: Number;
-    movementLeft: Number;
-    x: Number;
-    y: Number;
+    rapidityPoints: number;
+    attackPoints: number;
+    defensePoints: number;
+    actionsLeft: number;
+    movementLeft: number;
+    x: number;
+    y: number;
 }
 
 export const characterSchema = new Schema<ICharacter>({
@@ -66,5 +66,5 @@ export const characterSchema = new Schema<ICharacter>({
     y: {
         type: Number,
         required: true,
-    }
+    },
 }, { _id: false });

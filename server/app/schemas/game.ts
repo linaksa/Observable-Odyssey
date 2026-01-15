@@ -1,5 +1,5 @@
-import { model, Schema } from "mongoose";
-import { gameBoard, IBoard } from "./board";
+import { model, Schema } from 'mongoose';
+import { gameBoard, IBoard } from './board';
 
 interface IGame {
     gameTitle: string;
@@ -21,28 +21,28 @@ const gameSchema = new Schema<IGame>({
     description: {
         type: String,
         required: true,
-        maxLength: 1000
+        maxLength: 1000,
     },
     gameMode: {
         type: String,
         enum: ['ctf', 'classic'],
-        required: true
+        required: true,
     },
     lastModifiedDate: {
         type: Date,
-        required: true
+        required: true,
     },
     dateCreated: {
         type: Date,
-        required: true
+        required: true,
     },
     visibility: {
         type: String,
-        enum: ['hidden', 'viewable']
+        enum: ['hidden', 'viewable'],
     },
-    board: gameBoard
+    board: gameBoard,
 
-})
+});
 
 
-export const Game = model<IGame>('Game', gameSchema);
+export const game = model<IGame>('Game', gameSchema);

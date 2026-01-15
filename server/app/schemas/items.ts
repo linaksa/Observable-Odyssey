@@ -1,6 +1,5 @@
-import { Schema } from "mongoose";
-
-
+import { SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@app/constants';
+import { Schema } from 'mongoose';
 
 export interface IItem {
     x: number;
@@ -14,24 +13,24 @@ export interface IItem {
 export interface ILifeSanctuary extends IItem {
     active: boolean;
     itemType: 'lifeSanctuary';
-    size: 4;
+    size: typeof SANCTUARY_SIZE;
 }
 
 export interface IFightSanctuary extends IItem {
     active: boolean;
     itemType: 'fightSanctuary';
-    size: 4;
+    size: typeof SANCTUARY_SIZE;
 }
 
 export interface IStartingPosition extends IItem {
     itemType: 'startingPosition';
-    size: 1;
+    size: typeof SMALL_ITEM_SIZE;
 }
 
 export interface IFlag extends IItem {
     itemType: 'flag';
     isCarried: boolean;
-    size: 1;
+    size: typeof SMALL_ITEM_SIZE;
 }
 
 export type GameItem = IFlag | IStartingPosition | IFightSanctuary | ILifeSanctuary;
@@ -43,5 +42,5 @@ export const itemSchema = new Schema<IItem>({
     size: { type: Number, required: true },
     itemType: { type: String, required: true },
     active: { type: Boolean },
-    isCarried: { type: Boolean }
+    isCarried: { type: Boolean },
 }, { _id: false });

@@ -1,6 +1,6 @@
-import { model, Schema, Types } from "mongoose";
-import { characterSchema, ICharacter } from "./character";
-import { IItem, itemSchema } from "./items";
+import { model, Schema, Types } from 'mongoose';
+import { characterSchema, ICharacter } from './character';
+import { IItem, itemSchema } from './items';
 
 export interface IActiveGame {
     baseGameId: Types.ObjectId,
@@ -17,4 +17,4 @@ const activeGameSchema = new Schema<IActiveGame>({
     itemsState: [itemSchema],
 });
 
-export const ActiveGame = model<IActiveGame>('ActiveGame', activeGameSchema);
+export const activeGame = model<IActiveGame>('ActiveGame', activeGameSchema);
