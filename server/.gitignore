@@ -25,3 +25,6 @@ npm-debug.log
 !tsconfig.spec.json
 !tsconfig.json
 !package-lock.json
+
+# Environnement
+.env

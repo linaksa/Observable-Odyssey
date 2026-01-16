@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withHashLocation } from '@angular/router';
+import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
 import { AppComponent } from '@app/pages/app/app.component';
 import { CreationPageComponent } from '@app/pages/creation-page/creation-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
@@ -19,6 +20,7 @@ const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
     { path: 'home', component: MainPageComponent },
     { path: 'game', component: GamePageComponent },
+    { path: 'admin', component: AdministrationPageComponent },
     { path: 'material', component: MaterialPageComponent },
     { path: 'creation', component: CreationPageComponent },
     { path: '**', redirectTo: '/home' },
