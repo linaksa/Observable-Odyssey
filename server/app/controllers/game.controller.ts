@@ -1,7 +1,14 @@
 import { GameService } from '@app/services/game.service';
+import { Request, Response, GameService } from '@app/services/game.service';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
+
+const HTTP_STATUS_NO_CONTENT = StatusCodes.NO_CONTENT;
+const HTTP_STATUS_BAD_REQUEST = StatusCodes.BAD_REQUEST;
+const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
+
 
 const HTTP_STATUS_NO_CONTENT = StatusCodes.NO_CONTENT;
 const HTTP_STATUS_BAD_REQUEST = StatusCodes.BAD_REQUEST;
@@ -12,7 +19,7 @@ const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
 export class GameController {
     router: Router;
 
-    constructor(private readonly gameService: GameService) {
+    constructor(private readonly gameService: GameServiceprivate readonly gameService: GameService) {
         this.configureRouter();
     }
 

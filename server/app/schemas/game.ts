@@ -1,6 +1,16 @@
 import { GameType, IGame, Visibility } from '@common/game';
 import { model, Schema } from 'mongoose';
-import { gameBoard } from './board';
+import { gameBoard, IBoard } from './board';
+
+export interface IGame {
+    gameTitle: string;
+    description: string;
+    gameMode: string;
+    lastModifiedDate: Date;
+    dateCreated: Date;
+    visibility: string;
+    board: IBoard;
+}
 
 const gameSchema = new Schema<IGame>({
     gameTitle: {
@@ -36,8 +46,6 @@ const gameSchema = new Schema<IGame>({
         required: true,
     },
     board: gameBoard,
-
 });
-
 
 export const game = model<IGame>('Game', gameSchema);
