@@ -1,7 +1,7 @@
 import { model, Schema } from 'mongoose';
 import { gameBoard, IBoard } from './board';
 
-interface IGame {
+export interface IGame {
     gameTitle: string;
     description: string;
     gameMode: string;
