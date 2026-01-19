@@ -1,3 +1,13 @@
+export const enum GameType {
+    Ctf = 'ctf',
+    Classic = 'classic',
+}
+
+export const enum Visibility {
+    Hidden = 'hidden',
+    Viewable = 'viewable',
+}
+
 export const enum CellType {
     Empty = 'EMPTY',
     Ice = 'ICE',
