@@ -46,7 +46,7 @@
             <th mat-header-cell *matHeaderCellDef>Public</th>
             <td mat-cell *matCellDef="let element">
                 <form>
-                    <mat-checkbox name="visibility" [checked]="element.visibility === 'hidden'"></mat-checkbox>
+                    <mat-checkbox (change)="toggleVisibility($event, element)" name="visibility" [checked]="gameIsViewable(element)"></mat-checkbox>
                 </form>
             </td>
         </ng-container>
