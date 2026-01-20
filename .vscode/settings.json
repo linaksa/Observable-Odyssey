@@ -15,5 +15,8 @@
         "source.fixAll.eslint": "explicit"
     },
     "html.format.indentInnerHtml": true,
-    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }
