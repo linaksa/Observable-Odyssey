@@ -1,8 +1,7 @@
 import { Application } from '@app/app';
-import { GameType, Visibility } from '@app/constants';
-import { IBoard } from '@app/schemas/board';
-import { IGame } from '@app/schemas/game';
 import { GameService } from '@app/services/game.service';
+import { IBoard } from '@common/board';
+import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';
 import { StatusCodes } from 'http-status-codes';
 import { createStubInstance, SinonStubbedInstance } from 'sinon';
@@ -39,7 +38,10 @@ describe('GameController', () => {
             .send({ game: baseGame })
             .expect(StatusCodes.CREATED)
             .then((response) => {
-                expect(response.body).to.deep.equal(baseGame);
+                expect(response.body.gameTitle).to.equal(baseGame.gameTitle);
+                expect(response.body.description).to.equal(baseGame.description);
+                expect(new Date(response.body.dateCreated)).to.be.instanceOf(Date);
+                expect(new Date(response.body.lastModifiedDate)).to.be.instanceOf(Date);
             });
     });
 
@@ -51,7 +53,7 @@ describe('GameController', () => {
             .send({ game: baseGame })
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.equal({ error: "TEST" });
+                expect(response.body).to.deep.equal({ error: "TEST" });
             });
     });
 });
