@@ -1,11 +1,3 @@
-export const enum CellType {
-    Empty = 'EMPTY',
-    Ice = 'ICE',
-    Wall = 'WALL',
-    OpenDoor = 'OPEN_DOOR',
-    ClosedDoor = 'CLOSED_DOOR',
-}
-
 //TODO Add pictures to assets
 export const enum Avatar {
     Avatar1 = 'avatar1',
@@ -27,5 +19,8 @@ export const enum DiceType {
     SixSided = 'six sided',
 }
 
-export const SANCTUARY_SIZE = 4;
-export const SMALL_ITEM_SIZE = 1;
+export enum GameSize {
+    Small = 100,
+    Mid = 225,
+    Large = 400,
+}
