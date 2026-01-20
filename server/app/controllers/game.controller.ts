@@ -112,7 +112,7 @@ export class GameController {
                 await this.gameService.deleteGame(gameId);
                 res.sendStatus(HTTP_STATUS_NO_CONTENT);
             } catch (error) {
-                res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
             }
         });
         /**
@@ -168,13 +168,16 @@ export class GameController {
             try {
                 const gameId = req.params.id;
                 const gameData = req.body.game;
+                if (!gameData) {
+                    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Données du jeu manquantes' });
+                }
                 const updatedGame = await this.gameService.updateGame(gameId, gameData);
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
                 }
-                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
             }
         });
         /**
@@ -222,9 +225,9 @@ export class GameController {
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
                 }
-                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
             }
         });
     }
