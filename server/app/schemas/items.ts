@@ -1,4 +1,4 @@
-import { SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@app/constants';
+import { ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@app/constants';
 import { Schema } from 'mongoose';
 
 export interface IItem {
@@ -12,23 +12,23 @@ export interface IItem {
 
 export interface ILifeSanctuary extends IItem {
     active: boolean;
-    itemType: 'lifeSanctuary';
+    itemType: ItemType.LifeSanctuary;
     size: typeof SANCTUARY_SIZE;
 }
 
 export interface IFightSanctuary extends IItem {
     active: boolean;
-    itemType: 'fightSanctuary';
+    itemType: ItemType.FightSanctuary;
     size: typeof SANCTUARY_SIZE;
 }
 
 export interface IStartingPosition extends IItem {
-    itemType: 'startingPosition';
+    itemType: ItemType.StartingPosition;
     size: typeof SMALL_ITEM_SIZE;
 }
 
 export interface IFlag extends IItem {
-    itemType: 'flag';
+    itemType: ItemType.Flag;
     isCarried: boolean;
     size: typeof SMALL_ITEM_SIZE;
 }
