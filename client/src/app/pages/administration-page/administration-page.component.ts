@@ -39,11 +39,11 @@ export class AdministrationPageComponent implements OnInit {
     this.adminService.changeGameVisibility(element._id, visibility).subscribe({
       next: () => {
         this.fetchGames();
+        event.source.disabled = false;
+
       },
       error: () => {
         event.source.checked = !event.checked;
-      },
-      complete: () => {
         event.source.disabled = false;
       },
     });
