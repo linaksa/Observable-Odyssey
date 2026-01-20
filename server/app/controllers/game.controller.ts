@@ -14,6 +14,16 @@ export class GameController {
     private configureRouter(): void {
         this.router = Router();
 
+        this.router.get('/', async (req: Request, res: Response) => {
+            try {
+                const games = await this.gameService.getAllGames();
+                res.status(StatusCodes.OK).json(games);
+            }
+            catch (error) {
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+            }
+        });
+
         /**
          * @swagger
          *

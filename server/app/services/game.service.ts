@@ -8,6 +8,10 @@ export class GameService {
 
     constructor(private readonly boardService: BoardService) {}
 
+    async getAllGames(): Promise<IGame[]> {
+        return await game.find({})
+    }
+
     async createGame(gameData: IGame): Promise<IGame> {
         this.validateGameData(gameData);
 
