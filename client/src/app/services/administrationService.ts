@@ -22,6 +22,10 @@ export class AdministrationService {
         return this.http.post(`${this.baseUrl}/example/send`, message, { observe: 'response', responseType: 'text' });
     }
 
+    deleteGame(game: IGame) {
+        return this.http.delete(`${this.baseUrl}/games)
+    }
+
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
         return () => of(result as T);
     }
