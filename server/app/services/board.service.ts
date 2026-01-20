@@ -1,5 +1,6 @@
-import { CellType, GameSize, ItemType } from '@app/constants';
-import { IBoard } from '@app/schemas/board';
+import { GameSize } from '@app/constants';
+import { CellType, IBoard } from '@common/board';
+import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 
 

@@ -1,21 +1,4 @@
-export enum GameType {
-    Ctf = 'ctf',
-    Classic = 'classic',
-}
 
-export const enum Visibility {
-    Hidden = 'hidden',
-    Viewable = 'viewable',
-}
-
-export const enum CellType {
-    Empty = 'EMPTY',
-    Ice = 'ICE',
-    Water = 'WATER',
-    Wall = 'WALL',
-    OpenDoor = 'OPEN_DOOR',
-    ClosedDoor = 'CLOSED_DOOR',
-}
 
 //TODO Add pictures to assets
 export const enum Avatar {
@@ -43,13 +26,3 @@ export enum GameSize {
     Mid = 225,
     Large = 400,
 }
-
-export enum ItemType {
-    LifeSanctuary = 'lifeSanctuary',
-    FightSanctuary = 'fightSanctuary',
-    Flag = 'flag',
-    StartingPosition = 'startingPosition',
-}
-
-export const SANCTUARY_SIZE = 4;
-export const SMALL_ITEM_SIZE = 1;

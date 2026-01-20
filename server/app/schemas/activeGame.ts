@@ -1,6 +1,7 @@
+import { IItem } from '@common/items';
 import { model, Schema, Types } from 'mongoose';
 import { characterSchema, ICharacter } from './character';
-import { IItem, itemSchema } from './items';
+import { itemSchema } from './items';
 
 export interface IActiveGame {
     baseGameId: Types.ObjectId,
