@@ -1,4 +1,4 @@
-import { CellType, GameSize, GameType, ItemType } from '@app/constants';
+import { CellType, GameSize, ItemType } from '@app/constants';
 import { IBoard } from '@app/schemas/board';
 import { Service } from 'typedi';
 
@@ -15,6 +15,8 @@ enum ExpectedStartingPoints {
     Large = 6,
 }
 
+const EXPECTED_TERRAIN_USE = 0.5;
+
 @Service()
 export class BoardService {
 
@@ -23,18 +25,18 @@ export class BoardService {
      * no unreachable tile, all starting points are there
      * @returns boolean, if the game is valid or not
      */
-    public validateBoard(board: IBoard, gameType: GameType): boolean {
+    validateBoard(board: IBoard): boolean {
         const gameSize = board.cells.length * board.cells[0].length;
         let occupiedCells = 0;
-        for (let i = 0; i < board.cells.length; ++i) {
-            for (let j = 0; j < board.cells[0].length; ++j) {
-                if (board.cells[i][j] !== CellType.Empty) {
+        for (const row of board.cells) {
+            for (const cell of row) {
+                if (cell !== CellType.Empty) {
                     occupiedCells++;
                 }
             }
         }
 
-        if (occupiedCells <= gameSize * 0.5) {
+        if (occupiedCells <= gameSize * EXPECTED_TERRAIN_USE) {
             return false;
         }
 
@@ -43,10 +45,10 @@ export class BoardService {
         if (gameSize === GameSize.Small) {
             expectedStartingPoints = ExpectedStartingPoints.Small;
             expectedSanctuaries = ExpectedSanctuaries.Small;
-        } else if (gameSize == GameSize.Mid) {
+        } else if (gameSize === GameSize.Mid) {
             expectedStartingPoints = ExpectedStartingPoints.Mid;
             expectedSanctuaries = ExpectedSanctuaries.Mid;
-        } else if (gameSize == GameSize.Large) {
+        } else if (gameSize === GameSize.Large) {
             expectedStartingPoints = ExpectedStartingPoints.Large;
             expectedSanctuaries = ExpectedSanctuaries.Large;
         } else {
@@ -55,9 +57,9 @@ export class BoardService {
 
 
         for (const item of board.items) {
-            if (item.itemType == ItemType.FightSanctuary || item.itemType == ItemType.LifeSanctuary) {
+            if (item.itemType === ItemType.FightSanctuary || item.itemType === ItemType.LifeSanctuary) {
                 expectedSanctuaries--;
-            } else if (item.itemType == ItemType.StartingPosition) {
+            } else if (item.itemType === ItemType.StartingPosition) {
                 expectedStartingPoints--;
             }
         }
@@ -67,8 +69,7 @@ export class BoardService {
         }
 
         if (!this.areAllCellsReachable(board)) {
-            console.log("Talkin trash to the garbage around you")
-            return false
+            return false;
         }
 
         return true;
@@ -128,17 +129,19 @@ export class BoardService {
             [-1, 0],
             [1, 0],
             [0, -1],
-            [0, 1]
+            [0, 1],
         ];
 
         while (queue.length > 0) {
-            const [row, col] = queue.shift()!;
+            const current = queue.shift();
+            if (!current) continue;
 
             for (const [dRow, dCol] of directions) {
                 const newRow = row + dRow;
                 const newCol = col + dCol;
 
-                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && !visited[newRow][newCol] && board.cells[newRow][newCol] !== CellType.Wall
+                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols &&
+                    !visited[newRow][newCol] && board.cells[newRow][newCol] !== CellType.Wall
                 ) {
                     visited[newRow][newCol] = true;
                     queue.push([newRow, newCol]);
