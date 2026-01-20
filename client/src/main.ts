@@ -4,9 +4,11 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withHashLocation } from '@angular/router';
 import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
 import { AppComponent } from '@app/pages/app/app.component';
+import { CreationPageComponent } from '@app/pages/creation-page/creation-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { MaterialPageComponent } from '@app/pages/material-page/material-page.component';
+
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -20,6 +22,7 @@ const routes: Routes = [
     { path: 'game', component: GamePageComponent },
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'material', component: MaterialPageComponent },
+    { path: 'creation', component: CreationPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 
