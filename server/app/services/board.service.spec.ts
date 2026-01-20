@@ -1,5 +1,4 @@
-import { CellType } from '@app/constants';
-import { IBoard } from '@app/schemas/board';
+import { CellType, IBoard } from '@common/board';
 import { expect } from 'chai';
 import { Container } from 'typedi';
 import { BoardService } from './board.service';

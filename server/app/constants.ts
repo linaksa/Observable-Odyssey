@@ -1,18 +1,3 @@
-
-export const enum Visibility {
-    Hidden = 'hidden',
-    Viewable = 'viewable',
-}
-
-export const enum CellType {
-    Empty = 'EMPTY',
-    Ice = 'ICE',
-    Water = 'WATER',
-    Wall = 'WALL',
-    OpenDoor = ' ',
-    ClosedDoor = 'CLOSED_DOOR',
-}
-
 //TODO Add pictures to assets
 export const enum Avatar {
     Avatar1 = 'avatar1',

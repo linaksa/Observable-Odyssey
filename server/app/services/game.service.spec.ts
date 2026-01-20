@@ -1,6 +1,6 @@
-import { CellType, ItemType } from '@app/constants';
-import { IBoard } from '@app/schemas/board';
 import { game } from '@app/schemas/game';
+import { CellType, IBoard } from '@common/board';
+import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Container } from 'typedi';
