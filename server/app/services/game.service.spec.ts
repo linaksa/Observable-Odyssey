@@ -1,5 +1,6 @@
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
+import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
@@ -7,7 +8,11 @@ import { Container } from 'typedi';
 import { BoardService } from './board.service';
 import { GameService } from './game.service';
 
-
+/* NOTE: The linter is deactivated for line length around the definition of the cells because we were
+*  getting errors about lines being too long, but it was judged that splitting the 
+*  lines in this case would decrease readability, since it would break the grid shape
+*  of the cells.
+*/
 describe('Game Service', () => {
     let gameService: GameService;
     let mockBoardService: sinon.SinonStubbedInstance<BoardService>;
@@ -29,8 +34,9 @@ describe('Game Service', () => {
     });
 
     it('should create a game with dates', async () => {
+        /* eslint-disable max-len */
         const board: IBoard = {
-            "cells": [
+            cells: [
                 [CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water],
                 [CellType.Water, CellType.Ice, CellType.Water, CellType.Ice, CellType.Water, CellType.Water, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
                 [CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water],
@@ -40,36 +46,40 @@ describe('Game Service', () => {
                 [CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water],
                 [CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice],
                 [CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Water, CellType.Water, CellType.Ice, CellType.Water],
-                [CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall]
+                [CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
             ],
-            "items": [
+            items: [
                 {
-                    "itemType": "startingPosition",
-                    "x": 0,
-                    "y": 0,
-                    "size": 1
+                    itemType: 'startingPosition',
+                    x: 0,
+                    y: 0,
+                    size: 1,
                 },
                 {
-                    "itemType": "startingPosition",
-                    "x": 3,
-                    "y": 3,
-                    "size": 1
+                    itemType: 'startingPosition',
+                    x: 3,
+                    y: 3,
+                    size: 1,
                 },
                 {
-                    "itemType": "fightSanctuary",
-                    "x": 1,
-                    "y": 1,
-                    "size": 4
-                }
-            ]
+                    itemType: 'fightSanctuary',
+                    x: 1,
+                    y: 1,
+                    size: 4,
+                },
+            ],
         };
+        /* eslint-enable max-len */
 
-        const mockGameData = {
+        const mockGameData: IGame = {
             gameTitle: 'Test Game',
             description: 'Test Description',
-            gameMode: 'classic',
-            board: board,
-            preview: 'image.png'
+            gameMode: GameType.Classic,
+            board,
+            preview: 'image.png',
+            lastModifiedDate: new Date(),
+            dateCreated: new Date(),
+            visibility: Visibility.Hidden,
         };
 
         gameCreateStub.resolves({
@@ -77,13 +87,13 @@ describe('Game Service', () => {
             visibility: 'hidden',
             dateCreated: sinon.match.date,
             lastModifiedDate: sinon.match.date,
-            _id: '123'
+            _id: '123',
         });
 
-        const result = await gameService.createGame(mockGameData as any);
+        const result = await gameService.createGame(mockGameData);
 
-        expect(result.dateCreated).to.exist;
-        expect(result.lastModifiedDate).to.exist;
+        void expect(result.dateCreated).to.exist;
+        void expect(result.lastModifiedDate).to.exist;
     });
 
     it('should throw an error when description is missing', async () => {
@@ -91,12 +101,12 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de description");
         }
@@ -108,12 +118,12 @@ describe('Game Service', () => {
             description: '',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de description");
         }
@@ -124,12 +134,12 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de titre");
         }
@@ -141,12 +151,12 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de titre");
         }
@@ -158,12 +168,12 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'invalidMode',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal('Mode de jeu invalide');
         }
@@ -174,12 +184,12 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: 'Test Description',
             gameMode: 'classic',
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de carte");
         }
@@ -194,8 +204,8 @@ describe('Game Service', () => {
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal('Il manque une image de preview du jeu');
         }
@@ -209,12 +219,12 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png'
+            preview: 'image.png',
         };
 
         try {
-            await gameService.createGame(mockGameData as any);
-            expect.fail('Should have thrown an error');
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
         } catch (error) {
             expect(error.message).to.equal('Le terrain de jeu est invalide');
         }
