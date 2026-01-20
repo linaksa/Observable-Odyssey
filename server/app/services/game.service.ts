@@ -44,8 +44,19 @@ export class GameService {
         }
     }
 
-    async updateGame(id: string, gameData: unknown): Promise<unknown> {
-        throw new Error('Not implemented');
+    async updateGame(id: string, gameData: IGame): Promise<IGame> {
+        const existingGame = await game.findById(id);
+        if (!existingGame) {
+            throw new Error('Jeu introuvable');
+        }
+        this.validateGameData(gameData);
+        existingGame.gameTitle = gameData.gameTitle;
+        existingGame.description = gameData.description;
+        existingGame.gameMode = gameData.gameMode;
+        existingGame.board = gameData.board;
+        existingGame.preview = gameData.preview;
+        existingGame.lastModifiedDate = new Date();
+        return existingGame.save();
     }
 
     async deleteGame(gameId: string): Promise<void> {
