@@ -28,7 +28,7 @@ export class GameService {
         }
 
         if (!Object.values(GameType).includes(gameData.gameMode)) {
-            throw new Error("Mode de jeu invalide");
+            throw new Error('Mode de jeu invalide');
         }
 
         if (!gameData.board) {
@@ -36,11 +36,11 @@ export class GameService {
         }
 
         if (!gameData.preview) {
-            throw new Error("Il manque une image de preview du jeu");
+            throw new Error('Il manque une image de preview du jeu');
         }
 
-        if (!this.boardService.validateBoard(gameData.board, gameData.gameMode)) {
-            throw new Error("Le terrain de jeu est invalide");
+        if (!this.boardService.validateBoard(gameData.board)) {
+            throw new Error('Le terrain de jeu est invalide');
         }
     }
 }
