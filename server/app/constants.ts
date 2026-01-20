@@ -1,4 +1,4 @@
-export const enum GameType {
+export enum GameType {
     Ctf = 'ctf',
     Classic = 'classic',
 }
@@ -11,6 +11,7 @@ export const enum Visibility {
 export const enum CellType {
     Empty = 'EMPTY',
     Ice = 'ICE',
+    Water = 'WATER',
     Wall = 'WALL',
     OpenDoor = 'OPEN_DOOR',
     ClosedDoor = 'CLOSED_DOOR',
@@ -35,6 +36,19 @@ export const enum Avatar {
 export const enum DiceType {
     FourSided = 'four sided',
     SixSided = 'six sided',
+}
+
+export enum GameSize {
+    Small = 100,
+    Mid = 225,
+    Large = 400,
+}
+
+export enum ItemType {
+    LifeSanctuary = 'lifeSanctuary',
+    FightSanctuary = 'fightSanctuary',
+    Flag = 'flag',
+    StartingPosition = 'startingPosition',
 }
 
 export const SANCTUARY_SIZE = 4;

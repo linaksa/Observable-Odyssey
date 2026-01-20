@@ -9,6 +9,7 @@ export interface IGame {
     lastModifiedDate: Date;
     dateCreated: Date;
     visibility: Visibility;
+    preview: Base64URLString;
     board: IBoard;
 }
 
@@ -40,6 +41,10 @@ const gameSchema = new Schema<IGame>({
     visibility: {
         type: String,
         enum: [Visibility.Hidden, Visibility.Viewable],
+    },
+    preview: {
+        type: String,
+        required: true,
     },
     board: gameBoard,
 

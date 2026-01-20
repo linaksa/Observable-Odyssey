@@ -4,13 +4,13 @@ import { IItem, itemSchema } from './items';
 
 
 export interface IBoard {
-    cells: CellType[];
+    cells: CellType[][];
     items: IItem[];
 }
 
 export const gameBoard = new Schema<IBoard>({
     cells: {
-        type: [String],
+        type: [[String]],
         required: true,
     },
     items: [itemSchema],
