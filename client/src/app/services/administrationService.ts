@@ -11,7 +11,7 @@ import { environment } from 'src/environments/environment';
 export class AdministrationService {
     private readonly baseUrl: string = environment.serverUrl;
 
-    constructor(private readonly http: HttpClient) { }
+    constructor(private readonly http: HttpClient) {}
 
     getAllGames(): Observable<IExistingGame[]> {
         return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
