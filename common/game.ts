@@ -20,3 +20,7 @@ export interface IGame {
     preview: Base64URLString;
     board: IBoard;
 }
+
+export interface IExistingGame extends IGame {
+    _id: string;
+}
