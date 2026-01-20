@@ -1,5 +1,5 @@
-import { GameType, Visibility } from '@app/constants';
-import { game, IGame } from '@app/schemas/game';
+import { game } from '@app/schemas/game';
+import { GameType, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
 
@@ -7,6 +7,10 @@ import { BoardService } from './board.service';
 export class GameService {
 
     constructor(private readonly boardService: BoardService) {}
+
+    async getAllGames(): Promise<IGame[]> {
+        return await game.find({})
+    }
 
     async createGame(gameData: IGame): Promise<IGame> {
         this.validateGameData(gameData);

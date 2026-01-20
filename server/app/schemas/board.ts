@@ -1,12 +1,7 @@
-import { CellType } from '@app/constants';
+import { IBoard } from '@common/board';
 import { Schema } from 'mongoose';
-import { IItem, itemSchema } from './items';
+import { itemSchema } from './items';
 
-
-export interface IBoard {
-    cells: CellType[][];
-    items: IItem[];
-}
 
 export const gameBoard = new Schema<IBoard>({
     cells: {
