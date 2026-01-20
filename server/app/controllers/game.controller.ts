@@ -1,4 +1,4 @@
-import { game, IGame } from '@app/schemas/game';
+import { GameService } from '@app/services/game.service';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -7,29 +7,70 @@ import { Service } from 'typedi';
 export class GameController {
     router: Router;
 
-    constructor() {
+    constructor(private readonly gameService: GameService) {
         this.configureRouter();
     }
 
     private configureRouter(): void {
         this.router = Router();
 
+        /**
+         * @swagger
+         *
+         * /api/games:
+         *   post:
+         *     description: Create a new game with board configuration
+         *     tags:
+         *       - Games
+         *     produces:
+         *       - application/json
+         *     parameters:
+         *       - in: body
+         *         name: game
+         *         description: Game object containing title, description, mode, board and preview image
+         *         required: true
+         *         schema:
+         *           type: object
+         *           required:
+         *             - game
+         *           properties:
+         *             game:
+         *               type: object
+         *               required:
+         *                 - gameTitle
+         *                 - description
+         *                 - gameMode
+         *                 - board
+         *                 - preview
+         *               properties:
+         *                 gameTitle:
+         *                   type: string
+         *                 description:
+         *                   type: string
+         *                 gameMode:
+         *                   type: string
+         *                   enum: [Ctf, Classic]
+         *                 board:
+         *                   type: object
+         *                 preview:
+         *                   type: string
+         *                   description: Base64 encoded image
+         *     responses:
+         *       201:
+         *         description: Game created successfully
+         *       400:
+         *         description: Invalid game data
+         */
         this.router.post('/', async (req: Request, res: Response) => {
-            const gameObject: IGame = req.body.game;
-
-            if (!gameObject.description.length || gameObject.description.length == 0) {
-                res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing description information" });
-                return;
+            try {
+                const newGame = await this.gameService.createGame(req.body.game);
+                res.status(StatusCodes.CREATED).json(newGame);
+            } catch (error) {
+                res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
             }
-
-            if (!gameObject.gameTitle.length || gameObject.gameTitle.length == 0) {
-                res.status(StatusCodes.BAD_REQUEST).json({ error: "Missing title information" });
-                return;
-            }
-
-            if (!gameObject.gameMode == gamemi)
-                game.create
         });
+
+
     }
 
 

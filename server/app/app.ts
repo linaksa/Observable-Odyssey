@@ -43,7 +43,7 @@ export class Application {
         this.app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerJSDoc(this.swaggerOptions)));
         this.app.use('/api/example', this.exampleController.router);
         this.app.use('/api/date', this.dateController.router);
-        this.app.use('api/games', this.gameController.router);
+        this.app.use('/api/games', this.gameController.router);
         this.app.use('/', (req, res) => {
             res.redirect('/api/docs');
         });
