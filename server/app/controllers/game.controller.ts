@@ -30,8 +30,7 @@ export class GameController {
             try {
                 const games = await this.gameService.getAllGames();
                 res.status(StatusCodes.OK).json(games);
-            }
-            catch (error) {
+            } catch {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
             }
         });
