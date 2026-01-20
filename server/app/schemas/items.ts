@@ -2,7 +2,6 @@ import { IItem } from '@common/items';
 import { Schema } from 'mongoose';
 
 
-
 export const itemSchema = new Schema<IItem>({
     x: { type: Number, required: true },
     y: { type: Number, required: true },

@@ -18,7 +18,7 @@ describe('GameController', () => {
         preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
-        dateCreated: new Date()
+        dateCreated: new Date(),
 
     };
     let gameService: SinonStubbedInstance<GameService>;
@@ -47,13 +47,13 @@ describe('GameController', () => {
 
     it('should return an error when the game cannot be created', async () => {
 
-        gameService.createGame.rejects(new Error("TEST"));
+        gameService.createGame.rejects(new Error('TEST'));
         return supertest(expressApp)
             .post('/api/games/')
             .send({ game: baseGame })
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: "TEST" });
+                expect(response.body).to.deep.equal({ error: 'TEST' });
             });
     });
 });
