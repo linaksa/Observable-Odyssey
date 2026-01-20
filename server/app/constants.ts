@@ -13,7 +13,7 @@ export const enum CellType {
     Ice = 'ICE',
     Water = 'WATER',
     Wall = 'WALL',
-    OpenDoor = 'OPEN_DOOR',
+    OpenDoor = ' ',
     ClosedDoor = 'CLOSED_DOOR',
 }
 
