@@ -91,8 +91,30 @@ export class GameController {
                 res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
             }
         });
-
-        this.router.delete('/games/:id', async (req: Request, res: Response) => {
+        /**
+        * @swagger
+        *
+        * /api/games/{id}:
+        *   delete:
+        *     description: Delete a game by its unique MongoDB identifier
+        *     tags:
+        *       - Games
+        *     produces:
+        *       - application/json
+        *     parameters:
+        *       - in: path
+        *         name: id
+        *         description: Unique identifier of the game to delete
+        *         required: true
+        *         schema:
+        *           type: string
+        *     responses:
+        *       204:
+        *         description: Game deleted successfully
+        *       404:
+        *         description: Game not found or already deleted
+        */
+        this.router.delete('/:id', async (req: Request, res: Response) => {
             const gameId = req.params.id;
             try {
                 await this.gameService.deleteGame(gameId);
@@ -101,26 +123,116 @@ export class GameController {
                 res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
             }
         });
-
-        this.router.put('/games/:id', async (req: Request, res: Response) => {
+        /**
+         * @swagger
+         *
+         * /api/games/{id}:
+         *   put:
+         *     description: Update an existing game
+         *     tags:
+         *       - Games
+         *     produces:
+         *       - application/json
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         description: Unique identifier of the game to update
+         *         required: true
+         *         schema:
+         *           type: string
+         *       - in: body
+         *         name: game
+         *         description: Updated game data
+         *         required: true
+         *         schema:
+         *           type: object
+         *           required:
+         *             - game
+         *           properties:
+         *             game:
+         *               type: object
+         *               properties:
+         *                 gameTitle:
+         *                   type: string
+         *                 description:
+         *                   type: string
+         *                 gameMode:
+         *                   type: string
+         *                   enum: [Ctf, Classic]
+         *                 board:
+         *                   type: object
+         *                 preview:
+         *                   type: string
+         *                   description: Base64 encoded image
+         *     responses:
+         *       200:
+         *         description: Game updated successfully
+         *       400:
+         *         description: Invalid game data
+         *       404:
+         *         description: Game not found
+         */
+        this.router.put('/:id', async (req: Request, res: Response) => {
             try {
                 const gameId = req.params.id;
-                const gameData = req.body;
+                const gameData = req.body.game;
                 const updatedGame = await this.gameService.updateGame(gameId, gameData);
-                res.json(updatedGame);
+                return res.json(updatedGame);
             } catch (error) {
-                res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                if (error.message === 'Jeu introuvable') {
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                }
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
             }
         });
-
-        this.router.patch('/games/:id/visibility', async (req: Request, res: Response) => {
+        /**
+         * @swagger
+         *
+         * /api/games/{id}/visibility:
+         *   patch:
+         *     description: Change the visibility of a game
+         *     tags:
+         *       - Games
+         *     produces:
+         *       - application/json
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         description: Unique identifier of the game
+         *         required: true
+         *         schema:
+         *           type: string
+         *       - in: body
+         *         name: visibility
+         *         description: Visibility state of the game
+         *         required: true
+         *         schema:
+         *           type: object
+         *           required:
+         *             - visibility
+         *           properties:
+         *             visibility:
+         *               type: string
+         *               enum: [hidden, viewable]
+         *     responses:
+         *       200:
+         *         description: Game visibility updated successfully
+         *       400:
+         *         description: Invalid visibility value or request
+         *       404:
+         *         description: Game not found
+         */
+        this.router.patch('/:id/visibility', async (req: Request, res: Response) => {
             try {
                 const gameId = req.params.id;
                 const visibility = req.body.visibility;
                 const updatedGame = await this.gameService.changeVisibility(gameId, visibility);
-                res.json(updatedGame);
+                return res.json(updatedGame);
             } catch (error) {
-                res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                if (error.message === 'Jeu introuvable') {
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                }
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
             }
         });
     }
