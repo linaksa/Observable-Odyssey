@@ -35,13 +35,16 @@ export class AdministrationPageComponent implements OnInit {
 
   toggleVisibility(event: MatCheckboxChange, element: IExistingGame): void {
     const visibility: Visibility = event.checked ? Visibility.Viewable : Visibility.Hidden;
+    event.source.disabled = true;
     this.adminService.changeGameVisibility(element._id, visibility).subscribe({
-      next: (response) => {
+      next: () => {
         this.fetchGames();
       },
-      error: (error) => {
-        console.error('Error changing visibility:', error);
+      error: () => {
         event.source.checked = !event.checked;
+      },
+      complete: () => {
+        event.source.disabled = false;
       },
     });
   }

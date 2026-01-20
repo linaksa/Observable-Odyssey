@@ -21,8 +21,8 @@ export class AdministrationService {
         return this.http.patch(
             `${this.baseUrl}/games/${gameId}/visibility`,
             { visibility },
-            { observe: 'response', responseType: 'text' }
-        )
+            { observe: 'response', responseType: 'text' },
+        );
     }
 
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
