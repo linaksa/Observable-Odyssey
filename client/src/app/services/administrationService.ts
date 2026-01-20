@@ -1,5 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { IGame } from '@common/game';
 import { Message } from '@common/message';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -13,8 +14,8 @@ export class AdministrationService {
 
     constructor(private readonly http: HttpClient) {}
 
-    getAllGames(): Observable<Message[]> {
-        return this.http.get<Message[]>(`${this.baseUrl}/api/games`).pipe(catchError(this.handleError<Message[]>('basicGet')));
+    getAllGames(): Observable<IGame[]> {
+        return this.http.get<IGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IGame[]>('basicGet')));
     }
 
     basicPost(message: Message): Observable<HttpResponse<string>> {

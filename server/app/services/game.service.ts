@@ -1,5 +1,5 @@
-import { GameType, Visibility } from '@app/constants';
-import { game, IGame } from '@app/schemas/game';
+import { game } from '@app/schemas/game';
+import { GameType, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
 
