@@ -21,7 +21,6 @@ export class AdministrationPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.adminService.getAllGames().subscribe((games) => {
-      console.log("games are", games)
       this.dataSource.data = games ?? [];
     });
   }
