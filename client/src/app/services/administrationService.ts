@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IGame } from '@common/game';
-import { Message } from '@common/message';
+import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -14,12 +13,20 @@ export class AdministrationService {
 
     constructor(private readonly http: HttpClient) {}
 
-    getAllGames(): Observable<IGame[]> {
-        return this.http.get<IGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IGame[]>('basicGet')));
+    getAllGames(): Observable<IExistingGame[]> {
+        return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
     }
 
-    basicPost(message: Message): Observable<HttpResponse<string>> {
-        return this.http.post(`${this.baseUrl}/example/send`, message, { observe: 'response', responseType: 'text' });
+    changeGameVisibility(gameId: string, visibility: Visibility): Observable<HttpResponse<string>> {
+        return this.http.patch(
+            `${this.baseUrl}/games/${gameId}/visibility`,
+            { visibility },
+            { observe: 'response', responseType: 'text' },
+        );
+    }
+
+    deleteGame(game: IExistingGame): Observable<HttpResponse<string>> {
+        return this.http.delete(`${this.baseUrl}/games/${game._id}`, { observe: 'response', responseType: 'text' });
     }
 
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
