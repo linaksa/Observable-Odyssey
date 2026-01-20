@@ -1,30 +1,35 @@
-import { Component } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatTableModule } from '@angular/material/table';
+import { Component, OnInit, inject } from '@angular/core';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { CreateGameFormComponent } from '@app/components/create-game-form/create-game-form.component';
 import { AppMaterialModule } from '@app/modules/material.module';
-
-// mock
-const ELEMENT_DATA = [{ name: 'Hydrogen', size: 1.0079, mode: 'H', lastEdited: '2024-01-01', image: 'assets/images/hydrogen.png' }];
+import { AdministrationService } from '@app/services/administrationService';
+import { IGame, Visibility } from '@common/game';
 
 @Component({
     selector: 'app-create-page',
-    imports: [MatTableModule, MatTooltipModule, MatDialogModule, AppMaterialModule],
+    imports: [MatTableModule, MatTooltipModule, AppMaterialModule],
     templateUrl: './create-page.component.html',
     styleUrl: './create-page.component.scss',
 })
-export class CreatePageComponent {
+export class CreatePageComponent implements OnInit {
+    adminService: AdministrationService = inject(AdministrationService);
     displayedColumns: string[] = ['image', 'name', 'size', 'mode', 'lastEdited', 'actions'];
-    dataSource = ELEMENT_DATA;
+    dataSource = new MatTableDataSource<IGame>();
 
-    constructor(private dialog: MatDialog) {}
-
-    openDialog(): void {
-        this.dialog.open(CreateGameFormComponent, {
-            width: '80%',
-            height: '60%',
-            data: { name: ELEMENT_DATA[0].name },
+    ngOnInit(): void {
+        this.adminService.getAllGames().subscribe((games) => {
+            this.dataSource.data = games
+                .filter((game) => game.visibility !== Visibility.Hidden)
+                .map((game) => ({
+                    gameTitle: game.gameTitle,
+                    description: game.description,
+                    gameMode: game.gameMode,
+                    lastModifiedDate: new Date(game.lastModifiedDate),
+                    dateCreated: new Date(game.dateCreated),
+                    visibility: game.visibility,
+                    preview: game.preview,
+                    board: game.board,
+                }));
         });
     }
 }
