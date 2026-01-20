@@ -50,21 +50,22 @@ export class GameService {
             throw new Error('Jeu introuvable');
         }
         this.validateGameData(gameData);
-        existingGame.gameTitle = gameData.gameTitle;
-        existingGame.description = gameData.description;
-        existingGame.gameMode = gameData.gameMode;
-        existingGame.board = gameData.board;
-        existingGame.preview = gameData.preview;
-        existingGame.lastModifiedDate = new Date();
-        return existingGame.save();
+
+        return await game.findByIdAndUpdate(id, {
+            gameTitle: gameData.gameTitle,
+            description: gameData.description,
+            gameMode: gameData.gameMode,
+            board: gameData.board,
+            preview: gameData.preview,
+            lastModifiedDate: new Date(),
+        }, { new: true });
     }
 
     async deleteGame(gameId: string): Promise<void> {
-        const existingGame = await game.findById(gameId);
-        if (!existingGame) {
-            throw new Error('jeu a déja été supprimé');
+        const deletedGame = await game.findByIdAndDelete(gameId);
+        if (!deletedGame) {
+            throw new Error('Jeu déjà supprimé ou introuvable');
         }
-        await game.deleteOne({ _id: gameId });
     }
 
     async changeVisibility(id: string, visibility: Visibility): Promise<IGame> {
