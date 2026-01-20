@@ -1,7 +1,5 @@
 import { GameService } from '@app/services/game.service';
-import { Request, Response, GameService } from '@app/services/game.service';
 import { Request, Response, Router } from 'express';
-import { StatusCodes } from 'http-status-codes';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
@@ -9,17 +7,11 @@ const HTTP_STATUS_NO_CONTENT = StatusCodes.NO_CONTENT;
 const HTTP_STATUS_BAD_REQUEST = StatusCodes.BAD_REQUEST;
 const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
 
-
-const HTTP_STATUS_NO_CONTENT = StatusCodes.NO_CONTENT;
-const HTTP_STATUS_BAD_REQUEST = StatusCodes.BAD_REQUEST;
-const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
-
-
 @Service()
 export class GameController {
     router: Router;
 
-    constructor(private readonly gameService: GameServiceprivate readonly gameService: GameService) {
+    constructor(private readonly gameService: GameService) {
         this.configureRouter();
     }
 
@@ -91,28 +83,28 @@ export class GameController {
             }
         });
         /**
-        * @swagger
-        *
-        * /api/games/{id}:
-        *   delete:
-        *     description: Delete a game by its unique MongoDB identifier
-        *     tags:
-        *       - Games
-        *     produces:
-        *       - application/json
-        *     parameters:
-        *       - in: path
-        *         name: id
-        *         description: Unique identifier of the game to delete
-        *         required: true
-        *         schema:
-        *           type: string
-        *     responses:
-        *       204:
-        *         description: Game deleted successfully
-        *       404:
-        *         description: Game not found or already deleted
-        */
+         * @swagger
+         *
+         * /api/games/{id}:
+         *   delete:
+         *     description: Delete a game by its unique MongoDB identifier
+         *     tags:
+         *       - Games
+         *     produces:
+         *       - application/json
+         *     parameters:
+         *       - in: path
+         *         name: id
+         *         description: Unique identifier of the game to delete
+         *         required: true
+         *         schema:
+         *           type: string
+         *     responses:
+         *       204:
+         *         description: Game deleted successfully
+         *       404:
+         *         description: Game not found or already deleted
+         */
         this.router.delete('/:id', async (req: Request, res: Response) => {
             const gameId = req.params.id;
             try {
@@ -235,8 +227,4 @@ export class GameController {
             }
         });
     }
-
-
 }
-
-

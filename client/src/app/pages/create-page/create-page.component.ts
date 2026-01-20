@@ -1,19 +1,21 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink } from '@angular/router';
 import { AppMaterialModule } from '@app/modules/material.module';
 import { AdministrationService } from '@app/services/administrationService';
 import { IGame, Visibility } from '@common/game';
 
 @Component({
     selector: 'app-create-page',
-    imports: [MatTableModule, MatTooltipModule, AppMaterialModule],
+    imports: [MatTableModule, MatTooltipModule, AppMaterialModule, RouterLink, DatePipe],
     templateUrl: './create-page.component.html',
     styleUrl: './create-page.component.scss',
 })
 export class CreatePageComponent implements OnInit {
     adminService: AdministrationService = inject(AdministrationService);
-    displayedColumns: string[] = ['image', 'name', 'size', 'mode', 'lastEdited', 'actions'];
+    displayedColumns: string[] = ['image', 'gameTitle', 'size', 'mode', 'lastEdited', 'actions'];
     dataSource = new MatTableDataSource<IGame>();
 
     ngOnInit(): void {

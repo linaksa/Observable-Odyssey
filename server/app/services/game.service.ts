@@ -1,5 +1,5 @@
-import { game, IGame } from '@app/schemas/game';
-import { GameType, Visibility } from '@common/game';
+import { game } from '@app/schemas/game';
+import { GameType, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
 
@@ -54,14 +54,18 @@ export class GameService {
         }
         this.validateGameData(gameData);
 
-        return await game.findByIdAndUpdate(id, {
-            gameTitle: gameData.gameTitle,
-            description: gameData.description,
-            gameMode: gameData.gameMode,
-            board: gameData.board,
-            preview: gameData.preview,
-            lastModifiedDate: new Date(),
-        }, { new: true });
+        return await game.findByIdAndUpdate(
+            id,
+            {
+                gameTitle: gameData.gameTitle,
+                description: gameData.description,
+                gameMode: gameData.gameMode,
+                board: gameData.board,
+                preview: gameData.preview,
+                lastModifiedDate: new Date(),
+            },
+            { new: true },
+        );
     }
 
     async deleteGame(gameId: string): Promise<void> {
