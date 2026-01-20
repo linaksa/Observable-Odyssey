@@ -1,4 +1,10 @@
-<div class="page">
+<div class="min-h-screen relative flex flex-col items-center justify-center">
     <mat-progress-spinner mode="indeterminate" diameter="48"></mat-progress-spinner>
-    <p class="loading-text">Création de la partie...</p>
+    <p class="mt-4 text-gray-600">Création de la partie...</p>
+
+    <div class="absolute bottom-6 w-full flex justify-center">
+        @if (showButton) {
+        <button mat-raised-button color="primary" (click)="goHome()">Retour vers la vue initiale</button>
+        }
+    </div>
 </div>
