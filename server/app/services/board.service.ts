@@ -135,6 +135,7 @@ export class BoardService {
         while (queue.length > 0) {
             const current = queue.shift();
             if (!current) continue;
+            const [row, col] = current;
 
             for (const [dRow, dCol] of directions) {
                 const newRow = row + dRow;
