@@ -4,12 +4,13 @@ import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterModule } from '@angular/router';
 import { AdministrationService } from '@app/services/administrationService';
 import { IExistingGame, Visibility } from '@common/game';
 
 @Component({
   selector: 'app-administration-page',
-  imports: [MatTableModule, MatIconModule, MatCheckboxModule, MatTooltipModule, DatePipe],
+  imports: [MatTableModule, MatIconModule, MatCheckboxModule, MatTooltipModule, DatePipe, RouterModule],
   templateUrl: './administration-page.component.html',
   styleUrl: './administration-page.component.scss',
 })
@@ -26,6 +27,7 @@ export class AdministrationPageComponent implements OnInit {
   fetchGames(): void {
     this.adminService.getAllGames().subscribe((games) => {
       this.dataSource.data = games ?? [];
+
     });
   }
 
@@ -36,12 +38,21 @@ export class AdministrationPageComponent implements OnInit {
   toggleVisibility(event: MatCheckboxChange, element: IExistingGame): void {
     const visibility: Visibility = event.checked ? Visibility.Viewable : Visibility.Hidden;
     this.adminService.changeGameVisibility(element._id, visibility).subscribe({
-      next: (response) => {
+      next: () => {
         this.fetchGames();
       },
-      error: (error) => {
-        console.error('Error changing visibility:', error);
+      error: () => {
         event.source.checked = !event.checked;
+      },
+    });
+  }
+
+  deleteGame(element: IExistingGame): void {
+    this.adminService.deleteGame(element).subscribe({
+      next: () => {
+        this.dataSource.data = this.dataSource.data.filter(
+          item => item._id !== element._id,
+        );
       },
     });
   }
