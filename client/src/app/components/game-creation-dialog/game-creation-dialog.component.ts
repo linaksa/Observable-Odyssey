@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormField } from '@angular/material/form-field';
 import { AppMaterialModule } from "@app/modules/material.module";
 
@@ -10,14 +10,16 @@ import { AppMaterialModule } from "@app/modules/material.module";
   templateUrl: './game-creation-dialog.component.html',
   styleUrl: './game-creation-dialog.component.scss',
 })
-export class GameCreationDialogComponent {
+export class GameCreationDialogComponent implements OnInit {
 
   form: FormGroup;
   description: string;
-  private dialogRef = inject(MatDialogRef<GameCreationDialogComponent>);
+  private readonly fb = inject(FormBuilder);
 
-
-  close() {
-    this.dialogRef.close();
+  ngOnInit() {
+    this.form = this.fb.group({
+      description: [''],
+      isCTF: [false]
+    });
   }
 }
