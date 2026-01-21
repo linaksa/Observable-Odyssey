@@ -1,16 +1,22 @@
 <h2 mat-dialog-title>TEST</h2>
 
 <mat-dialog-content [formGroup]="form">
-  
+
+    <div class="mode-toggle">
+        <mat-slide-toggle formControlName="isCTF" color="primary">
+            {{ form.get('isCTF')?.value ? 'CTF Mode' : 'Normal Mode' }}
+        </mat-slide-toggle>
+    </div>
+
     <mat-form-field>
-        <input matInput
-                placeholder="Course Description"
-               formControlName="description">
+        <mat-label>Select multiple</mat-label>
+        <mat-select placeholder="Favorite food" [(ngModel)]="selectedValue" name="food">
+      <mat-option *ngFor="let food of foods" [value]="food.value">
+        {{food.viewValue}}
+      </mat-option>
+    </mat-select>
     </mat-form-field>
-      ....
  
 </mat-dialog-content>
 
-<mat-dialog-actions>
-    <button class="mat-raised-button"(click)="close()">Close</button>
-</mat-dialog-actions>
+
