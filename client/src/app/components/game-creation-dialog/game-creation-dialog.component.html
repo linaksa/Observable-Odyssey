@@ -1,22 +1,22 @@
-<h2 mat-dialog-title>TEST</h2>
+<h2 mat-dialog-title>Créer un jeu</h2>
 
-<mat-dialog-content [formGroup]="form">
+<mat-dialog-content class="h-full">
+    <div [formGroup]="form" class="flex flex-col h-full justify-evenly p-5">
+        <div class="mode-toggle w-full">
+            <mat-slide-toggle formControlName="isCTF" color="primary" [disabled]="true">
+                {{ form.get('isCTF')?.value ? 'CTF Mode' : 'Normal Mode' }}
+            </mat-slide-toggle>
+        </div>
 
-    <div class="mode-toggle">
-        <mat-slide-toggle formControlName="isCTF" color="primary">
-            {{ form.get('isCTF')?.value ? 'CTF Mode' : 'Normal Mode' }}
-        </mat-slide-toggle>
+        <mat-form-field class="w-full">
+            <mat-label>Sélectionner la taille du jeu</mat-label>
+            <mat-select formControlName="dimension">
+                <mat-option value="opt1">10x10</mat-option>
+                <mat-option value="opt2">15x15</mat-option>
+                <mat-option value="opt2">20x20</mat-option>
+            </mat-select>
+        </mat-form-field>
     </div>
-
-    <mat-form-field>
-        <mat-label>Select multiple</mat-label>
-        <mat-select placeholder="Favorite food" [(ngModel)]="selectedValue" name="food">
-      <mat-option *ngFor="let food of foods" [value]="food.value">
-        {{food.viewValue}}
-      </mat-option>
-    </mat-select>
-    </mat-form-field>
- 
 </mat-dialog-content>
 
 
