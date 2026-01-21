@@ -36,6 +36,8 @@ export class AdministrationPageComponent implements OnInit {
     dialogConfig.autoFocus = true;
     dialogConfig.hasBackdrop = true;
     dialogConfig.direction = 'rtl';
+    dialogConfig.width = '25vw';
+    dialogConfig.height = '25vw';
 
     this.dialog.open(GameCreationDialogComponent, dialogConfig);
   }
