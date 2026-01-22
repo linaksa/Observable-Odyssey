@@ -1,63 +1,18 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
-import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { Component } from '@angular/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
-import { AdministrationService } from '@app/services/administrationService';
-import { IExistingGame, Visibility } from '@common/game';
+import { AdminGameTableComponent } from '@app/components/admin-game-table/admin-game-table.component';
 
 @Component({
   selector: 'app-administration-page',
-  imports: [MatTableModule, MatIconModule, MatCheckboxModule, MatTooltipModule, DatePipe, RouterModule],
+  imports: [MatTableModule, MatIconModule, MatCheckboxModule, MatTooltipModule, DatePipe, RouterModule, AdminGameTableComponent],
   templateUrl: './administration-page.component.html',
   styleUrl: './administration-page.component.scss',
 })
-export class AdministrationPageComponent implements OnInit {
-  adminService: AdministrationService = inject(AdministrationService);
+export class AdministrationPageComponent {
 
-  dataSource = new MatTableDataSource<IExistingGame>();
-  displayedColumns: string[] = ['image', 'gameTitle', 'size', 'mode', 'lastEdited', 'visibility', 'actions'];
-
-  ngOnInit(): void {
-    this.fetchGames();
-  }
-
-  fetchGames(): void {
-    this.adminService.getAllGames().subscribe((games) => {
-      this.dataSource.data = games ?? [];
-
-    });
-  }
-
-  gameIsViewable(element: IExistingGame): boolean {
-    return element.visibility === Visibility.Viewable;
-  }
-
-  toggleVisibility(event: MatCheckboxChange, element: IExistingGame): void {
-    const visibility: Visibility = event.checked ? Visibility.Viewable : Visibility.Hidden;
-    event.source.disabled = true;
-    this.adminService.changeGameVisibility(element._id, visibility).subscribe({
-      next: () => {
-        this.fetchGames();
-        event.source.disabled = false;
-
-      },
-      error: () => {
-        event.source.checked = !event.checked;
-        event.source.disabled = false;
-      },
-    });
-  }
-
-  deleteGame(element: IExistingGame): void {
-    this.adminService.deleteGame(element).subscribe({
-      next: () => {
-        this.dataSource.data = this.dataSource.data.filter(
-          item => item._id !== element._id,
-        );
-      },
-    });
-  }
 }
