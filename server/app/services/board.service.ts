@@ -41,31 +41,23 @@ export class BoardService {
             return false;
         }
 
-        let expectedStartingPoints = 0;
-        let expectedSanctuaries = 0;
-        if (gameSize === GameSize.Small) {
-            expectedStartingPoints = ExpectedStartingPoints.Small;
-            expectedSanctuaries = ExpectedSanctuaries.Small;
-        } else if (gameSize === GameSize.Mid) {
-            expectedStartingPoints = ExpectedStartingPoints.Mid;
-            expectedSanctuaries = ExpectedSanctuaries.Mid;
-        } else if (gameSize === GameSize.Large) {
-            expectedStartingPoints = ExpectedStartingPoints.Large;
-            expectedSanctuaries = ExpectedSanctuaries.Large;
-        } else {
+        const expectedCounts = this.getExpectedCounts(gameSize);
+        if (!expectedCounts) {
             return false;
         }
 
-
         for (const item of board.items) {
-            if (item.itemType === ItemType.FightSanctuary || item.itemType === ItemType.LifeSanctuary) {
-                expectedSanctuaries--;
+            if (item.itemType === ItemType.FightSanctuary) {
+                expectedCounts.expectedFightSanctuaries--;
+            } else if (item.itemType === ItemType.LifeSanctuary) {
+                expectedCounts.expectedLifeSanctuaries--;
             } else if (item.itemType === ItemType.StartingPosition) {
-                expectedStartingPoints--;
+                expectedCounts.expectedStartingPoints--;
             }
         }
 
-        if (expectedStartingPoints !== 0 || expectedSanctuaries !== 0) {
+        if (expectedCounts.expectedStartingPoints !== 0 ||
+            expectedCounts.expectedFightSanctuaries !== 0 || expectedCounts.expectedLifeSanctuaries !== 0) {
             return false;
         }
 
@@ -74,6 +66,36 @@ export class BoardService {
         }
 
         return true;
+    }
+
+    /**
+     * @description Get expected counts for sanctuaries and starting points based on game size
+     * @returns Object with expected counts or null if game size is invalid
+     */
+    private getExpectedCounts(gameSize: number): {
+        expectedStartingPoints: number; expectedLifeSanctuaries:
+            number; expectedFightSanctuaries: number
+    } | null {
+        if (gameSize === GameSize.Small) {
+            return {
+                expectedStartingPoints: ExpectedStartingPoints.Small,
+                expectedLifeSanctuaries: ExpectedSanctuaries.Small,
+                expectedFightSanctuaries: ExpectedSanctuaries.Small,
+            };
+        } else if (gameSize === GameSize.Mid) {
+            return {
+                expectedStartingPoints: ExpectedStartingPoints.Mid,
+                expectedLifeSanctuaries: ExpectedSanctuaries.Mid,
+                expectedFightSanctuaries: ExpectedSanctuaries.Mid,
+            };
+        } else if (gameSize === GameSize.Large) {
+            return {
+                expectedStartingPoints: ExpectedStartingPoints.Large,
+                expectedLifeSanctuaries: ExpectedSanctuaries.Large,
+                expectedFightSanctuaries: ExpectedSanctuaries.Large,
+            };
+        }
+        return null;
     }
 
     /**

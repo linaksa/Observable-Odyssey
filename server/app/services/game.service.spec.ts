@@ -9,7 +9,7 @@ import { BoardService } from './board.service';
 import { GameService } from './game.service';
 
 /* NOTE: The linter is deactivated for line length around the definition of the cells because we were
-*  getting errors about lines being too long, but it was judged that splitting the 
+*  getting errors about lines being too long, but it was judged that splitting the
 *  lines in this case would decrease readability, since it would break the grid shape
 *  of the cells.
 */
@@ -19,10 +19,13 @@ describe('Game Service', () => {
     let gameCreateStub: sinon.SinonStub;
 
     beforeEach(async () => {
+        Container.reset();
+
         mockBoardService = sinon.createStubInstance(BoardService);
         mockBoardService.validateBoard.returns(true);
 
         Container.set(BoardService, mockBoardService);
+
         gameService = Container.get(GameService);
 
         gameCreateStub = sinon.stub(game, 'create');
