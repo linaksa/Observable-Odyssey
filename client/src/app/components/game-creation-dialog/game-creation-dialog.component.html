@@ -11,16 +11,25 @@
         <mat-form-field class="w-full">
             <mat-label>Sélectionner la taille du jeu</mat-label>
             <mat-select formControlName="dimension">
-                <mat-option value="opt1">10x10</mat-option>
-                <mat-option value="opt2">15x15</mat-option>
-                <mat-option value="opt2">20x20</mat-option>
+                <mat-option value="10x10">10x10</mat-option>
+                <mat-option value="15x15">15x15</mat-option>
+                <mat-option value="20x20">20x20</mat-option>
             </mat-select>
         </mat-form-field>
 
-        <mat-dialog-actions>
-            <button matButton (click)="createGame()" cdkFocusInitial>Create</button>
-        </mat-dialog-actions>
+        <div>
+            La partie pourra avoir {{numberOfPlayers}} joueurs
+        </div>
+        <div>
+            La partie aura {{gameSize}} cases
+        </div>
+
+
 
 
     </div>
+
 </mat-dialog-content>
+<mat-dialog-actions>
+    <button matButton (click)="createGame()" cdkFocusInitial>Create</button>
+</mat-dialog-actions>

@@ -8,7 +8,7 @@ describe('GameCreationDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [GameCreationDialogComponent]
+            imports: [GameCreationDialogComponent],
         })
             .compileComponents();
 

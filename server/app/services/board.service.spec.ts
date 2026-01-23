@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Test file requires many test cases with extensive board configurations to cover all validation branches */
 import { CellType, IBoard } from '@common/board';
 import { expect } from 'chai';
 import { Container } from 'typedi';
@@ -47,6 +48,12 @@ describe('Board Service', () => {
                     y: 1,
                     size: 4,
                 },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 1,
+                    y: 1,
+                    size: 4,
+                },
             ],
         };
         /* eslint-enable max-len */
@@ -89,6 +96,12 @@ describe('Board Service', () => {
                     y: 1,
                     size: 4,
                 },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 1,
+                    y: 1,
+                    size: 4,
+                },
             ],
         };
         /* eslint-enable max-len */
@@ -120,6 +133,12 @@ describe('Board Service', () => {
                 },
                 {
                     itemType: 'fightSanctuary',
+                    x: 1,
+                    y: 1,
+                    size: 4,
+                },
+                {
+                    itemType: 'lifeSanctuary',
                     x: 1,
                     y: 1,
                     size: 4,
@@ -170,6 +189,12 @@ describe('Board Service', () => {
                     y: 7,
                     size: 4,
                 },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 1,
+                    y: 1,
+                    size: 4,
+                },
             ],
         };
         /* eslint-enable max-len */
@@ -199,7 +224,6 @@ describe('Board Service', () => {
                 [CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
                 [CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
                 [CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
-                [CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall],
             ],
             items: [
                 {
@@ -224,6 +248,12 @@ describe('Board Service', () => {
                     itemType: 'fightSanctuary',
                     x: 13,
                     y: 13,
+                    size: 4,
+                },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 1,
+                    y: 1,
                     size: 4,
                 },
             ],
@@ -267,6 +297,12 @@ describe('Board Service', () => {
                     y: 1,
                     size: 4,
                 },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 5,
+                    y: 5,
+                    size: 4,
+                },
             ],
         };
         /* eslint-enable max-len */
@@ -287,7 +323,7 @@ describe('Board Service', () => {
                 [CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty],
                 [CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice],
                 [CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty],
-                [CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty],
+                [CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty, CellType.Ice, CellType.Empty, CellType.Empty, CellType.Empty],
             ],
             items: [
                 {
@@ -306,6 +342,12 @@ describe('Board Service', () => {
                     itemType: 'fightSanctuary',
                     x: 1,
                     y: 1,
+                    size: 4,
+                },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 5,
+                    y: 5,
                     size: 4,
                 },
             ],
@@ -347,6 +389,12 @@ describe('Board Service', () => {
                     itemType: 'fightSanctuary',
                     x: 1,
                     y: 1,
+                    size: 4,
+                },
+                {
+                    itemType: 'lifeSanctuary',
+                    x: 5,
+                    y: 5,
                     size: 4,
                 },
             ],
