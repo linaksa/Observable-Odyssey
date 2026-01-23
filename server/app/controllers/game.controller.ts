@@ -112,7 +112,7 @@ export class GameController {
                 await this.gameService.deleteGame(gameId);
                 res.sendStatus(HTTP_STATUS_NO_CONTENT);
             } catch (error) {
-                res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
             }
         });
         /**
@@ -155,7 +155,7 @@ export class GameController {
          *                   type: object
          *                 preview:
          *                   type: string
-         *                   description: Base64 encoded image
+         *                   description: image
          *     responses:
          *       200:
          *         description: Game updated successfully
@@ -172,9 +172,9 @@ export class GameController {
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
                 }
-                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
             }
         });
         /**
@@ -222,9 +222,9 @@ export class GameController {
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: error.message });
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
                 }
-                return res.status(HTTP_STATUS_BAD_REQUEST).json({ message: error.message });
+                return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
             }
         });
     }
