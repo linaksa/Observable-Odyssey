@@ -8,7 +8,7 @@ describe('CharacterFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CharacterFormComponent]
+      imports: [CharacterFormComponent],
     })
     .compileComponents();
 
