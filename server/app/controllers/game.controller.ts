@@ -155,7 +155,7 @@ export class GameController {
          *                   type: object
          *                 preview:
          *                   type: string
-         *                   description: Base64 encoded image
+         *                   description: image
          *     responses:
          *       200:
          *         description: Game updated successfully
@@ -168,9 +168,6 @@ export class GameController {
             try {
                 const gameId = req.params.id;
                 const gameData = req.body.game;
-                if (!gameData) {
-                    return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Données du jeu manquantes' });
-                }
                 const updatedGame = await this.gameService.updateGame(gameId, gameData);
                 return res.json(updatedGame);
             } catch (error) {

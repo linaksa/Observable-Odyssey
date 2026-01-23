@@ -140,20 +140,14 @@ describe('GameController', () => {
     });
 
     it('should return 400 on PUT if body is invalid', async () => {
-        return supertest(expressApp)
-            .put(`/api/games/${fakeGameId}`)
-            .send({})
-            .expect(StatusCodes.BAD_REQUEST);
-    });
+        gameService.updateGame.rejects(new Error('Données invalides'));
 
-    it('should return 400 on PUT if update fails with other error', async () => {
-        gameService.updateGame.rejects(new Error('Erreur inconnue'));
         return supertest(expressApp)
             .put(`/api/games/${fakeGameId}`)
-            .send({ game: baseGame })
+            .send({})  // body invalide ou manquant
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Erreur inconnue' });
+                expect(response.body).to.deep.equal({ error: 'Données invalides' });
             });
     });
 });

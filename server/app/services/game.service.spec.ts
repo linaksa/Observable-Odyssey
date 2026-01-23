@@ -254,7 +254,7 @@ describe('Game Service', () => {
 
         await gameService.deleteGame(fakeGameId);
 
-        expect(findByIdAndDeleteStub.calledOnceWithExactly(fakeGameId)).to.be.true;
+        expect(findByIdAndDeleteStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
     });
 
     it('should throw error if game to delete does not exist', async () => {
@@ -275,8 +275,8 @@ describe('Game Service', () => {
         const result = await gameService.changeVisibility(fakeGameId, Visibility.Viewable);
 
         expect(result.visibility).to.equal(Visibility.Viewable);
-        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.be.true;
-        expect(saveStub.calledOnce).to.be.true;
+        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
+        expect(saveStub.calledOnce).to.equal(true);
     });
 
     it('should throw error if game does not exist on changeVisibility', async () => {
@@ -299,12 +299,11 @@ describe('Game Service', () => {
         const result = await gameService.updateGame(fakeGameId, updatedData);
 
         expect(result.gameTitle).to.equal('Updated Title');
-        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.be.true;
-        expect(findByIdAndUpdateStub.calledOnce).to.be.true;
+        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
+        expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
     });
     it('should throw error if game to update does not exist', async () => {
         findByIdStub.resolves(null);
-
         try {
             await gameService.updateGame(fakeGameId, baseGame);
             throw new Error('Should have thrown');
@@ -314,13 +313,10 @@ describe('Game Service', () => {
     });
     it('should throw error if game data is invalid', async () => {
         findByIdStub.resolves(baseGame);
-        // on force validateGameData à lancer une erreur
         const invalidGameData = {
             ...baseGame,
-            gameTitle: '', // invalide → validateGameData va throw
+            gameTitle: '',
         };
-
-
         try {
             await gameService.updateGame(fakeGameId, invalidGameData);
             throw new Error('Should have thrown');
