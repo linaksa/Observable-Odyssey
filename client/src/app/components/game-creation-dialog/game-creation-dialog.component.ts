@@ -8,21 +8,26 @@ import { AppMaterialModule } from "@app/modules/material.module";
 
 
 @Component({
-  selector: 'app-game-creation-dialog',
-  imports: [AppMaterialModule, MatDialogModule, ReactiveFormsModule, MatFormField, MatOption, MatSelect],
-  templateUrl: './game-creation-dialog.component.html',
-  styleUrl: './game-creation-dialog.component.scss',
+    selector: 'app-game-creation-dialog',
+    imports: [AppMaterialModule, MatDialogModule, ReactiveFormsModule, MatFormField, MatOption, MatSelect],
+    templateUrl: './game-creation-dialog.component.html',
+    styleUrl: './game-creation-dialog.component.scss',
 })
 export class GameCreationDialogComponent implements OnInit {
 
-  form: FormGroup;
-  description: string;
-  private readonly fb = inject(FormBuilder);
+    form: FormGroup;
+    description: string;
+    private readonly fb = inject(FormBuilder);
 
-  ngOnInit() {
-    this.form = this.fb.group({
-      dimension: [''],
-      isCTF: [{ value: false, disabled: true }],
-    });
-  }
+    ngOnInit() {
+        this.form = this.fb.group({
+            dimension: [''],
+            isCTF: [{ value: false, disabled: true }],
+        });
+    }
+
+    createGame() {
+        console.log("khudjshkdhk");
+
+    }
 }
