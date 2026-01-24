@@ -1,5 +1,5 @@
 import { game } from '@app/schemas/game';
-import { GameType, IGame, Visibility } from '@common/game';
+import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
 
@@ -7,7 +7,7 @@ import { BoardService } from './board.service';
 export class GameService {
     constructor(private readonly boardService: BoardService) {}
 
-    async getAllGames(): Promise<IGame[]> {
+    async getAllGames(): Promise<IExistingGame[]> {
         return await game.find({});
     }
 
