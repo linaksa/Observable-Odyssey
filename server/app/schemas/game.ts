@@ -1,15 +1,6 @@
+import { GameType, IGame, Visibility } from '@common/game';
 import { model, Schema } from 'mongoose';
-import { gameBoard, IBoard } from './board';
-
-interface IGame {
-    gameTitle: string;
-    description: string;
-    gameMode: string;
-    lastModifiedDate: Date;
-    dateCreated: Date;
-    visibility: string;
-    board: IBoard;
-}
+import { gameBoard } from './board';
 
 const gameSchema = new Schema<IGame>({
     gameTitle: {
@@ -25,7 +16,7 @@ const gameSchema = new Schema<IGame>({
     },
     gameMode: {
         type: String,
-        enum: ['ctf', 'classic'],
+        enum: [GameType.Ctf, GameType.Classic],
         required: true,
     },
     lastModifiedDate: {
@@ -38,11 +29,13 @@ const gameSchema = new Schema<IGame>({
     },
     visibility: {
         type: String,
-        enum: ['hidden', 'viewable'],
+        enum: [Visibility.Hidden, Visibility.Viewable],
+    },
+    preview: {
+        type: String,
+        required: true,
     },
     board: gameBoard,
-
 });
-
 
 export const game = model<IGame>('Game', gameSchema);
