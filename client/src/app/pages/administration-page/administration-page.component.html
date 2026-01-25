@@ -1,14 +1,12 @@
 <div class="content">
-    <div class="flex justify-between mb-2">
-        <div>Jeux disponibles</div>
-        <button mat-button color="primary" class="btn btn-success" (click)="openDialog()">
-            <span>Ajouter un jeu</span>
-        </button>
+    <div class="flex justify-between">
+        <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
+        <button class="btn btn-green" (click)="openDialog()">Ajouter un jeu</button>
     </div>
 
     <div class="flex justify-center">
-        <h4 class="page-title">Administration</h4>
+        <h1 class="page-title mt-4">Administration</h1>
     </div>
 
-    <app-admin-game-table></app-admin-game-table>
+    <app-game-table [isAdmin]="true"></app-game-table>
 </div>

@@ -17,11 +17,3 @@ body {
     margin: 0;
     font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
-
-div.content {
-    @apply p-4;
-}
-
-.page-title {
-    @apply text-4xl font-semibold mb-4;
-}

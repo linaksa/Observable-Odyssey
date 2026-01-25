@@ -8,9 +8,7 @@ import { CharacterFormComponent } from '@app/pages/character-form/character-form
 import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
-import { MaterialPageComponent } from '@app/pages/material-page/material-page.component';
 import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
-
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -24,7 +22,6 @@ const routes: Routes = [
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'create', component: CreatePageComponent },
     { path: 'wait', component: WaitPageComponent },
-    { path: 'material', component: MaterialPageComponent },
     { path: 'form', component: CharacterFormComponent },
     { path: '**', redirectTo: '/home' },
 ];

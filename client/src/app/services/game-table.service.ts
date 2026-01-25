@@ -1,23 +1,30 @@
 import { inject, Injectable } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
-import { IExistingGame } from '@common/game';
+import { IExistingGame, Visibility } from '@common/game';
 import { GameService } from './game.service';
 
-
 @Injectable({
-  providedIn: 'root',
+    providedIn: 'root',
 })
 export class GameTableServiceService {
-  gaemService: GameService = inject(GameService);
+    gameService: GameService = inject(GameService);
 
-  tableData = new MatTableDataSource<IExistingGame>();
-  displayedColumns: string[] = [];
+    tableData = new MatTableDataSource<IExistingGame>();
+    displayedColumns: string[] = [];
 
-  fetchGames(): void {
-    this.gaemService.getAllGames().subscribe({
-      next: (fetchedGames) => {
-        this.tableData.data = fetchedGames ?? [];
-      },
-    });
-  }
+    fetchGames(): void {
+        this.gameService.getAllGames().subscribe({
+            next: (fetchedGames) => {
+                this.tableData.data = fetchedGames ?? [];
+            },
+        });
+    }
+
+    fetchVisibleGames(): void {
+        this.gameService.getAllGames().subscribe({
+            next: (fetchedGames) => {
+                this.tableData.data = fetchedGames.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
+            },
+        });
+    }
 }

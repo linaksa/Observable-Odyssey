@@ -9,8 +9,7 @@ describe('GameCreationDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [GameCreationDialogComponent],
-        })
-            .compileComponents();
+        }).compileComponents();
 
         fixture = TestBed.createComponent(GameCreationDialogComponent);
         component = fixture.componentInstance;

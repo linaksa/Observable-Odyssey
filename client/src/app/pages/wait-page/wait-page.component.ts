@@ -1,11 +1,10 @@
 import { Component } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { AppMaterialModule } from '@app/modules/material.module';
 
 @Component({
     selector: 'app-wait-page',
-    imports: [AppMaterialModule, MatProgressSpinnerModule, RouterLink],
+    imports: [MatProgressSpinnerModule, RouterLink],
     templateUrl: './wait-page.component.html',
     styleUrl: './wait-page.component.scss',
 })

@@ -11,7 +11,6 @@ import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { Subject, takeUntil } from 'rxjs';
 
-
 @Component({
     selector: 'app-game-creation-dialog',
     imports: [AppMaterialModule, MatDialogModule, ReactiveFormsModule, MatFormField, MatOption, MatSelect],
@@ -19,13 +18,11 @@ import { Subject, takeUntil } from 'rxjs';
     styleUrl: './game-creation-dialog.component.scss',
 })
 export class GameCreationDialogComponent implements OnInit, OnDestroy {
-
     private readonly fb = inject(FormBuilder);
     private readonly destroy$ = new Subject<void>();
     private readonly router = inject(Router);
     private readonly gameService = inject(GameService);
     private readonly dialogRef = inject(MatDialogRef<GameCreationDialogComponent>, { optional: true });
-
 
     form: FormGroup;
     description: string;
@@ -38,7 +35,7 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
             isCTF: [{ value: false, disabled: true }],
         });
 
-        this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(values => {
+        this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((values) => {
             this.updateGameInfo(values.dimension);
         });
 
@@ -61,7 +58,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
                 break;
         }
     }
-
 
     createGame() {
         const size = Math.sqrt(this.gameSize);
@@ -87,7 +83,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
                 this.dialogRef.close();
             }
         });
-
     }
 
     ngOnDestroy() {

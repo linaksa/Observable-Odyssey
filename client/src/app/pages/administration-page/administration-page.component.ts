@@ -1,16 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterModule } from '@angular/router';
-import { AdminGameTableComponent } from '@app/components/admin-game-table/admin-game-table.component';
+import { RouterLink } from '@angular/router';
 import { GameCreationDialogComponent } from '@app/components/game-creation-dialog/game-creation-dialog.component';
+import { GameTableComponent } from '@app/components/game-table/game-table.component';
 
 @Component({
     selector: 'app-administration-page',
-    imports: [MatTableModule, MatIconModule, MatCheckboxModule, MatTooltipModule, RouterModule, AdminGameTableComponent],
+    imports: [GameTableComponent, RouterLink],
     templateUrl: './administration-page.component.html',
     styleUrl: './administration-page.component.scss',
 })
@@ -22,7 +18,6 @@ export class AdministrationPageComponent {
 
         dialogConfig.autoFocus = true;
         dialogConfig.hasBackdrop = true;
-        dialogConfig.direction = 'rtl';
         dialogConfig.width = '25vw';
         dialogConfig.height = '25vw';
 
