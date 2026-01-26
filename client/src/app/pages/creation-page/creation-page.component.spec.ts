@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CharacterFormComponent } from './character-form.component';
+import { CreationPageComponent } from './creation-page.component';
 
-describe('CharacterFormComponent', () => {
-  let component: CharacterFormComponent;
-  let fixture: ComponentFixture<CharacterFormComponent>;
+describe('CreationPageComponent', () => {
+  let component: CreationPageComponent;
+  let fixture: ComponentFixture<CreationPageComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CharacterFormComponent]
+      imports: [CreationPageComponent],
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(CharacterFormComponent);
+    fixture = TestBed.createComponent(CreationPageComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

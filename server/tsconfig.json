@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "baseUrl": "./",
-        "rootDir": "../",
         "target": "es6",
         "types": ["reflect-metadata", "@types/mocha", "mocha"],
         "module": "commonjs",
