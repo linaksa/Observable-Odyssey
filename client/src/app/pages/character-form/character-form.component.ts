@@ -40,7 +40,7 @@ export class CharacterFormComponent {
     avatars: AvatarI[] = Array.from({ length: 12 }, (_, i) => ({
         name: `Avatar ${i + 1}`,
         avatar: `avatar${i + 1}` as Avatar,
-        image: `assets/avatar${i + 1}.png`,
+        image: `assets/avatar${i + 1}.jpg`,
         character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
     }));
 
