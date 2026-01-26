@@ -6,13 +6,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-character-form',
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatDividerModule, MatFormFieldModule, MatIconModule, MatInputModule],
-  templateUrl: './character-form.component.html',
-  styleUrl: './character-form.component.scss',
+    selector: 'app-character-form',
+    imports: [CommonModule, MatButtonModule, MatCardModule, MatDividerModule, MatFormFieldModule, MatIconModule, MatInputModule, RouterLink],
+    templateUrl: './character-form.component.html',
+    styleUrl: './character-form.component.scss',
 })
-export class CharacterFormComponent {
-
-}
+export class CharacterFormComponent {}
