@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
-import { Avatar, DiceType, RANDOM_PLAYER_NAMES } from '@common/constants';
+import { Avatar, DiceType } from '@common/constants';
 
 type DiceSelectionType = 'attack' | 'defense';
 
@@ -48,20 +48,6 @@ export class CharacterFormComponent {
     selectedDiceType: DiceSelectionType | null = null;
     selectedBonusType: BonusType | null = null;
 
-    generateRandomCharacter(): void {
-        this.form.controls.playerName.setValue(
-            RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)],
-        );
-
-        const avatarIndex = Math.floor(Math.random() * this.avatars.length);
-        this.selectAvatar(avatarIndex);
-
-        const bonus: BonusType = Math.random() < 0.5 ? 'life' : 'speed';
-        this.addBonus(bonus);
-
-        const dice: DiceSelectionType = Math.random() < 0.5 ? 'attack' : 'defense';
-        this.addDice(dice);
-    }
 
     selectAvatar(avatarIndex: number): void {
         if (!this.avatars[avatarIndex]) {
