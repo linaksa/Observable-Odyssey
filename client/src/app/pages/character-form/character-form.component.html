@@ -43,11 +43,12 @@
                     <mat-card-content class="space-y-5">
                         <div class="text-center">
                             <div class="text-lg font-semibold">Informations</div>
+                            <div class="text-sm text-slate-600">(Nom du personnage)</div>
                         </div>
 
                         <form [formGroup]="form">
                             <mat-form-field appearance="outline" class="w-full">
-                                <mat-label class="pr-4">Nom</mat-label>
+                                <mat-label>Nom du personnage</mat-label>
                                 <input matInput type="text" maxlength="9" placeholder="Entrez votre nom" formControlName="playerName" />
                             </mat-form-field>
                         </form>
