@@ -4,7 +4,7 @@
             <div>
                 <h1 class="text-2xl font-semibold">Création d'avatar</h1>
             </div>
-            <button mat-stroked-button type="button">
+            <button mat-stroked-button type="button" routerLink="/create">
                 <mat-icon class="!text-[18px]">arrow_back</mat-icon>
                 Retour
             </button>
@@ -80,9 +80,7 @@
 
                         <div class="grid place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6">
                             <div class="text-sm font-semibold text-slate-700">Avatar sélectionné</div>
-                            <div class="mt-3 grid h-40 w-40 place-items-center rounded-2xl bg-slate-200 text-slate-600">
-                                Image de lavatar
-                            </div>
+                            <div class="mt-3 grid h-40 w-40 place-items-center rounded-2xl bg-slate-200 text-slate-600">Image de lavatar</div>
                         </div>
 
                         <mat-divider></mat-divider>
@@ -111,7 +109,7 @@
 
                         <div class="flex flex-wrap justify-end gap-3">
                             <button mat-stroked-button type="button">Réinitialiser</button>
-                            <button mat-flat-button color="primary" type="button">Confirmer</button>
+                            <button mat-flat-button color="primary" type="button" routerLink="/wait">Confirmer</button>
                         </div>
                     </mat-card-content>
                 </mat-card>
@@ -144,12 +142,8 @@
                         <div class="space-y-3">
                             <div class="text-sm font-semibold text-slate-700">Attribuer les dés</div>
                             <div class="grid gap-3">
-                                <button mat-stroked-button type="button">
-                                    Dé à 6 faces pour l'Attaque et dé à 4 faces pour la Défense
-                                </button>
-                                <button mat-stroked-button type="button">
-                                    Dé à 6 faces pour la Défense et dé à 4 faces pour l'Attaque
-                                </button>
+                                <button mat-stroked-button type="button">Dé à 6 faces pour l'Attaque et dé à 4 faces pour la Défense</button>
+                                <button mat-stroked-button type="button">Dé à 6 faces pour la Défense et dé à 4 faces pour l'Attaque</button>
                             </div>
                         </div>
                     </mat-card-content>

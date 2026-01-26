@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Créer un jeu</h2>
+
+<mat-dialog-content class="h-full">
+    <div [formGroup]="form" class="flex flex-col h-full justify-evenly p-5">
+        <div class="mode-toggle w-full">
+            <mat-slide-toggle formControlName="isCTF" color="primary" [disabled]="true">
+                {{ form.get('isCTF')?.value ? 'Mode CTF' : 'Mode normal' }}
+            </mat-slide-toggle>
+        </div>
+
+        <mat-form-field class="w-full">
+            <mat-label>Sélectionner la taille du jeu</mat-label>
+            <mat-select formControlName="dimension">
+                <mat-option value="10x10">10×10</mat-option>
+                <mat-option value="15x15">15×15</mat-option>
+                <mat-option value="20x20">20×20</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <div>La partie pourra avoir {{ numberOfPlayers }} joueurs</div>
+        <div>La partie aura {{ gameSize }} cases</div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+    <button class="btn btn-green ml-auto mr-5 mb-5 inline-flex" (click)="createGame()">Créer</button>
+</mat-dialog-actions>
