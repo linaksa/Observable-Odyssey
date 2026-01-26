@@ -7,19 +7,21 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { RouterLink } from '@angular/router';
-import { AvatarI } from '@app/classes/character/AvatarI';
-import { BonusType, CharacterModel } from '@app/classes/character/character.model';
-import { Avatar, DiceType } from '@common/constants';
+import { BonusType, Character } from '@app/classes/character/character';
 
 type DiceSelectionType = 'attack' | 'defense';
+
+interface AvatarUI {
+    name: string;
+    image: string;
+    attributes: Character;
+}
 
 @Component({
     selector: 'app-character-form',
     imports: [
         CommonModule,
         ReactiveFormsModule,
-        RouterLink,
         MatButtonModule,
         MatCardModule,
         MatDividerModule,
@@ -37,17 +39,15 @@ export class CharacterFormComponent {
         }),
     });
 
-    avatars: AvatarI[] = Array.from({ length: 12 }, (_, i) => ({
+    avatars: AvatarUI[] = Array.from({ length: 12 }, (_, i) => ({
         name: `Avatar ${i + 1}`,
-        avatar: `avatar${i + 1}` as Avatar,
         image: `assets/avatar${i + 1}.jpg`,
-        character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
+        attributes: new Character(),
     }));
 
     selectedAvatarIndex: number | null = null;
     selectedDiceType: DiceSelectionType | null = null;
     selectedBonusType: BonusType | null = null;
-
 
     selectAvatar(avatarIndex: number): void {
         if (!this.avatars[avatarIndex]) {
@@ -62,7 +62,7 @@ export class CharacterFormComponent {
         }
 
         this.selectedAvatarIndex = avatarIndex;
-        this.avatars[avatarIndex].character = CharacterModel.createDefault(this.avatars[avatarIndex].avatar);
+        this.avatars[avatarIndex].attributes = new Character();
         this.selectedBonusType = null;
         this.selectedDiceType = null;
     }
@@ -75,7 +75,7 @@ export class CharacterFormComponent {
         const selectedAvatar = this.avatars[this.selectedAvatarIndex];
 
         if (this.selectedBonusType) {
-            selectedAvatar.character.removeBonus(this.selectedBonusType, 2);
+            selectedAvatar.attributes.removeBonus(this.selectedBonusType, 2);
         }
 
         if (this.selectedBonusType === type) {
@@ -84,7 +84,7 @@ export class CharacterFormComponent {
         }
 
         this.selectedBonusType = type;
-        selectedAvatar.character.addBonus(type, 2);
+        selectedAvatar.attributes.addBonus(type, 2);
     }
 
     addDice(type: DiceSelectionType): void {
@@ -96,20 +96,21 @@ export class CharacterFormComponent {
 
         if (this.selectedDiceType === type) {
             this.selectedDiceType = null;
-            selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-            selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
+            selectedAvatar.attributes.attackDice = 'D4';
+            selectedAvatar.attributes.defenseDice = 'D4';
             return;
         }
 
         this.selectedDiceType = type;
 
         if (type === 'attack') {
-            selectedAvatar.character.attackBonusDiceType = DiceType.SixSided;
-            selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
+            selectedAvatar.attributes.attackDice = 'D6';
+            selectedAvatar.attributes.defenseDice = 'D4';
             return;
         }
 
-        selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-        selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+        selectedAvatar.attributes.attackDice = 'D4';
+        selectedAvatar.attributes.defenseDice = 'D6';
     }
 }
+

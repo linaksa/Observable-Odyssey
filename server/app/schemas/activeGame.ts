@@ -1,7 +1,6 @@
-import { ICharacter } from '@common/ICharacter';
 import { IItem } from '@common/items';
 import { model, Schema, Types } from 'mongoose';
-import { characterSchema } from './character';
+import { characterSchema, ICharacter } from './character';
 import { itemSchema } from './items';
 
 export interface IActiveGame {
