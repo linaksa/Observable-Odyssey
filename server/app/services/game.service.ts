@@ -54,7 +54,7 @@ export class GameService {
     async updateGame(id: string, gameData: IGame): Promise<IGame> {
         const existingGame = await game.findById(id);
         if (!existingGame) {
-            return await this.createGame(gameData);// crée le jeu si il n'existe pas ou a été supprimé
+            return await this.createGame(gameData); // crée le jeu si il n'existe pas ou a été supprimé
         }
         this.validateGameData(gameData);
 

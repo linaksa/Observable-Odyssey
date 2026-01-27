@@ -4,22 +4,21 @@ import { provideRouter, RouterLink } from '@angular/router';
 import { EditionPageComponent } from './edition-page.component';
 
 describe('EditionPageComponent', () => {
-  let component: EditionPageComponent;
-  let fixture: ComponentFixture<EditionPageComponent>;
+    let component: EditionPageComponent;
+    let fixture: ComponentFixture<EditionPageComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [EditionPageComponent, RouterLink],
-      providers: [provideRouter([])],
-    })
-    .compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [EditionPageComponent, RouterLink],
+            providers: [provideRouter([])],
+        }).compileComponents();
 
-    fixture = TestBed.createComponent(EditionPageComponent);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
-  });
+        fixture = TestBed.createComponent(EditionPageComponent);
+        component = fixture.componentInstance;
+        await fixture.whenStable();
+    });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
 });

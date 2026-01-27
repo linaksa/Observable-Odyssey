@@ -12,7 +12,6 @@ describe('Board Service', () => {
     });
 
     it('should return true when validating a valid board', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -163,13 +162,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.true;
     });
 
     it('should return false for invalid board size', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -332,13 +330,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when board doesnt have enough starting points for small board', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -483,13 +480,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when board doesnt have enough starting points for mid board', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -772,13 +768,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when board doesnt have enough starting points for large board', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -1211,13 +1206,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when board has unreachable ', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -1368,13 +1362,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when 50% or more of the board is empty', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -1525,13 +1518,12 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });
 
     it('should return false when the board is all walls', () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -1682,7 +1674,7 @@ describe('Board Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
+
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });

@@ -10,13 +10,12 @@ import html2canvas from 'html2canvas-oklch';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
 
-
 type Tool = 'placement' | 'objects' | 'erase';
 enum GridSize {
     SMALL = 10,
     MEDIUM = 15,
     LARGE = 20,
-};
+}
 
 @Component({
     selector: 'app-edition-page',
@@ -24,7 +23,6 @@ enum GridSize {
     templateUrl: './edition-page.component.html',
     styleUrl: './edition-page.component.scss',
 })
-
 export class EditionPageComponent implements OnInit {
     @Input() gameId!: string;
     adminService: AdministrationService = inject(AdministrationService);
@@ -55,13 +53,7 @@ export class EditionPageComponent implements OnInit {
     spawnpointMaxAmount: number = 2;
     spawnpointAmount: number = 0;
 
-    blockingCells = new Set<CellType>([
-        CellType.Wall,
-        CellType.Water,
-        CellType.OpenDoor,
-        CellType.ClosedDoor,
-    ]);
-
+    blockingCells = new Set<CellType>([CellType.Wall, CellType.Water, CellType.OpenDoor, CellType.ClosedDoor]);
 
     constructor() {
         this.buildGrid(this.gridSize);
@@ -72,7 +64,7 @@ export class EditionPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.gameService.getGameById(this.gameId).subscribe(game => {
+        this.gameService.getGameById(this.gameId).subscribe((game) => {
             this.editedGame = game;
             this.gameForm.patchValue({
                 gameTitle: this.editedGame?.gameTitle,
@@ -97,14 +89,12 @@ export class EditionPageComponent implements OnInit {
     }
 
     removeAllFlags(): void {
-        this.objects = this.objects.map(obj =>
-            obj === 'flag' ? null : obj,
-        );
+        this.objects = this.objects.map((obj) => (obj === 'flag' ? null : obj));
         this.isFlagPlaced = false;
     }
 
     changeMode(): void {
-        if (this.objects.some(object => object === 'flag' && this.isCTF)) {
+        if (this.objects.some((object) => object === 'flag' && this.isCTF)) {
             const res = confirm('Changing the mode to Normal while a flag is placed will remove it.');
             if (res) {
                 this.removeAllFlags();
@@ -116,7 +106,7 @@ export class EditionPageComponent implements OnInit {
     onSubmit(): void {
         const grid: HTMLElement | null = document.querySelector('#grid-container');
         if (!grid) return;
-        html2canvas(grid).then(canvas => {
+        html2canvas(grid).then((canvas) => {
             const imgData: Base64URLString = canvas.toDataURL('image/png');
             if (this.gameForm.valid) {
                 const formData = this.gameForm.value;
@@ -152,9 +142,7 @@ export class EditionPageComponent implements OnInit {
 
     setGrid(size: number): void {
         if (this.isBoardFilled()) {
-            const confirmChange = confirm(
-                'Changing the grid size will erase your progress. Save first to not lose progress',
-            );
+            const confirmChange = confirm('Changing the grid size will erase your progress. Save first to not lose progress');
             if (!confirmChange) {
                 return;
             }
@@ -176,8 +164,7 @@ export class EditionPageComponent implements OnInit {
         if (this.activeTool !== 'placement') return;
 
         if (this.selectedMaterial === CellType.OpenDoor) {
-            this.gameCells[rowIndex][index] =
-                this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+            this.gameCells[rowIndex][index] = this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
             return;
         }
 
@@ -197,19 +184,14 @@ export class EditionPageComponent implements OnInit {
 
         if (this.blockingCells.has(this.gameCells[rowIndex][index])) return;
 
-        if (
-            (this.selectedObject === ItemType.FightSanctuary) ||
-            (this.selectedObject === ItemType.LifeSanctuary)
-        ) {
+        if (this.selectedObject === ItemType.FightSanctuary || this.selectedObject === ItemType.LifeSanctuary) {
             const size = this.gridSize;
             const coordinates = [index, index + 1, index + size, index + size + 1];
             const col = index % size;
             if (col === size - 1) return;
-            if (coordinates.some(coords => coords >= this.objects.length)) return;
+            if (coordinates.some((coords) => coords >= this.objects.length)) return;
 
-            const overlaps = this.sanctuaryCoordinates.some(sanctuary =>
-                sanctuary.some(cell => coordinates.includes(cell)),
-            );
+            const overlaps = this.sanctuaryCoordinates.some((sanctuary) => sanctuary.some((cell) => coordinates.includes(cell)));
 
             if (overlaps) {
                 alert('Overwriting another sanctuary, error.');
@@ -242,9 +224,7 @@ export class EditionPageComponent implements OnInit {
 
     erase(rowIndex: number, index: number): void {
         if (this.objects[index]) {
-            const sanctuary = this.sanctuaryCoordinates.find(s =>
-                s.includes(index),
-            );
+            const sanctuary = this.sanctuaryCoordinates.find((s) => s.includes(index));
 
             if (sanctuary) {
                 if (this.objects[index] === ItemType.LifeSanctuary) this.healSanctuaryAmount--;
@@ -252,9 +232,7 @@ export class EditionPageComponent implements OnInit {
                 for (const coord of sanctuary) {
                     this.objects[coord] = null;
                 }
-                this.sanctuaryCoordinates = this.sanctuaryCoordinates.filter(
-                    s => s !== sanctuary,
-                );
+                this.sanctuaryCoordinates = this.sanctuaryCoordinates.filter((s) => s !== sanctuary);
             } else if (this.objects[index] === ItemType.Flag) {
                 this.isFlagPlaced = false;
                 this.objects[index] = null;
@@ -266,7 +244,6 @@ export class EditionPageComponent implements OnInit {
             }
             return;
         }
-
 
         this.gameCells[rowIndex][index] = CellType.Empty;
     }
@@ -281,8 +258,7 @@ export class EditionPageComponent implements OnInit {
             this.applyObject(rowIndex, index);
         } else {
             if (this.activeTool === 'placement' && this.selectedMaterial === CellType.OpenDoor) {
-                this.gameCells[rowIndex][index] =
-                    this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+                this.gameCells[rowIndex][index] = this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
                 return;
             }
             this.applyTile(rowIndex, index);
@@ -316,10 +292,9 @@ export class EditionPageComponent implements OnInit {
     }
 
     isBoardFilled(): boolean {
-        return this.gameCells.some(row => {
-            return row.some(cell => cell !== CellType.Empty);
-        },
-        );
+        return this.gameCells.some((row) => {
+            return row.some((cell) => cell !== CellType.Empty);
+        });
     }
 
     getSanctuaryBgPosition(index: number): string | null {
@@ -356,5 +331,4 @@ export class EditionPageComponent implements OnInit {
     get currentMode(): string {
         return this.isCTF ? 'CTF' : 'Normal';
     }
-
 }

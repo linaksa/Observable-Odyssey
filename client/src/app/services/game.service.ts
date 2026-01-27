@@ -14,29 +14,21 @@ export class GameService {
 
     constructor(private readonly http: HttpClient) {}
 
-  getAllGames(): Observable<IExistingGame[]> {
-    return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
-  }
+    getAllGames(): Observable<IExistingGame[]> {
+        return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
+    }
 
-  getGameById(gameId: string): Observable<IExistingGame> {
-    return this.http.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));
-  }
+    getGameById(gameId: string): Observable<IExistingGame> {
+        return this.http.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));
+    }
 
-  changeGameVisibility(gameId: string, visibility: Visibility): Observable<HttpResponse<string>> {
-    return this.http.patch(
-      `${this.baseUrl}/games/${gameId}/visibility`,
-      { visibility },
-      { observe: 'response', responseType: 'text' },
-    );
-  }
+    changeGameVisibility(gameId: string, visibility: Visibility): Observable<HttpResponse<string>> {
+        return this.http.patch(`${this.baseUrl}/games/${gameId}/visibility`, { visibility }, { observe: 'response', responseType: 'text' });
+    }
 
-  saveGame(gameId: string, gameData: Partial<IExistingGame>): Observable<HttpResponse<string>> {
-    return this.http.put(
-      `${this.baseUrl}/games/${gameId}`,
-      gameData,
-      { observe: 'response', responseType: 'text' },
-    );
-  }
+    saveGame(gameId: string, gameData: Partial<IExistingGame>): Observable<HttpResponse<string>> {
+        return this.http.put(`${this.baseUrl}/games/${gameId}`, gameData, { observe: 'response', responseType: 'text' });
+    }
 
     deleteGame(game: IExistingGame): Observable<HttpResponse<string>> {
         return this.http.delete(`${this.baseUrl}/games/${game._id}`, { observe: 'response', responseType: 'text' });

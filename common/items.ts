@@ -8,7 +8,6 @@ export enum ItemType {
     StartingPosition = 'startingPosition',
 }
 
-
 export interface IItem {
     x: number;
     y: number;
