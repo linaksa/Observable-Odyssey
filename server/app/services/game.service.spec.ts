@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
@@ -55,7 +56,6 @@ describe('Game Service', () => {
     });
 
     it('should create a game with dates', async () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
@@ -200,7 +200,6 @@ describe('Game Service', () => {
                 },
             ],
         };
-        /* eslint-enable max-len */
 
         const mockGameData: IGame = {
             gameTitle: 'Test Game',
@@ -376,7 +375,7 @@ describe('Game Service', () => {
             await gameService.deleteGame(fakeGameId);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Jeu déjà supprimé ou introuvable');
+            expect(error.message).to.equal('Jeu déjà supprimé');
         }
     });
     // changeVisibility tests
@@ -414,14 +413,16 @@ describe('Game Service', () => {
         expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
         expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
     });
-    it('should throw error if game to update does not exist', async () => {
+    it('should create game if game to update does not exist', async () => {
         findByIdStub.resolves(null);
-        try {
-            await gameService.updateGame(fakeGameId, baseGame);
-            throw new Error('Should have thrown');
-        } catch (error) {
-            expect(error.message).to.equal('Jeu introuvable');
-        }
+
+        const createdGame = { ...baseGame, _id: fakeGameId };
+        gameCreateStub.resolves(createdGame);
+
+        const result = await gameService.updateGame(fakeGameId, baseGame);
+        expect(gameCreateStub.calledOnce).to.equal(true);
+        expect(gameCreateStub.calledWith(baseGame)).to.equal(true);
+        expect(result).to.deep.equal(createdGame);
     });
     it('should throw error if game data is invalid', async () => {
         findByIdStub.resolves(baseGame);
