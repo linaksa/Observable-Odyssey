@@ -1,14 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { provideRouter, RouterLink } from '@angular/router';
 import { MainPageComponent } from './main-page.component';
 
-describe('GamePageComponent', () => {
+describe('MainPage', () => {
     let component: MainPageComponent;
     let fixture: ComponentFixture<MainPageComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MainPageComponent],
+            imports: [MainPageComponent, RouterLink],
+            providers: [provideRouter([])],
         }).compileComponents();
 
         fixture = TestBed.createComponent(MainPageComponent);

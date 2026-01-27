@@ -1,6 +1,6 @@
 import { IItem } from './items';
 
-export const enum CellType {
+export enum CellType {
     Empty = 'EMPTY',
     Ice = 'ICE',
     Water = 'WATER',

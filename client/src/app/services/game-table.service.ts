@@ -23,7 +23,7 @@ export class GameTableServiceService {
     fetchVisibleGames(): void {
         this.gameService.getAllGames().subscribe({
             next: (fetchedGames) => {
-                this.tableData.data = fetchedGames.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
+                this.tableData.data = fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
             },
         });
     }
