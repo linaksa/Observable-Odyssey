@@ -33,7 +33,7 @@
                         />
                         Visible
                     </label>
-                    <button class="btn btn-purple" routerLink="/edit">Modification</button>
+                    <button class="btn btn-purple" [routerLink]="['/edit', element._id]">Modification</button>
                     <button class="btn btn-red" (click)="deleteGame(element)">Suppression</button>
                     } @else {
                     <button class="btn" routerLink="/form">Créer une partie</button>

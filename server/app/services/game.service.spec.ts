@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines -- Test file requires many test cases with extensive board configurations to cover all validation branches */
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';

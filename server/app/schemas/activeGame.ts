@@ -4,6 +4,7 @@ import { model, Schema, Types } from 'mongoose';
 import { characterSchema } from './character';
 import { itemSchema } from './items';
 
+
 export interface IActiveGame {
     baseGameId: Types.ObjectId;
     players: ICharacter[];
