@@ -1,6 +1,7 @@
 import { DatePipe, NgClass } from '@angular/common';
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AdminSocketService } from '@app/services/admin.socket.service';
 import { AdministrationService } from '@app/services/administrationService';
 import { GameTableServiceService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
@@ -12,10 +13,11 @@ import { IExistingGame, Visibility } from '@common/game';
     templateUrl: './game-table.component.html',
     styleUrl: './game-table.component.scss',
 })
-export class GameTableComponent implements OnInit {
+export class GameTableComponent implements OnInit, OnDestroy {
     adminService: AdministrationService = inject(AdministrationService);
     gameTableService: GameTableServiceService = inject(GameTableServiceService);
     gameService: GameService = inject(GameService);
+    adminSocketService: AdminSocketService = inject(AdminSocketService);
 
     @Input() isAdmin = false;
 
@@ -27,6 +29,12 @@ export class GameTableComponent implements OnInit {
         } else {
             this.gameTableService.fetchVisibleGames();
         }
+
+        this.adminSocketService.fetchGamesOnSignal().subscribe({
+            next: () => {
+                this.gameTableService.fetchGames();
+            },
+        });
     }
 
     gameIsViewable(element: IExistingGame): boolean {
@@ -55,5 +63,9 @@ export class GameTableComponent implements OnInit {
                 this.gameTableService.tableData.data = this.gameTableService.tableData.data.filter((item) => item._id !== element._id);
             },
         });
+    }
+
+    ngOnDestroy(): void {
+        this.adminSocketService.disconnect();
     }
 }

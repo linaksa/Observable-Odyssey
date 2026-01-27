@@ -9,7 +9,7 @@ import { environment } from 'src/environments/environment';
     providedIn: 'root',
 })
 export class CommunicationService {
-    private readonly baseUrl: string = environment.serverUrl;
+    private readonly baseUrl: string = environment.apiUrl;
 
     constructor(private readonly http: HttpClient) {}
 
