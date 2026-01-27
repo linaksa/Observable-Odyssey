@@ -27,7 +27,6 @@ export class GameController {
             }
         });
 
-
         this.router.get('/:id', async (req: Request, res: Response) => {
             const gameId = req.params.id;
             try {

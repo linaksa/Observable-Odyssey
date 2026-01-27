@@ -10,7 +10,7 @@ div.content {
 
 @layer components {
     .btn {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-normal text-white bg-blue-600 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-normal text-white bg-blue-600 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
     }
 
     .btn-green {
@@ -23,6 +23,10 @@ div.content {
 
     .btn-gray {
         @apply bg-gray-600 hover:bg-gray-800 focus:ring-gray-500;
+    }
+
+    .btn-outline {
+        @apply text-black bg-neutral-50 hover:bg-neutral-200 focus:ring-gray-500 border border-neutral-300;
     }
 
     .btn-purple {

@@ -9,9 +9,7 @@ describe('Example service', () => {
     let dateService: SinonStubbedInstance<DateService>;
     let consoleStub: sinon.SinonStub;
 
-
     describe('Example service methods', () => {
-
         before(() => {
             consoleStub = stub(console, 'log');
         });

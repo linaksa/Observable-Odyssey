@@ -1,4 +1,3 @@
-//TODO Add pictures to assets
 export const enum Avatar {
     Avatar1 = 'avatar1',
     Avatar2 = 'avatar2',
@@ -18,6 +17,29 @@ export const enum DiceType {
     FourSided = 'four sided',
     SixSided = 'six sided',
 }
+
+export const RANDOM_PLAYER_NAMES: string[] = [
+    'Joueur1',
+    'Joueur2',
+    'Joueur3',
+    'Joueur4',
+    'Joueur5',
+    'Joueur6',
+    'Joueur7',
+    'Joueur8',
+    'Joueur9',
+    'Joueur10',
+    'Joueur11',
+    'Joueur12',
+    'Joueur13',
+    'Joueur14',
+    'Joueur15',
+    'Joueur16',
+    'Joueur17',
+    'Joueur18',
+    'Joueur19',
+    'Joueur20',
+];
 
 export enum GameSize {
     Small = 100,
