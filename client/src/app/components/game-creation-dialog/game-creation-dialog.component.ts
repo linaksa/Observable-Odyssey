@@ -78,7 +78,7 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         };
         this.gameService.gameUnderCreation = game;
 
-        this.router.navigate(['/game', 'creation']).then(() => {
+        this.router.navigate(['/edit', 'creation']).then(() => {
             if (this.dialogRef) {
                 this.dialogRef.close();
             }

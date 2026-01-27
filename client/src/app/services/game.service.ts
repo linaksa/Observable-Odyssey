@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IExistingGame, IGame, Visibility } from '@common/game';
+import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
 })
 export class GameService {
     private readonly baseUrl: string = environment.serverUrl;
-    gameUnderCreation: IGame;
+    gameUnderCreation: IExistingGame;
 
     constructor(private readonly http: HttpClient) {}
 

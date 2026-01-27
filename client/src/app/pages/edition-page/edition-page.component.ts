@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { AdministrationService } from '@app/services/administrationService';
 import { GameService } from '@app/services/game.service';
-import { EditGameFormData, IExistingGame } from '@common/game';
+import { EditGameFormData, GameType, IExistingGame, Visibility } from '@common/game';
 import html2canvas from 'html2canvas-oklch';
 
 import { CellType } from '@common/board';
@@ -64,14 +64,36 @@ export class EditionPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.gameService.getGameById(this.gameId).subscribe((game) => {
-            this.editedGame = game;
-            this.gameForm.patchValue({
-                gameTitle: this.editedGame?.gameTitle,
-                description: this.editedGame?.description,
+        if(this.gameId === 'creation'){
+            if(this.gameService.gameUnderCreation){
+                this.editedGame = this.gameService.gameUnderCreation;
+            }else{
+                this.editedGame = {
+                    _id: '',
+                    gameTitle: '',
+                    description: '',
+                    gameMode: GameType.Classic,
+                    lastModifiedDate: new Date(),
+                    dateCreated: new Date(),
+                    visibility: Visibility.Hidden,
+                    preview: '',
+                            board: {
+                        items: [],
+                        cells: Array.from({ length:  GridSize.SMALL}, () => Array(GridSize.SMALL).fill(CellType.Empty)),
+                    },
+                };
+            }
+        }else {
+            this.gameService.getGameById(this.gameId).subscribe(game => {
+                this.editedGame = game;
+                this.gameForm.patchValue({
+                    gameTitle: this.editedGame?.gameTitle,
+                    description: this.editedGame?.description,
+                });
+                this.gameCells = this.editedGame?.board.cells;
             });
-            this.gameCells = this.editedGame?.board.cells;
-        });
+        }
+
     }
 
     updateMaxAmount() {
