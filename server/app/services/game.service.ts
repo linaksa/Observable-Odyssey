@@ -11,6 +11,10 @@ export class GameService {
         return await game.find({});
     }
 
+    async getGame(id: string): Promise<IExistingGame | null> {
+        return await game.findById(id);
+    }
+
     async createGame(gameData: IGame): Promise<IGame> {
         this.validateGameData(gameData);
 

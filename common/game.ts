@@ -24,3 +24,11 @@ export interface IGame {
 export interface IExistingGame extends IGame {
     _id: string;
 }
+
+export interface EditGameFormData {
+    gameTitle: string;
+    description: string;
+    gameMode: GameType;
+    preview: Base64URLString;
+    board: IBoard;
+}

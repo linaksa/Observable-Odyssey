@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { provideRouter, RouterLink } from '@angular/router';
 import { GamePageComponent } from './game-page.component';
 
 describe('GamePageComponent', () => {
@@ -8,7 +9,8 @@ describe('GamePageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [GamePageComponent],
+            imports: [GamePageComponent, RouterLink],
+            providers: [provideRouter([])],
         }).compileComponents();
 
         fixture = TestBed.createComponent(GamePageComponent);

@@ -27,6 +27,20 @@ export class GameController {
             }
         });
 
+
+        this.router.get('/:id', async (req: Request, res: Response) => {
+            const gameId = req.params.id;
+            try {
+                const existingGame = await this.gameService.getGame(gameId);
+                if (!existingGame) {
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: 'Jeu introuvable' });
+                }
+                return res.json(existingGame);
+            } catch {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur' });
+            }
+        });
+
         /**
          * @swagger
          *
@@ -164,16 +178,19 @@ export class GameController {
          *         description: Game not found
          */
         this.router.put('/:id', async (req: Request, res: Response) => {
+            const gameId = req.params.id;
+            const gameData = req.body;
             try {
-                const gameId = req.params.id;
-                const gameData = req.body.game;
                 const updatedGame = await this.gameService.updateGame(gameId, gameData);
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
+                    //const newGame = await this.gameService.createGame(gameData);
+                    //return res.json(newGame);
+                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: 'Jeu introuvable' });
+                } else {
+                    return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
                 }
-                return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
             }
         });
         /**
