@@ -21,11 +21,24 @@ describe('Game Service', () => {
     let findByIdStub: sinon.SinonStub;
     let findByIdAndUpdateStub: sinon.SinonStub;
     let findByIdAndDeleteStub: sinon.SinonStub;
+    let findStub: sinon.SinonStub;
 
     const fakeGameId = '507f1f77bcf86cd799439011';
+    const anotherFakeGameId = '507f1f77bcf86cd799439012';
     const baseGame: IGame = {
         gameTitle: 'Test Game',
         description: 'Test Description',
+        gameMode: GameType.Classic,
+        board: { cells: [[CellType.Empty]], items: [] },
+        preview: 'image.png',
+        visibility: Visibility.Hidden,
+        lastModifiedDate: new Date(),
+        dateCreated: new Date(),
+    };
+
+    const baseGame2: IGame = {
+        gameTitle: 'Test Game2',
+        description: 'Test Description2',
         gameMode: GameType.Classic,
         board: { cells: [[CellType.Empty]], items: [] },
         preview: 'image.png',
@@ -48,11 +61,55 @@ describe('Game Service', () => {
         findByIdStub = sinon.stub(game, 'findById');
         findByIdAndUpdateStub = sinon.stub(game, 'findByIdAndUpdate');
         findByIdAndDeleteStub = sinon.stub(game, 'findByIdAndDelete');
+        findStub = sinon.stub(game, 'find');
     });
 
     afterEach(() => {
         sinon.restore();
         Container.reset();
+    });
+
+    it('should return all games', async () => {
+        const games = [
+            { ...baseGame, _id: fakeGameId },
+            { ...baseGame2, _id: anotherFakeGameId },
+        ];
+
+        findStub.resolves(games);
+
+        const result = await gameService.getAllGames();
+
+        expect(findStub.calledOnceWithExactly({})).to.equal(true);
+        expect(result).to.deep.equal(games);
+    });
+
+    it('should return empty array if no games exist', async () => {
+        findStub.resolves([]);
+
+        const result = await gameService.getAllGames();
+
+        expect(findStub.calledOnceWithExactly({})).to.equal(true);
+        expect(result).to.deep.equal([]);
+    });
+
+    it('should return game by id', async () => {
+        const existingGame = { ...baseGame, _id: fakeGameId };
+
+        findByIdStub.resolves(existingGame);
+
+        const result = await gameService.getGame(fakeGameId);
+
+        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
+        expect(result).to.deep.equal(existingGame);
+    });
+
+    it('should return null if game does not exist', async () => {
+        findByIdStub.resolves(null);
+
+        const result = await gameService.getGame(fakeGameId);
+
+        expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
+        expect(result).to.equal(null);
     });
 
     it('should create a game with dates', async () => {

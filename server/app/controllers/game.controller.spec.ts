@@ -8,6 +8,13 @@ import { createStubInstance, SinonStubbedInstance } from 'sinon';
 import * as supertest from 'supertest';
 import { Container } from 'typedi';
 
+const normalizeDates = (games: IGame[]) =>
+    games.map((g) => ({
+        ...g,
+        dateCreated: new Date(g.dateCreated).toISOString(),
+        lastModifiedDate: new Date(g.lastModifiedDate).toISOString(),
+    }));
+
 describe('GameController', () => {
     const baseGame: IGame = {
         gameTitle: 'Test Game',
@@ -19,7 +26,26 @@ describe('GameController', () => {
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
     };
+    const baseGame2: IGame = {
+        gameTitle: 'Test Game2',
+        description: 'Test Description2',
+        gameMode: GameType.Classic,
+        board: {} as IBoard,
+        preview: 'image.png',
+        visibility: Visibility.Hidden,
+        lastModifiedDate: new Date(),
+        dateCreated: new Date(),
+    };
     const fakeGameId = '507f1f77bcf86cd799439011';
+    const fakeGameId2 = '507f1f77bcf86cd799439012';
+    const existingGame1 = {
+        _id: fakeGameId,
+        ...baseGame,
+    };
+    const existingGame2 = {
+        _id: fakeGameId2,
+        ...baseGame2,
+    };
     let gameService: SinonStubbedInstance<GameService>;
     let expressApp: Express.Application;
 
@@ -29,6 +55,63 @@ describe('GameController', () => {
         const app = Container.get(Application);
         Object.defineProperty(app['gameController'], 'gameService', { value: gameService });
         expressApp = app.app;
+    });
+
+    it('should return all games', async () => {
+        const gamesList = [existingGame1, existingGame2];
+        gameService.getAllGames.resolves(gamesList);
+        return supertest(expressApp)
+            .get('/api/games/')
+            .expect(StatusCodes.OK)
+            .then((response) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                expect(normalizeDates(response.body)).to.deep.equal(normalizeDates(gamesList as any));
+            });
+    });
+
+    it('should return 500 if getAllGames fails', async () => {
+        gameService.getAllGames.rejects(new Error('Erreur interne du serveur'));
+
+        return supertest(expressApp)
+            .get('/api/games/')
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+            });
+    });
+
+    it('should return a game by id', async () => {
+        gameService.getGame.resolves(existingGame1);
+
+        return supertest(expressApp)
+            .get(`/api/games/${fakeGameId}`)
+            .expect(StatusCodes.OK)
+            .then((response) => {
+                expect(response.body.gameTitle).to.equal(existingGame1.gameTitle);
+                expect(response.body.description).to.equal(existingGame1.description);
+            });
+    });
+
+    it('should return 404 if game not found on GET by id', async () => {
+        gameService.getGame.resolves(null);
+
+        return supertest(expressApp)
+            .get(`/api/games/${fakeGameId}`)
+            .expect(StatusCodes.NOT_FOUND)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ message: 'Jeu introuvable' });
+            });
+    });
+
+    it('should return 500 if getGame throws an error', async () => {
+        gameService.getGame.rejects(new Error('Erreur interne du serveur'));
+
+        return supertest(expressApp)
+            .get(`/api/games/${fakeGameId}`)
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ message: 'Erreur interne du serveur' });
+            });
     });
 
     it('should return created game on valid request', async () => {
