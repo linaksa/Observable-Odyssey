@@ -14,9 +14,9 @@ export class GameService {
 
     constructor(private readonly http: HttpClient) {}
 
-    getAllGames(): Observable<IExistingGame[]> {
-        return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
-    }
+  getAllGames(): Observable<IExistingGame[]> {
+    return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
+  }
 
     getGameById(gameId: string): Observable<IExistingGame> {
         return this.http.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));
