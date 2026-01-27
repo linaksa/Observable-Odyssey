@@ -51,7 +51,7 @@ export class GameService {
     async updateGame(id: string, gameData: IGame): Promise<IGame> {
         const existingGame = await game.findById(id);
         if (!existingGame) {
-            throw new Error('Jeu introuvable');
+            return await this.createGame(gameData);// crée le jeu si il n'existe pas ou a été supprimé
         }
         this.validateGameData(gameData);
 
@@ -68,7 +68,7 @@ export class GameService {
     async deleteGame(gameId: string): Promise<void> {
         const deletedGame = await game.findByIdAndDelete(gameId);
         if (!deletedGame) {
-            throw new Error('Jeu déjà supprimé ou introuvable');
+            throw new Error('Jeu déjà supprimé'); // on va devoir avertir l'utilisateur (alert maybe)
         }
     }
 
