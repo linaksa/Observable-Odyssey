@@ -1674,7 +1674,6 @@ describe('Board Service', () => {
                 },
             ],
         };
-
         const res = boardService.validateBoard(board);
         void expect(res).to.be.false;
     });

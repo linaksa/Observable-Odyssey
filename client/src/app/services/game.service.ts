@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IExistingGame, Visibility } from '@common/game';
+import { IExistingGame, IGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -9,14 +9,14 @@ import { environment } from 'src/environments/environment';
     providedIn: 'root',
 })
 export class GameService {
-    private readonly baseUrl: string = environment.serverUrl;
-    gameUnderCreation: IExistingGame;
+    private readonly baseUrl: string = environment.apiUrl;
+    gameUnderCreation: IGame;
 
     constructor(private readonly http: HttpClient) {}
 
-  getAllGames(): Observable<IExistingGame[]> {
-    return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
-  }
+    getAllGames(): Observable<IExistingGame[]> {
+        return this.http.get<IExistingGame[]>(`${this.baseUrl}/games`).pipe(catchError(this.handleError<IExistingGame[]>('basicGet')));
+    }
 
     getGameById(gameId: string): Observable<IExistingGame> {
         return this.http.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));

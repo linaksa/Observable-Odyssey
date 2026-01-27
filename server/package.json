@@ -44,6 +44,7 @@
         "@common": "out/common"
     },
     "dependencies": {
+        "@types/ws": "^8.18.1",
         "cookie-parser": "1.4.7",
         "cors": "2.8.5",
         "dotenv": "^17.2.3",
@@ -54,6 +55,7 @@
         "mongoose": "^9.1.3",
         "prettier": "3.4.2",
         "reflect-metadata": "0.2.2",
+        "socket.io": "^4.8.3",
         "swagger-jsdoc": "6.2.8",
         "swagger-ui-express": "5.0.0",
         "typedi": "0.10.0"

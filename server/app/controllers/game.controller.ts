@@ -1,3 +1,4 @@
+import { AdminSocketsService } from '@app/services/admin.sockets.service';
 import { GameService } from '@app/services/game.service';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
@@ -11,8 +12,18 @@ const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
 export class GameController {
     router: Router;
 
-    constructor(private readonly gameService: GameService) {
+    constructor(
+        private readonly gameService: GameService,
+        private readonly adminSocketService: AdminSocketsService,
+    ) {
         this.configureRouter();
+    }
+
+    private getParamAsString(req: Request, key: string): string | null {
+        const value = (req.params as Record<string, unknown>)[key];
+        if (typeof value === 'string') return value;
+        if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+        return null;
     }
 
     private configureRouter(): void {
@@ -28,7 +39,7 @@ export class GameController {
         });
 
         this.router.get('/:id', async (req: Request, res: Response) => {
-            const gameId = req.params.id;
+            const gameId = this.getParamAsString(req, 'id');
             try {
                 const existingGame = await this.gameService.getGame(gameId);
                 if (!existingGame) {
@@ -90,6 +101,7 @@ export class GameController {
         this.router.post('/', async (req: Request, res: Response) => {
             try {
                 const newGame = await this.gameService.createGame(req.body.game);
+                this.adminSocketService.emitNewData();
                 res.status(StatusCodes.CREATED).json(newGame);
             } catch (error) {
                 res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
@@ -119,9 +131,10 @@ export class GameController {
          *         description: Game not found or already deleted
          */
         this.router.delete('/:id', async (req: Request, res: Response) => {
-            const gameId = req.params.id;
+            const gameId = this.getParamAsString(req, 'id');
             try {
                 await this.gameService.deleteGame(gameId);
+                this.adminSocketService.emitNewData();
                 res.sendStatus(HTTP_STATUS_NO_CONTENT);
             } catch (error) {
                 res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
@@ -177,10 +190,12 @@ export class GameController {
          *         description: Game not found
          */
         this.router.put('/:id', async (req: Request, res: Response) => {
-            const gameId = req.params.id;
+            const gameId = this.getParamAsString(req, 'id');
+
             const gameData = req.body;
             try {
                 const updatedGame = await this.gameService.updateGame(gameId, gameData);
+                this.adminSocketService.emitNewData();
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {
@@ -231,9 +246,10 @@ export class GameController {
          */
         this.router.patch('/:id/visibility', async (req: Request, res: Response) => {
             try {
-                const gameId = req.params.id;
+                const gameId = this.getParamAsString(req, 'id');
                 const visibility = req.body.visibility;
                 const updatedGame = await this.gameService.changeVisibility(gameId, visibility);
+                this.adminSocketService.emitNewData();
                 return res.json(updatedGame);
             } catch (error) {
                 if (error.message === 'Jeu introuvable') {

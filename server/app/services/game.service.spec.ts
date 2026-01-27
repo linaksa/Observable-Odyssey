@@ -1,18 +1,14 @@
+/* eslint-disable max-lines */
+
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { Container } from 'typedi';
 import { BoardService } from './board.service';
 import { GameService } from './game.service';
 
-/* NOTE: The linter is deactivated for line length around the definition of the cells because we were
- *  getting errors about lines being too long, but it was judged that splitting the
- *  lines in this case would decrease readability, since it would break the grid shape
- *  of the cells.
- */
 describe('Game Service', () => {
     let gameService: GameService;
     let mockBoardService: sinon.SinonStubbedInstance<BoardService>;
@@ -47,14 +43,10 @@ describe('Game Service', () => {
     };
 
     beforeEach(async () => {
-        Container.reset();
-
         mockBoardService = sinon.createStubInstance(BoardService);
         mockBoardService.validateBoard.returns(true);
 
-        Container.set(BoardService, mockBoardService);
-
-        gameService = Container.get(GameService);
+        gameService = new GameService(mockBoardService);
 
         gameCreateStub = sinon.stub(game, 'create');
         findByIdStub = sinon.stub(game, 'findById');
@@ -65,7 +57,6 @@ describe('Game Service', () => {
 
     afterEach(() => {
         sinon.restore();
-        Container.reset();
     });
 
     it('should return all games', async () => {
@@ -112,38 +103,127 @@ describe('Game Service', () => {
     });
 
     it('should create a game with dates', async () => {
-        /* eslint-disable max-len */
         const board: IBoard = {
             cells: [
                 [
-                    CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
                 ],
                 [
-                    CellType.Water, CellType.Ice, CellType.Water, CellType.Ice, CellType.Water, CellType.Water, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
                 ],
                 [
-                    CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
                 ],
                 [
-                    CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
                 ],
                 [
-                    CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Water, CellType.Water, CellType.Ice, CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
                 ],
                 [
-                    CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
                 ],
                 [
-                    CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
                 ],
                 [
-                    CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
                 ],
                 [
-                    CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Water, CellType.Water, CellType.Ice, CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
                 ],
                 [
-                    CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall, CellType.Water, CellType.Ice, CellType.Water, CellType.Wall,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
+                    CellType.Water,
+                    CellType.Ice,
+                    CellType.Water,
+                    CellType.Wall,
                 ],
             ],
             items: [

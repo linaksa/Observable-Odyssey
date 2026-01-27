@@ -1,7 +1,8 @@
 import { Application } from '@app/app';
 import * as http from 'http';
 import { AddressInfo } from 'net';
-import { Service } from 'typedi';
+import { Container, Service } from 'typedi';
+import { AdminSocketsService } from './services/admin.sockets.service';
 
 @Service()
 export class Server {
@@ -19,6 +20,11 @@ export class Server {
         this.application.app.set('port', Server.appPort);
 
         this.server = http.createServer(this.application.app);
+
+        // This is to avoid injecting the HttpServer into the Websocket service
+        // before its initialized, which would cause a crash
+        const adminSocketsService = Container.get(AdminSocketsService);
+        adminSocketsService.initialize(this.server);
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

@@ -1,11 +1,12 @@
 import { Application } from '@app/app';
+import { AdminSocketsService } from '@app/services/admin.sockets.service';
 import { GameService } from '@app/services/game.service';
 import { IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';
 import { StatusCodes } from 'http-status-codes';
 import { createStubInstance, SinonStubbedInstance } from 'sinon';
-import * as supertest from 'supertest';
+import supertest, { Response } from 'supertest';
 import { Container } from 'typedi';
 
 const normalizeDates = (games: IGame[]) =>
@@ -47,13 +48,17 @@ describe('GameController', () => {
         ...baseGame2,
     };
     let gameService: SinonStubbedInstance<GameService>;
+    let adminSocketService: SinonStubbedInstance<AdminSocketsService>;
     let expressApp: Express.Application;
 
     beforeEach(async () => {
+        Container.reset();
         gameService = createStubInstance(GameService);
+        adminSocketService = createStubInstance(AdminSocketsService);
         gameService.createGame.resolves(baseGame);
+        Container.set(GameService, gameService);
+        Container.set(AdminSocketsService, adminSocketService);
         const app = Container.get(Application);
-        Object.defineProperty(app['gameController'], 'gameService', { value: gameService });
         expressApp = app.app;
     });
 
@@ -212,7 +217,7 @@ describe('GameController', () => {
             .put(`/api/games/${fakeGameId}`)
             .send({ game: baseGame })
             .expect(StatusCodes.NOT_FOUND)
-            .then((response) => {
+            .then((response: Response) => {
                 expect(response.body).to.deep.equal({ error: 'Jeu introuvable' });
             });
     });
@@ -224,7 +229,7 @@ describe('GameController', () => {
             .put(`/api/games/${fakeGameId}`)
             .send({}) // body invalide ou manquant
             .expect(StatusCodes.BAD_REQUEST)
-            .then((response) => {
+            .then((response: Response) => {
                 expect(response.body).to.deep.equal({ error: 'Données invalides' });
             });
     });
