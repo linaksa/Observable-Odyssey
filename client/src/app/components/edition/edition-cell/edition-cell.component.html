@@ -1,0 +1,27 @@
+<div
+    (mousedown)="mousedDownCell.emit()"
+    (mouseenter)="mouseMoveCell.emit()"
+    class="relative select-none size-full">
+    <div [ngClass]="backgroundImage" class="absolute inset-0 bg-no-repeat bg-cover"></div>
+
+    <div
+        *ngIf="board.getObjectAt(i, j) as obj"
+        class="absolute inset-0 z-10"
+        [ngStyle]="
+            obj.itemType === itemType.FightSanctuary || obj.itemType === itemType.LifeSanctuary
+                    ? {
+                        backgroundImage:
+                            obj.itemType === itemType.FightSanctuary
+                            ? 'url(/assets/fightSanctuary.png)'
+                            : 'url(/assets/healSanctuary.png)',
+                        backgroundSize: '200% 200%',
+                        backgroundPosition: board.getSanctuaryBgPosition(i, j)
+                    }
+                    : null
+                "
+            [ngClass]="{
+                    'bg-[url(/assets/flag.png)] bg-[length:100%_100%]': obj.itemType === itemType.Flag,
+                    'bg-[url(/assets/spawnpoint.png)] bg-cover': obj.itemType === itemType.StartingPosition
+            }"
+    ></div>
+</div>
