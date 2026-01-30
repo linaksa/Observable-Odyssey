@@ -4,9 +4,9 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { ActionSelectionButtonComponent } from '@app/components/edition/action-selection-button/action-selection-button.component';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
+import { EditionFormComponent } from '@app/components/edition/edition-form/edition-form.component';
 import { AdministrationService } from '@app/services/administrationService';
 import { BoardEditorService, Tool, ToolOption } from '@app/services/edition.service';
-import { GameEditFormService } from '@app/services/game-edit-form.service';
 import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
@@ -14,7 +14,7 @@ import { ItemType } from '@common/items';
 
 @Component({
     selector: 'app-game-edition',
-    imports: [CommonModule, ReactiveFormsModule, MatButtonToggleModule, EditionCellComponent, ActionSelectionButtonComponent],
+    imports: [CommonModule, ReactiveFormsModule, MatButtonToggleModule, EditionCellComponent, ActionSelectionButtonComponent, EditionFormComponent],
     templateUrl: './game-edition.component.html',
     styleUrl: './game-edition.component.scss',
 })
@@ -23,7 +23,6 @@ export class GameEditionComponent implements OnInit {
 
     adminService: AdministrationService = inject(AdministrationService);
     gameService: GameService = inject(GameService);
-    gameEditFormService: GameEditFormService = inject(GameEditFormService);
     editedGame: IExistingGame;
     board: BoardEditorService = inject(BoardEditorService);
 
@@ -48,12 +47,11 @@ export class GameEditionComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.gameEditFormService.init(this.gameToEdit);
         this.board.initFromExistingBoard(this.gameToEdit);
     }
 
 
-    onGameModeChange(event: Event): void {
+    gameModeChange(event: Event): void {
         const selectElement = event.target as HTMLSelectElement;
         const selectedMode: GameType = selectElement.value as GameType;
 
@@ -72,10 +70,6 @@ export class GameEditionComponent implements OnInit {
 
         }
         this.board.changeGameMode(selectedMode);
-    }
-
-    submitGameForm(): void {
-        this.gameEditFormService.submitForm(this.gameToEdit._id, this.board.gameCells, this.board.objects);
     }
 
     selectTool(tool: Tool): void {
