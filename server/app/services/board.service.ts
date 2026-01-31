@@ -1,5 +1,6 @@
 import { CellType, IBoard } from '@common/board';
 import { GameSize } from '@common/constants';
+import { GameType } from '@common/game';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 
@@ -24,7 +25,8 @@ export class BoardService {
      * no unreachable tile, all starting points are there
      * @returns boolean, if the game is valid or not
      */
-    validateBoard(board: IBoard): boolean {
+    validateBoard(board: IBoard, gameMode: GameType): string[] {
+        const errors: string[] = [];
         const gameSize = board.cells.length * board.cells[0].length;
         let occupiedCells = 0;
         for (const row of board.cells) {
@@ -36,12 +38,13 @@ export class BoardService {
         }
 
         if (occupiedCells <= gameSize * EXPECTED_TERRAIN_USE) {
-            return false;
+            errors.push('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
         }
 
         const expectedCounts = this.getExpectedCounts(gameSize);
         if (!expectedCounts) {
-            return false;
+            errors.push('La taille de la carte est invalide.');
+            return errors;
         }
 
         for (const item of board.items) {
@@ -54,19 +57,34 @@ export class BoardService {
             }
         }
 
-        if (
-            expectedCounts.expectedStartingPoints !== 0 ||
-            expectedCounts.expectedFightSanctuaries !== 0 ||
-            expectedCounts.expectedLifeSanctuaries !== 0
-        ) {
-            return false;
+        if (expectedCounts.expectedStartingPoints !== 0) {
+            errors.push('Le nombre de positions de départ est invalide.');
+        }
+
+        if (expectedCounts.expectedFightSanctuaries !== 0) {
+            errors.push('Le nombre de sanctuaires de combat est invalide.');
+        }
+
+        if (expectedCounts.expectedLifeSanctuaries !== 0) {
+            errors.push('Le nombre de sanctuaires de vie est invalide.');
         }
 
         if (!this.areAllCellsReachable(board)) {
-            return false;
+            errors.push('Toutes les cellules de la carte ne sont pas accessibles.');
         }
+        this.validateGameModeRules(board, gameMode, errors);
 
-        return true;
+        return errors;
+    }
+
+    private validateGameModeRules(board: IBoard, gameMode: GameType, errors: string[]): void {
+        if (gameMode === GameType.Ctf) {
+            const flagCount = board.items.filter((item) => item.itemType === ItemType.Flag).length;
+
+            if (flagCount === 0) {
+                errors.push('En mode Capture The Flag, un drapeau doit être placé sur la carte.');
+            }
+        }
     }
 
     /**

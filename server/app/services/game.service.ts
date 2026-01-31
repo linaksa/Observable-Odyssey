@@ -45,9 +45,10 @@ export class GameService {
         if (!gameData.preview) {
             throw new Error('Il manque une image de preview du jeu');
         }
+        const boardErrors = this.boardService.validateBoard(gameData.board, gameData.gameMode);
 
-        if (!this.boardService.validateBoard(gameData.board)) {
-            throw new Error('Le terrain de jeu est invalide');
+        if (boardErrors.length > 0) {
+            throw new Error(boardErrors.join(' '));
         }
     }
 

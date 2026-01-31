@@ -44,7 +44,7 @@ describe('Game Service', () => {
 
     beforeEach(async () => {
         mockBoardService = sinon.createStubInstance(BoardService);
-        mockBoardService.validateBoard.returns(true);
+        mockBoardService.validateBoard.returns([]);
 
         gameService = new GameService(mockBoardService);
 
@@ -389,8 +389,7 @@ describe('Game Service', () => {
     });
 
     it('should throw an error when board is invalid', async () => {
-        mockBoardService.validateBoard.returns(false);
-
+        mockBoardService.validateBoard.returns(['Moins de 50% de la surface totale de la carte est couverte par des tuiles.']);
         const mockGameData = {
             gameTitle: 'Test Game',
             description: 'Test Description',
@@ -403,7 +402,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Le terrain de jeu est invalide');
+            expect(error.message).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
         }
     });
     // deleteGame tests
