@@ -8,5 +8,5 @@ import { RouterLink } from '@angular/router';
     imports: [RouterLink],
 })
 export class MainPageComponent {
-    readonly title: string = '(Nom du jeu)';
+    readonly title: string = 'OK Garmin - Erstelle ein Rollenspiel mit Angular';
 }
