@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IExistingGame, IGame, Visibility } from '@common/game';
+import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
 })
 export class GameService {
     private readonly baseUrl: string = environment.apiUrl;
-    gameUnderCreation: IGame;
+    gameUnderCreation: IExistingGame;
 
     constructor(private readonly http: HttpClient) {}
 
@@ -28,6 +28,10 @@ export class GameService {
 
     saveGame(gameId: string, gameData: Partial<IExistingGame>): Observable<HttpResponse<string>> {
         return this.http.put(`${this.baseUrl}/games/${gameId}`, gameData, { observe: 'response', responseType: 'text' });
+    }
+
+    createGame(gameData: Partial<IExistingGame>): Observable<HttpResponse<string>> {
+        return this.http.post(`${this.baseUrl}/games`, { game: gameData }, { observe: 'response', responseType: 'text' });
     }
 
     deleteGame(game: IExistingGame): Observable<HttpResponse<string>> {
