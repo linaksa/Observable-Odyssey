@@ -1,4 +1,5 @@
 import { DatePipe, NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AdminSocketService } from '@app/services/admin.socket.service';
@@ -6,6 +7,7 @@ import { AdministrationService } from '@app/services/administrationService';
 import { GameTableServiceService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { IExistingGame, Visibility } from '@common/game';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
     selector: 'app-game-table',
@@ -14,6 +16,9 @@ import { IExistingGame, Visibility } from '@common/game';
     styleUrl: './game-table.component.scss',
 })
 export class GameTableComponent implements OnInit, OnDestroy {
+    private _snackBar = inject(MatSnackBar);
+    private _closeString = 'Fermer';
+
     adminService: AdministrationService = inject(AdministrationService);
     gameTableService: GameTableServiceService = inject(GameTableServiceService);
     gameService: GameService = inject(GameService);
@@ -33,6 +38,10 @@ export class GameTableComponent implements OnInit, OnDestroy {
         this.adminSocketService.fetchGamesOnSignal().subscribe({
             next: () => {
                 this.gameTableService.fetchGames();
+            },
+            error: (error: HttpErrorResponse) => {
+                const serverMessage = error?.error?.error || "Il y a eu un problème lors de l'ajout des jeux.";
+                this._snackBar.open(serverMessage, this._closeString);
             },
         });
     }
@@ -61,6 +70,10 @@ export class GameTableComponent implements OnInit, OnDestroy {
         this.gameService.deleteGame(element).subscribe({
             next: () => {
                 this.gameTableService.tableData.data = this.gameTableService.tableData.data.filter((item) => item._id !== element._id);
+            },
+            error: (error: HttpErrorResponse) => {
+                const serverMessage = error?.error?.error || 'Il y a eu un problème lors de la suppression.';
+                this._snackBar.open(serverMessage, this._closeString);
             },
         });
     }
