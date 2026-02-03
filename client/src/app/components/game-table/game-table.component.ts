@@ -37,11 +37,11 @@ export class GameTableComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.gameTableService.tableData.data = [];
 
-        fetchCorrectGames();
+        this.fetchCorrectGames();
 
         this.adminSocketService.fetchGamesOnSignal().subscribe({
             next: () => {
-                fetchCorrectGames();
+                this.fetchCorrectGames();
             },
             error: (error: HttpErrorResponse) => {
                 const serverMessage = error?.error?.error || "Il y a eu un problème lors de l'ajout des jeux.";
