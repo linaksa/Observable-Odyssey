@@ -25,6 +25,7 @@
                             <app-action-selection-button
                                 [isSelected]="board.selectedObject === type"
                                 [tooltip]="itemTypesDescLabels[type]"
+                                [disabled]="board.getRemainingObjectCount(type) === 0"
                                 (click)="selectObject(type)">
                                 <span>{{board.itemTypesLabels[type]}} | </span>
                                 <span class="text-sm text-red-500">
