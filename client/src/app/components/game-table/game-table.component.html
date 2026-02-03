@@ -1,6 +1,11 @@
 <section>
     <div class="overflow-hidden bg-white shadow-sm ring-1 ring-gray-200 rounded-lg">
-        @if (!(gameTableService.tableData.data.length)) {
+        @if(gameTableService.isLoading()) {
+            <div class="fixed w-screen h-screen top-0 left-0 opacity-50 bg-gray-500 z-50">
+                <div class="size-8 border-4 border-black border-t-transparent rounded-full animate-spin relative top-[50%] left-[50%]"></div>
+            </div>
+        }
+        @else if (!(gameTableService.tableData.data.length)) {
         <div class="px-4 py-8 text-center text-sm text-gray-500">Aucun jeu</div>
         } @else {
         <div class="divide-y divide-gray-200">
