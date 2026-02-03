@@ -27,7 +27,7 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
     form: FormGroup;
     description: string;
     numberOfPlayers: string = '2';
-    gameSize: number = 100;
+    size: number = 10;
 
     ngOnInit() {
         this.form = this.fb.group({
@@ -46,27 +46,25 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         switch (dimension) {
             case '10x10':
                 this.numberOfPlayers = '2';
-                this.gameSize = 100;
+                this.size = 10;
                 break;
             case '15x15':
                 this.numberOfPlayers = '2 à 4';
-                this.gameSize = 225;
+                this.size = 15;
                 break;
             case '20x20':
                 this.numberOfPlayers = '2 à 6';
-                this.gameSize = 400;
+                this.size = 20;
                 break;
         }
     }
 
     createGame() {
-        const size = Math.sqrt(this.gameSize);
-
         const game: IExistingGame = {
             gameMode: this.form.get('isCTF')?.value ? GameType.Ctf : GameType.Classic,
             board: {
                 items: [],
-                cells: Array.from({ length: size }, () => Array(size).fill(CellType.Empty)),
+                cells: Array.from({ length: this.size }, () => Array(this.size).fill(CellType.Empty)),
             },
             gameTitle: '',
             _id: '',
