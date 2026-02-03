@@ -23,9 +23,8 @@ export class EditionCellComponent {
 
     board = inject(BoardEditorService);
 
-    @Output() mousedDownCell = new EventEmitter<void>();
-    @Output() mouseMoveCell = new EventEmitter<void>();
-
+    @Output() mousedDownCell = new EventEmitter<MouseEvent>();
+    @Output() mouseMoveCell = new EventEmitter<MouseEvent>();
     @Input() cellType: CellType;
     @Input() i!: number;
     @Input() j!: number;

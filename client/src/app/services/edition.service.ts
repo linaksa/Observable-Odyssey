@@ -14,7 +14,6 @@ enum GridSize {
 export enum ToolOption {
     Placement = 'placement',
     Objects = 'objects',
-    Erase = 'erase',
 }
 
 
@@ -51,7 +50,6 @@ export class BoardEditorService {
     availableToolsIcons: { [key in ToolOption]: string } = {
         [ToolOption.Placement]: 'assets/edit-page/cursor.svg',
         [ToolOption.Objects]: 'assets/edit-page/cube.svg',
-        [ToolOption.Erase]: 'assets/edit-page/eraser.svg',
     };
 
 
@@ -166,7 +164,10 @@ export class BoardEditorService {
             return;
         }
 
-        if (this.blockingCells.has(this.selectedMaterial) && this.isCellOccupied(rowIndex, index)) return;
+        if (this.blockingCells.has(this.selectedMaterial) && this.isCellOccupied(rowIndex, index)) {
+            this.eraseObject(rowIndex, index);
+            this.gameCells[rowIndex][index] = this.selectedMaterial;
+        }
 
         this.gameCells[rowIndex][index] = this.selectedMaterial;
     }
@@ -221,21 +222,21 @@ export class BoardEditorService {
         if (cells.some(([row, col]) => this.isCellOccupied(row, col))) return;
 
         if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
-
         this.objects.push({ itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE});
 
         return;
     }
 
-    erase(row: number, col: number): void {
+    eraseTile(row: number, col: number): void {
+        this.gameCells[row][col] = CellType.Empty;
+    }
+
+    eraseObject(row: number, col: number): void {
         const obj = this.objects.find(o =>
             this.cellBelongsToObject(o, row, col),
         );
 
-        if (!obj) {
-            this.gameCells[row][col] = CellType.Empty;
-            return;
-        }
+        if (!obj) return;
 
         this.objects = this.objects.filter(o => o !== obj);
     }

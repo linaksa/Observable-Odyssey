@@ -29,7 +29,6 @@ export class GameEditionComponent implements OnInit {
     toolDescToolTip: { [key in ToolOption]: string } = {
         [ToolOption.Placement]: 'Placement d\'une tuile',
         [ToolOption.Objects]: 'Placement d\' un objet',
-        [ToolOption.Erase]: 'Effacer un objet/une tuile',
     };
 
     itemTypesDescLabels: { [key in ItemType]: string } = {
@@ -40,6 +39,7 @@ export class GameEditionComponent implements OnInit {
     };
 
     isDrawing = false;
+    isShiftPressed = false;
     lastIndexes: [number, number] = [0, 0];
 
     constructor() {
@@ -85,40 +85,66 @@ export class GameEditionComponent implements OnInit {
     }
 
 
-    onMouseDown(rowIndex: number, index: number): void {
+    onMouseDown(row: number, col: number, event: MouseEvent): void {
         this.isDrawing = true;
-        this.lastIndexes = [rowIndex, index];
+        this.lastIndexes = [row, col];
 
-        if (this.board.activeTool === ToolOption.Erase) {
-            this.board.erase(rowIndex, index);
-        } else if (this.board.activeTool === ToolOption.Objects) {
-            this.board.applyObject(rowIndex, index);
-        } else {
-            if (this.board.activeTool === ToolOption.Placement && this.board.selectedMaterial === CellType.OpenDoor) {
-                this.board.gameCells[rowIndex][index] =
-                    this.board.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
-                return;
+        if (event.button === 2) {
+            if (this.isShiftPressed) {
+                this.board.eraseObject(row, col);
+            } else {
+                this.board.eraseTile(row, col);
             }
-            this.board.applyTile(rowIndex, index);
+            return;
         }
+
+        if (this.board.activeTool === ToolOption.Objects) {
+            this.board.applyObject(row, col);
+            return;
+        }
+
+        if (this.board.activeTool === ToolOption.Placement && this.board.selectedMaterial === CellType.OpenDoor) {
+            this.board.gameCells[row][col] =
+                this.board.gameCells[row][col] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+            return;
+        }
+
+        this.board.applyTile(row, col);
     }
 
-    onMouseMove(rowIndex: number, index: number): void {
+    onMouseMove(row: number, col: number, event: MouseEvent): void {
         if (!this.isDrawing) return;
-        if (this.lastIndexes[0] === rowIndex && this.lastIndexes[1] === index) return;
+        if (this.lastIndexes[0] === row && this.lastIndexes[1] === col) return;
 
-        this.lastIndexes = [rowIndex, index];
-        if (this.board.activeTool === ToolOption.Placement) {
-            this.board.applyTile(rowIndex, index);
+        this.lastIndexes = [row, col];
+
+        if (event.buttons === 2) {
+            if (this.isShiftPressed) {
+                this.board.eraseObject(row, col);
+            } else {
+                this.board.eraseTile(row, col);
+            }
+            return;
         }
-        if (this.board.activeTool === ToolOption.Erase) {
-            this.board.erase(rowIndex, index);
+
+        if (this.board.activeTool === ToolOption.Placement) {
+            this.board.applyTile(row, col);
         }
     }
 
     @HostListener('window:mouseup')
     stopDrawing(): void {
         this.isDrawing = false;
+    }
+
+    @HostListener('window:keydown.shift')
+    onShiftDown(): void {
+        this.isShiftPressed = true;
+    }
+
+    @HostListener('window:keyup.shift')
+    onShiftUp(): void {
+        this.isShiftPressed = false;
     }
 
     get availableItemsTypes(): ItemType[] {

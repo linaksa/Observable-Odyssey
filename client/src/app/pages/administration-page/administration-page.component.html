@@ -1,11 +1,11 @@
 <div class="content">
-    <div class="flex justify-between">
-        <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
-        <button class="btn btn-green" (click)="openDialog()">Ajouter un jeu</button>
-    </div>
+    <nav class="sub-page-nav">
+        <button class="btn main-page-btn" routerLink="/home">Retour vers la vue initiale</button>
+        <button class="btn btn-green main-page-btn" (click)="openDialog()">Ajouter un jeu</button>
+    </nav>
 
     <div class="flex justify-center">
-        <h1 class="page-title mt-4">Administration</h1>
+        <h1 class="main-page-title p-4 md:pt-0">Administration</h1>
     </div>
 
     <app-game-table [isAdmin]="true"></app-game-table>

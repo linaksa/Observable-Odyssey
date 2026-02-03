@@ -1,6 +1,7 @@
 <div
-    (mousedown)="mousedDownCell.emit()"
-    (mouseenter)="mouseMoveCell.emit()"
+    (mousedown)="mousedDownCell.emit($event)"
+    (mouseenter)="mouseMoveCell.emit($event)"
+    (contextmenu)="$event.preventDefault()"
     class="relative select-none size-full">
     <div [ngClass]="backgroundImage" class="absolute inset-0 bg-no-repeat bg-cover"></div>
 
