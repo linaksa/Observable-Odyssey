@@ -1,11 +1,13 @@
 /* eslint-disable max-lines */
 
+import { GameController } from '@app/controllers/game.controller';
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { AdminSocketsService } from './admin.sockets.service';
 import { BoardService } from './board.service';
 import { GameService } from './game.service';
 
@@ -304,6 +306,35 @@ describe('Game Service', () => {
         } catch (error) {
             expect(error.message).to.equal("Il n'y a pas de description");
         }
+    });
+    it('should return first element when param is an array', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: ['array-id'],
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal('array-id');
+    });
+
+    it('should return null when param is invalid', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: false,
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal(null);
     });
 
     it('should throw an error when gameTitle is missing', async () => {
