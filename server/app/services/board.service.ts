@@ -7,7 +7,7 @@ import { Service } from 'typedi';
 enum ExpectedSanctuaries {
     Small = 1,
     Mid = 2,
-    Large = 3,
+    Large = 4,
 }
 
 enum ExpectedStartingPoints {

@@ -55,7 +55,7 @@
                 <div
                     #grid
                     id="grid-container"
-                    class="grid bg-gray-400 aspect-square h-full auto-rows-fr select-none"
+                    class="grid bg-gray-400 aspect-square w-full auto-rows-fr select-none "
                     [style.gridTemplateColumns]="'repeat(' + boardEditorService.gameCells.length + ', 1fr)'"
                 >
                     @for (row of boardEditorService.gameCells; track $index; let rowIndex = $index) { @for (cell of row; track $index; let i = $index)

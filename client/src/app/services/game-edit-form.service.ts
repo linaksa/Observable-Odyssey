@@ -101,9 +101,8 @@ export class GameEditFormService {
             resolve();
           },
           error: (err) => {
-            err = JSON.parse(err.error);
             this.formValid = false;
-            this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', err.error.error];
+            this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', err.error];
             this.isSubmitting.set(false);
             reject();
           },

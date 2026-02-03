@@ -1175,6 +1175,10 @@ export const insufficientStartingPointsLargeBoard: IBoard = {
     items: [
         { itemType: 'startingPosition', x: 0, y: 0, size: 1 },
         { itemType: 'fightSanctuary', x: 5, y: 5, size: 4 },
+        { itemType: 'fightSanctuary', x: 5, y: 5, size: 4 },
+        { itemType: 'fightSanctuary', x: 5, y: 5, size: 4 },
+        { itemType: 'lifeSanctuary', x: 10, y: 10, size: 4 },
+        { itemType: 'lifeSanctuary', x: 10, y: 10, size: 4 },
         { itemType: 'lifeSanctuary', x: 10, y: 10, size: 4 },
         { itemType: 'fightSanctuary', x: 15, y: 15, size: 4 },
         { itemType: 'lifeSanctuary', x: 19, y: 19, size: 4 },
