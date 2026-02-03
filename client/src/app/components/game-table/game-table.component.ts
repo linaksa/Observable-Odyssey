@@ -1,13 +1,13 @@
 import { DatePipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { AdminSocketService } from '@app/services/admin.socket.service';
 import { AdministrationService } from '@app/services/administrationService';
 import { GameTableServiceService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { IExistingGame, Visibility } from '@common/game';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
     selector: 'app-game-table',
@@ -26,18 +26,22 @@ export class GameTableComponent implements OnInit, OnDestroy {
 
     @Input() isAdmin = false;
 
-    ngOnInit(): void {
-        this.gameTableService.tableData.data = [];
-
+    fetchCorrectGames(): void {
         if (this.isAdmin) {
             this.gameTableService.fetchGames();
         } else {
             this.gameTableService.fetchVisibleGames();
         }
+    }
+
+    ngOnInit(): void {
+        this.gameTableService.tableData.data = [];
+
+        fetchCorrectGames();
 
         this.adminSocketService.fetchGamesOnSignal().subscribe({
             next: () => {
-                this.gameTableService.fetchGames();
+                fetchCorrectGames();
             },
             error: (error: HttpErrorResponse) => {
                 const serverMessage = error?.error?.error || "Il y a eu un problème lors de l'ajout des jeux.";
