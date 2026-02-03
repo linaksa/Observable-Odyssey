@@ -53,6 +53,7 @@
 
             <div class="flex-1 flex items-center justify-center p-4">
                 <div
+                    #grid
                     id="grid-container"
                     class="grid bg-gray-400 aspect-square h-full auto-rows-fr select-none"
                     [style.gridTemplateColumns]="'repeat(' + boardEditorService.gameCells.length + ', 1fr)'"
@@ -89,6 +90,7 @@
                 }
             </div>
             <app-edition-form
+                [gridSelector]="grid"
                 [game]="gameToEdit"
                 [cells]="boardEditorService.gameCells"
                 [objects]="boardEditorService.objects"

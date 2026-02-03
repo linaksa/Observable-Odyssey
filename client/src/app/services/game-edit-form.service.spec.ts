@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { IBoard } from '@common/board';
 import { EditGameFormData, GameType, IExistingGame, Visibility } from '@common/game';
 import { GameEditFormService } from './game-edit-form.service';
@@ -29,10 +30,10 @@ describe('GameEditFormService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(GameEditFormService);
+    gameServiceSpy = jasmine.createSpyObj('GameService', ['saveGame', 'createGame'], { mySignal: signal(false) });
+    TestBed.overrideProvider(GameService, { useValue: gameServiceSpy });
 
-    gameServiceSpy = jasmine.createSpyObj('GameService', ['saveGame', 'createGame']);
-    service.gameService = gameServiceSpy;
+    service = TestBed.inject(GameEditFormService);
   });
 
   it('should have all form fields', () => {
@@ -52,19 +53,23 @@ describe('GameEditFormService', () => {
   it('should not submit if preview image fails', async () => {
     spyOn(service, 'getPreviewImage').and.returnValue(Promise.resolve(null));
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
-
-    expect(service.formValid).toBeFalse();
-    expect(service.formErrors).toHaveSize(1);
-    expect(service.isSubmitting).toBeFalse();
-    
-    expect(service.gameService.saveGame).not.toHaveBeenCalled();
+    try{
+      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      fail('Submit form should have thrown an error');
+    }catch{
+      expect(service.formValid).toBeFalse();
+      expect(service.formErrors).toHaveSize(1);
+      expect(service.isSubmitting()).toBeFalse();
+      
+      expect(service.gameService.saveGame).not.toHaveBeenCalled();
+    }
   });
 
   it('should submit form with correct data', async () => {
     const fakeImage = 'data:image/png;base64,fakeImageData' as Base64URLString;
     spyOn(service, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
 
+    randomGame._id = '1';
     gameServiceSpy.saveGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
   
     const newTitle = 'Updated Game Title';
@@ -83,7 +88,7 @@ describe('GameEditFormService', () => {
         board: randomGame.board,
     };
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
+    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.saveGame).toHaveBeenCalled();
     expect(service.gameService.saveGame).toHaveBeenCalledWith(randomGame._id, expectedGameData);
   });
@@ -95,21 +100,25 @@ describe('GameEditFormService', () => {
     gameServiceSpy.saveGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
     randomGame._id = '1';
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
+    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.saveGame).toHaveBeenCalled();
 
     expect(service.formValid).toBeTrue();
     expect(service.formErrors).toHaveSize(0);
-    expect(service.isSubmitting).toBeFalse();
+    expect(service.isSubmitting()).toBeFalse();
 
-    gameServiceSpy.saveGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    gameServiceSpy.saveGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: '{"error": "Save error"}' })));
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
-    expect(service.gameService.saveGame).toHaveBeenCalled();
+    try{
+      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      fail('Submit form should have thrown an error');
+    } catch {
+      expect(service.gameService.saveGame).toHaveBeenCalled();
 
-    expect(service.formValid).toBeFalse();
-    expect(service.formErrors).not.toHaveSize(0);
-    expect(service.isSubmitting).toBeFalse();
+      expect(service.formValid).toBeFalse();
+      expect(service.formErrors).not.toHaveSize(0);
+      expect(service.isSubmitting()).toBeFalse();
+    }
   });
 
   it('should submit form successfully with newly created game', async () => {
@@ -119,48 +128,50 @@ describe('GameEditFormService', () => {
     gameServiceSpy.createGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
     randomGame._id = '';
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
+    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.createGame).toHaveBeenCalled();
 
     expect(service.formValid).toBeTrue();
     expect(service.formErrors).toHaveSize(0);
-    expect(service.isSubmitting).toBeFalse();
+    expect(service.isSubmitting()).toBeFalse();
 
-    gameServiceSpy.createGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+    gameServiceSpy.createGame.and.returnValue(throwError(() => new HttpErrorResponse({status: 500, error: '{"error": "Save error"}'})));
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items);
-    expect(service.gameService.createGame).toHaveBeenCalled();
+    try{
+      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      fail('Submit form should have thrown an error');
+    } catch {
+      expect(service.gameService.createGame).toHaveBeenCalled();
 
-    expect(service.formValid).toBeFalse();
-    expect(service.formErrors).not.toHaveSize(0);
-    expect(service.isSubmitting).toBeFalse();
+      expect(service.formValid).toBeFalse();
+      expect(service.formErrors).not.toHaveSize(0);
+      expect(service.isSubmitting()).toBeFalse();
+    }
   });
 
   it('should return null if grid element does not exists', async () => {
-    spyOn(document, 'querySelector').and.returnValue(null);
-
-    const result = await service.getPreviewImage();
+    const grid = null;
+    const result = await service.getPreviewImage(grid);
     expect(result).toBeNull();
   });
 
   it('should return null if html2canvas fails', async () => {
     const fakeElement = document.createElement('div');
-    spyOn(document, 'querySelector').and.returnValue(fakeElement);
     spyOn(HTMLCanvasElement.prototype, 'toDataURL').and.throwError('Canvas error');
 
-    const result = await service.getPreviewImage();
+    const result = await service.getPreviewImage(fakeElement);
     expect(result).toBeNull();
   });
 
   it('should return image data if html2canvas succeeds', async () => {
     const fakeElement = document.createElement('div');
-    spyOn(document, 'querySelector').and.returnValue(fakeElement);
 
     const fakeCanvas = document.createElement('canvas');
     spyOn(fakeCanvas, 'toDataURL').and.returnValue('data:image/png;base64,FAKE_BASE64');
     spyOn(service, 'customHtml2Canvas').and.returnValue(Promise.resolve(fakeCanvas));
+    
 
-    const result = await service.getPreviewImage();
+    const result = await service.getPreviewImage(fakeElement);
     expect(result).not.toBeNull();
   });
 });

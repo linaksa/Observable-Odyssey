@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { signal } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { provideRouter, RouterLink } from '@angular/router';
 import { GameEditFormService } from '@app/services/game-edit-form.service';
@@ -34,7 +35,7 @@ describe('EditionFormComponent', () => {
       providers: [provideRouter([]), { provide: FormBuilder, useValue: formBuilder }],
     }).compileComponents();
 
-    editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm']);
+    editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm'], {isSubmitting: signal(false) });
     editFormServiceSpy.form = formBuilder.group({
       gameTitle: [''],
       description: [''],
@@ -49,6 +50,7 @@ describe('EditionFormComponent', () => {
     component.game = randomGame;
     component.cells = randomGame.board.cells;
     component.objects = randomGame.board.items;
+    component.gridSelector = null;
     await fixture.whenStable();
   });
 
@@ -57,7 +59,9 @@ describe('EditionFormComponent', () => {
   });
 
   it('should call submitForm on submitGameForm', () => {
+    editFormServiceSpy.submitForm.and.returnValue(Promise.resolve());
+
     component.submitGameForm();
-    expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(randomGame._id, component.cells, component.objects);
+    expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(randomGame._id, component.cells, component.objects, component.gridSelector);
   });
 });
