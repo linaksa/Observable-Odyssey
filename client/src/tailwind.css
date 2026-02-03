@@ -65,3 +65,9 @@ div.content {
 .main-page-btn {
     @apply w-full sm:w-auto;
 }
+
+/* Subpages */
+
+.sub-page-nav {
+    @apply flex justify-between flex-col sm:flex-row gap-4;
+}

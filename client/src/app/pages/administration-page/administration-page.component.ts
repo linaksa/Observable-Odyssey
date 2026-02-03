@@ -18,8 +18,6 @@ export class AdministrationPageComponent {
 
         dialogConfig.autoFocus = true;
         dialogConfig.hasBackdrop = true;
-        dialogConfig.width = '25vw';
-        dialogConfig.height = '25vw';
 
         this.dialog.open(GameCreationDialogComponent, dialogConfig);
     }

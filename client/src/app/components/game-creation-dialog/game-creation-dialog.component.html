@@ -2,7 +2,7 @@
 
 <mat-dialog-content class="h-full">
     <div [formGroup]="form" class="flex flex-col h-full justify-evenly p-5">
-        <div class="mode-toggle w-full">
+        <div class="mode-toggle w-full pb-4">
             <mat-slide-toggle formControlName="isCTF" color="primary" [disabled]="true">
                 {{ form.get('isCTF')?.value ? 'Mode CTF' : 'Mode normal' }}
             </mat-slide-toggle>
