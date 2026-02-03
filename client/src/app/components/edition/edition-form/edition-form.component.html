@@ -1,11 +1,11 @@
 <form [formGroup]="gameEditFormService.form" (ngSubmit)="submitGameForm()">
-
-    @if(gameEditFormService.isSubmitting) {
+    
+    @if(isSubmittingFlag()) { 
         <div class="fixed w-screen h-screen top-0 left-0 opacity-50 bg-gray-500 z-50">
             <div class="size-8 border-4 border-black border-t-transparent rounded-full animate-spin relative top-[50%] left-[50%]"></div>
         </div>
     }
-
+    
     <div class="flex flex-col gap-2">
         <div class="flex flex-col">
             <label>Titre</label>
@@ -38,6 +38,5 @@
 
     <button
         class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200"
-        routerLink="/admin"
         type="submit">Sauvegarder</button>
 </form>

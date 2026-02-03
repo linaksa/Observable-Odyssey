@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
+import { Component, HostListener, inject, Input, OnInit, ViewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { RouterLink } from '@angular/router';
@@ -25,6 +25,7 @@ import { ItemType } from '@common/items';
 })
 export class GameEditionComponent implements OnInit {
     @Input() gameToEdit: IExistingGame;
+    @ViewChild('grid', { static: false })
 
     gameService: GameService = inject(GameService);
     boardEditorService: BoardEditorService = inject(BoardEditorService);
