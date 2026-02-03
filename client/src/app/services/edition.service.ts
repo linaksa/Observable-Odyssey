@@ -82,8 +82,8 @@ export class BoardEditorService {
     ]);
 
     initFromExistingBoard(game: IExistingGame): void {
-        this.gameCells = game.board.cells;
-        this.objects = game.board.items;
+        this.gameCells = structuredClone(game.board.cells);
+        this.objects = structuredClone(game.board.items);
         this.gameMode = game.gameMode;
     }
 
@@ -153,6 +153,10 @@ export class BoardEditorService {
             );
         }
         this.gameMode = nextMode;
+    }
+
+    revertGrid(game: IExistingGame): void {
+        this.initFromExistingBoard(structuredClone(game));
     }
 
     applyTile(rowIndex: number, index: number): void {

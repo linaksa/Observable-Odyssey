@@ -4,10 +4,11 @@ import { GameEditFormService } from '@app/services/game-edit-form.service';
 import { CellType } from '@common/board';
 import { IExistingGame } from '@common/game';
 import { IItem } from '@common/items';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-edition-form',
-  imports: [ReactiveFormsModule],
+    imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './edition-form.component.html',
   styleUrl: './edition-form.component.scss',
 })
