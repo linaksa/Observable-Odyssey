@@ -41,6 +41,10 @@ export const RANDOM_PLAYER_NAMES: string[] = [
     'Joueur20',
 ];
 
+export const PLAYER_NAME_MIN_LENGTH = 3;
+export const PLAYER_NAME_MAX_LENGTH = 20;
+
+
 export enum GameSize {
     Small = 100,
     Mid = 225,
