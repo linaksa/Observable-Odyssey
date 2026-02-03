@@ -57,8 +57,8 @@
                             [cellType]="cell"
                             [i]="rowIndex"
                             [j]="i"
-                            (mousedDownCell)="onMouseDown(rowIndex, i)"
-                            (mouseMoveCell)="onMouseMove(rowIndex, i)"
+                            (mousedDownCell)="onMouseDown(rowIndex, i, $event)"
+                            (mouseMoveCell)="onMouseMove(rowIndex, i, $event)"
                         ></app-edition-cell>
                     }
                 }
