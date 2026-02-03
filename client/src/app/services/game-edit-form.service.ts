@@ -13,25 +13,27 @@ import { GameService } from './game.service';
 export class GameEditFormService {
     gameService = inject(GameService);
 
-    form: FormGroup;
-    formValid: boolean;
-    formErrors: string[];
-    isSubmitting: boolean = false;
+  form: FormGroup;
+  formValid: boolean = false;
+  formErrors: string[];
+  isSubmitting: boolean = false;
 
-    constructor(private formBuilder: FormBuilder) {
-        this.form = this.formBuilder.group({
-            gameTitle: [''],
-            description: [''],
-            gameMode: [GameType.Classic],
-        });
-    }
+  customHtml2Canvas = html2canvas;
 
-    availableGameModes: GameType[] = [GameType.Classic, GameType.Ctf];
+  availableGameModes: GameType[] = [GameType.Classic, GameType.Ctf];
+  availableGameModeLabels = {
+    [GameType.Classic]: 'Classique',
+    [GameType.Ctf]: 'Capture de drapeau',
+  };
 
-    availableGameModeLabels = {
-        [GameType.Classic]: 'Classique',
-        [GameType.Ctf]: 'Capture de drapeau',
-    };
+
+  constructor(private formBuilder: FormBuilder) {
+    this.form = this.formBuilder.group({
+      gameTitle: [''],
+      description: [''],
+      gameMode: [GameType.Classic],
+    });
+  }
 
     init(gameData: EditGameFormData): void {
         this.form.patchValue({
@@ -47,34 +49,27 @@ export class GameEditFormService {
             return null;
         }
 
-        let imgData: Base64URLString;
-        try {
-            const canvas = await html2canvas(grid);
-            imgData = canvas.toDataURL('image/png');
-        } catch {
-            return null;
-        }
-        return imgData;
+    let imgData: Base64URLString;
+    try {
+      const canvas: HTMLCanvasElement = await this.customHtml2Canvas(grid);
+      imgData = canvas.toDataURL('image/png');
+    } catch {
+      return null;
     }
+    return imgData;
+  }
 
     async submitForm(id: string, cells: CellType[][], items: IItem[]): Promise<void> {
         this.isSubmitting = true;
         this.formErrors = [];
 
-        const previewImage = await this.getPreviewImage();
-        if (!previewImage) {
-            this.formValid = false;
-            this.formErrors = ["Une erreur est survenue lors de la génération de l'aperçu du plateau."];
-            this.isSubmitting = false;
-            return;
-        }
-
-        if (!this.form.valid) {
-            this.formValid = false;
-            this.formErrors = ['Le formulaire contient des erreurs. Veuillez vérifier les champs.'];
-            this.isSubmitting = false;
-            return;
-        }
+    const previewImage = await this.getPreviewImage();
+    if (!previewImage) {
+        this.formValid = false;
+        this.formErrors = ['Une erreur est survenue lors de la génération de l\'aperçu du plateau.'];
+        this.isSubmitting = false;
+        return;
+    }
 
         const formData = this.form.value;
         const board: IBoard = {
@@ -89,8 +84,15 @@ export class GameEditFormService {
             preview: previewImage,
             board,
         };
+
+        let observable;
         if (id) {
-            this.gameService.saveGame(id, gameData).subscribe({
+            observable = this.gameService.saveGame(id, gameData);
+        } else {
+            observable = this.gameService.createGame(gameData);
+        }
+
+        observable.subscribe({
                 next: () => {
                     this.formValid = true;
                     this.isSubmitting = false;
@@ -101,18 +103,5 @@ export class GameEditFormService {
                     this.isSubmitting = false;
                 },
             });
-        } else {
-            this.gameService.createGame(gameData).subscribe({
-                next: () => {
-                    this.formValid = true;
-                    this.isSubmitting = false;
-                },
-                error: (err) => {
-                    this.formValid = false;
-                    this.formErrors = ['Une erreur est survenue lors de la création du jeu.', err.error];
-                    this.isSubmitting = false;
-                },
-            });
-        }
     }
 }
