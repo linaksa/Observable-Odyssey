@@ -9,16 +9,16 @@
     <div class="flex flex-col gap-2">
         <div class="flex flex-col">
             <label>Titre</label>
-            <input formControlName="gameTitle" type="text" class="border rounded px-2 py-1" name="editionTitle"/>
+            <input id="gameTitle" formControlName="gameTitle" type="text" class="border rounded px-2 py-1" name="gameTitle"/>
         </div>
 
         <div class="flex flex-col">
             <label>Description</label>
-            <textarea formControlName="description"  class="border rounded px-2 py-1" rows="4" name="editionDescription"></textarea>
+            <textarea formControlName="description"  class="border rounded px-2 py-1" rows="4" name="description"></textarea>
         </div>
         <div class="flex flex-col">
             <label>Mode de jeu</label>
-            <select formControlName="gameMode" class="border" (change)="onGameModeChange.emit($event)">
+            <select formControlName="gameMode" name="gameMode" class="border" (change)="onGameModeChange.emit($event)">
                 @for (mode of gameEditFormService.availableGameModes; track $index;) {
                     <option [value]="mode">{{ gameEditFormService.availableGameModeLabels[mode] }}</option>
                 }
