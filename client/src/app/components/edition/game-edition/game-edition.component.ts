@@ -11,10 +11,16 @@ import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { ItemType } from '@common/items';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-game-edition',
-    imports: [CommonModule, ReactiveFormsModule, MatButtonToggleModule, EditionCellComponent, ActionSelectionButtonComponent, EditionFormComponent],
+    imports: [CommonModule,
+        ReactiveFormsModule,
+        MatButtonToggleModule,
+        EditionCellComponent,
+        ActionSelectionButtonComponent,
+        EditionFormComponent, RouterLink],
     templateUrl: './game-edition.component.html',
     styleUrl: './game-edition.component.scss',
 })
@@ -42,12 +48,16 @@ export class GameEditionComponent implements OnInit {
     isShiftPressed = false;
     lastIndexes: [number, number] = [0, 0];
 
+    previousVersion: IExistingGame;
+
+
     constructor() {
         this.board.buildGrid(this.board.gridSize);
     }
 
     ngOnInit(): void {
-        this.board.initFromExistingBoard(this.gameToEdit);
+        this.previousVersion = structuredClone(this.gameToEdit);
+        this.board.initFromExistingBoard(structuredClone(this.previousVersion));
     }
 
 
