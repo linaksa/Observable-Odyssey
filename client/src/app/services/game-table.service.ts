@@ -6,7 +6,7 @@ import { GameService } from './game.service';
 @Injectable({
     providedIn: 'root',
 })
-export class GameTableServiceService {
+export class GameTableService {
     gameService: GameService = inject(GameService);
 
     tableData = new MatTableDataSource<IExistingGame>();
