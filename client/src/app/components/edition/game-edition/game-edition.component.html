@@ -49,7 +49,7 @@
             <div class="flex-1 flex items-center justify-center p-4">
                 <div id="grid-container"
                     class="grid bg-gray-400 aspect-square h-full auto-rows-fr select-none"
-                    [style.gridTemplateColumns]="'repeat(' + board.gridSize + ', 1fr)'"
+                    [style.gridTemplateColumns]="'repeat(' + board.gameCells.length + ', 1fr)'"
                 >
                 @for (row of board.gameCells; track $index; let rowIndex = $index) {
                     @for (cell of row; track $index; let i = $index) {
