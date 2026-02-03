@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { FormBuilder } from '@angular/forms';
+import { provideRouter, RouterLink } from '@angular/router';
 import { GameEditFormService } from '@app/services/game-edit-form.service';
 import { IBoard } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
@@ -29,10 +30,9 @@ describe('EditionFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EditionFormComponent],
-      providers: [{ provide: FormBuilder, useValue: formBuilder }],
-    })
-    .compileComponents();
+      imports: [EditionFormComponent, RouterLink],
+      providers: [provideRouter([]), { provide: FormBuilder, useValue: formBuilder }],
+    }).compileComponents();
 
     editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm']);
     editFormServiceSpy.form = formBuilder.group({

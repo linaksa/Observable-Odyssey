@@ -16,26 +16,18 @@ export enum ToolOption {
     Objects = 'objects',
 }
 
-
 @Injectable({
     providedIn: 'root',
 })
 export class BoardEditorService {
-
     itemTypesLabels: { [key in ItemType]: string } = {
         [ItemType.LifeSanctuary]: 'Sanctuaire de vie',
         [ItemType.FightSanctuary]: 'Sanctuaire de combat',
-        [ItemType.StartingPosition]: 'Point d\'apparition',
+        [ItemType.StartingPosition]: "Point d'apparition",
         [ItemType.Flag]: 'Drapeau',
     };
 
-    availableCellTypes = [
-        CellType.Empty,
-        CellType.Ice,
-        CellType.Water,
-        CellType.Wall,
-        CellType.OpenDoor,
-    ];
+    availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
 
     cellTypesLabels: { [key in CellType]: string } = {
         [CellType.Empty]: 'Gazon',
@@ -51,9 +43,6 @@ export class BoardEditorService {
         [ToolOption.Placement]: 'assets/edit-page/cursor.svg',
         [ToolOption.Objects]: 'assets/edit-page/cube.svg',
     };
-
-
-    gridSize = GridSize.SMALL;
 
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
@@ -74,12 +63,7 @@ export class BoardEditorService {
     spawnpointMaxAmount = 2;
     flagMaxAmount = 1;
 
-    blockingCells = new Set<CellType>([
-        CellType.Wall,
-        CellType.Water,
-        CellType.OpenDoor,
-        CellType.ClosedDoor,
-    ]);
+    blockingCells = new Set<CellType>([CellType.Wall, CellType.Water, CellType.OpenDoor, CellType.ClosedDoor]);
 
     initFromExistingBoard(game: IExistingGame): void {
         this.gameCells = structuredClone(game.board.cells);
@@ -88,43 +72,36 @@ export class BoardEditorService {
     }
 
     buildGrid(size: number): void {
-        this.gridSize = size;
-
-        this.gameCells = Array.from({ length: size }, () =>
-            Array.from({ length: size }, () => CellType.Empty),
-        );
+        this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Empty));
 
         this.objects = [];
-
 
         this.updateMaxAmount();
     }
 
     cellBelongsToObject(obj: IItem, row: number, col: number): boolean {
         if (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) {
-            return (row >= obj.x && row <= obj.x + 1 && col >= obj.y && col <= obj.y + 1);
+            return row >= obj.x && row <= obj.x + 1 && col >= obj.y && col <= obj.y + 1;
         }
         return obj.x === row && obj.y === col;
     }
 
     isCellOccupied(row: number, col: number): boolean {
-        return this.objects.some(obj =>
-            this.cellBelongsToObject(obj, row, col),
-        );
+        return this.objects.some((obj) => this.cellBelongsToObject(obj, row, col));
     }
 
     getObjectAt(row: number, col: number): IItem | null {
-        return this.objects.find(obj => this.cellBelongsToObject(obj, row, col)) ?? null;
+        return this.objects.find((obj) => this.cellBelongsToObject(obj, row, col)) ?? null;
     }
 
     updateMaxAmount() {
-        if (this.gridSize === GridSize.SMALL) {
+        if (this.gameCells.length === GridSize.SMALL) {
             this.sanctuaryMaxAmount = 1;
             this.spawnpointMaxAmount = 2;
-        } else if (this.gridSize === GridSize.MEDIUM) {
+        } else if (this.gameCells.length === GridSize.MEDIUM) {
             this.sanctuaryMaxAmount = 2;
             this.spawnpointMaxAmount = 4;
-        } else if (this.gridSize === GridSize.LARGE) {
+        } else if (this.gameCells.length === GridSize.LARGE) {
             this.sanctuaryMaxAmount = 4;
             this.spawnpointMaxAmount = 6;
         }
@@ -132,25 +109,20 @@ export class BoardEditorService {
 
     setGrid(size: number): void {
         if (this.isBoardFilled()) {
-            const confirmChange = confirm(
-                'Changing the grid size will erase your progress. Save first to not lose progress',
-            );
+            const confirmChange = confirm('Changing the grid size will erase your progress. Save first to not lose progress');
             if (!confirmChange) {
                 return;
             }
         }
-        this.gridSize = size;
         this.resetGrid();
         this.buildGrid(size);
     }
 
-    changeGameMode(nextMode: GameType): void{
+    changeGameMode(nextMode: GameType): void {
         this.selectedObject = null;
 
-        if(nextMode !== GameType.Ctf){
-            this.objects = this.objects.filter(
-                obj => obj.itemType !== ItemType.Flag,
-            );
+        if (nextMode !== GameType.Ctf) {
+            this.objects = this.objects.filter((obj) => obj.itemType !== ItemType.Flag);
         }
         this.gameMode = nextMode;
     }
@@ -163,8 +135,7 @@ export class BoardEditorService {
         if (this.activeTool !== ToolOption.Placement) return;
 
         if (this.selectedMaterial === CellType.OpenDoor) {
-            this.gameCells[rowIndex][index] =
-                this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+            this.gameCells[rowIndex][index] = this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
             return;
         }
 
@@ -181,10 +152,7 @@ export class BoardEditorService {
 
         if (this.blockingCells.has(this.gameCells[rowIndex][colIndex])) return;
 
-        if (
-            this.selectedObject === ItemType.LifeSanctuary ||
-            this.selectedObject === ItemType.FightSanctuary
-        ) {
+        if (this.selectedObject === ItemType.LifeSanctuary || this.selectedObject === ItemType.FightSanctuary) {
             this.placeSanctuary(rowIndex, colIndex);
             return;
         }
@@ -208,13 +176,13 @@ export class BoardEditorService {
     }
 
     placeSanctuary(rowIndex: number, colIndex: number): void {
-        if(this.selectedObject === null) return;
+        if (this.selectedObject === null) return;
 
         if (this.selectedObject === ItemType.LifeSanctuary && this.getObjectCount(ItemType.LifeSanctuary) >= this.sanctuaryMaxAmount) return;
 
         if (this.selectedObject === ItemType.FightSanctuary && this.getObjectCount(ItemType.FightSanctuary) >= this.sanctuaryMaxAmount) return;
 
-        if (rowIndex + 1 >= this.gridSize || colIndex + 1 >= this.gridSize) return;
+        if (rowIndex + 1 >= this.gameCells.length || colIndex + 1 >= this.gameCells.length) return;
 
         const cells: [number, number][] = [
             [rowIndex, colIndex],
@@ -226,7 +194,7 @@ export class BoardEditorService {
         if (cells.some(([row, col]) => this.isCellOccupied(row, col))) return;
 
         if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
-        this.objects.push({ itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE});
+        this.objects.push({ itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE });
 
         return;
     }
@@ -236,31 +204,26 @@ export class BoardEditorService {
     }
 
     eraseObject(row: number, col: number): void {
-        const obj = this.objects.find(o =>
-            this.cellBelongsToObject(o, row, col),
-        );
+        const obj = this.objects.find((o) => this.cellBelongsToObject(o, row, col));
 
         if (!obj) return;
 
-        this.objects = this.objects.filter(o => o !== obj);
+        this.objects = this.objects.filter((o) => o !== obj);
     }
 
     resetGrid(): void {
-        this.buildGrid(this.gridSize);
+        this.buildGrid(this.gameCells.length);
     }
 
     isBoardFilled(): boolean {
-        return this.gameCells.some(row => {
-                return row.some(cell => cell !== CellType.Empty);
-            },
-        );
+        return this.gameCells.some((row) => {
+            return row.some((cell) => cell !== CellType.Empty);
+        });
     }
 
     getSanctuaryBgPosition(row: number, col: number): string | null {
-        const sanctuary = this.objects.find(obj =>
-            (obj.itemType === ItemType.LifeSanctuary ||
-                obj.itemType === ItemType.FightSanctuary) &&
-            this.cellBelongsToObject(obj, row, col),
+        const sanctuary = this.objects.find(
+            (obj) => (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) && this.cellBelongsToObject(obj, row, col),
         );
 
         if (!sanctuary) return null;
@@ -275,7 +238,7 @@ export class BoardEditorService {
     }
 
     getObjectCount(itemType: ItemType): number {
-        return this.objects.filter(obj => obj.itemType === itemType).length;
+        return this.objects.filter((obj) => obj.itemType === itemType).length;
     }
 
     getRemainingObjectCount(itemType: ItemType): number {
@@ -292,5 +255,4 @@ export class BoardEditorService {
                 return 0;
         }
     }
-
 }

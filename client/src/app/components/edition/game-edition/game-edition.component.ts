@@ -2,16 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, Input, OnInit } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { RouterLink } from '@angular/router';
 import { ActionSelectionButtonComponent } from '@app/components/edition/action-selection-button/action-selection-button.component';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
 import { EditionFormComponent } from '@app/components/edition/edition-form/edition-form.component';
-import { AdministrationService } from '@app/services/administrationService';
 import { BoardEditorService, Tool, ToolOption } from '@app/services/edition.service';
 import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { ItemType } from '@common/items';
-import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-game-edition',
@@ -27,20 +26,18 @@ import { RouterLink } from '@angular/router';
 export class GameEditionComponent implements OnInit {
     @Input() gameToEdit: IExistingGame;
 
-    adminService: AdministrationService = inject(AdministrationService);
     gameService: GameService = inject(GameService);
-    editedGame: IExistingGame;
-    board: BoardEditorService = inject(BoardEditorService);
+    boardEditorService: BoardEditorService = inject(BoardEditorService);
 
     toolDescToolTip: { [key in ToolOption]: string } = {
-        [ToolOption.Placement]: 'Placement d\'une tuile',
-        [ToolOption.Objects]: 'Placement d\' un objet',
+        [ToolOption.Placement]: "Placement d'une tuile",
+        [ToolOption.Objects]: "Placement d' un objet",
     };
 
     itemTypesDescLabels: { [key in ItemType]: string } = {
         [ItemType.LifeSanctuary]: 'Soigne le joueur',
-        [ItemType.FightSanctuary]: 'Augmente les degats d\'attaque',
-        [ItemType.StartingPosition]: 'Position d\'apparition du joueur',
+        [ItemType.FightSanctuary]: "Augmente les degats d'attaque",
+        [ItemType.StartingPosition]: "Position d'apparition du joueur",
         [ItemType.Flag]: 'Objectif pour le mode CTF ',
     };
 
@@ -50,50 +47,40 @@ export class GameEditionComponent implements OnInit {
 
     previousVersion: IExistingGame;
 
-
-    constructor() {
-        this.board.buildGrid(this.board.gridSize);
-    }
-
     ngOnInit(): void {
+        this.boardEditorService.buildGrid(this.gameToEdit.board.cells.length);
         this.previousVersion = structuredClone(this.gameToEdit);
-        this.board.initFromExistingBoard(structuredClone(this.previousVersion));
+        this.boardEditorService.initFromExistingBoard(structuredClone(this.previousVersion));
     }
-
 
     gameModeChange(event: Event): void {
         const selectElement = event.target as HTMLSelectElement;
         const selectedMode: GameType = selectElement.value as GameType;
 
-
-        const hasFlag = this.board.getObjectCount(ItemType.Flag) > 0;
+        const hasFlag = this.boardEditorService.getObjectCount(ItemType.Flag) > 0;
         if (hasFlag && selectedMode !== GameType.Ctf) {
-            const res = confirm(
-                'Changing the mode to Normal while a flag is placed will remove it.',
-            );
+            const res = confirm('Changing the mode to Normal while a flag is placed will remove it.');
 
-            if (!res){
-                this.board.changeGameMode(this.board.gameMode);
-                selectElement.value = this.board.gameMode;
+            if (!res) {
+                this.boardEditorService.changeGameMode(this.boardEditorService.gameMode);
+                selectElement.value = this.boardEditorService.gameMode;
                 return;
-            };
-
+            }
         }
-        this.board.changeGameMode(selectedMode);
+        this.boardEditorService.changeGameMode(selectedMode);
     }
 
     selectTool(tool: Tool): void {
-        this.board.activeTool = tool;
+        this.boardEditorService.activeTool = tool;
     }
 
     selectMaterial(material: CellType): void {
-        this.board.selectedMaterial = material;
+        this.boardEditorService.selectedMaterial = material;
     }
 
     selectObject(object: ItemType): void {
-        this.board.selectedObject = object;
+        this.boardEditorService.selectedObject = object;
     }
-
 
     onMouseDown(row: number, col: number, event: MouseEvent): void {
         this.isDrawing = true;
@@ -101,25 +88,25 @@ export class GameEditionComponent implements OnInit {
 
         if (event.button === 2) {
             if (this.isShiftPressed) {
-                this.board.eraseObject(row, col);
+                this.boardEditorService.eraseObject(row, col);
             } else {
-                this.board.eraseTile(row, col);
+                this.boardEditorService.eraseTile(row, col);
             }
             return;
         }
 
-        if (this.board.activeTool === ToolOption.Objects) {
-            this.board.applyObject(row, col);
+        if (this.boardEditorService.activeTool === ToolOption.Objects) {
+            this.boardEditorService.applyObject(row, col);
             return;
         }
 
-        if (this.board.activeTool === ToolOption.Placement && this.board.selectedMaterial === CellType.OpenDoor) {
-            this.board.gameCells[row][col] =
-                this.board.gameCells[row][col] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+        if (this.boardEditorService.activeTool === ToolOption.Placement && this.boardEditorService.selectedMaterial === CellType.OpenDoor) {
+            this.boardEditorService.gameCells[row][col] =
+                this.boardEditorService.gameCells[row][col] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
             return;
         }
 
-        this.board.applyTile(row, col);
+        this.boardEditorService.applyTile(row, col);
     }
 
     onMouseMove(row: number, col: number, event: MouseEvent): void {
@@ -130,15 +117,15 @@ export class GameEditionComponent implements OnInit {
 
         if (event.buttons === 2) {
             if (this.isShiftPressed) {
-                this.board.eraseObject(row, col);
+                this.boardEditorService.eraseObject(row, col);
             } else {
-                this.board.eraseTile(row, col);
+                this.boardEditorService.eraseTile(row, col);
             }
             return;
         }
 
-        if (this.board.activeTool === ToolOption.Placement) {
-            this.board.applyTile(row, col);
+        if (this.boardEditorService.activeTool === ToolOption.Placement) {
+            this.boardEditorService.applyTile(row, col);
         }
     }
 
@@ -158,13 +145,9 @@ export class GameEditionComponent implements OnInit {
     }
 
     get availableItemsTypes(): ItemType[] {
-        const baseAvailableItemTypes = [
-            ItemType.LifeSanctuary,
-            ItemType.FightSanctuary,
-            ItemType.StartingPosition,
-        ];
+        const baseAvailableItemTypes = [ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition];
 
-        if (this.board.gameMode === GameType.Ctf) {
+        if (this.boardEditorService.gameMode === GameType.Ctf) {
             return baseAvailableItemTypes.concat([ItemType.Flag]);
         }
         return baseAvailableItemTypes;
