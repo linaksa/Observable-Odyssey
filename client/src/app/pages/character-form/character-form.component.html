@@ -25,8 +25,8 @@
                             <button
                                 mat-stroked-button
                                 type="button"
-                                class="min-w-0! p-0! aspect-square rounded-xl! overflow-hidden"
-                                [ngClass]="selectedAvatarIndex === i ? 'border-indigo-600! bg-indigo-50!' : ''"
+                                class="!min-w-0 !p-0 aspect-square !rounded-xl overflow-hidden"
+                                [ngClass]="selectedAvatarIndex === i ? '!border-indigo-600 !bg-indigo-50' : ''"
                                 (click)="selectAvatar(i)"
                             >
                                 <img [src]="avatar.image" [alt]="avatar.name" class="h-full w-full object-cover" />
@@ -101,7 +101,7 @@
 
                         <div class="flex flex-wrap justify-end gap-3">
                             <button class="btn btn-outline" (click)="generateRandomCharacter()">Générer un personnage aléatoire</button>
-                            <button class="btn" routerLink="/wait">Confirmer</button>
+                            <button class="btn" type="submit" [disabled]="!form.valid" routerLink="/wait">Confirmer</button>
                         </div>
                     </mat-card-content>
                 </mat-card>
@@ -127,7 +127,7 @@
                                 <button
                                     class="btn btn-outline"
                                     [disabled]="selectedAvatarIndex === null"
-                                    [ngClass]="selectedBonusType === 'life' ? 'border-indigo-600!' : ''"
+                                    [ngClass]="selectedBonusType === 'life' ? '!border-indigo-600' : ''"
                                     (click)="addBonus('life')"
                                 >
                                     +2 à la Vie
@@ -135,7 +135,7 @@
                                 <button
                                     class="btn btn-outline"
                                     [disabled]="selectedAvatarIndex === null"
-                                    [ngClass]="selectedBonusType === 'speed' ? 'border-indigo-600!' : ''"
+                                    [ngClass]="selectedBonusType === 'speed' ? '!border-indigo-600' : ''"
                                     (click)="addBonus('speed')"
                                 >
                                     +2 à la Rapidité
@@ -151,7 +151,7 @@
                                 <button
                                     class="btn btn-outline"
                                     [disabled]="selectedAvatarIndex === null"
-                                    [ngClass]="selectedDiceType === 'attack' ? 'border-indigo-600!' : ''"
+                                    [ngClass]="selectedDiceType === 'attack' ? '!border-indigo-600' : ''"
                                     (click)="addDice('attack')"
                                 >
                                     Dé à 6 faces pour l'Attaque et dé à 4 faces pour la Défense
@@ -159,7 +159,7 @@
                                 <button
                                     class="btn btn-outline"
                                     [disabled]="selectedAvatarIndex === null"
-                                    [ngClass]="selectedDiceType === 'defense' ? 'border-indigo-600!' : ''"
+                                    [ngClass]="selectedDiceType === 'defense' ? '!border-indigo-600' : ''"
                                     (click)="addDice('defense')"
                                 >
                                     Dé à 6 faces pour la Défense et dé à 4 faces pour l'Attaque

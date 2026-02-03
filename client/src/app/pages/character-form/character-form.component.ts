@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
-import { Avatar, DiceType, RANDOM_PLAYER_NAMES } from '@common/constants';
+import { Avatar, DiceType, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDOM_PLAYER_NAMES } from '@common/constants';
 
 type DiceSelectionType = 'attack' | 'defense';
 
@@ -34,6 +34,21 @@ export class CharacterFormComponent {
     readonly form = new FormGroup({
         playerName: new FormControl('', {
             nonNullable: true,
+            validators: [
+                Validators.required,
+                Validators.minLength(PLAYER_NAME_MIN_LENGTH),
+                Validators.maxLength(PLAYER_NAME_MAX_LENGTH),
+                Validators.pattern(/^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/),
+            ],
+        }),
+        avatarIndex: new FormControl<number | null>(null, {
+            validators: [Validators.required],
+        }),
+        bonusType: new FormControl<BonusType | null>(null, {
+            validators: [Validators.required],
+        }),
+        diceType: new FormControl<DiceSelectionType | null>(null, {
+            validators: [Validators.required],
         }),
     });
 
@@ -47,8 +62,10 @@ export class CharacterFormComponent {
     selectedAvatarIndex: number | null = null;
     selectedDiceType: DiceSelectionType | null = null;
     selectedBonusType: BonusType | null = null;
+    submitted = false;
+    errorMessage = '';
 
-    generateRandomCharacter(): void {
+generateRandomCharacter(): void {
         this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
 
         let avatarIndex = Math.floor(Math.random() * this.avatars.length);
@@ -77,6 +94,9 @@ export class CharacterFormComponent {
             this.selectedAvatarIndex = null;
             this.selectedBonusType = null;
             this.selectedDiceType = null;
+            this.form.controls.avatarIndex.setValue(null);
+            this.form.controls.bonusType.setValue(null);
+            this.form.controls.diceType.setValue(null);
             return;
         }
 
@@ -84,7 +104,11 @@ export class CharacterFormComponent {
         this.avatars[avatarIndex].character = CharacterModel.createDefault(this.avatars[avatarIndex].avatar);
         this.selectedBonusType = null;
         this.selectedDiceType = null;
+        this.form.controls.avatarIndex.setValue(avatarIndex);
+        this.form.controls.bonusType.setValue(null);
+        this.form.controls.diceType.setValue(null);
     }
+
 
     addBonus(type: BonusType): void {
         if (this.selectedAvatarIndex === null) {
@@ -99,11 +123,13 @@ export class CharacterFormComponent {
 
         if (this.selectedBonusType === type) {
             this.selectedBonusType = null;
+            this.form.controls.bonusType.setValue(null);
             return;
         }
 
         this.selectedBonusType = type;
         selectedAvatar.character.addBonus(type, 2);
+        this.form.controls.bonusType.setValue(type);
     }
 
     addDice(type: DiceSelectionType): void {
@@ -117,10 +143,12 @@ export class CharacterFormComponent {
             this.selectedDiceType = null;
             selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
             selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
+            this.form.controls.diceType.setValue(null);
             return;
         }
 
         this.selectedDiceType = type;
+        this.form.controls.diceType.setValue(type);
 
         if (type === 'attack') {
             selectedAvatar.character.attackBonusDiceType = DiceType.SixSided;
@@ -131,4 +159,30 @@ export class CharacterFormComponent {
         selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
         selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
     }
+
+    // confirmChanges(): void {
+    //     this.submitted = true;
+
+    //     if (this.form.controls.playerName.invalid) {
+    //         this.errorMessage = 'Votre nom ne doit contenir que des lettres (entre 3 et 20 lettres)';
+    //         return;
+    //     }
+
+    //     if (this.form.controls.avatarIndex.invalid) {
+    //         this.errorMessage = 'Vous devez choisir un avatar';
+    //         return;
+    //     }
+
+    //     if (this.form.controls.diceType.invalid) {
+    //         this.errorMessage = 'Vous devez assigner les des';
+    //         return;
+    //     }
+
+    //     if (this.form.controls.bonusType.invalid) {
+    //         this.errorMessage = 'Vous devez ajouter un bonus';
+    //         return;
+    //     }
+
+    //     this.errorMessage = '';
+    // }
 }
