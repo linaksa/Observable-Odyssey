@@ -5,7 +5,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { AdminSocketService } from '@app/services/admin.socket.service';
 import { AdministrationService } from '@app/services/administrationService';
-import { GameTableServiceService } from '@app/services/game-table.service';
+import { GameTableService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { IExistingGame, Visibility } from '@common/game';
 
@@ -20,7 +20,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
     private _closeString = 'Fermer';
 
     adminService: AdministrationService = inject(AdministrationService);
-    gameTableService: GameTableServiceService = inject(GameTableServiceService);
+    gameTableService: GameTableService = inject(GameTableService);
     gameService: GameService = inject(GameService);
     adminSocketService: AdminSocketService = inject(AdminSocketService);
 

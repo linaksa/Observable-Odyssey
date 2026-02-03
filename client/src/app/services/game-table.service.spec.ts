@@ -1,16 +1,81 @@
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import SpyObj = jasmine.SpyObj;
 
-import { GameTableServiceService } from './game-table.service';
+import { GameType, IExistingGame, Visibility } from '@common/game';
+import { GameTableService } from './game-table.service';
+import { GameService } from './game.service';
 
-describe('GameTableServiceService', () => {
-    let service: GameTableServiceService;
+describe('GameTableService', () => {
+    let service: GameTableService;
+    let gameServiceSpy: SpyObj<GameService>;
+
+    const gamesMock: IExistingGame[] = [
+        {
+            _id: '1uqgifiirvpoh4gnrbriovhn',
+            gameTitle: 'Visible Game',
+            description: '',
+            board: { cells: [[]], items: [] },
+            gameMode: GameType.Classic,
+            lastModifiedDate: new Date(),
+            visibility: Visibility.Viewable,
+            dateCreated: new Date(),
+            preview: '',
+        },
+        {
+            _id: '102974rj32ofqeqhjbfeqi',
+            gameTitle: 'Hidden Game',
+            description: '',
+            board: { cells: [[]], items: [] },
+            gameMode: GameType.Ctf,
+            lastModifiedDate: new Date(),
+            visibility: Visibility.Hidden,
+            dateCreated: new Date(),
+            preview: '',
+        },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
-        service = TestBed.inject(GameTableServiceService);
+        service = TestBed.inject(GameTableService);
+
+        gameServiceSpy = jasmine.createSpyObj('GameService', ['getAllGames']);
+        service.gameService = gameServiceSpy;
     });
 
     it('should be created', () => {
         expect(service).toBeTruthy();
+    });
+
+    it('should have tableData initialized as empty', () => {
+        expect(service.tableData.data).toEqual([]);
+    });
+
+    it('should fetch all games', () => {
+        gameServiceSpy.getAllGames.and.returnValue(of(gamesMock));
+
+        service.fetchGames();
+
+        expect(gameServiceSpy.getAllGames).toHaveBeenCalled();
+        expect(service.tableData.data).toEqual(gamesMock);
+    });
+
+    it('should fetch only visible games', () => {
+        gameServiceSpy.getAllGames.and.returnValue(of(gamesMock));
+
+        service.fetchVisibleGames();
+
+        expect(gameServiceSpy.getAllGames).toHaveBeenCalled();
+        expect(service.tableData.data).toEqual([gamesMock[0]]);
+    });
+
+    it('should handle empty response', () => {
+        gameServiceSpy.getAllGames.and.returnValue(of([]));
+
+        service.fetchGames();
+        expect(service.tableData.data).toEqual([]);
+
+        service.fetchVisibleGames();
+        expect(service.tableData.data).toEqual([]);
     });
 });
