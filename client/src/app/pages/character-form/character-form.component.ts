@@ -1,12 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
@@ -16,17 +10,7 @@ type DiceSelectionType = 'attack' | 'defense';
 
 @Component({
     selector: 'app-character-form',
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        MatButtonModule,
-        MatCardModule,
-        MatDividerModule,
-        MatFormFieldModule,
-        MatIconModule,
-        MatInputModule,
-        RouterLink,
-    ],
+    imports: [CommonModule, ReactiveFormsModule, RouterLink],
     templateUrl: './character-form.component.html',
     styleUrl: './character-form.component.scss',
 })
@@ -55,7 +39,7 @@ export class CharacterFormComponent {
     avatars: AvatarI[] = Array.from({ length: 12 }, (_, i) => ({
         name: `Avatar ${i + 1}`,
         avatar: `avatar${i + 1}` as Avatar,
-        image: `assets/avatar${i + 1}.png`,
+        image: `assets/form-page/avatar${i + 1}.png`,
         character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
     }));
 
@@ -65,7 +49,7 @@ export class CharacterFormComponent {
     submitted = false;
     errorMessage = '';
 
-generateRandomCharacter(): void {
+    generateRandomCharacter(): void {
         this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
 
         let avatarIndex = Math.floor(Math.random() * this.avatars.length);
@@ -108,7 +92,6 @@ generateRandomCharacter(): void {
         this.form.controls.bonusType.setValue(null);
         this.form.controls.diceType.setValue(null);
     }
-
 
     addBonus(type: BonusType): void {
         if (this.selectedAvatarIndex === null) {

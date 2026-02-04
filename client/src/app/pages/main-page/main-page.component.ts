@@ -7,6 +7,4 @@ import { RouterLink } from '@angular/router';
     styleUrls: ['./main-page.component.scss'],
     imports: [RouterLink],
 })
-export class MainPageComponent {
-    readonly title: string = 'OK Garmin - Erstelle ein Rollenspiel mit Angular';
-}
+export class MainPageComponent {}

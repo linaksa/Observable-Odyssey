@@ -2,29 +2,29 @@
     (mousedown)="mousedDownCell.emit($event)"
     (mouseenter)="mouseMoveCell.emit($event)"
     (contextmenu)="$event.preventDefault()"
-    class="relative select-none size-full">
-
+    class="relative select-none size-full"
+>
     <div [ngClass]="backgroundImage" class="absolute inset-0 bg-no-repeat bg-cover"></div>
 
     @if (board.getObjectAt(i, j); as obj) {
-        <div
-            class="absolute inset-0 z-10"
-            [ngStyle]="
-        obj.itemType === itemType.FightSanctuary || obj.itemType === itemType.LifeSanctuary
-          ? {
-              backgroundImage:
-                obj.itemType === itemType.FightSanctuary
-                  ? 'url(/assets/fightSanctuary.png)'
-                  : 'url(/assets/healSanctuary.png)',
-              backgroundSize: '200% 200%',
-              backgroundPosition: board.getSanctuaryBgPosition(i, j)
-            }
-          : null
-      "
-            [ngClass]="{
-        'bg-[url(/assets/flag.png)] bg-[length:100%_100%]': obj.itemType === itemType.Flag,
-        'bg-[url(/assets/spawnpoint.png)] bg-cover': obj.itemType === itemType.StartingPosition
-      }">
-        </div>
+    <div
+        class="absolute inset-0 z-10"
+        [ngStyle]="
+            obj.itemType === itemType.FightSanctuary || obj.itemType === itemType.LifeSanctuary
+                ? {
+                      backgroundImage:
+                          obj.itemType === itemType.FightSanctuary
+                              ? 'url(/assets/edit-page/sprites/fightSanctuary.png)'
+                              : 'url(/assets/edit-page/sprites/healSanctuary.png)',
+                      backgroundSize: '200% 200%',
+                      backgroundPosition: board.getSanctuaryBgPosition(i, j)
+                  }
+                : null
+        "
+        [ngClass]="{
+            'bg-[url(/assets/edit-page/sprites/flag.png)] bg-size-[100%_100%]': obj.itemType === itemType.Flag,
+            'bg-[url(/assets/edit-page/sprites/spawnpoint.png)] bg-cover': obj.itemType === itemType.StartingPosition
+        }"
+    ></div>
     }
 </div>

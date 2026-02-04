@@ -40,8 +40,8 @@ export class BoardEditorService {
 
     availableTools = Object.values(ToolOption);
     availableToolsIcons: { [key in ToolOption]: string } = {
-        [ToolOption.Placement]: 'assets/edit-page/cursor.svg',
-        [ToolOption.Objects]: 'assets/edit-page/cube.svg',
+        [ToolOption.Placement]: 'assets/edit-page/tools/cursor.svg',
+        [ToolOption.Objects]: 'assets/edit-page/tools/cube.svg',
     };
 
     gameCells: CellType[][] = [];
