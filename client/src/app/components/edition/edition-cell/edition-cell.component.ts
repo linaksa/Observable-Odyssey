@@ -1,17 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { BoardEditorService } from '@app/services/edition.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
 import { CellType } from '@common/board';
-import { ItemType } from '@common/items';
-
-const CELL_TYPE_BACKGROUDS: { [key in CellType]: string } = {
-    [CellType.Empty]: 'bg-[url("/assets/edit-page/sprites/grass.png")]',
-    [CellType.Ice]: 'bg-[url("/assets/edit-page/sprites/ice.png")]',
-    [CellType.Water]: 'bg-[url(/assets/edit-page/sprites/water.png)]',
-    [CellType.Wall]: 'bg-[url(/assets/edit-page/sprites/wall.png)]',
-    [CellType.OpenDoor]: 'bg-[url(/assets/edit-page/sprites/openedDoor.png)]',
-    [CellType.ClosedDoor]: 'bg-[url(/assets/edit-page/sprites/closedDoor.png)]',
-};
+import { IItem, ItemType } from '@common/items';
 
 @Component({
     selector: 'app-edition-cell',
@@ -20,16 +11,45 @@ const CELL_TYPE_BACKGROUDS: { [key in CellType]: string } = {
     styleUrl: './edition-cell.component.scss',
 })
 export class EditionCellComponent {
-    board = inject(BoardEditorService);
-
     @Output() mousedDownCell = new EventEmitter<MouseEvent>();
-    @Output() mouseMoveCell = new EventEmitter<MouseEvent>();
+    @Output() mouseEnterCell = new EventEmitter<MouseEvent>();
     @Input() cellType: CellType;
-    @Input() i!: number;
-    @Input() j!: number;
+    @Input() rowIndex: number;
+    @Input() colIndex: number;
+    @Input() item: IItem | null;
 
     get backgroundImage(): string {
-        return `${CELL_TYPE_BACKGROUDS[this.cellType]}`;
+        return `${CELL_TYPE_BACKGROUNDS[this.cellType]}`;
+    }
+
+    get backgroundImageForObject(): string {
+        if (!this.item) return '';
+        return `${OBJECT_IMAGES[this.item.itemType as ItemType]}`;
+    }
+
+    get objectExtraStyles(): { [key: string]: string } {
+        if (!this.item) return {};
+
+        if (this.item.itemType === ItemType.LifeSanctuary || this.item.itemType === ItemType.FightSanctuary) {
+            // key cannot be camel case because it is a css rule;
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            return { 'background-position': this.getSanctuaryBgPosition(this.rowIndex, this.colIndex, this.item) };
+        }
+
+        return {};
+    }
+
+    getSanctuaryBgPosition(row: number, col: number, item: IItem): string {
+        if (row === item.x && col === item.y) {
+            return '0% 0%';
+        } else if (row === item.x && col === item.y + 1) {
+            return '100% 0%';
+        } else if (row === item.x + 1 && col === item.y) {
+            return '0% 100%';
+        } else if (row === item.x + 1 && col === item.y + 1) {
+            return '100% 100%';
+        }
+        return '';
     }
 
     protected readonly itemType = ItemType;
