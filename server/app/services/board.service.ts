@@ -28,18 +28,7 @@ export class BoardService {
     validateBoard(board: IBoard, gameMode: GameType): string[] {
         const errors: string[] = [];
         const gameSize = board.cells.length * board.cells[0].length;
-        let occupiedCells = 0;
-        for (const row of board.cells) {
-            for (const cell of row) {
-                if (cell !== CellType.Empty) {
-                    occupiedCells++;
-                }
-            }
-        }
-
-        if (occupiedCells <= gameSize * EXPECTED_TERRAIN_USE) {
-            errors.push('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
-        }
+        this.validateOccupiedTerrain(board, gameSize, errors);
 
         const expectedCounts = this.getExpectedCounts(gameSize);
         if (!expectedCounts) {
@@ -75,6 +64,21 @@ export class BoardService {
         this.validateGameModeRules(board, gameMode, errors);
 
         return errors;
+    }
+
+    private validateOccupiedTerrain(board: IBoard, gameSize: number, errors: string[]): void {
+        let occupiedCells = 0;
+        for (const row of board.cells) {
+            for (const cell of row) {
+                if (cell !== CellType.ClosedDoor && cell !== CellType.OpenDoor && cell !== CellType.Wall) {
+                    occupiedCells++;
+                }
+            }
+        }
+
+        if (occupiedCells <= gameSize * EXPECTED_TERRAIN_USE) {
+            errors.push('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
+        }
     }
 
     private validateGameModeRules(board: IBoard, gameMode: GameType, errors: string[]): void {
