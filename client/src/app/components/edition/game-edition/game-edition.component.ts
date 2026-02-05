@@ -110,7 +110,7 @@ export class GameEditionComponent implements OnInit {
         this.boardEditorService.applyTile(row, col);
     }
 
-    onMouseMove(row: number, col: number, event: MouseEvent): void {
+    onMouseEnter(row: number, col: number, event: MouseEvent): void {
         if (!this.isDrawing) return;
         if (this.lastIndexes[0] === row && this.lastIndexes[1] === col) return;
 

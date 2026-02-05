@@ -1,30 +1,17 @@
 <div
+    id="cell-wrapper"
     (mousedown)="mousedDownCell.emit($event)"
-    (mouseenter)="mouseMoveCell.emit($event)"
+    (mouseenter)="mouseEnterCell.emit($event)"
     (contextmenu)="$event.preventDefault()"
-    class="relative select-none size-full"
->
-    <div [ngClass]="backgroundImage" class="absolute inset-0 bg-no-repeat bg-cover"></div>
+    class="relative select-none size-full">
 
-    @if (board.getObjectAt(i, j); as obj) {
-    <div
-        class="absolute inset-0 z-10"
-        [ngStyle]="
-            obj.itemType === itemType.FightSanctuary || obj.itemType === itemType.LifeSanctuary
-                ? {
-                      backgroundImage:
-                          obj.itemType === itemType.FightSanctuary
-                              ? 'url(/assets/edit-page/sprites/fightSanctuary.png)'
-                              : 'url(/assets/edit-page/sprites/healSanctuary.png)',
-                      backgroundSize: '200% 200%',
-                      backgroundPosition: board.getSanctuaryBgPosition(i, j)
-                  }
-                : null
-        "
-        [ngClass]="{
-            'bg-[url(/assets/edit-page/sprites/flag.png)] bg-size-[100%_100%]': obj.itemType === itemType.Flag,
-            'bg-[url(/assets/edit-page/sprites/spawnpoint.png)] bg-cover': obj.itemType === itemType.StartingPosition
-        }"
-    ></div>
+    <div id="cell" [ngClass]="backgroundImage" class="absolute inset-0 bg-no-repeat bg-cover"></div>
+
+    @if (item) {
+        <div id="item"
+            [ngClass]="backgroundImageForObject"
+            class="absolute inset-0 z-10"
+            [ngStyle]="objectExtraStyles"> 
+        </div>
     }
 </div>

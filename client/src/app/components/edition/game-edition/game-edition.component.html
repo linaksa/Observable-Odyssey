@@ -58,14 +58,15 @@
                     class="grid bg-gray-400 aspect-square w-full auto-rows-fr select-none "
                     [style.gridTemplateColumns]="'repeat(' + boardEditorService.gameCells.length + ', 1fr)'"
                 >
-                    @for (row of boardEditorService.gameCells; track $index; let rowIndex = $index) { @for (cell of row; track $index; let i = $index)
+                    @for (row of boardEditorService.gameCells; track $index; let rowIndex = $index) { @for (cell of row; track $index; let colIndex = $index)
                     {
                     <app-edition-cell
                         [cellType]="cell"
-                        [i]="rowIndex"
-                        [j]="i"
-                        (mousedDownCell)="onMouseDown(rowIndex, i, $event)"
-                        (mouseMoveCell)="onMouseMove(rowIndex, i, $event)"
+                        [rowIndex]="rowIndex"
+                        [colIndex]="colIndex"
+                        (mousedDownCell)="onMouseDown(rowIndex, colIndex, $event)"
+                        (mouseEnterCell)="onMouseEnter(rowIndex, colIndex, $event)"
+                        [item]="boardEditorService.getObjectAt(rowIndex, colIndex)"
                     ></app-edition-cell>
                     } }
                 </div>

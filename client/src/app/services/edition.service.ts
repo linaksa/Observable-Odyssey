@@ -221,22 +221,6 @@ export class BoardEditorService {
         });
     }
 
-    getSanctuaryBgPosition(row: number, col: number): string | null {
-        const sanctuary = this.objects.find(
-            (obj) => (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) && this.cellBelongsToObject(obj, row, col),
-        );
-
-        if (!sanctuary) return null;
-
-        if (row === sanctuary.x && col === sanctuary.y) return '0% 0%';
-
-        if (row === sanctuary.x && col === sanctuary.y + 1) return '100% 0%';
-
-        if (row === sanctuary.x + 1 && col === sanctuary.y) return '0% 100%';
-
-        return '100% 100%';
-    }
-
     getObjectCount(itemType: ItemType): number {
         return this.objects.filter((obj) => obj.itemType === itemType).length;
     }
