@@ -6,12 +6,17 @@ import {
     allWallsBoard,
     ctfNoFlagMediumBoard,
     ctfNoFlagSmallBoard,
+    edgeDoorBoard,
     halfTerrainBoard,
     insufficientStartingPointsLargeBoard,
     insufficientStartingPointsSmallBoard,
+    invalidDoorBoard,
     invalidSizeBoard,
+    topEdgeDoorBoard,
     unreachableBoard,
     validClassicBoard,
+    verticalDoorTopWallOnlyBoard,
+    verticalDoorWithWallsBoard,
 } from './board.service.spec.constants';
 
 describe('Board Service', () => {
@@ -23,7 +28,6 @@ describe('Board Service', () => {
 
     it('should return true when validating a valid board', () => {
         const board = validClassicBoard;
-
         const errors = boardService.validateBoard(board, GameType.Classic);
         expect(errors).to.have.lengthOf(0);
     });
@@ -65,7 +69,6 @@ describe('Board Service', () => {
 
     it('should return false when less than 50% of the board is terrain cells', () => {
         const board = halfTerrainBoard;
-
         const errors = boardService.validateBoard(board, GameType.Classic);
         expect(errors).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
     });
@@ -81,5 +84,35 @@ describe('Board Service', () => {
 
         const errors = boardService.validateBoard(board, GameType.Ctf);
         expect(errors).to.have.lengthOf(1);
+    });
+
+    it('should return an error when a door doesnt have wall on both axes', () => {
+        const board = invalidDoorBoard;
+        const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+    });
+
+    it('should return an error when a door is placed on the edge', () => {
+        const board = edgeDoorBoard;
+        const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+    });
+
+    it('should return an error when a door is placed on the top edge between walls', () => {
+        const board = topEdgeDoorBoard;
+        const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+    });
+
+    it('should return an error when only the top neighbor is a wall in vertical check', () => {
+        const board = verticalDoorTopWallOnlyBoard;
+        const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+    });
+
+    it('should validate a vertical door between walls with terrain on sides', () => {
+        const board = verticalDoorWithWallsBoard;
+        const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.not.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
     });
 });
