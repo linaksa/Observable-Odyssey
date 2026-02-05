@@ -6,7 +6,7 @@ import {
     allWallsBoard,
     ctfNoFlagMediumBoard,
     ctfNoFlagSmallBoard,
-    halfEmptyBoard,
+    halfTerrainBoard,
     insufficientStartingPointsLargeBoard,
     insufficientStartingPointsSmallBoard,
     invalidSizeBoard,
@@ -63,8 +63,8 @@ describe('Board Service', () => {
         expect(errors).to.include('Toutes les cellules de la carte ne sont pas accessibles.');
     });
 
-    it('should return false when 50% or more of the board is empty', () => {
-        const board = halfEmptyBoard;
+    it('should return false when less than 50% of the board is terrain cells', () => {
+        const board = halfTerrainBoard;
 
         const errors = boardService.validateBoard(board, GameType.Classic);
         expect(errors).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
