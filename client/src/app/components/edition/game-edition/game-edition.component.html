@@ -1,5 +1,5 @@
 <div class="h-screen bg-gray-100 p-4">
-    <div class="max-h-full flex gap-4">
+    <div class="h-full flex gap-4">
         <aside class="bg-white border rounded-lg p-4 flex flex-col basis-1/4">
             @if (boardEditorService.activeTool === 'placement') {
             <div>
@@ -30,10 +30,15 @@
                 </div>
             </div>
             }
-            <button class="mt-auto w-full rounded-lg border px-4 py-2 hover:bg-gray-100" routerLink="/admin">Retour a la page admin</button>
+            <button
+                class="mt-auto w-full rounded-lg border px-4 py-2 hover:bg-gray-100"
+                routerLink="/admin"
+            >
+                Retour a la page admin
+            </button>
         </aside>
 
-        <main class="bg-gray-50 rounded-xl border flex-1">
+        <main class="bg-gray-50 rounded-xl border flex flex-col flex-1">
             <div class="h-12 px-4 border-b flex items-center justify-center gap-2 bg-white">
                 <button type="button" (click)="boardEditorService.setGrid(10)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
                     10×10
@@ -65,13 +70,7 @@
                 </div>
             </div>
             <div class="h-12 px-4 border-t flex items-center justify-center gap-2 bg-white">
-                <button
-                    type="button"
-                    (click)="boardEditorService.revertGrid(this.previousVersion)"
-                    class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200"
-                >
-                    Reset
-                </button>
+                <button type="button" (click)="boardEditorService.revertGrid(this.previousVersion)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">Reset</button>
             </div>
         </main>
 
