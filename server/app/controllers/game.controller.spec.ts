@@ -1,4 +1,5 @@
 import { Application } from '@app/app';
+import { ValidationError } from '@app/errors/validationError';
 import { AdminSocketsService } from '@app/services/admin.sockets.service';
 import { GameService } from '@app/services/game.service';
 import { IBoard } from '@common/board';
@@ -69,6 +70,7 @@ describe('GameController', () => {
             .get('/api/games/')
             .expect(StatusCodes.OK)
             .then((response) => {
+                // On normalise les dates pour éviter les problèmes de comparaison liés aux formats de date
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 expect(normalizeDates(response.body)).to.deep.equal(normalizeDates(gamesList as any));
             });
@@ -133,7 +135,7 @@ describe('GameController', () => {
     });
 
     it('should return an error when the game cannot be created', async () => {
-        gameService.createGame.rejects(new Error('TEST'));
+        gameService.createGame.rejects(new ValidationError('TEST'));
         return supertest(expressApp)
             .post('/api/games/')
             .send({ game: baseGame })
@@ -143,20 +145,38 @@ describe('GameController', () => {
             });
     });
 
+    it('should return 500 on internal server error when creating a game', async () => {
+        gameService.createGame.rejects(new Error('Erreur interne du serveur'));
+        return supertest(expressApp)
+            .post('/api/games')
+            .send({ game: baseGame })
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((res) => {
+                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+            });
+    });
+
     it('should delete a game and return 204', async () => {
         gameService.deleteGame.resolves();
-
         return supertest(expressApp).delete(`/api/games/${fakeGameId}`).expect(StatusCodes.NO_CONTENT);
     });
 
     it('should return 404 if game not found on DELETE', async () => {
-        gameService.deleteGame.rejects(new Error('Jeu introuvable'));
-
+        gameService.deleteGame.rejects(new Error('Jeu déjà supprimé'));
         return supertest(expressApp)
             .delete(`/api/games/${fakeGameId}`)
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Jeu introuvable' });
+                expect(response.body).to.deep.equal({ error: 'Jeu déjà supprimé' });
+            });
+    });
+    it('should return 500 on internal server error when deleting a game', async () => {
+        gameService.deleteGame.rejects(new Error('Erreur interne du serveur'));
+        return supertest(expressApp)
+            .delete(`/api/games/${fakeGameId}`)
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((res) => {
+                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
             });
     });
 
@@ -175,7 +195,6 @@ describe('GameController', () => {
 
     it('should return 404 if game not found on PATCH', async () => {
         gameService.changeVisibility.rejects(new Error('Jeu introuvable'));
-
         return supertest(expressApp)
             .patch(`/api/games/${fakeGameId}/visibility`)
             .send({ visibility: Visibility.Viewable })
@@ -186,20 +205,29 @@ describe('GameController', () => {
     });
 
     it('should return 400 if invalid visibility on PATCH', async () => {
-        gameService.changeVisibility.rejects(new Error('Valeur invalide'));
-
+        gameService.changeVisibility.rejects(new ValidationError('Visibilité invalide'));
         return supertest(expressApp)
             .patch(`/api/games/${fakeGameId}/visibility`)
             .send({ visibility: 'eqifbgqrgiqo' })
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Valeur invalide' });
+                expect(response.body).to.deep.equal({ error: 'Visibilité invalide' });
+            });
+    });
+    it('should return 500 on internal server error when changing visibility', async () => {
+        gameService.changeVisibility.rejects(new Error('Erreur interne du serveur'));
+        return supertest(expressApp)
+            .patch(`/api/games/${fakeGameId}/visibility`)
+            .send({ visibility: Visibility.Viewable })
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((res) => {
+                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
             });
     });
 
     it('should update a game and return updated game', async () => {
         const updatedGame = { ...baseGame, gameTitle: 'Updated Title' };
-        gameService.updateGame.resolves(updatedGame);
+        gameService.updateGame.resolves({ game: updatedGame, created: false });
 
         return supertest(expressApp)
             .put(`/api/games/${fakeGameId}`)
@@ -210,27 +238,44 @@ describe('GameController', () => {
             });
     });
 
-    it('should return 404 if game not found on PUT', async () => {
-        gameService.updateGame.rejects(new Error('Jeu introuvable'));
-
+    it('should create a new game if the game to update has been deleted during update', async () => {
+        const createdGame = { ...baseGame, gameTitle: 'Created Title' };
+        gameService.updateGame.resolves({ game: createdGame, created: true });
         return supertest(expressApp)
             .put(`/api/games/${fakeGameId}`)
-            .send({ game: baseGame })
-            .expect(StatusCodes.NOT_FOUND)
-            .then((response: Response) => {
-                expect(response.body).to.deep.equal({ error: 'Jeu introuvable' });
+            .send({ game: createdGame })
+            .expect(StatusCodes.CREATED)
+            .then((response) => {
+                expect(response.body.gameTitle).to.deep.equal('Created Title');
             });
     });
 
     it('should return 400 on PUT if body is invalid', async () => {
-        gameService.updateGame.rejects(new Error('Données invalides'));
-
+        gameService.updateGame.rejects(new ValidationError('Données invalides'));
+        const invalidBody = {
+            game: {
+                gameTitle: '',
+                description: '',
+                gameMode: 'Invalid',
+                preview: '',
+            },
+        };
         return supertest(expressApp)
             .put(`/api/games/${fakeGameId}`)
-            .send({}) // body invalide ou manquant
+            .send(invalidBody)
             .expect(StatusCodes.BAD_REQUEST)
             .then((response: Response) => {
                 expect(response.body).to.deep.equal({ error: 'Données invalides' });
+            });
+    });
+    it('should return 500 on internal server error when updating a game', async () => {
+        gameService.updateGame.rejects(new Error('Erreur interne du serveur'));
+        return supertest(expressApp)
+            .put(`/api/games/${fakeGameId}`)
+            .send({ game: baseGame })
+            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
+            .then((res) => {
+                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
             });
     });
 });
