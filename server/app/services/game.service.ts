@@ -1,3 +1,4 @@
+import { ValidationError } from '@app/errors/validationError';
 import { game } from '@app/schemas/game';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
@@ -27,39 +28,40 @@ export class GameService {
 
     private validateGameData(gameData: IGame): void {
         if (!gameData.description?.length) {
-            throw new Error("Il n'y a pas de description");
+            throw new ValidationError("Il n'y a pas de description");
         }
 
         if (!gameData.gameTitle?.length) {
-            throw new Error("Il n'y a pas de titre");
+            throw new ValidationError("Il n'y a pas de titre");
         }
 
         if (!Object.values(GameType).includes(gameData.gameMode)) {
-            throw new Error('Mode de jeu invalide');
+            throw new ValidationError('Mode de jeu invalide');
         }
 
         if (!gameData.board) {
-            throw new Error("Il n'y a pas de carte");
+            throw new ValidationError("Il n'y a pas de carte");
         }
 
         if (!gameData.preview) {
-            throw new Error('Il manque une image de preview du jeu');
+            throw new ValidationError('Il manque une image de preview du jeu');
         }
         const boardErrors = this.boardService.validateBoard(gameData.board, gameData.gameMode);
 
         if (boardErrors.length > 0) {
-            throw new Error(boardErrors.join(' '));
+            throw new ValidationError(boardErrors.join(' '));
         }
     }
 
-    async updateGame(id: string, gameData: IGame): Promise<IGame> {
+    async updateGame(id: string, gameData: IGame): Promise<{ game: IGame; created: boolean }> {
         const existingGame = await game.findById(id);
         if (!existingGame) {
-            return await this.createGame(gameData); // crée le jeu si il n'existe pas ou a été supprimé
+            const newGame = await this.createGame(gameData);
+            return { game: newGame, created: true };
         }
         this.validateGameData(gameData);
 
-        return await game.findByIdAndUpdate(
+        const updatedGame = await game.findByIdAndUpdate(
             id,
             {
                 gameTitle: gameData.gameTitle,
@@ -71,12 +73,13 @@ export class GameService {
             },
             { new: true },
         );
+        return { game: updatedGame, created: false };
     }
 
     async deleteGame(gameId: string): Promise<void> {
         const deletedGame = await game.findByIdAndDelete(gameId);
         if (!deletedGame) {
-            throw new Error('Jeu déjà supprimé'); // on va devoir avertir l'utilisateur (alert maybe)
+            throw new Error('Jeu déjà supprimé');
         }
     }
 
@@ -84,6 +87,10 @@ export class GameService {
         const existingGame = await game.findById(id);
         if (!existingGame) {
             throw new Error('Jeu introuvable');
+        }
+        const validVisibilities = [Visibility.Viewable, Visibility.Hidden];
+        if (!validVisibilities.includes(visibility)) {
+            throw new ValidationError('Visibilité invalide');
         }
         existingGame.visibility = visibility;
         existingGame.lastModifiedDate = new Date();

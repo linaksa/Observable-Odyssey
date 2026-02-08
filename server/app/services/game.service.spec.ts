@@ -477,6 +477,16 @@ describe('Game Service', () => {
             expect(error.message).to.equal('Jeu introuvable');
         }
     });
+    it('should throw error if visibility is invalid', async () => {
+        findByIdStub.resolves(baseGame);
+
+        try {
+            await gameService.changeVisibility(fakeGameId, 'INVALID_VISIBILITY' as Visibility);
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect(error.message).to.equal('Visibilité invalide');
+        }
+    });
     // updateGame tests
     it('should update a game successfully', async () => {
         const updatedData = { ...baseGame, gameTitle: 'Updated Title' };
@@ -484,9 +494,10 @@ describe('Game Service', () => {
         findByIdStub.resolves(baseGame);
         findByIdAndUpdateStub.resolves(updatedData);
 
-        const result = await gameService.updateGame(fakeGameId, updatedData);
+        const { game: updatedGame, created } = await gameService.updateGame(fakeGameId, updatedData);
 
-        expect(result.gameTitle).to.equal('Updated Title');
+        expect(updatedGame.gameTitle).to.equal('Updated Title');
+        expect(created).to.equal(false);
         expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
         expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
     });
@@ -499,9 +510,9 @@ describe('Game Service', () => {
         const result = await gameService.updateGame(fakeGameId, baseGame);
         expect(gameCreateStub.calledOnce).to.equal(true);
         expect(gameCreateStub.calledWith(baseGame)).to.equal(true);
-        expect(result).to.deep.equal(createdGame);
+        expect(result).to.deep.equal({ game: createdGame, created: true });
     });
-    it('should throw error if game data is invalid', async () => {
+    it('should throw error if game data to update is invalid', async () => {
         findByIdStub.resolves(baseGame);
         const invalidGameData = {
             ...baseGame,
