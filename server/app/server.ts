@@ -2,7 +2,7 @@ import { Application } from '@app/app';
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
-import { AdminSocketsService } from './services/admin.sockets.service';
+import { AdminSocketsService } from './services/admin-sockets.service';
 
 @Service()
 export class Server {

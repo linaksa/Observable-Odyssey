@@ -7,7 +7,7 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { AdminSocketsService } from './admin.sockets.service';
+import { AdminSocketsService } from './admin-sockets.service';
 import { BoardService } from './board.service';
 import { GameService } from './game.service';
 

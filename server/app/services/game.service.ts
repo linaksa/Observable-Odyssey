@@ -1,8 +1,9 @@
-import { ValidationError } from '@app/errors/validationError';
+import { ValidationError } from '@app/error-types/validation-error';
 import { game } from '@app/schemas/game';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
+import { UpdatedGame } from './interfaces/updated-game';
 
 @Service()
 export class GameService {
@@ -53,11 +54,12 @@ export class GameService {
         }
     }
 
-    async updateGame(id: string, gameData: IGame): Promise<{ game: IGame; created: boolean }> {
+    async updateGame(id: string, gameData: IGame): Promise<UpdatedGame> {
         const existingGame = await game.findById(id);
         if (!existingGame) {
             const newGame = await this.createGame(gameData);
-            return { game: newGame, created: true };
+            const gameToCreate = { game: newGame, created: true };
+            return gameToCreate;
         }
         this.validateGameData(gameData);
 
@@ -73,7 +75,8 @@ export class GameService {
             },
             { new: true },
         );
-        return { game: updatedGame, created: false };
+        const gameToUpdate = { game: updatedGame, created: false };
+        return gameToUpdate;
     }
 
     async deleteGame(gameId: string): Promise<void> {

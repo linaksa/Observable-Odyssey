@@ -1,13 +1,9 @@
-import { ValidationError } from '@app/errors/validationError';
-import { AdminSocketsService } from '@app/services/admin.sockets.service';
+import { ValidationError } from '@app/error-types/validation-error';
+import { AdminSocketsService } from '@app/services/admin-sockets.service';
 import { GameService } from '@app/services/game.service';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
-
-const HTTP_STATUS_NO_CONTENT = StatusCodes.NO_CONTENT;
-const HTTP_STATUS_BAD_REQUEST = StatusCodes.BAD_REQUEST;
-const HTTP_STATUS_NOT_FOUND = StatusCodes.NOT_FOUND;
 
 @Service()
 export class GameController {
@@ -142,7 +138,7 @@ export class GameController {
             try {
                 const existingGame = await this.gameService.getGame(gameId);
                 if (!existingGame) {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ message: 'Jeu introuvable' });
+                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Jeu introuvable' });
                 }
                 return res.json(existingGame);
             } catch {
@@ -241,7 +237,7 @@ export class GameController {
             try {
                 await this.gameService.deleteGame(gameId);
                 this.adminSocketService.emitNewData();
-                return res.sendStatus(HTTP_STATUS_NO_CONTENT);
+                return res.sendStatus(StatusCodes.NO_CONTENT);
             } catch (error) {
                 if (error.message === 'Jeu déjà supprimé') {
                     return res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
@@ -304,12 +300,12 @@ export class GameController {
             const gameId = this.getParamAsString(req, 'id');
             const gameData = req.body;
             try {
-                const { game: game, created } = await this.gameService.updateGame(gameId, gameData);
+                const updatedGame = await this.gameService.updateGame(gameId, gameData);
                 this.adminSocketService.emitNewData();
-                if (created) {
-                    return res.status(StatusCodes.CREATED).json(game);
+                if (updatedGame.created) {
+                    return res.status(StatusCodes.CREATED).json(updatedGame.game);
                 } else {
-                    return res.status(StatusCodes.OK).json(game);
+                    return res.status(StatusCodes.OK).json(updatedGame.game);
                 }
             } catch (error) {
                 if (error instanceof ValidationError) {
@@ -367,10 +363,10 @@ export class GameController {
                 return res.json(updatedGame);
             } catch (error) {
                 if (error instanceof ValidationError) {
-                    return res.status(HTTP_STATUS_BAD_REQUEST).json({ error: error.message });
+                    return res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
                 }
                 if (error.message === 'Jeu introuvable') {
-                    return res.status(HTTP_STATUS_NOT_FOUND).json({ error: error.message });
+                    return res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
                 }
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
             }
