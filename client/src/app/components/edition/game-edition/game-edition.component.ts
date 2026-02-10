@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ActionSelectionButtonComponent } from '@app/components/edition/action-selection-button/action-selection-button.component';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
 import { EditionFormComponent } from '@app/components/edition/edition-form/edition-form.component';
-import { CELL_TYPE_BACKGROUNDS } from '@app/constants/backgrounds-mapping';
+import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
 import { BoardEditorService, Tool, ToolOption } from '@app/services/edition.service';
 import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
@@ -31,6 +31,7 @@ export class GameEditionComponent implements OnInit {
     boardEditorService: BoardEditorService = inject(BoardEditorService);
 
     cellTypeBackgrounds = CELL_TYPE_BACKGROUNDS;
+    toolIcons = OBJECT_IMAGES;
 
     toolDescToolTip: { [key in ToolOption]: string } = {
         [ToolOption.Placement]: "Placement d'une tuile",

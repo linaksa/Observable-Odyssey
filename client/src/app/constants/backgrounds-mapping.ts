@@ -11,8 +11,15 @@ export const CELL_TYPE_BACKGROUNDS: { [key in CellType]: string } = {
 };
 
 export const OBJECT_IMAGES: { [key in ItemType]: string } = {
-    [ItemType.LifeSanctuary]: 'bg-[url(/assets/edit-page/sprites/healSanctuary.png)] bg-size-[200%_200%]',
-    [ItemType.FightSanctuary]: 'bg-[url(/assets/edit-page/sprites/fightSanctuary.png)] bg-size-[200%_200%]',
-    [ItemType.StartingPosition]: 'bg-[url(/assets/edit-page/sprites/spawnpoint.png)] bg-cover',
-    [ItemType.Flag]: 'bg-[url(/assets/edit-page/sprites/flag.png)] bg-[length:100%_100%]',
+    [ItemType.LifeSanctuary]: 'bg-[url(/assets/edit-page/sprites/healSanctuary.png)]',
+    [ItemType.FightSanctuary]: 'bg-[url(/assets/edit-page/sprites/fightSanctuary.png)]',
+    [ItemType.StartingPosition]: 'bg-[url(/assets/edit-page/sprites/spawnpoint.png)]',
+    [ItemType.Flag]: 'bg-[url(/assets/edit-page/sprites/flag.png)]',
+};
+
+export const OBJECT_SPECIFIC_CLASSES: { [key in ItemType]: string } = {
+    [ItemType.LifeSanctuary]: 'bg-size-[200%_200%]',
+    [ItemType.FightSanctuary]: 'bg-size-[200%_200%]',
+    [ItemType.StartingPosition]: 'bg-cover',
+    [ItemType.Flag]: 'bg-[length:100%_100%]',
 };

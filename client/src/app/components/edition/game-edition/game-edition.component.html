@@ -27,7 +27,7 @@
                                 [disabled]="boardEditorService.getRemainingObjectCount(type) === 0"
                                 (click)="selectObject(type)"
                             >
-                                <span>{{ boardEditorService.itemTypesLabels[type] }} | </span>
+                            <div class="size-16 bg-cover m-auto" [ngClass]="toolIcons[type]"></div>
                                 <span
                                     class="text-sm text-red-500"> {{ boardEditorService.getRemainingObjectCount(type) }}
                                     restant </span>
