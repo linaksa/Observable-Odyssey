@@ -8,7 +8,6 @@ import { GameTableComponent } from '@app/components/game-table/game-table.compon
     selector: 'app-administration-page',
     imports: [GameTableComponent, RouterLink],
     templateUrl: './administration-page.component.html',
-    styleUrl: './administration-page.component.scss',
 })
 export class AdministrationPageComponent {
     dialog = inject(MatDialog);

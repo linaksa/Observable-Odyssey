@@ -10,7 +10,6 @@ import { IItem } from '@common/items';
   selector: 'app-edition-form',
   imports: [ReactiveFormsModule],
   templateUrl: './edition-form.component.html',
-  styleUrl: './edition-form.component.scss',
 })
 export class EditionFormComponent implements OnInit {
   gameEditFormService = inject(GameEditFormService);

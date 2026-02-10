@@ -15,7 +15,6 @@ import { Subject, takeUntil } from 'rxjs';
     selector: 'app-game-creation-dialog',
     imports: [AppMaterialModule, MatDialogModule, ReactiveFormsModule, MatFormField, MatOption, MatSelect],
     templateUrl: './game-creation-dialog.component.html',
-    styleUrl: './game-creation-dialog.component.scss',
 })
 export class GameCreationDialogComponent implements OnInit, OnDestroy {
     private readonly fb = inject(FormBuilder);

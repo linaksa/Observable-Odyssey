@@ -13,7 +13,6 @@ import { IExistingGame, Visibility } from '@common/game';
     selector: 'app-game-table',
     imports: [DatePipe, RouterLink, NgClass],
     templateUrl: './game-table.component.html',
-    styleUrl: './game-table.component.scss',
 })
 export class GameTableComponent implements OnInit, OnDestroy {
     private _snackBar = inject(MatSnackBar);
