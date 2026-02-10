@@ -1,4 +1,4 @@
-import { ICharacter } from '@common/ICharacter';
+import { ICharacter } from '@common/character';
 import { Schema } from 'mongoose';
 
 export const characterSchema = new Schema<ICharacter>(

@@ -12,7 +12,7 @@ export interface IItem {
     x: number;
     y: number;
     size: number;
-    itemType: string;
+    itemType: ItemType;
     active?: boolean;
     isCarried?: boolean;
 }

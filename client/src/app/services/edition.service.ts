@@ -5,7 +5,7 @@ import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items'
 
 export type Tool = 'placement' | 'objects' | 'erase';
 
-enum GridSize {
+export enum GridSize {
     SMALL = 10,
     MEDIUM = 15,
     LARGE = 20,
@@ -27,10 +27,10 @@ export class BoardEditorService {
         [ItemType.Flag]: 'Drapeau',
     };
 
-    availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
+    availableCellTypes = [CellType.Grass, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
 
     cellTypesLabels: { [key in CellType]: string } = {
-        [CellType.Empty]: 'Gazon',
+        [CellType.Grass]: 'Gazon',
         [CellType.Ice]: 'Glace',
         [CellType.Water]: 'Eau',
         [CellType.Wall]: 'Mur',
@@ -46,11 +46,11 @@ export class BoardEditorService {
 
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
-    gameMode: GameType;
+    gameMode!: GameType;
 
     activeTool: Tool = ToolOption.Placement;
-    selectedMaterial: CellType = CellType.Empty;
-    selectedObject: ItemType | null;
+    selectedMaterial: CellType = CellType.Grass;
+    selectedObject!: ItemType | null;
 
     objectSizesMap = {
         [ItemType.LifeSanctuary]: SANCTUARY_SIZE,
@@ -72,7 +72,7 @@ export class BoardEditorService {
     }
 
     buildGrid(size: number): void {
-        this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Empty));
+        this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Grass));
 
         this.objects = [];
 
@@ -200,7 +200,7 @@ export class BoardEditorService {
     }
 
     eraseTile(row: number, col: number): void {
-        this.gameCells[row][col] = CellType.Empty;
+        this.gameCells[row][col] = CellType.Grass;
     }
 
     eraseObject(row: number, col: number): void {
@@ -217,7 +217,7 @@ export class BoardEditorService {
 
     isBoardFilled(): boolean {
         return this.gameCells.some((row) => {
-            return row.some((cell) => cell !== CellType.Empty);
+            return row.some((cell) => cell !== CellType.Grass);
         });
     }
 

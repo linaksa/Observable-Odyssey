@@ -139,11 +139,11 @@ deploy:server:
     script:
         - 'which ssh-agent || (apt-get update -qq && apt-get install -qq openssh-client )'
         - eval $(ssh-agent -s)
-        - ssh-add <(echo "$EC2_PEM_FILE_CONTENT")
+        - ssh-add <(echo '$EC2_PEM_FILE_CONTENT')
         - mkdir -p ~/.ssh
-        - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+        - "[[ -f /.dockerenv ]] && echo -e 'Host *\n\tStrictHostKeyChecking no\n\n' > ~/.ssh/config"
         - |
-            timeout 600 ssh -t -oStrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=5 "${EC2_USER}@${EC2_HOST}" "
+            timeout 600 ssh -t -oStrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=5 '${EC2_USER}@${EC2_HOST}' '
                 set -e
 
                 echo 'Update repository cache'
@@ -229,4 +229,4 @@ deploy:server:
 
                 # Launch the server in background and append output to /var/log/messages for CloudWatch
                 PORT=${SERVER_PORT} forever start -a -l /var/log/messages out/server/app/index.js
-            "
+            '
