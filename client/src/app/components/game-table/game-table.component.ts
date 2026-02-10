@@ -8,6 +8,7 @@ import { AdministrationService } from '@app/services/administrationService';
 import { GameTableService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { IExistingGame, Visibility } from '@common/game';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-table',
@@ -15,6 +16,8 @@ import { IExistingGame, Visibility } from '@common/game';
     templateUrl: './game-table.component.html',
 })
 export class GameTableComponent implements OnInit, OnDestroy {
+    private socketSubscription?: Subscription;
+
     adminService: AdministrationService = inject(AdministrationService);
     gameTableService: GameTableService = inject(GameTableService);
     gameService: GameService = inject(GameService);
@@ -45,10 +48,10 @@ export class GameTableComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.gameTableService.tableData = [];
-
         this.fetchCorrectGames();
 
-        this.adminSocketService.fetchGamesOnSignal().subscribe({
+        this.adminSocketService.connect();
+        this.socketSubscription = this.adminSocketService.fetchGamesOnSignal().subscribe({
             next: () => {
                 this.fetchCorrectGames();
             },
@@ -93,6 +96,9 @@ export class GameTableComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        if (this.socketSubscription) {
+            this.socketSubscription.unsubscribe();
+        }
         this.adminSocketService.disconnect();
         if (this.toastTimeoutId) {
             clearTimeout(this.toastTimeoutId);
