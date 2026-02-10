@@ -51,8 +51,6 @@ export class FormPageComponent implements OnInit {
     selectedAvatarIndex: number | null = null;
     selectedDiceType: DiceSelectionType | null = null;
     selectedBonusType: BonusType | null = null;
-    submitted = false;
-    errorMessage = '';
 
     ngOnInit(): void {
         // no-op; form is managed locally and submitted via the service

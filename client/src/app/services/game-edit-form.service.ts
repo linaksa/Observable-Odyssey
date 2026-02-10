@@ -66,7 +66,7 @@ export class GameEditFormService {
         const previewImage = await this.getPreviewImage(gridSelector);
         if (!previewImage) {
             this.formValid = false;
-            this.formErrors = ["Une erreur est survenue lors de la génération de l'aperçu du plateau."];
+            this.formErrors = ['Une erreur est survenue lors de la génération de l\'aperçu du plateau.'];
             this.isSubmitting.set(false);
             return Promise.reject();
         }

@@ -82,10 +82,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         }
     }
 
-    private isValidDimension(value: unknown): value is DimensionSize {
-        return value === 'small' || value === 'medium' || value === 'large';
-    }
-
     createGame() {
         if (this.form.invalid) {
             return;
@@ -116,15 +112,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         this.form.get('isCTF')?.setValue(isCTF);
     }
 
-    get selectedDimension(): string {
-        const dimensionValue = this.form.get('dimension')?.value;
-
-        if (this.isValidDimension(dimensionValue)) {
-            return this.dimensionConfigs[dimensionValue].displaySize;
-        }
-
-        return this.dimensionConfigs[this.defaultDimension].displaySize;
-    }
 
     get isCTFMode(): boolean {
         return this.form.get('isCTF')?.value ?? this.defaultIsCTF;
