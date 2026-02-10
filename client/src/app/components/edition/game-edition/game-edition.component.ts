@@ -13,6 +13,7 @@ import { GameType, IExistingGame } from '@common/game';
 import { ItemType } from '@common/items';
 
 @Component({
+    standalone: true,
     selector: 'app-game-edition',
     imports: [CommonModule,
         ReactiveFormsModule,
@@ -26,6 +27,10 @@ import { ItemType } from '@common/items';
 export class GameEditionComponent implements OnInit {
     @Input() gameToEdit: IExistingGame;
     @ViewChild('grid', { static: false })
+    grid!: HTMLElement;
+
+    @ViewChild(EditionFormComponent)
+    editionForm!: EditionFormComponent;
 
     gameService: GameService = inject(GameService);
     boardEditorService: BoardEditorService = inject(BoardEditorService);
@@ -45,6 +50,7 @@ export class GameEditionComponent implements OnInit {
     isDrawing = false;
     isShiftPressed = false;
     lastIndexes: [number, number] = [0, 0];
+    currentCell: [number, number] | null = null;
 
     previousVersion: IExistingGame;
 
@@ -86,6 +92,8 @@ export class GameEditionComponent implements OnInit {
     onMouseDown(row: number, col: number, event: MouseEvent): void {
         this.isDrawing = true;
         this.lastIndexes = [row, col];
+        this.currentCell = [row, col];
+
 
         if (event.button === 2) {
             if (this.isShiftPressed) {
@@ -115,6 +123,8 @@ export class GameEditionComponent implements OnInit {
         if (this.lastIndexes[0] === row && this.lastIndexes[1] === col) return;
 
         this.lastIndexes = [row, col];
+        this.currentCell = [row, col];
+
 
         if (event.buttons === 2) {
             if (this.isShiftPressed) {
@@ -138,12 +148,23 @@ export class GameEditionComponent implements OnInit {
     @HostListener('window:keydown.shift')
     onShiftDown(): void {
         this.isShiftPressed = true;
+
+        if (!this.currentCell) return;
+        const [row, col] = this.currentCell;
+
+        this.boardEditorService.eraseObject(row, col);
     }
 
     @HostListener('window:keyup.shift')
     onShiftUp(): void {
         this.isShiftPressed = false;
+
+        if (!this.currentCell) return;
+        const [row, col] = this.currentCell;
+
+        this.boardEditorService.eraseTile(row, col);
     }
+
 
     get availableItemsTypes(): ItemType[] {
         const baseAvailableItemTypes = [ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition];
@@ -152,5 +173,10 @@ export class GameEditionComponent implements OnInit {
             return baseAvailableItemTypes.concat([ItemType.Flag]);
         }
         return baseAvailableItemTypes;
+    }
+
+    resetAll(): void {
+        this.boardEditorService.revertGrid(this.previousVersion);
+        this.editionForm.resetForm(this.previousVersion);
     }
 }
