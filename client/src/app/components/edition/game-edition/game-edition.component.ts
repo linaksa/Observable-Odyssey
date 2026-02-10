@@ -51,6 +51,7 @@ export class GameEditionComponent implements OnInit {
     isShiftPressed = false;
     lastIndexes: [number, number] = [0, 0];
     currentCell: [number, number] | null = null;
+    currentClick: number = 0;
 
     previousVersion: IExistingGame;
 
@@ -132,7 +133,7 @@ export class GameEditionComponent implements OnInit {
     onShiftDown(): void {
         this.isShiftPressed = true;
 
-        if (!this.currentCell) return;
+        if (!this.currentCell || !this.isDrawing) return;
         const [row, col] = this.currentCell;
 
         this.boardEditorService.eraseObject(row, col);
@@ -142,7 +143,7 @@ export class GameEditionComponent implements OnInit {
     onShiftUp(): void {
         this.isShiftPressed = false;
 
-        if (!this.currentCell) return;
+        if (!this.currentCell || !this.isDrawing) return;
         const [row, col] = this.currentCell;
 
         this.boardEditorService.eraseTile(row, col);
