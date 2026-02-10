@@ -6,8 +6,11 @@
                     <h3 class="text-sm font-semibold mb-4 text-gray-700">Matériaux</h3>
                     <div class="flex flex-col gap-2">
                         @for (type of boardEditorService.availableCellTypes; track $index) {
-                            <app-action-selection-button [isSelected]="boardEditorService.selectedMaterial === type" (click)="selectMaterial(type)">
-                                {{ boardEditorService.cellTypesLabels[type] }}
+                            <app-action-selection-button 
+                                [isSelected]="boardEditorService.selectedMaterial === type" 
+                                (click)="selectMaterial(type)"
+                                [tooltip]="cellTypesDescToolTip[type]">
+                                <div class="size-16 bg-cover m-auto" [ngClass]="cellTypeBackgrounds[type]"></div>
                             </app-action-selection-button>
                         }
                     </div>
