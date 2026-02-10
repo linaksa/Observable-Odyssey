@@ -1,9 +1,9 @@
 <div class="flex flex-col min-h-screen p-4 gap-4">
     <div class="flex flex-1 justify-center items-center">
-        <app-loading-overlay loadingText="Création de la partie..." class="flex flex-col gap-8 items-center justify-center"></app-loading-overlay>
+        <app-loading-overlay loadingText="Création de la partie..." class="flex flex-col gap-8 justify-center items-center"></app-loading-overlay>
     </div>
 
-    <div class="absolute bottom-4 w-full flex justify-center">
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
         @if (showButton) {
             <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
         }
