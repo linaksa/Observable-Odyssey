@@ -57,7 +57,7 @@ export class GameEditionComponent implements OnInit {
     isShiftPressed = false;
     lastIndexes: [number, number] = [0, 0];
     currentCell: [number, number] | null = null;
-    currentClick: number = 0;
+    isRightClick: boolean = false;
 
     previousVersion: IExistingGame;
 
@@ -83,8 +83,10 @@ export class GameEditionComponent implements OnInit {
         this.isDrawing = true;
         this.lastIndexes = [row, col];
         this.currentCell = [row, col];
+        this.isRightClick = event.button === 2;
 
-        if (event.button === 2) {
+
+        if (this.isRightClick) {
             if (this.isShiftPressed) {
                 this.boardEditorService.eraseObject(row, col);
             } else {
@@ -114,7 +116,7 @@ export class GameEditionComponent implements OnInit {
         this.lastIndexes = [row, col];
         this.currentCell = [row, col];
 
-        if (event.buttons === 2) {
+        if (event.buttons === 2 || this.isRightClick) {
             if (this.isShiftPressed) {
                 this.boardEditorService.eraseObject(row, col);
             } else {
@@ -131,13 +133,14 @@ export class GameEditionComponent implements OnInit {
     @HostListener('window:mouseup')
     stopDrawing(): void {
         this.isDrawing = false;
+        this.isRightClick = false;
     }
 
     @HostListener('window:keydown.shift')
     onShiftDown(): void {
         this.isShiftPressed = true;
 
-        if (!this.currentCell || !this.isDrawing) return;
+        if (!this.currentCell || !this.isDrawing || !this.isRightClick) return;
         const [row, col] = this.currentCell;
 
         this.boardEditorService.eraseObject(row, col);
@@ -147,7 +150,7 @@ export class GameEditionComponent implements OnInit {
     onShiftUp(): void {
         this.isShiftPressed = false;
 
-        if (!this.currentCell || !this.isDrawing) return;
+        if (!this.currentCell || !this.isDrawing || !this.isRightClick) return;
         const [row, col] = this.currentCell;
 
         this.boardEditorService.eraseTile(row, col);

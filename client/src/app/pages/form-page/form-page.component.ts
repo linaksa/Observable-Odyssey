@@ -45,8 +45,6 @@ export class FormPageComponent {
     selectedAvatarIndex: number | null = null;
     selectedDiceType: DiceSelectionType | null = null;
     selectedBonusType: BonusType | null = null;
-    submitted = false;
-    errorMessage = '';
 
     generateRandomCharacter(): void {
         this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
