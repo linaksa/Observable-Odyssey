@@ -37,15 +37,6 @@ export class BoardEditorService {
 
     availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
 
-    cellTypesLabels: { [key in CellType]: string } = {
-        [CellType.Empty]: 'Gazon',
-        [CellType.Ice]: 'Glace',
-        [CellType.Water]: 'Eau',
-        [CellType.Wall]: 'Mur',
-        [CellType.OpenDoor]: 'Porte',
-        [CellType.ClosedDoor]: 'Porte',
-    };
-
     availableTools = Object.values(ToolOption);
     availableToolsIcons: { [key in ToolOption]: string } = {
         [ToolOption.Placement]: 'assets/edit-page/tools/cursor.svg',
