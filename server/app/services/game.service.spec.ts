@@ -3,6 +3,7 @@
 import { GameController } from '@app/controllers/game.controller';
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
+import { BAD_DESCRIPTION_LENGTH, BAD_TITLE_LENGTH } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
@@ -307,6 +308,40 @@ describe('Game Service', () => {
             expect(error.message).to.equal("Il n'y a pas de description");
         }
     });
+
+    it('should throw when description contains only spaces', async () => {
+        const mockGameData = {
+            gameTitle: 'Valid title',
+            description: '     ',
+            gameMode: 'classic',
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
+            preview: 'image.png',
+        };
+
+        try {
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect(error.message).to.equal("Il n'y a pas de description");
+        }
+    });
+
+    it('should throw an error when description is longer than 200 characters', async () => {
+        const mockGameData = {
+            gameTitle: 'Test Game',
+            description: 'a'.repeat(BAD_DESCRIPTION_LENGTH), // 201 caractères
+            gameMode: 'classic',
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
+            preview: 'image.png',
+        };
+
+        try {
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
+        } catch (error) {
+            expect(error.message).to.equal('La description ne peut pas dépasser 200 caractères');
+        }
+    });
     it('should return first element when param is an array', () => {
         const controller = new GameController({} as GameService, {} as AdminSocketsService);
 
@@ -370,6 +405,39 @@ describe('Game Service', () => {
         }
     });
 
+    it('should throw when gameTitle contains only spaces', async () => {
+        const mockGameData = {
+            gameTitle: '     ',
+            description: 'Valid description',
+            gameMode: 'classic',
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
+            preview: 'image.png',
+        };
+
+        try {
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect(error.message).to.equal("Il n'y a pas de titre");
+        }
+    });
+
+    it('should throw an error when gameTitle is longer than 50 characters', async () => {
+        const mockGameData = {
+            gameTitle: 'a'.repeat(BAD_TITLE_LENGTH), // 51 caractères
+            description: 'Test Description',
+            gameMode: 'classic',
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
+            preview: 'image.png',
+        };
+
+        try {
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
+        } catch (error) {
+            expect(error.message).to.equal('Le titre ne peut pas dépasser 50 caractères');
+        }
+    });
     it('should throw an error when gameMode is invalid', async () => {
         const mockGameData = {
             gameTitle: 'Test Game',

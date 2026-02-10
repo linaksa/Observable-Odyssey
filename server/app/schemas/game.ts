@@ -6,13 +6,13 @@ const gameSchema = new Schema<IGame>({
     gameTitle: {
         type: String,
         required: true,
-        maxLength: 100,
+        maxLength: 50,
         unique: true,
     },
     description: {
         type: String,
         required: true,
-        maxLength: 1000,
+        maxLength: 200,
     },
     gameMode: {
         type: String,

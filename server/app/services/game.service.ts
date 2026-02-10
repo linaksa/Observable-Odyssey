@@ -1,5 +1,6 @@
 import { ValidationError } from '@app/error-types/validation-error';
 import { game } from '@app/schemas/game';
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
 import { BoardService } from './board.service';
@@ -19,7 +20,6 @@ export class GameService {
 
     async createGame(gameData: IGame): Promise<IGame> {
         this.validateGameData(gameData);
-
         gameData.visibility = Visibility.Hidden;
         gameData.dateCreated = new Date();
         gameData.lastModifiedDate = new Date();
@@ -28,12 +28,21 @@ export class GameService {
     }
 
     private validateGameData(gameData: IGame): void {
-        if (!gameData.description?.length) {
+        const title = gameData.gameTitle?.trim();
+        const description = gameData.description?.trim();
+        if (!description?.length) {
             throw new ValidationError("Il n'y a pas de description");
         }
+        if (description.length > MAX_DESCRIPTION_LENGTH) {
+            throw new ValidationError('La description ne peut pas dépasser 200 caractères');
+        }
 
-        if (!gameData.gameTitle?.length) {
+        if (!title?.length) {
             throw new ValidationError("Il n'y a pas de titre");
+        }
+
+        if (title.length > MAX_TITLE_LENGTH) {
+            throw new ValidationError('Le titre ne peut pas dépasser 50 caractères');
         }
 
         if (!Object.values(GameType).includes(gameData.gameMode)) {
@@ -62,7 +71,6 @@ export class GameService {
             return gameToCreate;
         }
         this.validateGameData(gameData);
-
         const updatedGame = await game.findByIdAndUpdate(
             id,
             {
