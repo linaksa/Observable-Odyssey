@@ -5,7 +5,7 @@ import { GameType, IExistingGame, Visibility } from '@common/game';
 import { of } from 'rxjs';
 import { GameService } from './game.service';
 
-describe('GameServiceService', () => {
+describe('GameService', () => {
     let service: GameService;
     const httpSpy = jasmine.createSpyObj('HttpClientPort', ['get', 'post', 'put', 'patch', 'delete']);
 
