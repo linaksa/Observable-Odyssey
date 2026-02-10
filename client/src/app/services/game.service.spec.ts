@@ -1,14 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClient } from '@angular/common/http';
+import { HTTP_CLIENT } from '@app/http/http.interface';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { of } from 'rxjs';
 import { GameService } from './game.service';
-import SpyObj = jasmine.SpyObj;
 
 describe('GameServiceService', () => {
     let service: GameService;
-    let httpSpy: SpyObj<HttpClient>;
+    const httpSpy = jasmine.createSpyObj('HttpClientPort', ['get', 'post', 'put', 'patch', 'delete']);
 
     const dummyBaseURL = 'http://localhost:3000/api';
 
@@ -25,10 +24,16 @@ describe('GameServiceService', () => {
     };
 
     beforeEach(() => {
-        TestBed.configureTestingModule({});
+        httpSpy.get.and.returnValue(of([]));
+        httpSpy.post.and.returnValue(of({}));
+        httpSpy.put.and.returnValue(of({}));
+        httpSpy.patch.and.returnValue(of({}));
+        httpSpy.delete.and.returnValue(of({}));
 
-        httpSpy = jasmine.createSpyObj('HttpClient', ['get', 'post', 'put', 'patch', 'delete'], { baseUrl: dummyBaseURL });
-        TestBed.overrideProvider(HttpClient, { useValue: httpSpy });
+        TestBed.configureTestingModule({
+            providers: [{ provide: HTTP_CLIENT, useValue: httpSpy }],
+        });
+
         service = TestBed.inject(GameService);
     });
 
