@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, Input, OnInit, ViewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { RouterLink } from '@angular/router';
 import { ActionSelectionButtonComponent } from '@app/components/edition/action-selection-button/action-selection-button.component';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
@@ -15,12 +14,7 @@ import { ItemType } from '@common/items';
 @Component({
     standalone: true,
     selector: 'app-game-edition',
-    imports: [CommonModule,
-        ReactiveFormsModule,
-        MatButtonToggleModule,
-        EditionCellComponent,
-        ActionSelectionButtonComponent,
-        EditionFormComponent, RouterLink],
+    imports: [CommonModule, ReactiveFormsModule, EditionCellComponent, ActionSelectionButtonComponent, EditionFormComponent, RouterLink],
     templateUrl: './game-edition.component.html',
     styleUrl: './game-edition.component.scss',
 })
@@ -37,14 +31,23 @@ export class GameEditionComponent implements OnInit {
 
     toolDescToolTip: { [key in ToolOption]: string } = {
         [ToolOption.Placement]: "Placement d'une tuile",
-        [ToolOption.Objects]: "Placement d' un objet",
+        [ToolOption.Objects]: "Placement d'un objet",
     };
 
-    itemTypesDescLabels: { [key in ItemType]: string } = {
+    itemTypesDescToolTip: { [key in ItemType]: string } = {
         [ItemType.LifeSanctuary]: 'Soigne le joueur',
         [ItemType.FightSanctuary]: "Augmente les degats d'attaque",
         [ItemType.StartingPosition]: "Position d'apparition du joueur",
         [ItemType.Flag]: 'Objectif pour le mode CTF ',
+    };
+
+    cellTypesDescToolTip: { [key in CellType]: string } = {
+        [CellType.Empty]: 'Tuile de base',
+        [CellType.Ice]: 'Ne consomme aucun mouvement',
+        [CellType.Water]: 'Consomme deux fois plus de mouvement',
+        [CellType.Wall]: "N'est pas traversable",
+        [CellType.OpenDoor]: 'Une porte ouverte',
+        [CellType.ClosedDoor]: 'Une porte fermée',
     };
 
     isDrawing = false;
@@ -78,7 +81,6 @@ export class GameEditionComponent implements OnInit {
         this.lastIndexes = [row, col];
         this.currentCell = [row, col];
 
-
         if (event.button === 2) {
             if (this.isShiftPressed) {
                 this.boardEditorService.eraseObject(row, col);
@@ -108,7 +110,6 @@ export class GameEditionComponent implements OnInit {
 
         this.lastIndexes = [row, col];
         this.currentCell = [row, col];
-
 
         if (event.buttons === 2) {
             if (this.isShiftPressed) {
@@ -148,7 +149,6 @@ export class GameEditionComponent implements OnInit {
 
         this.boardEditorService.eraseTile(row, col);
     }
-
 
     get availableItemsTypes(): ItemType[] {
         const baseAvailableItemTypes = [ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition];

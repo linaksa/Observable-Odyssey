@@ -4,7 +4,7 @@ import { CellType, IBoard } from '@common/board';
 import { EditGameFormData, GameType } from '@common/game';
 
 import { IItem } from '@common/items';
-import html2canvas from 'html2canvas-oklch';
+import html2canvas from 'html2canvas-pro';
 import { GameService } from './game.service';
 
 @Injectable({
@@ -56,17 +56,17 @@ export class GameEditFormService {
         return imgData;
     }
 
-
-    async submitForm(id: string, gameMode:GameType, cells: CellType[][], items: IItem[], gridSelector: HTMLElement | null): Promise<void> {
+    async submitForm(id: string, gameMode: GameType, cells: CellType[][], items: IItem[], gridSelector: HTMLElement | null): Promise<void> {
         this.isSubmitting.set(true);
-        // Allow angular to rerender before html2canva blocks the cycle somehow
-        await new Promise(resolve => setTimeout(resolve, 0));
+        // Allow angular to rerender before html2canvas blocks the cycle somehow
+        const timeout = 50;
+        await new Promise((resolve) => setTimeout(resolve, timeout));
         this.formErrors = [];
 
         const previewImage = await this.getPreviewImage(gridSelector);
         if (!previewImage) {
             this.formValid = false;
-            this.formErrors = ['Une erreur est survenue lors de la génération de l\'aperçu du plateau.'];
+            this.formErrors = ["Une erreur est survenue lors de la génération de l'aperçu du plateau."];
             this.isSubmitting.set(false);
             return Promise.reject();
         }
@@ -92,23 +92,21 @@ export class GameEditFormService {
             observable = this.gameService.createGame(gameData);
         }
 
-        return new Promise(
-            (resolve, reject) => {
-                observable.subscribe({
-                    next: () => {
-                        this.formValid = true;
-                        this.isSubmitting.set(false);
-                        resolve();
-                    },
-                    error: (err) => {
-                        err = JSON.parse(err.error);
-                        this.formValid = false;
-                        this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', err.error];
-                        this.isSubmitting.set(false);
-                        reject();
-                    },
-                });
-            },
-        );
+        return new Promise((resolve, reject) => {
+            observable.subscribe({
+                next: () => {
+                    this.formValid = true;
+                    this.isSubmitting.set(false);
+                    resolve();
+                },
+                error: (err) => {
+                    err = JSON.parse(err.error);
+                    this.formValid = false;
+                    this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', err.error];
+                    this.isSubmitting.set(false);
+                    reject();
+                },
+            });
+        });
     }
 }

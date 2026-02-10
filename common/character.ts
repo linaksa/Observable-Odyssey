@@ -15,3 +15,14 @@ export interface ICharacter {
     x: number;
     y: number;
 }
+
+export interface CharacterFormData {
+    name: string;
+    avatar: Avatar;
+    initialHealth: number;
+    attackBonusDiceType: DiceType;
+    defenseBonusDiceType: DiceType;
+    rapidityPoints: number;
+    attackPoints: number;
+    defensePoints: number;
+}
