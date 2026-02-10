@@ -167,4 +167,18 @@ describe('GameEditFormService', () => {
         const result = await service.getPreviewImage(fakeElement);
         expect(result).not.toBeNull();
     });
+
+
+    it('should reset form', () => {
+        const newTitle = 'Updated Game Title';
+        const newDescription = 'Updated Description';
+
+        service.form.get('gameTitle')?.setValue(newTitle);
+        service.form.get('description')?.setValue(newDescription);
+
+        service.resetForm(randomGame);
+
+        expect(service.form.get('gameTitle')?.value).toBe(randomGame.gameTitle);
+        expect(service.form.get('description')?.value).toBe(randomGame.description);
+    });
 });
