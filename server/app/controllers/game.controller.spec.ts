@@ -1,6 +1,6 @@
 import { Application } from '@app/app';
-import { ValidationError } from '@app/errors/validationError';
-import { AdminSocketsService } from '@app/services/admin.sockets.service';
+import { ValidationError } from '@app/error-types/validation-error';
+import { AdminSocketsService } from '@app/services/admin-sockets.service';
 import { GameService } from '@app/services/game.service';
 import { IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';

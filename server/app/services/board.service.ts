@@ -1,11 +1,11 @@
 import { IBoard } from '@common/board';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
-import { DoorValidator } from './board-validators/door.validator';
-import { GameModeValidator } from './board-validators/game-mode.validator';
-import { ItemsValidator } from './board-validators/items.validator';
-import { ReachabilityValidator } from './board-validators/reachability.validator';
-import { TerrainValidator } from './board-validators/terrain.validator';
+import { DoorValidator } from './board-validators/door-validator.service';
+import { GameModeValidator } from './board-validators/game-mode-validator.service';
+import { ItemsValidator } from './board-validators/items-validator.service';
+import { ReachabilityValidator } from './board-validators/reachability-validator.service';
+import { TerrainValidator } from './board-validators/terrain-validator.service';
 
 @Service()
 export class BoardService {

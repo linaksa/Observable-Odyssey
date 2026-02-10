@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { createServer, Server as HttpServer } from 'http';
 import * as sinon from 'sinon';
-import { AdminSocketsService } from './admin.sockets.service';
+import { AdminSocketsService } from './admin-sockets.service';
 
 describe('AdminSocketsService', () => {
     let service: AdminSocketsService;
