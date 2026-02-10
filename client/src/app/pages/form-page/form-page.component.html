@@ -45,7 +45,7 @@
             <div class="text-2xl text-white tracking-wider text-center">Informations</div>
 
             <div class="flex grow flex-col">
-                <form [formGroup]="form" (ngSubmit)="submitCharacterForm()">
+                <form [formGroup]="form">
                     <div class="w-full">
                         <label for="playerName" class="text-white tracking-wider">Nom du personnage</label>
                         <input
@@ -156,13 +156,8 @@
 
             <div class="flex shrink flex-col gap-2">
                 <button class="btn" (click)="generateRandomCharacter()">Générer un personnage aléatoire</button>
-                <button
-                    class="btn btn-green h-12 inline-flex items-center gap-2"
-                    type="submit"
-                    [disabled]="!form.valid || isSubmittingFlag()"
-                    (click)="submitCharacterForm()"
-                >
-                    @if (isSubmittingFlag()) {
+                <button class="btn btn-green h-12 inline-flex items-center gap-2" type="submit" [disabled]="!form.valid" routerLink="/wait">
+                    @if (false) {
                         <img
                             src="assets/loading/cogwheel.png"
                             alt="Chargement"

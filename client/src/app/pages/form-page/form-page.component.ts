@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, Signal, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
-import { CharacterFormService } from '@app/services/character-form.service';
 import { Avatar, DiceType, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDOM_PLAYER_NAMES } from '@common/constants';
 
 type DiceSelectionType = 'attack' | 'defense';
@@ -14,12 +13,7 @@ type DiceSelectionType = 'attack' | 'defense';
     imports: [CommonModule, ReactiveFormsModule, RouterLink],
     templateUrl: './form-page.component.html',
 })
-export class FormPageComponent implements OnInit {
-    characterFormService: CharacterFormService = inject(CharacterFormService);
-    private readonly router = inject(Router);
-
-    isSubmittingFlag: Signal<boolean> = this.characterFormService.isSubmitting.asReadonly();
-
+export class FormPageComponent {
     readonly form = new FormGroup({
         playerName: new FormControl('', {
             nonNullable: true,
@@ -53,10 +47,6 @@ export class FormPageComponent implements OnInit {
     selectedBonusType: BonusType | null = null;
     submitted = false;
     errorMessage = '';
-
-    ngOnInit(): void {
-        // no-op; form is managed locally and submitted via the service
-    }
 
     generateRandomCharacter(): void {
         this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
@@ -150,23 +140,5 @@ export class FormPageComponent implements OnInit {
 
         selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
         selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
-    }
-
-    submitCharacterForm(): void {
-        if (this.form.invalid || this.isSubmittingFlag()) return;
-
-        const value = this.form.getRawValue() as {
-            playerName: string;
-            avatarIndex: number | null;
-            bonusType: BonusType | null;
-            diceType: DiceSelectionType | null;
-        };
-
-        this.characterFormService
-            .submitForm(value)
-            .then(() => {
-                this.router.navigate(['/wait']);
-            })
-            .catch();
     }
 }
