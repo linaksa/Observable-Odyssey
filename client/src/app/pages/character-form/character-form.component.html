@@ -1,0 +1,163 @@
+<div class="flex flex-col min-h-screen p-4 gap-4">
+    <nav class="flex justify-between flex-col sm:flex-row gap-4">
+        <button class="btn w-full sm:w-auto" routerLink="/create">Retour vers la création d'une partie</button>
+    </nav>
+
+    <div class="flex justify-center">
+        <h1 class="text-5xl font-black text-white p-4 md:pt-0">Création de personnage</h1>
+    </div>
+
+    <div class="flex flex-col lg:flex-row justify-center gap-4">
+        <!-- choisir l'avatar -->
+        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+            <div class="text-2xl text-white tracking-wider text-center">Avatar</div>
+
+            <div class="flex grow justify-center">
+                <div class="w-64 h-64 aspect-square bg-[#0f1528] text-white/60 rounded-lg overflow-hidden">
+                    @if (selectedAvatarIndex !== null) {
+                    <img
+                        [src]="avatars[selectedAvatarIndex].image"
+                        [alt]="avatars[selectedAvatarIndex].name"
+                        class="h-full w-full object-cover object-top"
+                    />
+                    } @else {
+                    <span class="flex h-full w-full items-center justify-center p-3 text-center"> Veuillez en choisir un ci-dessous </span> }
+                </div>
+            </div>
+
+            <div class="flex shrink justify-center">
+                <div class="grid grid-cols-4 : sm:grid-cols-6 md:grid-cols-12 lg:grid-cols-4 gap-1">
+                    @for (avatar of avatars; track avatar.image; let i = $index) {
+                    <button
+                        class="relative w-fit max-w-16 h-auto aspect-square rounded-full overflow-hidden"
+                        [ngClass]="selectedAvatarIndex === i ? 'outline-4 outline-blue-600' : ''"
+                        (click)="selectAvatar(i)"
+                        type="button"
+                    >
+                        <img [src]="avatar.image" [alt]="avatar.name" class="h-full w-full object-cover" />
+                        @if (selectedAvatarIndex === i) {
+                        <div class="absolute inset-0 bg-blue-600/30"></div>
+                        }
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- entrer les donnees -->
+        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+            <div class="text-2xl text-white tracking-wider text-center">Informations</div>
+
+            <div class="flex grow flex-col pb-4">
+                <form [formGroup]="form">
+                    <div class="w-full">
+                        <label class="text-white tracking-wider">Nom du personnage</label>
+                        <input type="text" maxlength="9" placeholder="Entrez votre nom" formControlName="playerName" class="input w-full" />
+                    </div>
+                </form>
+
+                <div class="border-t border-slate-300 my-4"></div>
+
+                <div class="flex flex-col gap-2">
+                    <div class="text-white tracking-wider">Attributs</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex flex-row justify-between items-center rounded-lg bg-[#a39fff] p-4">
+                            <span class="text-black tracking-wider">Vie</span>
+                            <span class="text-2xl font-bold">
+                                {{ selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.initialHealth : '-' }}
+                            </span>
+                        </div>
+                        <div class="flex flex-row justify-between items-center rounded-lg bg-[#f1969a] p-4">
+                            <span class="text-black tracking-wider">Rapidité</span>
+                            <span class="text-2xl font-bold">
+                                {{ selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.rapidityPoints : '-' }}
+                            </span>
+                        </div>
+                        <div class="flex flex-row justify-between items-center rounded-lg bg-[#fdb7c5] p-4">
+                            <span class="text-black tracking-wider">Attaque</span>
+                            <span class="text-2xl font-bold">
+                                {{ selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.attackPoints : '-' }}
+                            </span>
+                        </div>
+                        <div class="flex flex-row justify-between items-center rounded-lg bg-[#cea0d9] p-4">
+                            <span class="text-black tracking-wider">Défense</span>
+                            <span class="text-2xl font-bold">
+                                {{ selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.defensePoints : '-' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex shrink flex-col gap-4">
+                <button class="btn btn-outline" (click)="generateRandomCharacter()">Générer un personnage aléatoire</button>
+            </div>
+        </div>
+
+        <!-- choisir les attributs -->
+        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+            <div class="text-2xl text-white tracking-wider text-center">Descriptions des attributs</div>
+
+            <div>
+                <div class="space-y-2 text-sm text-white">
+                    <p><strong>Vie :</strong> Le nombre de points de vie du personnage.</p>
+                    <p><strong>Rapidité :</strong> Détermine l'ordre des tours et les points de mouvement par tour.</p>
+                    <p><strong>Attaque :</strong> La force avec laquelle une attaque est faite sur l'adversaire.</p>
+                    <p><strong>Défense :</strong> La capacité à bloquer l'attaque d'un adversaire.</p>
+                </div>
+
+                <div class="border-t border-slate-300 my-4"></div>
+
+                <div class="space-y-3">
+                    <div class="text-sm font-semibold text-white">Ajouter un bonus</div>
+                    <div class="grid gap-3">
+                        <button
+                            class="btn"
+                            [disabled]="selectedAvatarIndex === null"
+                            [ngClass]="selectedBonusType === 'life' ? 'btn-blue' : ''"
+                            (click)="addBonus('life')"
+                        >
+                            +2 à la Vie
+                        </button>
+                        <button
+                            class="btn"
+                            [disabled]="selectedAvatarIndex === null"
+                            [ngClass]="selectedBonusType === 'speed' ? 'btn-blue' : ''"
+                            (click)="addBonus('speed')"
+                        >
+                            +2 à la Rapidité
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-300 my-4"></div>
+
+                <div class="space-y-3">
+                    <div class="text-sm font-semibold text-white">Attribuer les dés</div>
+                    <div class="grid gap-3">
+                        <button
+                            class="btn"
+                            [disabled]="selectedAvatarIndex === null"
+                            [ngClass]="selectedDiceType === 'attack' ? 'btn-blue' : ''"
+                            (click)="addDice('attack')"
+                        >
+                            Dé à 6 faces pour l'Attaque et dé à 4 faces pour la Défense
+                        </button>
+                        <button
+                            class="btn"
+                            [disabled]="selectedAvatarIndex === null"
+                            [ngClass]="selectedDiceType === 'defense' ? 'btn-blue' : ''"
+                            (click)="addDice('defense')"
+                        >
+                            Dé à 6 faces pour la Défense et dé à 4 faces pour l'Attaque
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end">
+        <button class="btn btn-green w-full lg:w-auto" type="submit" [disabled]="!form.valid" routerLink="/wait">Confirmer la création</button>
+    </div>
+</div>

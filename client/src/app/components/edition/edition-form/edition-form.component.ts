@@ -1,0 +1,39 @@
+import { Component, EventEmitter, inject, Input, OnInit, Output, Signal } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { GameEditFormService } from '@app/services/game-edit-form.service';
+import { CellType } from '@common/board';
+import { IExistingGame } from '@common/game';
+import { IItem } from '@common/items';
+
+@Component({
+  selector: 'app-edition-form',
+  imports: [ReactiveFormsModule],
+  templateUrl: './edition-form.component.html',
+  styleUrl: './edition-form.component.scss',
+})
+export class EditionFormComponent implements OnInit {
+  gameEditFormService = inject(GameEditFormService);
+  private readonly router = inject(Router);
+
+  isSubmittingFlag: Signal<boolean> = this.gameEditFormService.isSubmitting.asReadonly();
+
+  @Input() game: IExistingGame;
+  @Input() cells: CellType[][];
+  @Input() objects: IItem[];
+  @Input() gridSelector: HTMLElement | null;
+
+  @Output() onGameModeChange = new EventEmitter<Event>();
+
+  ngOnInit(): void {
+    this.gameEditFormService.init(this.game);
+  }
+
+  submitGameForm(): void {
+    this.gameEditFormService.submitForm(this.game._id, this.cells, this.objects, this.gridSelector).then(() => {
+      this.router.navigate(['/admin']);
+    }).catch(() => {
+      // The service handles error display on its own
+    });
+  }
+}

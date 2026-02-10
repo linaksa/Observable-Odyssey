@@ -1,4 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
+import { MatTableDataSource } from '@angular/material/table';
 import { IExistingGame, Visibility } from '@common/game';
 import { GameService } from './game.service';
 
@@ -8,7 +9,7 @@ import { GameService } from './game.service';
 export class GameTableService {
     gameService: GameService = inject(GameService);
 
-    tableData: IExistingGame[] = [];
+    tableData = new MatTableDataSource<IExistingGame>();
 
     isLoading = signal(false);
 
@@ -16,7 +17,7 @@ export class GameTableService {
         this.isLoading.set(true);
         this.gameService.getAllGames().subscribe({
             next: (fetchedGames) => {
-                this.tableData = fetchedGames ?? [];
+                this.tableData.data = fetchedGames ?? [];
             },
             complete: () => {
                 this.isLoading.set(false);
@@ -28,7 +29,7 @@ export class GameTableService {
         this.isLoading.set(true);
         this.gameService.getAllGames().subscribe({
             next: (fetchedGames) => {
-                this.tableData = fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
+                this.tableData.data = fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
             },
             complete: () => {
                 this.isLoading.set(false);

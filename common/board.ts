@@ -1,7 +1,7 @@
 import { IItem } from './items';
 
 export enum CellType {
-    Grass = 'GRASS',
+    Empty = 'EMPTY',
     Ice = 'ICE',
     Water = 'WATER',
     Wall = 'WALL',

@@ -1,4 +1,4 @@
-import { ICharacter } from '@common/character';
+import { ICharacter } from '@common/ICharacter';
 import { Avatar, DiceType } from '@common/constants';
 
 export type BonusType = 'life' | 'speed';

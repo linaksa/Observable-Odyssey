@@ -1,37 +1,27 @@
-<div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg w-full h-full sm:w-100 sm:h-fit gap-4 p-4">
-    <div class="text-2xl text-white tracking-wider text-center">Créer un jeu</div>
+<h1 mat-dialog-title>Créer un jeu</h1>
 
-    <form [formGroup]="form" class="flex grow flex-col justify-center gap-4">
-        <div class="flex flex-row gap-4 justify-center">
-            <button type="button" class="btn flex-1" [ngClass]="isCTFMode ? '' : 'btn-blue'" (click)="toggleGameMode(false)">Mode normal</button>
-
-            <button
-                type="button"
-                class="btn flex-1"
-                [ngClass]="isCTFMode ? 'btn-blue' : ''"
-                (click)="toggleGameMode(true)"
-                [disabled]="form.get('isCTF')?.disabled"
-            >
-                Mode CTF
-            </button>
+<mat-dialog-content>
+    <div [formGroup]="form" class="">
+        <div class="pb-4">
+            <mat-slide-toggle formControlName="isCTF" color="primary" [disabled]="true">
+                {{ form.get('isCTF')?.value ? 'Mode CTF' : 'Mode normal' }}
+            </mat-slide-toggle>
         </div>
 
-        <div class="flex flex-col gap-2">
-            <label for="dimension-select" class="text-white tracking-wider">Sélectionner la taille du jeu</label>
-            <select id="dimension-select" formControlName="dimension" class="select w-full">
-                @for (option of dimensionOptions; track option.value) {
-                    <option [value]="option.value">{{ option.label }}</option>
-                }
-            </select>
-        </div>
+        <mat-form-field class="w-full">
+            <mat-label>Sélectionner la taille du jeu</mat-label>
+            <mat-select formControlName="dimension">
+                <mat-option value="10x10">Petite</mat-option>
+                <mat-option value="15x15">Moyenne</mat-option>
+                <mat-option value="20x20">Grande</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-        <div class="flex flex-col text-sm text-white tracking-widest gap-1">
-            <span>La partie pourra avoir {{ numberOfPlayers }} joueurs.</span>
-            <span>La partie aura {{ displaySize }} cases.</span>
-        </div>
-    </form>
-
-    <div class="flex shrink flex-col gap-2">
-        <button type="button" class="btn btn-green" (click)="createGame()" [disabled]="form.invalid">Créer</button>
+        <div>La partie pourra avoir {{ numberOfPlayers }} joueurs</div>
+        <div>La partie aura {{ form.get('dimension')?.value ?? '0x0' }} cases</div>
     </div>
-</div>
+</mat-dialog-content>
+
+<mat-dialog-actions>
+    <button class="btn btn-green ml-auto" cdkFocusInitial (click)="createGame()">Créer</button>
+</mat-dialog-actions>

@@ -1,0 +1,100 @@
+<div class="h-screen bg-gray-100 p-4">
+    <div class="h-full flex gap-4">
+        <aside class="bg-white border rounded-lg p-4 flex flex-col basis-1/4">
+            @if (boardEditorService.activeTool === 'placement') {
+            <div>
+                <h3 class="text-sm font-semibold mb-4 text-gray-700">Matériaux</h3>
+                <div class="flex flex-col gap-2">
+                    @for (type of boardEditorService.availableCellTypes; track $index;) {
+                    <app-action-selection-button [isSelected]="boardEditorService.selectedMaterial === type" (click)="selectMaterial(type)">
+                        {{ boardEditorService.cellTypesLabels[type] }}
+                    </app-action-selection-button>
+                    }
+                </div>
+            </div>
+            } @if (boardEditorService.activeTool === 'objects') {
+            <div>
+                <h3 class="text-sm font-semibold mb-4 text-gray-700">Objets</h3>
+                <div class="flex flex-col gap-2">
+                    @for (type of availableItemsTypes; track $index;) {
+                    <app-action-selection-button
+                        [isSelected]="boardEditorService.selectedObject === type"
+                        [tooltip]="itemTypesDescLabels[type]"
+                        [disabled]="boardEditorService.getRemainingObjectCount(type) === 0"
+                        (click)="selectObject(type)"
+                    >
+                        <span>{{ boardEditorService.itemTypesLabels[type] }} | </span>
+                        <span class="text-sm text-red-500"> {{ boardEditorService.getRemainingObjectCount(type) }} restant </span>
+                    </app-action-selection-button>
+                    }
+                </div>
+            </div>
+            }
+            <button
+                class="mt-auto w-full rounded-lg border px-4 py-2 hover:bg-gray-100"
+                routerLink="/admin"
+            >
+                Retour a la page admin
+            </button>
+        </aside>
+
+        <main class="bg-gray-50 rounded-xl border flex flex-col flex-1">
+            <div class="h-12 px-4 border-b flex items-center justify-center gap-2 bg-white">
+                <button type="button" (click)="boardEditorService.setGrid(10)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
+                    10×10
+                </button>
+                <button type="button" (click)="boardEditorService.setGrid(15)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
+                    15×15
+                </button>
+                <button type="button" (click)="boardEditorService.setGrid(20)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
+                    20×20
+                </button>
+            </div>
+
+            <div id="grid-container" class="flex-1 flex items-center justify-center p-4">
+                <div
+                    #grid
+                    class="grid bg-gray-400 w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
+                    [ngClass]="'grid-'+ boardEditorService.gameCells.length">
+                    @for (row of boardEditorService.gameCells; track $index; let rowIndex = $index) { @for (cell of row; track $index; let colIndex = $index)
+                    {
+                    <app-edition-cell
+                        [cellType]="cell"
+                        [rowIndex]="rowIndex"
+                        [colIndex]="colIndex"
+                        (mousedDownCell)="onMouseDown(rowIndex, colIndex, $event)"
+                        (mouseEnterCell)="onMouseEnter(rowIndex, colIndex, $event)"
+                        [item]="boardEditorService.getObjectAt(rowIndex, colIndex)"
+                    ></app-edition-cell>
+                    } }
+                </div>
+            </div>
+            <div class="h-12 px-4 border-t flex items-center justify-center gap-2 bg-white">
+                <button type="button" (click)="boardEditorService.revertGrid(this.previousVersion)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">Reset</button>
+            </div>
+        </main>
+
+        <aside class="bg-white border rounded-lg p-4 flex flex-col justify-between basis-1/4">
+            <div class="flex flex-col gap-2">
+                <h3 class="text-sm font-semibold mb-4 text-gray-700">Outils</h3>
+
+                @for (tool of boardEditorService.availableTools; track $index;) {
+                <app-action-selection-button
+                    [isSelected]="boardEditorService.activeTool === tool"
+                    [tooltip]="toolDescToolTip[tool]"
+                    (click)="selectTool(tool)"
+                >
+                    <img class="size-8 m-auto" [src]="boardEditorService.availableToolsIcons[tool]" alt="{{ tool }}" />
+                </app-action-selection-button>
+                }
+            </div>
+            <app-edition-form
+                [gridSelector]="grid"
+                [game]="gameToEdit"
+                [cells]="boardEditorService.gameCells"
+                [objects]="boardEditorService.objects"
+                (onGameModeChange)="gameModeChange($event)"
+            ></app-edition-form>
+        </aside>
+    </div>
+</div>

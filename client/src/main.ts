@@ -4,9 +4,9 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
 import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
 import { AppComponent } from '@app/pages/app/app.component';
+import { CharacterFormComponent } from '@app/pages/character-form/character-form.component';
 import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
-import { EditPageComponent } from '@app/pages/edit-page/edit-page.component';
-import { FormPageComponent } from '@app/pages/form-page/form-page.component';
+import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
@@ -20,11 +20,11 @@ const routes: Routes = [
     { path: '', redirectTo: '/home', pathMatch: 'full' },
     { path: 'home', component: MainPageComponent },
     { path: 'game', component: GamePageComponent },
-    { path: 'create', component: CreatePageComponent },
     { path: 'admin', component: AdministrationPageComponent },
-    { path: 'form', component: FormPageComponent },
-    { path: 'edit/:gameId', component: EditPageComponent },
+    { path: 'create', component: CreatePageComponent },
     { path: 'wait', component: WaitPageComponent },
+    { path: 'form', component: CharacterFormComponent },
+    { path: 'edit/:gameId', component: EditionPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 
