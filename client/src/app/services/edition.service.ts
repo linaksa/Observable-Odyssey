@@ -5,7 +5,7 @@ import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items'
 
 export type Tool = 'placement' | 'objects' | 'erase';
 
-enum GridSize {
+export enum GridSize {
     SMALL = 10,
     MEDIUM = 15,
     LARGE = 20,

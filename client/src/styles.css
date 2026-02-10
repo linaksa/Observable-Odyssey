@@ -1,4 +1,15 @@
+/* You can add global styles to this file, and also import other style files */
+
 @import 'tailwindcss';
+
+body {
+    margin: 0;
+    font-family: 'Jersey 10', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: large;
+    background-color: #0f1528;
+}
 
 div.content {
     @apply p-4;
@@ -36,8 +47,18 @@ div.content {
 }
 
 .input {
-    @apply inline-flex items-center tracking-wider leading-tight justify-start px-4 py-2 cursor-text shadow-inner
-    bg-gray-100 text-black border-2 border-t-gray-700 border-l-gray-700 border-b-white border-r-white
+    @apply inline-flex items-center tracking-wider leading-tight justify-start px-4 py-2 cursor-text
+    bg-gray-100 text-black shadow-inner
+    border-2 border-t-gray-700 border-l-gray-700 border-b-white border-r-white
+    focus:outline-none focus:ring-2 focus:ring-blue-500
+    disabled:opacity-40 disabled:cursor-not-allowed;
+}
+
+.select {
+    @apply inline-flex items-center tracking-wider leading-tight px-4 py-2 cursor-pointer transition-colors
+    bg-gray-100 text-black shadow-inner
+    border-2 border-t-gray-700 border-l-gray-700 border-b-white border-r-white
+    hover:bg-gray-300 hover:border-t-gray-600 hover:border-l-gray-600
     focus:outline-none focus:ring-2 focus:ring-blue-500
     disabled:opacity-40 disabled:cursor-not-allowed;
 }

@@ -1,44 +1,76 @@
-<div class="overflow-hidden bg-[#233f74] rounded-lg">
-    @if(gameTableService.isLoading()) {
-    <div class="flex flex-row justify-center self-center items-center gap-4 p-4">
-        <img
-            src="assets/loading/cogwheel.png"
-            class="h-12 w-12 animate-[spin_2s_steps(16)_infinite] select-none [image-rendering:pixelated]"
-            draggable="false"
-        />
-        <span class="text-2xl text-white tracking-wider">Chargement des jeux...</span>
-    </div>
-    } @else if (!(gameTableService.tableData.data.length)) {
-    <div class="text-2xl text-white/80 tracking-wider text-center p-4">Aucun jeu</div>
+<div class="overflow-hidden bg-[#233f74] rounded-lg relative">
+    @if (toastMessage()) {
+        <div
+            class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-neutral-800 text-white px-4 py-3 rounded-lg shadow-lg max-w-[90vw] sm:max-w-xl text-center font-semibold tracking-wide"
+            role="status"
+            aria-live="polite"
+        >
+            {{ toastMessage() }}
+        </div>
+    }
+
+    @if (gameTableService.isLoading() && !gameTableService.tableData.length) {
+        <app-loading-overlay
+            loadingText="Chargement des jeux..."
+            class="flex flex-row justify-center self-center items-center gap-4 p-4"
+        ></app-loading-overlay>
+    } @else if (!gameTableService.tableData.length) {
+        <div class="text-2xl text-white/80 tracking-wider text-center p-4">Aucun jeu</div>
     } @else {
-    <div class="divide-y-4 divide-[#0f1528]">
-        @for (element of gameTableService.tableData.data; track element._id) {
-        <article class="flex flex-col sm:flex-row justify-between gap-4 p-4">
-            <section class="flex flex-row gap-4">
-                <img class="rounded-lg object-cover w-32 h-32" [src]="element.preview" [alt]="element.gameTitle" [attr.title]="element.description" />
+        <div class="divide-y-4 divide-[#0f1528]">
+            @for (element of gameTableService.tableData; track element._id) {
+                <article class="flex flex-col sm:flex-row justify-between gap-4 p-4">
+                    <section class="flex flex-row gap-4">
+                        <img
+                            class="rounded-lg object-cover w-32 h-32"
+                            [src]="element.preview"
+                            [alt]="element.gameTitle"
+                            [attr.title]="element.description"
+                        />
 
-                <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider">
-                    <span class="text-2xl font-black text-white">{{ element.gameTitle }}</span>
-                    <span class="">Mode : {{ element.gameMode }}</span>
-                    <span class="">Taille : {{ element.board.cells.length }}×{{ element.board.cells.length }}</span>
-                    <span class="">Dernière modification : {{ element.lastModifiedDate | date: 'dd/MM/yyyy' }}</span>
-                </div>
-            </section>
+                        <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider">
+                            <span class="text-2xl font-black text-white">{{ element.gameTitle }}</span>
+                            <span class="">Mode : {{ element.gameMode }}</span>
+                            <span class="">Taille : {{ element.board.cells.length }}×{{ element.board.cells.length }}</span>
+                            <span class="">Dernière modification : {{ element.lastModifiedDate | date: 'dd/MM/yyyy' }}</span>
+                        </div>
+                    </section>
 
-            <section class="flex shrink flex-wrap self-start align-middle gap-4 w-full sm:w-min md:w-auto justify-center sm:justify-end">
-                @if (isAdmin) {
-                <label class="btn h-full" [ngClass]="gameIsViewable(element) ? 'btn-green' : 'btn-red'">
-                    <input hidden="true" type="checkbox" [checked]="gameIsViewable(element)" (change)="toggleVisibility($event, element)" />
-                    Visible
-                </label>
-                <button class="btn h-full" [routerLink]="['/edit', element._id]">Modification</button>
-                <button class="btn h-full" (click)="deleteGame(element)">Suppression</button>
-                } @else {
-                <button class="btn btn-blue h-full" routerLink="/form">Créer une partie</button>
-                }
-            </section>
-        </article>
-        }
-    </div>
+                    <section class="flex shrink flex-wrap self-start align-middle gap-4 w-full sm:w-min md:w-auto h-12 justify-center sm:justify-end">
+                        @if (isAdmin) {
+                            <label class="btn h-full inline-flex items-center gap-2" [ngClass]="gameIsViewable(element) ? 'btn-green' : 'btn-red'">
+                                <input
+                                    #visibilityCheckbox
+                                    hidden="true"
+                                    type="checkbox"
+                                    [checked]="gameIsViewable(element)"
+                                    (change)="toggleVisibility($event, element)"
+                                />
+                                @if (visibilityCheckbox.checked !== gameIsViewable(element)) {
+                                    <img
+                                        src="assets/loading/cogwheel.png"
+                                        alt="Chargement"
+                                        class="h-full w-auto object-contain animate-[spin_2s_steps(16)_infinite] select-none [image-rendering:pixelated]"
+                                        draggable="false"
+                                    />
+                                }
+                                <span>Visible</span>
+                            </label>
+                            <button class="btn h-full" [routerLink]="['/edit', element._id]">Modification</button>
+                            <button class="btn h-full" (click)="deleteGame(element)">Suppression</button>
+                        } @else {
+                            <button class="btn btn-blue h-full" routerLink="/form">Créer une partie</button>
+                        }
+                    </section>
+                </article>
+            }
+
+            @if (gameTableService.isLoading()) {
+                <app-loading-overlay
+                    loadingText="Chargement des jeux..."
+                    class="flex flex-row justify-center self-center items-center gap-4 p-4"
+                ></app-loading-overlay>
+            }
+        </div>
     }
 </div>

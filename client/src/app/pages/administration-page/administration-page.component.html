@@ -4,9 +4,15 @@
         <button class="btn btn-blue w-full sm:w-auto" (click)="openDialog()">Ajouter un jeu</button>
     </nav>
 
-    <div class="flex justify-center">
+    <div class="flex justify-center text-center">
         <h1 class="text-5xl font-black text-white p-4 md:pt-0">Administration</h1>
     </div>
 
     <app-game-table [isAdmin]="true"></app-game-table>
 </div>
+
+@if (isDialogOpen) {
+    <div class="fixed inset-0 flex items-center justify-center w-full h-full bg-black/70" (click)="closeDialog()">
+        <app-game-creation-dialog (click)="$event.stopPropagation()"></app-game-creation-dialog>
+    </div>
+}

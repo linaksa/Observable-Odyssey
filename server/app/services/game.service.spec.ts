@@ -230,19 +230,19 @@ describe('Game Service', () => {
             ],
             items: [
                 {
-                    itemType: 'startingPosition',
+                    itemType: ItemType.StartingPosition,
                     x: 0,
                     y: 0,
                     size: 1,
                 },
                 {
-                    itemType: 'startingPosition',
+                    itemType: ItemType.StartingPosition,
                     x: 3,
                     y: 3,
                     size: 1,
                 },
                 {
-                    itemType: 'fightSanctuary',
+                    itemType: ItemType.FightSanctuary,
                     x: 1,
                     y: 1,
                     size: 4,

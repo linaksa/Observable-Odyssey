@@ -48,7 +48,7 @@ describe('GameTableService', () => {
     });
 
     it('should have tableData initialized as empty', () => {
-        expect(service.tableData.data).toEqual([]);
+        expect(service.tableData).toEqual([]);
     });
 
     it('should fetch all games', () => {
@@ -57,7 +57,7 @@ describe('GameTableService', () => {
         service.fetchGames();
 
         expect(gameServiceSpy.getAllGames).toHaveBeenCalled();
-        expect(service.tableData.data).toEqual(gamesMock);
+        expect(service.tableData).toEqual(gamesMock);
     });
 
     it('should fetch only visible games', () => {
@@ -66,16 +66,16 @@ describe('GameTableService', () => {
         service.fetchVisibleGames();
 
         expect(gameServiceSpy.getAllGames).toHaveBeenCalled();
-        expect(service.tableData.data).toEqual([gamesMock[0]]);
+        expect(service.tableData).toEqual([gamesMock[0]]);
     });
 
     it('should handle empty response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of([]));
 
         service.fetchGames();
-        expect(service.tableData.data).toEqual([]);
+        expect(service.tableData).toEqual([]);
 
         service.fetchVisibleGames();
-        expect(service.tableData.data).toEqual([]);
+        expect(service.tableData).toEqual([]);
     });
 });
