@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { HttpClientPort } from '@app/http/http.client.port';
-import { HTTP_CLIENT } from '@app/http/http.interface';
+import { HttpClientPort } from '@app/http/http-client-port';
+import { HTTP_CLIENT } from '@app/http/http-interface';
 import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';

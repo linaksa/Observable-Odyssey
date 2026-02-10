@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Visibility } from '@common/game';
 import { of } from 'rxjs';
-import { AdministrationService } from './administrationService';
+import { AdministrationService } from './administration.service';
 import { GameService } from './game.service';
 import SpyObj = jasmine.SpyObj;
 
