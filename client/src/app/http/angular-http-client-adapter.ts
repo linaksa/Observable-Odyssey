@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angula
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { HttpClientPort, HttpError, HttpOptions } from './http.interface';
+import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
 
 @Injectable()
 export class AngularHttpClientAdapter implements HttpClientPort {

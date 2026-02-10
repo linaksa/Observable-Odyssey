@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
 
-import { HTTP_CLIENT } from '@app/http/http.interface';
+import { HTTP_CLIENT } from '@app/http/http-interface';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { GameTableService } from './game-table.service';
 import { GameService } from './game.service';

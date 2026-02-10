@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { HttpOptions } from './http.model';
+import { HttpOptions } from './http-model';
 /**
  * Framework agnostic HTTP Client contract
  * no angular imports allowed here

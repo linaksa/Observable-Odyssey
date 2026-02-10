@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HTTP_CLIENT } from '@app/http/http.interface';
+import { HTTP_CLIENT } from '@app/http/http-interface';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { of, throwError } from 'rxjs';
 import { GameService } from './game.service';
@@ -97,10 +97,8 @@ describe('GameService', () => {
     });
 
     it('should not crash when the request fails', () => {
-        httpSpy.get.and.returnValue(
-            throwError(() => new Error('404')),
-        );
-        
+        httpSpy.get.and.returnValue(throwError(() => new Error('404')));
+
         service.getAllGames();
     });
 });

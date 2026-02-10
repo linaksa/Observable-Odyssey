@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
 import { AvatarSelectorComponent } from '@app/components/avatar-selector/avatar-selector.component';
@@ -26,6 +27,7 @@ type DiceSelectionType = 'attack' | 'defense';
     templateUrl: './form-page.component.html',
 })
 export class FormPageComponent {
+    private router = inject(Router);
     readonly form = new FormGroup({
         playerName: new FormControl('', {
             nonNullable: true,
@@ -150,5 +152,9 @@ export class FormPageComponent {
 
         selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
         selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+    }
+
+    onFormSubmitted() {
+        this.router.navigate(['wait']);
     }
 }

@@ -4,7 +4,7 @@ import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/co
 import { RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 import { AdminSocketService } from '@app/services/admin.socket.service';
-import { AdministrationService } from '@app/services/administrationService';
+import { AdministrationService } from '@app/services/administration.service';
 import { GameTableService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { IExistingGame, Visibility } from '@common/game';

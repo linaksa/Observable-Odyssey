@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminSocketService } from '@app/services/admin.socket.service';
-import { AdministrationService } from '@app/services/administrationService';
+import { AdministrationService } from '@app/services/administration.service';
 import { GameTableService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
