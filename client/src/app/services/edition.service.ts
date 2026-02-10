@@ -63,7 +63,7 @@ export class BoardEditorService {
     spawnpointMaxAmount = 2;
     flagMaxAmount = 1;
 
-    blockingCells = new Set<CellType>([CellType.Wall, CellType.Water, CellType.OpenDoor, CellType.ClosedDoor]);
+    blockingCells = new Set<CellType>([CellType.Wall, CellType.OpenDoor, CellType.ClosedDoor]);
 
     initFromExistingBoard(game: IExistingGame): void {
         this.gameCells = structuredClone(game.board.cells);
@@ -111,20 +111,21 @@ export class BoardEditorService {
         this.initFromExistingBoard(structuredClone(game));
     }
 
-    applyTile(rowIndex: number, index: number): void {
+    applyTile(rowIndex: number, colIndex: number): void {
         if (this.activeTool !== ToolOption.Placement) return;
 
-        if (this.selectedMaterial === CellType.OpenDoor) {
-            this.gameCells[rowIndex][index] = this.gameCells[rowIndex][index] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+        if (this.selectedMaterial === CellType.OpenDoor ) {
+            this.eraseObject(rowIndex, colIndex);
+            this.gameCells[rowIndex][colIndex] = this.gameCells[rowIndex][colIndex] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
             return;
         }
 
-        if (this.blockingCells.has(this.selectedMaterial) && this.isCellOccupied(rowIndex, index)) {
-            this.eraseObject(rowIndex, index);
-            this.gameCells[rowIndex][index] = this.selectedMaterial;
+        if (this.blockingCells.has(this.selectedMaterial) && this.isCellOccupied(rowIndex, colIndex)) {
+            this.eraseObject(rowIndex, colIndex);
+            this.gameCells[rowIndex][colIndex] = this.selectedMaterial;
         }
 
-        this.gameCells[rowIndex][index] = this.selectedMaterial;
+        this.gameCells[rowIndex][colIndex] = this.selectedMaterial;
     }
 
     applyObject(rowIndex: number, colIndex: number): void {
