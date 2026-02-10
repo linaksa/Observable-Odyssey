@@ -6,5 +6,6 @@ import { GameTableComponent } from '@app/components/game-table/game-table.compon
     selector: 'app-create-page',
     imports: [GameTableComponent, RouterLink],
     templateUrl: './create-page.component.html',
+    styleUrl: './create-page.component.scss',
 })
 export class CreatePageComponent {}

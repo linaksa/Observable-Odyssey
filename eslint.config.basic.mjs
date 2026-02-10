@@ -91,36 +91,36 @@ export default (tsParser, tsPlugin) => [
             ],
             '@typescript-eslint/prefer-for-of': 'error',
             '@typescript-eslint/prefer-function-type': 'error',
-            '@typescript-eslint/consistent-type-assertions': 'error',
-            '@typescript-eslint/no-empty-function': 'error',
-            '@typescript-eslint/no-misused-new': 'error',
-            '@typescript-eslint/no-non-null-assertion': 'error',
-            '@typescript-eslint/no-shadow': ['error', { 'hoist': 'all' }],
-            '@typescript-eslint/no-require-imports': 'error',
-            '@typescript-eslint/no-empty-object-type': 'error',
-            '@typescript-eslint/no-unsafe-function-type': 'error',
-            '@typescript-eslint/no-wrapper-object-types': 'error',
-            '@typescript-eslint/naming-convention': [
-                'error',
+            "@typescript-eslint/consistent-type-assertions": "error",
+            "@typescript-eslint/no-empty-function": "error",
+            "@typescript-eslint/no-misused-new": "error",
+            "@typescript-eslint/no-non-null-assertion": "error",
+            "@typescript-eslint/no-shadow": ["error", { "hoist": "all" }],
+            "@typescript-eslint/no-require-imports": "error",
+            "@typescript-eslint/no-empty-object-type": "error",
+            "@typescript-eslint/no-unsafe-function-type": "error",
+            "@typescript-eslint/no-wrapper-object-types": "error",
+            "@typescript-eslint/naming-convention": [
+                "error",
                 {
-                    'format': ['camelCase'],
-                    'leadingUnderscore': 'allow',
-                    'selector': 'default',
-                    'trailingUnderscore': 'allow',
-                    'filter': { 'regex': '^(_id|__v)$', 'match': false }
+                    "format": ["camelCase"],
+                    "leadingUnderscore": "allow",
+                    "selector": "default",
+                    "trailingUnderscore": "allow",
+                    "filter": { "regex": "^(_id|__v)$", "match": false }
                 },
                 {
-                    'format': ['camelCase', 'UPPER_CASE'],
-                    'selector': 'variable',
-                    'trailingUnderscore': 'allow',
+                    "format": ["camelCase", "UPPER_CASE"],
+                    "selector": "variable",
+                    "trailingUnderscore": "allow",
                 },
                 {
-                    'format': ['PascalCase'],
-                    'selector': 'typeLike'
+                    "format": ["PascalCase"],
+                    "selector": "typeLike"
                 },
                 {
-                    'format': ['PascalCase'],
-                    'selector': 'enumMember'
+                    "format": ["PascalCase"],
+                    "selector": "enumMember"
                 }
             ]
         },

@@ -26,7 +26,7 @@ describe('Game Service', () => {
         gameTitle: 'Test Game',
         description: 'Test Description',
         gameMode: GameType.Classic,
-        board: { cells: [[CellType.Grass]], items: [] },
+        board: { cells: [[CellType.Empty]], items: [] },
         preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
@@ -37,7 +37,7 @@ describe('Game Service', () => {
         gameTitle: 'Test Game2',
         description: 'Test Description2',
         gameMode: GameType.Classic,
-        board: { cells: [[CellType.Grass]], items: [] },
+        board: { cells: [[CellType.Empty]], items: [] },
         preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
@@ -230,19 +230,19 @@ describe('Game Service', () => {
             ],
             items: [
                 {
-                    itemType: ItemType.StartingPosition,
+                    itemType: 'startingPosition',
                     x: 0,
                     y: 0,
                     size: 1,
                 },
                 {
-                    itemType: ItemType.StartingPosition,
+                    itemType: 'startingPosition',
                     x: 3,
                     y: 3,
                     size: 1,
                 },
                 {
-                    itemType: ItemType.FightSanctuary,
+                    itemType: 'fightSanctuary',
                     x: 1,
                     y: 1,
                     size: 4,
@@ -279,7 +279,7 @@ describe('Game Service', () => {
         const mockGameData = {
             gameTitle: 'Test Game',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
@@ -296,7 +296,7 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: '',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
@@ -341,7 +341,7 @@ describe('Game Service', () => {
         const mockGameData = {
             description: 'Test Description',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
@@ -358,7 +358,7 @@ describe('Game Service', () => {
             gameTitle: '',
             description: 'Test Description',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
@@ -375,7 +375,7 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: 'Test Description',
             gameMode: 'invalidMode',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
@@ -408,7 +408,7 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: 'Test Description',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
         };
 
         try {
@@ -425,7 +425,7 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: 'Test Description',
             gameMode: 'classic',
-            board: { cells: [CellType.Grass], items: [ItemType.FightSanctuary] },
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
         };
 
