@@ -6,7 +6,6 @@ import { RouterLink } from '@angular/router';
     selector: 'app-wait-page',
     imports: [MatProgressSpinnerModule, RouterLink],
     templateUrl: './wait-page.component.html',
-    styleUrl: './wait-page.component.scss',
 })
 export class WaitPageComponent {
     timeToShowButtonMs: number = 3000;

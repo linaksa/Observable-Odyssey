@@ -11,7 +11,6 @@ import { GameSize } from '@common/constants';
 @Component({
     selector: 'app-edition-page',
     imports: [CommonModule, GameEditionComponent],
-    styleUrls: ['./edition-page.component.scss'],
     template: `
         <div>
             @if (editedGame) {

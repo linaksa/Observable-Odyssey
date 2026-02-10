@@ -8,7 +8,6 @@ import { IItem, ItemType } from '@common/items';
     selector: 'app-edition-cell',
     imports: [CommonModule],
     templateUrl: './edition-cell.component.html',
-    styleUrl: './edition-cell.component.scss',
 })
 export class EditionCellComponent {
     @Output() mousedDownCell = new EventEmitter<MouseEvent>();

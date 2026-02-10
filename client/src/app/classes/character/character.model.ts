@@ -2,6 +2,7 @@ import { ICharacter } from '@common/ICharacter';
 import { Avatar, DiceType } from '@common/constants';
 
 export type BonusType = 'life' | 'speed';
+export type DiceSelectionType = 'attack' | 'defense';
 
 export class CharacterModel {
     static createDefault(avatar: Avatar): CharacterModel {
@@ -131,5 +132,31 @@ export class CharacterModel {
             return;
         }
         this.character.rapidityPoints -= amount;
+    }
+
+    applyBonusSelection(previous: BonusType | null, next: BonusType | null, amount: number): void {
+        if (previous) {
+            this.removeBonus(previous, amount);
+        }
+        if (next) {
+            this.addBonus(next, amount);
+        }
+    }
+
+    applyDiceChoice(choice: DiceSelectionType | null): void {
+        if (choice === 'attack') {
+            this.character.attackBonusDiceType = DiceType.SixSided;
+            this.character.defenseBonusDiceType = DiceType.FourSided;
+            return;
+        }
+
+        if (choice === 'defense') {
+            this.character.attackBonusDiceType = DiceType.FourSided;
+            this.character.defenseBonusDiceType = DiceType.SixSided;
+            return;
+        }
+
+        this.character.attackBonusDiceType = DiceType.FourSided;
+        this.character.defenseBonusDiceType = DiceType.FourSided;
     }
 }

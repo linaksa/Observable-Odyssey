@@ -1,18 +1,40 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
-import { BonusType, CharacterModel } from '@app/classes/character/character.model';
-import { Avatar, DiceType, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDOM_PLAYER_NAMES } from '@common/constants';
+import { BonusType, CharacterModel, DiceSelectionType } from '@app/classes/character/character.model';
+import { Avatar, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDOM_PLAYER_NAMES } from '@common/constants';
 
-type DiceSelectionType = 'attack' | 'defense';
+type SelectionState = {
+    avatarIndex: number | null;
+    bonusType: BonusType | null;
+    diceType: DiceSelectionType | null;
+};
+
+const BONUS_AMOUNT = 2;
+const RANDOM_CHOICE_PROBABILITY = 0.5;
 
 @Component({
     selector: 'app-character-form',
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatCardModule,
+        MatDividerModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatInputModule,
+        RouterLink,
+    ],
     templateUrl: './character-form.component.html',
-    styleUrl: './character-form.component.scss',
 })
 export class CharacterFormComponent {
     readonly form = new FormGroup({
@@ -22,6 +44,7 @@ export class CharacterFormComponent {
                 Validators.required,
                 Validators.minLength(PLAYER_NAME_MIN_LENGTH),
                 Validators.maxLength(PLAYER_NAME_MAX_LENGTH),
+                //  Autorise uniquement lettres (avec accents) et chiffres, aucun espace ni symbole
                 Validators.pattern(/^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/),
             ],
         }),
@@ -43,30 +66,37 @@ export class CharacterFormComponent {
         character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
     }));
 
-    selectedAvatarIndex: number | null = null;
-    selectedDiceType: DiceSelectionType | null = null;
-    selectedBonusType: BonusType | null = null;
+    private selectionState: SelectionState = {
+        avatarIndex: null,
+        bonusType: null,
+        diceType: null,
+    };
     submitted = false;
     errorMessage = '';
 
-    generateRandomCharacter(): void {
-        this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
+    get selectedAvatarIndex(): number | null {
+        return this.selectionState.avatarIndex;
+    }
 
-        let avatarIndex = Math.floor(Math.random() * this.avatars.length);
-        if (this.selectedAvatarIndex !== null && this.avatars.length > 1) {
-            while (avatarIndex === this.selectedAvatarIndex) {
-                avatarIndex = Math.floor(Math.random() * this.avatars.length);
-            }
-        }
+    get selectedBonusType(): BonusType | null {
+        return this.selectionState.bonusType;
+    }
+
+    get selectedDiceType(): DiceSelectionType | null {
+        return this.selectionState.diceType;
+    }
+
+    generateRandomCharacter(): void {
+        const previousAvatarIndex = this.selectionState.avatarIndex;
+
+        this.form.controls.playerName.setValue(this.pickRandomName());
+        this.resetSelections();
+
+        const avatarIndex = this.pickRandomAvatarIndex(previousAvatarIndex);
         this.selectAvatar(avatarIndex);
 
-        const randomChances = 0.5;
-
-        const bonus: BonusType = Math.random() < randomChances ? 'life' : 'speed';
-        this.addBonus(bonus);
-
-        const dice: DiceSelectionType = Math.random() < randomChances ? 'attack' : 'defense';
-        this.addDice(dice);
+        this.addBonus(this.pickRandomBonus());
+        this.addDice(this.pickRandomDice());
     }
 
     selectAvatar(avatarIndex: number): void {
@@ -74,98 +104,99 @@ export class CharacterFormComponent {
             return;
         }
 
-        if (this.selectedAvatarIndex === avatarIndex) {
-            this.selectedAvatarIndex = null;
-            this.selectedBonusType = null;
-            this.selectedDiceType = null;
-            this.form.controls.avatarIndex.setValue(null);
-            this.form.controls.bonusType.setValue(null);
-            this.form.controls.diceType.setValue(null);
+        if (this.selectionState.avatarIndex === avatarIndex) {
+            this.resetSelections();
             return;
         }
 
-        this.selectedAvatarIndex = avatarIndex;
+        this.selectionState.avatarIndex = avatarIndex;
         this.avatars[avatarIndex].character = CharacterModel.createDefault(this.avatars[avatarIndex].avatar);
-        this.selectedBonusType = null;
-        this.selectedDiceType = null;
-        this.form.controls.avatarIndex.setValue(avatarIndex);
-        this.form.controls.bonusType.setValue(null);
-        this.form.controls.diceType.setValue(null);
+        this.applySelectionsToAvatar(avatarIndex);
+    }
+
+    private applySelectionsToAvatar(avatarIndex: number): void {
+        const selectedAvatar = this.avatars[avatarIndex];
+
+        selectedAvatar.character.applyBonusSelection(null, this.selectionState.bonusType, BONUS_AMOUNT);
+        selectedAvatar.character.applyDiceChoice(this.selectionState.diceType);
+        this.syncFormWithSelection();
     }
 
     addBonus(type: BonusType): void {
-        if (this.selectedAvatarIndex === null) {
+        if (this.selectionState.avatarIndex === null) {
             return;
         }
 
-        const selectedAvatar = this.avatars[this.selectedAvatarIndex];
+        const selectedAvatar = this.avatars[this.selectionState.avatarIndex];
+        const previous = this.selectionState.bonusType;
+        const next = previous === type ? null : type;
 
-        if (this.selectedBonusType) {
-            selectedAvatar.character.removeBonus(this.selectedBonusType, 2);
-        }
-
-        if (this.selectedBonusType === type) {
-            this.selectedBonusType = null;
-            this.form.controls.bonusType.setValue(null);
-            return;
-        }
-
-        this.selectedBonusType = type;
-        selectedAvatar.character.addBonus(type, 2);
-        this.form.controls.bonusType.setValue(type);
+        this.selectionState.bonusType = next;
+        selectedAvatar.character.applyBonusSelection(previous, next, BONUS_AMOUNT);
+        this.syncFormWithSelection();
     }
 
     addDice(type: DiceSelectionType): void {
-        if (this.selectedAvatarIndex === null) {
+        if (this.selectionState.avatarIndex === null) {
             return;
         }
 
-        const selectedAvatar = this.avatars[this.selectedAvatarIndex];
+        const selectedAvatar = this.avatars[this.selectionState.avatarIndex];
+        const previous = this.selectionState.diceType;
+        const next = previous === type ? null : type;
 
-        if (this.selectedDiceType === type) {
-            this.selectedDiceType = null;
-            selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-            selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
-            this.form.controls.diceType.setValue(null);
-            return;
-        }
-
-        this.selectedDiceType = type;
-        this.form.controls.diceType.setValue(type);
-
-        if (type === 'attack') {
-            selectedAvatar.character.attackBonusDiceType = DiceType.SixSided;
-            selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
-            return;
-        }
-
-        selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-        selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+        this.selectionState.diceType = next;
+        selectedAvatar.character.applyDiceChoice(next);
+        this.syncFormWithSelection();
     }
 
-    // confirmChanges(): void {
-    //     this.submitted = true;
+    private resetSelections(): void {
+        this.selectionState = {
+            avatarIndex: null,
+            bonusType: null,
+            diceType: null,
+        };
+        this.syncFormWithSelection();
+    }
 
-    //     if (this.form.controls.playerName.invalid) {
-    //         this.errorMessage = 'Votre nom ne doit contenir que des lettres (entre 3 et 20 lettres)';
-    //         return;
-    //     }
+    private syncFormWithSelection(): void {
+        this.form.controls.avatarIndex.setValue(this.selectionState.avatarIndex);
+        this.form.controls.bonusType.setValue(this.selectionState.bonusType);
+        this.form.controls.diceType.setValue(this.selectionState.diceType);
+    }
 
-    //     if (this.form.controls.avatarIndex.invalid) {
-    //         this.errorMessage = 'Vous devez choisir un avatar';
-    //         return;
-    //     }
+    private pickRandomName(): string {
+        return RANDOM_PLAYER_NAMES[this.pickRandomIndex(RANDOM_PLAYER_NAMES.length)];
+    }
 
-    //     if (this.form.controls.diceType.invalid) {
-    //         this.errorMessage = 'Vous devez assigner les des';
-    //         return;
-    //     }
+    private pickRandomBonus(): BonusType {
+        return this.nextRandom() < RANDOM_CHOICE_PROBABILITY ? 'life' : 'speed';
+    }
 
-    //     if (this.form.controls.bonusType.invalid) {
-    //         this.errorMessage = 'Vous devez ajouter un bonus';
-    //         return;
-    //     }
+    private pickRandomDice(): DiceSelectionType {
+        return this.nextRandom() < RANDOM_CHOICE_PROBABILITY ? 'attack' : 'defense';
+    }
 
-    //     this.errorMessage = '';
-    // }
+    private pickRandomAvatarIndex(excludeIndex: number | null): number {
+        if (this.avatars.length <= 1 || excludeIndex === null) {
+            return this.pickRandomIndex(this.avatars.length);
+        }
+
+        let avatarIndex = this.pickRandomIndex(this.avatars.length);
+        while (avatarIndex === excludeIndex) {
+            avatarIndex = this.pickRandomIndex(this.avatars.length);
+        }
+        return avatarIndex;
+    }
+
+    private pickRandomIndex(max: number): number {
+        if (max <= 0) {
+            return 0;
+        }
+        return Math.floor(this.nextRandom() * max);
+    }
+
+    private nextRandom(): number {
+        return Math.random();
+    }
 }

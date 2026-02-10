@@ -3,7 +3,6 @@ import { Component, Input } from '@angular/core';
 @Component({
   selector: 'app-action-selection-button',
   imports: [],
-  styleUrl: './action-selection-button.component.scss',
     template: `
         <button
             type="button"
