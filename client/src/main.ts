@@ -2,6 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
+import { AngularHttpClientAdapter } from '@app/http/angular.http.client.adapter';
+import { HTTP_CLIENT } from '@app/http/http.interface';
 import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
 import { AppComponent } from '@app/pages/app/app.component';
 import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
@@ -30,5 +32,13 @@ const routes: Routes = [
 
 enableProfiling();
 bootstrapApplication(AppComponent, {
-    providers: [provideZoneChangeDetection(), provideHttpClient(), provideRouter(routes, withHashLocation(), withComponentInputBinding())],
+    providers: [
+        provideZoneChangeDetection(),
+        provideHttpClient(),
+        provideRouter(routes, withHashLocation(), withComponentInputBinding()),
+        {
+            provide: HTTP_CLIENT,
+            useClass: AngularHttpClientAdapter,
+        },
+    ],
 });
