@@ -35,7 +35,7 @@ describe('EditionFormComponent', () => {
       providers: [provideRouter([]), { provide: FormBuilder, useValue: formBuilder }],
     }).compileComponents();
 
-    editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm'], {isSubmitting: signal(false) });
+    editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm', 'resetForm'], {isSubmitting: signal(false) });
     editFormServiceSpy.form = formBuilder.group({
       gameTitle: [''],
       description: [''],
@@ -63,5 +63,19 @@ describe('EditionFormComponent', () => {
     component.submitGameForm();
     expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(
       randomGame._id, randomGame.gameMode, component.cells, component.objects, component.gridSelector);
+  });
+
+  it('should call gameEditFormService.resetForm on resetForm', () => {
+
+      component.resetForm(randomGame);
+
+      expect(editFormServiceSpy.resetForm).toHaveBeenCalledWith(randomGame);
+  });
+
+  it('should catch the error is submitForm rejects the promise', () => {
+      editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
+
+      component.submitGameForm();
+      expect(editFormServiceSpy.submitForm).toHaveBeenCalled();
   });
 });

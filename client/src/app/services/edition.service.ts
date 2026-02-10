@@ -16,6 +16,14 @@ export enum ToolOption {
     Objects = 'objects',
 }
 
+const MAX_SANCTUARY_AMOUNT_LARGE = 4;
+const MAX_SANCTUARY_AMOUNT_MEDIUM = 2;
+const MAX_SANCTUARY_AMOUNT_SMALL = 1;
+
+const MAX_SPAWNPOINT_AMOUNT_LARGE = 6;
+const MAX_SPAWNPOINT_AMOUNT_MEDIUM = 4;
+const MAX_SPAWNPOINT_AMOUNT_SMALL = 2;
+
 @Injectable({
     providedIn: 'root',
 })
@@ -51,6 +59,7 @@ export class BoardEditorService {
     activeTool: Tool = ToolOption.Placement;
     selectedMaterial: CellType = CellType.Empty;
     selectedObject: ItemType | null;
+
 
     objectSizesMap = {
         [ItemType.LifeSanctuary]: SANCTUARY_SIZE,
@@ -96,14 +105,14 @@ export class BoardEditorService {
 
     updateMaxAmount() {
         if (this.gameCells.length === GridSize.SMALL) {
-            this.sanctuaryMaxAmount = 1;
-            this.spawnpointMaxAmount = 2;
+            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_SMALL;
+            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_SMALL;
         } else if (this.gameCells.length === GridSize.MEDIUM) {
-            this.sanctuaryMaxAmount = 2;
-            this.spawnpointMaxAmount = 4;
+            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_MEDIUM;
+            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_MEDIUM;
         } else if (this.gameCells.length === GridSize.LARGE) {
-            this.sanctuaryMaxAmount = 4;
-            this.spawnpointMaxAmount = 6;
+            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_LARGE;
+            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_LARGE;
         }
     }
 
