@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
+import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES, OBJECT_SPECIFIC_CLASSES } from '@app/constants/backgrounds-mapping';
 import { CellType } from '@common/board';
 import { IItem, ItemType } from '@common/items';
 
@@ -23,7 +23,7 @@ export class EditionCellComponent {
 
     get backgroundImageForObject(): string {
         if (!this.item) return '';
-        return `${OBJECT_IMAGES[this.item.itemType as ItemType]}`;
+        return `${OBJECT_IMAGES[this.item.itemType as ItemType]} ${OBJECT_SPECIFIC_CLASSES[this.item.itemType as ItemType]}`;
     }
 
     get objectExtraStyles(): { [key: string]: string } {

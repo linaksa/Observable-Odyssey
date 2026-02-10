@@ -28,13 +28,6 @@ const MAX_SPAWNPOINT_AMOUNT_SMALL = 2;
     providedIn: 'root',
 })
 export class BoardEditorService {
-    itemTypesLabels: { [key in ItemType]: string } = {
-        [ItemType.LifeSanctuary]: 'Sanctuaire de vie',
-        [ItemType.FightSanctuary]: 'Sanctuaire de combat',
-        [ItemType.StartingPosition]: "Point d'apparition",
-        [ItemType.Flag]: 'Drapeau',
-    };
-
     availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
 
     availableTools = Object.values(ToolOption);
