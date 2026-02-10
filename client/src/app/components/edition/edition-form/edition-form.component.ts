@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, Input, OnInit, Output, Signal } from '
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GameEditFormService } from '@app/services/game-edit-form.service';
+
 import { CellType } from '@common/board';
 import { IExistingGame } from '@common/game';
 import { IItem } from '@common/items';
@@ -36,4 +37,8 @@ export class EditionFormComponent implements OnInit {
       // The service handles error display on its own
     });
   }
+
+    resetForm(game: IExistingGame): void {
+        this.gameEditFormService.resetForm(game);
+    }
 }
