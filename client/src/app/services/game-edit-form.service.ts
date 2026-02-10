@@ -20,17 +20,10 @@ export class GameEditFormService {
 
     customHtml2Canvas = html2canvas;
 
-    availableGameModes: GameType[] = [GameType.Classic, GameType.Ctf];
-    availableGameModeLabels = {
-        [GameType.Classic]: 'Classique',
-        [GameType.Ctf]: 'Capture de drapeau',
-    };
-
     constructor(private formBuilder: FormBuilder) {
         this.form = this.formBuilder.group({
             gameTitle: [''],
             description: [''],
-            gameMode: [GameType.Classic],
         });
     }
 
@@ -38,7 +31,6 @@ export class GameEditFormService {
         this.form.patchValue({
             gameTitle: gameData.gameTitle,
             description: gameData.description,
-            gameMode: gameData.gameMode,
         });
     }
 
@@ -46,7 +38,6 @@ export class GameEditFormService {
         this.form.reset({
             gameTitle: gameData.gameTitle,
             description: gameData.description,
-            gameMode: gameData.gameMode,
         });
     }
 
@@ -66,7 +57,7 @@ export class GameEditFormService {
     }
 
 
-    async submitForm(id: string, cells: CellType[][], items: IItem[], gridSelector: HTMLElement | null): Promise<void> {
+    async submitForm(id: string, gameMode:GameType, cells: CellType[][], items: IItem[], gridSelector: HTMLElement | null): Promise<void> {
         this.isSubmitting.set(true);
         // Allow angular to rerender before html2canva blocks the cycle somehow
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -89,7 +80,7 @@ export class GameEditFormService {
         const gameData: EditGameFormData = {
             gameTitle: formData.gameTitle,
             description: formData.description,
-            gameMode: formData.gameMode,
+            gameMode,
             preview: previewImage,
             board,
         };

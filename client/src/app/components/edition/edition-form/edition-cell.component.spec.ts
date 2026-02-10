@@ -39,7 +39,6 @@ describe('EditionFormComponent', () => {
     editFormServiceSpy.form = formBuilder.group({
       gameTitle: [''],
       description: [''],
-      gameMode: [GameType.Classic],
     });
 
     TestBed.overrideProvider(GameEditFormService, { useValue: editFormServiceSpy });
@@ -62,6 +61,7 @@ describe('EditionFormComponent', () => {
     editFormServiceSpy.submitForm.and.returnValue(Promise.resolve());
 
     component.submitGameForm();
-    expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(randomGame._id, component.cells, component.objects, component.gridSelector);
+    expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(
+      randomGame._id, randomGame.gameMode, component.cells, component.objects, component.gridSelector);
   });
 });

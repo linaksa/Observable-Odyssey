@@ -60,23 +60,6 @@ export class GameEditionComponent implements OnInit {
         this.boardEditorService.initFromExistingBoard(structuredClone(this.previousVersion));
     }
 
-    gameModeChange(event: Event): void {
-        const selectElement = event.target as HTMLSelectElement;
-        const selectedMode: GameType = selectElement.value as GameType;
-
-        const hasFlag = this.boardEditorService.getObjectCount(ItemType.Flag) > 0;
-        if (hasFlag && selectedMode !== GameType.Ctf) {
-            const res = confirm('Changing the mode to Normal while a flag is placed will remove it.');
-
-            if (!res) {
-                this.boardEditorService.changeGameMode(this.boardEditorService.gameMode);
-                selectElement.value = this.boardEditorService.gameMode;
-                return;
-            }
-        }
-        this.boardEditorService.changeGameMode(selectedMode);
-    }
-
     selectTool(tool: Tool): void {
         this.boardEditorService.activeTool = tool;
     }

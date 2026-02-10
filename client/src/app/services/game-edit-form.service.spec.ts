@@ -39,7 +39,6 @@ describe('GameEditFormService', () => {
   it('should have all form fields', () => {
     expect(service.form.contains('gameTitle')).toBeTrue();
     expect(service.form.contains('description')).toBeTrue();
-    expect(service.form.contains('gameMode')).toBeTrue();
   });
 
   it('should take provided game value on init', () => {
@@ -47,14 +46,13 @@ describe('GameEditFormService', () => {
 
     expect(service.form.get('gameTitle')?.value).toBe(randomGame.gameTitle);
     expect(service.form.get('description')?.value).toBe(randomGame.description);
-    expect(service.form.get('gameMode')?.value).toBe(randomGame.gameMode);
   });
 
   it('should not submit if preview image fails', async () => {
     spyOn(service, 'getPreviewImage').and.returnValue(Promise.resolve(null));
 
     try{
-      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
       fail('Submit form should have thrown an error');
     }catch{
       expect(service.formValid).toBeFalse();
@@ -74,21 +72,19 @@ describe('GameEditFormService', () => {
   
     const newTitle = 'Updated Game Title';
     const newDescription = 'Updated Description';
-    const newGameMode = GameType.Ctf;
 
     service.form.get('gameTitle')?.setValue(newTitle);
     service.form.get('description')?.setValue(newDescription);
-    service.form.get('gameMode')?.setValue(newGameMode);
 
     const expectedGameData: EditGameFormData = {
         gameTitle: newTitle,
         description: newDescription,
-        gameMode: newGameMode,
+        gameMode: randomGame.gameMode,
         preview: fakeImage,
         board: randomGame.board,
     };
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+    await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.saveGame).toHaveBeenCalled();
     expect(service.gameService.saveGame).toHaveBeenCalledWith(randomGame._id, expectedGameData);
   });
@@ -100,7 +96,7 @@ describe('GameEditFormService', () => {
     gameServiceSpy.saveGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
     randomGame._id = '1';
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+    await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.saveGame).toHaveBeenCalled();
 
     expect(service.formValid).toBeTrue();
@@ -110,7 +106,7 @@ describe('GameEditFormService', () => {
     gameServiceSpy.saveGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: '{"error": "Save error"}' })));
 
     try{
-      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
       fail('Submit form should have thrown an error');
     } catch {
       expect(service.gameService.saveGame).toHaveBeenCalled();
@@ -128,7 +124,7 @@ describe('GameEditFormService', () => {
     gameServiceSpy.createGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
     randomGame._id = '';
 
-    await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+    await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
     expect(service.gameService.createGame).toHaveBeenCalled();
 
     expect(service.formValid).toBeTrue();
@@ -138,7 +134,7 @@ describe('GameEditFormService', () => {
     gameServiceSpy.createGame.and.returnValue(throwError(() => new HttpErrorResponse({status: 500, error: '{"error": "Save error"}'})));
 
     try{
-      await service.submitForm(randomGame._id, randomGame.board.cells, randomGame.board.items, null);
+      await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
       fail('Submit form should have thrown an error');
     } catch {
       expect(service.gameService.createGame).toHaveBeenCalled();
