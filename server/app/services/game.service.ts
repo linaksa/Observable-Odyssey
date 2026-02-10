@@ -20,6 +20,12 @@ export class GameService {
 
     async createGame(gameData: IGame): Promise<IGame> {
         this.validateGameData(gameData);
+
+        const existingGame = await game.findOne({ gameTitle: gameData.gameTitle });
+        if (existingGame) {
+            throw new ValidationError('Un jeu avec ce nom existe déjà');
+        }
+
         gameData.visibility = Visibility.Hidden;
         gameData.dateCreated = new Date();
         gameData.lastModifiedDate = new Date();
@@ -70,7 +76,18 @@ export class GameService {
             const gameToCreate = { game: newGame, created: true };
             return gameToCreate;
         }
+
         this.validateGameData(gameData);
+
+        // Check if another game with the same title exists (excluding the current game)
+        const duplicateGame = await game.findOne({
+            gameTitle: gameData.gameTitle,
+            _id: { $ne: id },
+        });
+        if (duplicateGame) {
+            throw new ValidationError('Un jeu avec ce nom existe déjà');
+        }
+
         const updatedGame = await game.findByIdAndUpdate(
             id,
             {
@@ -83,6 +100,7 @@ export class GameService {
             },
             { new: true },
         );
+
         const gameToUpdate = { game: updatedGame, created: false };
         return gameToUpdate;
     }

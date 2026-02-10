@@ -106,6 +106,9 @@ describe('Game Service', () => {
     });
 
     it('should create a game with dates', async () => {
+        const findOneStub = sinon.stub(game, 'findOne');
+        findOneStub.resolves(null);
+
         const board: IBoard = {
             cells: [
                 [
@@ -274,6 +277,8 @@ describe('Game Service', () => {
 
         void expect(result.dateCreated).to.exist;
         void expect(result.lastModifiedDate).to.exist;
+
+        findOneStub.restore();
     });
 
     it('should throw an error when description is missing', async () => {
@@ -288,7 +293,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de description");
+            expect((error as Error).message).to.equal("Il n'y a pas de description");
         }
     });
 
@@ -305,7 +310,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de description");
+            expect((error as Error).message).to.equal("Il n'y a pas de description");
         }
     });
 
@@ -384,7 +389,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de titre");
+            expect((error as Error).message).to.equal("Il n'y a pas de titre");
         }
     });
 
@@ -401,7 +406,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de titre");
+            expect((error as Error).message).to.equal("Il n'y a pas de titre");
         }
     });
 
@@ -451,7 +456,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Mode de jeu invalide');
+            expect((error as Error).message).to.equal('Mode de jeu invalide');
         }
     });
 
@@ -467,7 +472,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de carte");
+            expect((error as Error).message).to.equal("Il n'y a pas de carte");
         }
     });
 
@@ -483,7 +488,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Il manque une image de preview du jeu');
+            expect((error as Error).message).to.equal('Il manque une image de preview du jeu');
         }
     });
 
@@ -501,9 +506,48 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
+            expect((error as Error).message).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
         }
     });
+
+    it('should throw an error when game title already exists', async () => {
+        const findOneStub = sinon.stub(game, 'findOne');
+        findOneStub.resolves({ ...baseGame, _id: fakeGameId } as never);
+
+        const mockGameData = {
+            ...baseGame,
+            gameTitle: 'Test Game',
+        };
+
+        try {
+            await gameService.createGame(mockGameData);
+            throw new Error('Should have thrown an error');
+        } catch (error) {
+            expect((error as Error).message).to.equal('Un jeu avec ce nom existe déjà');
+        }
+
+        findOneStub.restore();
+    });
+
+    it('should create game when title is unique', async () => {
+        const findOneStub = sinon.stub(game, 'findOne');
+        findOneStub.resolves(null);
+        gameCreateStub.resolves(baseGame);
+
+        const mockGameData = {
+            ...baseGame,
+            gameTitle: 'Unique Game',
+        };
+
+        const result = await gameService.createGame(mockGameData);
+
+        expect(findOneStub.calledOnce).to.equal(true);
+        expect(gameCreateStub.calledOnce).to.equal(true);
+        expect(result).to.deep.equal(baseGame);
+
+        findOneStub.restore();
+    });
+
     // deleteGame tests
     it('should delete a game successfully', async () => {
         findByIdAndDeleteStub.resolves(baseGame);
@@ -520,7 +564,7 @@ describe('Game Service', () => {
             await gameService.deleteGame(fakeGameId);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Jeu déjà supprimé');
+            expect((error as Error).message).to.equal('Jeu déjà supprimé');
         }
     });
     // changeVisibility tests
@@ -542,7 +586,7 @@ describe('Game Service', () => {
             await gameService.changeVisibility(fakeGameId, Visibility.Viewable);
             throw new Error('Should have thrown');
         } catch (error) {
-            expect(error.message).to.equal('Jeu introuvable');
+            expect((error as Error).message).to.equal('Jeu introuvable');
         }
     });
     it('should throw error if visibility is invalid', async () => {
@@ -552,14 +596,16 @@ describe('Game Service', () => {
             await gameService.changeVisibility(fakeGameId, 'INVALID_VISIBILITY' as Visibility);
             throw new Error('Should have thrown');
         } catch (error) {
-            expect(error.message).to.equal('Visibilité invalide');
+            expect((error as Error).message).to.equal('Visibilité invalide');
         }
     });
     // updateGame tests
     it('should update a game successfully', async () => {
         const updatedData = { ...baseGame, gameTitle: 'Updated Title' };
+        const findOneStub = sinon.stub(game, 'findOne');
 
         findByIdStub.resolves(baseGame);
+        findOneStub.resolves(null);
         findByIdAndUpdateStub.resolves(updatedData);
 
         const { game: updatedGame, created } = await gameService.updateGame(fakeGameId, updatedData);
@@ -570,6 +616,8 @@ describe('Game Service', () => {
         expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
     });
     it('should create game if game to update does not exist', async () => {
+        const findOneStub = sinon.stub(game, 'findOne');
+        findOneStub.resolves(null);
         findByIdStub.resolves(null);
 
         const createdGame = { ...baseGame, _id: fakeGameId };
@@ -582,6 +630,7 @@ describe('Game Service', () => {
     });
     it('should throw error if game data to update is invalid', async () => {
         findByIdStub.resolves(baseGame);
+
         const invalidGameData = {
             ...baseGame,
             gameTitle: '',
@@ -590,7 +639,27 @@ describe('Game Service', () => {
             await gameService.updateGame(fakeGameId, invalidGameData);
             throw new Error('Should have thrown');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de titre");
+            expect((error as Error).message).to.equal("Il n'y a pas de titre");
         }
+    });
+
+    it('should throw error if updating game title to an existing title', async () => {
+        const findOneStub = sinon.stub(game, 'findOne');
+        findByIdStub.resolves(baseGame);
+        findOneStub.resolves({ ...baseGame2, _id: anotherFakeGameId } as never);
+
+        const updatedGameData = {
+            ...baseGame,
+            gameTitle: 'Test Game2',
+        };
+
+        try {
+            await gameService.updateGame(fakeGameId, updatedGameData);
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as Error).message).to.equal('Un jeu avec ce nom existe déjà');
+        }
+
+        findOneStub.restore();
     });
 });
