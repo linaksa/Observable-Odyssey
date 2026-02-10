@@ -87,4 +87,14 @@ describe('GameTableService', () => {
         service.fetchVisibleGames();
         expect(service.tableData).toEqual([]);
     });
+
+    it('should handle null response', () => {
+        gameServiceSpy.getAllGames.and.returnValue(of(null as unknown as IExistingGame[]));
+
+        service.fetchGames();
+        expect(service.tableData).toEqual([]);
+
+        service.fetchVisibleGames();
+        expect(service.tableData).toEqual([]);
+    });
 });
