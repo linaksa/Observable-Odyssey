@@ -1,0 +1,13 @@
+<div class="text-2xl text-white tracking-wider text-center">Informations</div>
+
+<div class="flex grow flex-col">
+    <app-player-name-input [form]="form" />
+
+    <div class="border-t border-white mt-4 mb-2"></div>
+
+    <app-character-attributes-grid [avatars]="avatars" [selectedAvatarIndex]="selectedAvatarIndex" />
+
+    <div class="border-t border-white mt-4 mb-2"></div>
+
+    <app-attribute-descriptions />
+</div>
