@@ -39,18 +39,6 @@
         </aside>
 
         <main class="bg-gray-50 rounded-xl border flex flex-col flex-1">
-            <div class="h-12 px-4 border-b flex items-center justify-center gap-2 bg-white">
-                <button type="button" (click)="boardEditorService.setGrid(10)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
-                    10×10
-                </button>
-                <button type="button" (click)="boardEditorService.setGrid(15)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
-                    15×15
-                </button>
-                <button type="button" (click)="boardEditorService.setGrid(20)" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">
-                    20×20
-                </button>
-            </div>
-
             <div id="grid-container" class="flex-1 flex items-center justify-center p-4">
                 <div
                     #grid
@@ -93,7 +81,6 @@
                 [game]="gameToEdit"
                 [cells]="boardEditorService.gameCells"
                 [objects]="boardEditorService.objects"
-                (onGameModeChange)="gameModeChange($event)"
             ></app-edition-form>
         </aside>
     </div>

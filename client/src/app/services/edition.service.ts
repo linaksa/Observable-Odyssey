@@ -107,26 +107,6 @@ export class BoardEditorService {
         }
     }
 
-    setGrid(size: number): void {
-        if (this.isBoardFilled()) {
-            const confirmChange = confirm('Changing the grid size will erase your progress. Save first to not lose progress');
-            if (!confirmChange) {
-                return;
-            }
-        }
-        this.resetGrid();
-        this.buildGrid(size);
-    }
-
-    changeGameMode(nextMode: GameType): void {
-        this.selectedObject = null;
-
-        if (nextMode !== GameType.Ctf) {
-            this.objects = this.objects.filter((obj) => obj.itemType !== ItemType.Flag);
-        }
-        this.gameMode = nextMode;
-    }
-
     revertGrid(game: IExistingGame): void {
         this.initFromExistingBoard(structuredClone(game));
     }
@@ -209,16 +189,6 @@ export class BoardEditorService {
         if (!obj) return;
 
         this.objects = this.objects.filter((o) => o !== obj);
-    }
-
-    resetGrid(): void {
-        this.buildGrid(this.gameCells.length);
-    }
-
-    isBoardFilled(): boolean {
-        return this.gameCells.some((row) => {
-            return row.some((cell) => cell !== CellType.Empty);
-        });
     }
 
     getObjectCount(itemType: ItemType): number {
