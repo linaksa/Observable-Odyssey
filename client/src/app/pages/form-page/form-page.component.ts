@@ -1,16 +1,28 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AvatarI } from '@app/classes/character/AvatarI';
 import { BonusType, CharacterModel } from '@app/classes/character/character.model';
+import { AvatarSelectorComponent } from '@app/components/avatar-selector/avatar-selector.component';
+import { BackNavigationComponent } from '@app/components/back-navigation/back-navigation.component';
+import { CharacterInfoPanelComponent } from '@app/components/character-info-panel/character-info-panel.component';
+import { CharacterModifierPanelComponent } from '@app/components/character-modifier-panel/character-modifier-panel.component';
+import { FormPageHeaderComponent } from '@app/components/form-page-header/form-page-header.component';
 import { Avatar, DiceType, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDOM_PLAYER_NAMES } from '@common/constants';
 
 type DiceSelectionType = 'attack' | 'defense';
 
 @Component({
     selector: 'app-form-page',
-    imports: [CommonModule, ReactiveFormsModule, RouterLink],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        BackNavigationComponent,
+        FormPageHeaderComponent,
+        AvatarSelectorComponent,
+        CharacterInfoPanelComponent,
+        CharacterModifierPanelComponent,
+    ],
     templateUrl: './form-page.component.html',
 })
 export class FormPageComponent {
