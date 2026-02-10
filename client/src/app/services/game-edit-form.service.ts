@@ -101,16 +101,12 @@ export class GameEditFormService {
                 },
                 error: (err) => {
                     this.formValid = false;
-                    try {
-                        const serverError = err.originalError?.error;
-                        const parsedError = typeof serverError === 'string' ? JSON.parse(serverError) : serverError;
-                        this.formErrors = [
-                            'Une erreur est survenue lors de la sauvegarde du jeu.',
-                            parsedError?.error || parsedError?.message || err.message || 'Erreur inconnue',
-                        ];
-                    } catch {
-                        this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', err.message || 'Erreur inconnue'];
-                    }
+                    const serverError = err.originalError?.error;
+                        
+                    this.formErrors = [
+                        'Une erreur est survenue lors de la sauvegarde du jeu.',
+                        serverError?.error || 'Erreur inconnue',
+                    ];
                     this.isSubmitting.set(false);
                     reject();
                 },
