@@ -1,24 +1,21 @@
-import { Component, inject } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GameCreationDialogComponent } from '@app/components/game-creation-dialog/game-creation-dialog.component';
 import { GameTableComponent } from '@app/components/game-table/game-table.component';
 
 @Component({
     selector: 'app-administration-page',
-    imports: [GameTableComponent, RouterLink],
+    imports: [GameTableComponent, RouterLink, GameCreationDialogComponent],
     templateUrl: './administration-page.component.html',
-    styleUrl: './administration-page.component.scss',
 })
 export class AdministrationPageComponent {
-    dialog = inject(MatDialog);
+    isDialogOpen = false;
 
     openDialog() {
-        const dialogConfig = new MatDialogConfig();
+        this.isDialogOpen = true;
+    }
 
-        dialogConfig.autoFocus = true;
-        dialogConfig.hasBackdrop = true;
-
-        this.dialog.open(GameCreationDialogComponent, dialogConfig);
+    closeDialog() {
+        this.isDialogOpen = false;
     }
 }

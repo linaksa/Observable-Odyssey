@@ -1,18 +1,17 @@
 import { Component } from '@angular/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 
 @Component({
     selector: 'app-wait-page',
-    imports: [MatProgressSpinnerModule, RouterLink],
+    imports: [LoadingOverlayComponent, RouterLink],
     templateUrl: './wait-page.component.html',
-    styleUrl: './wait-page.component.scss',
 })
 export class WaitPageComponent {
-    timeToShowButtonMs: number = 3000;
+    timeout: number = 0;
     showButton: boolean = false;
 
     constructor() {
-        setTimeout(() => (this.showButton = true), this.timeToShowButtonMs);
+        setTimeout(() => (this.showButton = true), this.timeout);
     }
 }

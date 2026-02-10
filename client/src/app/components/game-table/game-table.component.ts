@@ -1,8 +1,8 @@
 import { DatePipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, Input, OnDestroy, OnInit } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 import { AdminSocketService } from '@app/services/admin.socket.service';
 import { AdministrationService } from '@app/services/administrationService';
 import { GameTableService } from '@app/services/game-table.service';
@@ -11,20 +11,29 @@ import { IExistingGame, Visibility } from '@common/game';
 
 @Component({
     selector: 'app-game-table',
-    imports: [DatePipe, RouterLink, NgClass],
+    imports: [DatePipe, RouterLink, NgClass, LoadingOverlayComponent],
     templateUrl: './game-table.component.html',
-    styleUrl: './game-table.component.scss',
 })
 export class GameTableComponent implements OnInit, OnDestroy {
-    private _snackBar = inject(MatSnackBar);
-    private _closeString = 'Fermer';
-
     adminService: AdministrationService = inject(AdministrationService);
     gameTableService: GameTableService = inject(GameTableService);
     gameService: GameService = inject(GameService);
     adminSocketService: AdminSocketService = inject(AdminSocketService);
 
     @Input() isAdmin = false;
+
+    toastMessage = signal<string | null>(null);
+    private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    timeout = 4000;
+
+    private showToast(message: string, durationMs = this.timeout) {
+        if (this.toastTimeoutId) {
+            clearTimeout(this.toastTimeoutId);
+        }
+        this.toastMessage.set(message);
+        this.toastTimeoutId = setTimeout(() => this.toastMessage.set(null), durationMs);
+    }
 
     fetchCorrectGames(): void {
         if (this.isAdmin) {
@@ -35,7 +44,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.gameTableService.tableData.data = [];
+        this.gameTableService.tableData = [];
 
         this.fetchCorrectGames();
 
@@ -45,7 +54,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => {
                 const serverMessage = error?.error?.error || "Il y a eu un problème lors de l'ajout des jeux.";
-                this._snackBar.open(serverMessage, this._closeString);
+                this.showToast(serverMessage);
             },
         });
     }
@@ -66,6 +75,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
             error: () => {
                 input.disabled = false;
                 input.checked = !input.checked;
+                this.showToast('Il y a eu un problème lors du changement de visibilité.');
             },
         });
     }
@@ -73,16 +83,19 @@ export class GameTableComponent implements OnInit, OnDestroy {
     deleteGame(element: IExistingGame): void {
         this.gameService.deleteGame(element).subscribe({
             next: () => {
-                this.gameTableService.tableData.data = this.gameTableService.tableData.data.filter((item) => item._id !== element._id);
+                this.gameTableService.tableData = this.gameTableService.tableData.filter((item) => item._id !== element._id);
             },
             error: (error: HttpErrorResponse) => {
                 const serverMessage = error?.error?.error || 'Il y a eu un problème lors de la suppression.';
-                this._snackBar.open(serverMessage, this._closeString);
+                this.showToast(serverMessage);
             },
         });
     }
 
     ngOnDestroy(): void {
         this.adminSocketService.disconnect();
+        if (this.toastTimeoutId) {
+            clearTimeout(this.toastTimeoutId);
+        }
     }
 }
