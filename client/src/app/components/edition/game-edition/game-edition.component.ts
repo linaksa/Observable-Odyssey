@@ -101,12 +101,6 @@ export class GameEditionComponent implements OnInit {
             return;
         }
 
-        if (this.boardEditorService.activeTool === ToolOption.Placement && this.boardEditorService.selectedMaterial === CellType.OpenDoor) {
-            this.boardEditorService.gameCells[row][col] =
-                this.boardEditorService.gameCells[row][col] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
-            return;
-        }
-
         this.boardEditorService.applyTile(row, col);
     }
 
