@@ -12,7 +12,9 @@
         "coverage": "ng test --code-coverage --source-map=true",
         "lint": "eslint --config eslint.config.mjs \"src/**/*.ts\"",
         "lint:fix": "eslint --config eslint.config.mjs \"src/**/*.ts\" --fix",
-        "start-chromium": "BROWSER=chromium ng serve --open"
+        "start-chromium": "BROWSER=chromium ng serve --open",
+        "test-chromium": "ng test --browsers Chromium",
+        "coverage-chromium": "ng test --code-coverage --source-map=true --browsers Chromium"
     },
     "prettier": {
         "printWidth": 150,

@@ -28,11 +28,14 @@ export class EditionFormComponent implements OnInit {
     }
 
     submitGameForm(): void {
-        this.gameEditFormService.submitForm(this.game._id, this.game.gameMode, this.cells, this.objects, this.gridSelector).then(() => {
-            this.router.navigate(['/admin']);
-        }).catch(() => {
-            // The service handles error display on its own
-        });
+        this.gameEditFormService
+            .submitForm(this.game._id, this.game.gameMode, this.cells, this.objects, this.gridSelector)
+            .then(() => {
+                this.router.navigate(['/admin']);
+            })
+            .catch(() => {
+                // The service handles error display on its own
+            });
     }
 
     resetForm(game: IExistingGame): void {

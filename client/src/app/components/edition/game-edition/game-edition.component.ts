@@ -86,7 +86,6 @@ export class GameEditionComponent implements OnInit {
         this.currentCell = [row, col];
         this.isRightClick = event.button === 2;
 
-
         if (this.isRightClick) {
             if (this.isShiftPressed) {
                 this.boardEditorService.eraseObject(row, col);

@@ -16,7 +16,7 @@ import SpyObj = jasmine.SpyObj;
 })
 class MockGameEditionComponent {
     @Input() gameToEdit: IExistingGame;
-};
+}
 
 const randomBoard: IBoard = { cells: [[]], items: [] };
 const randomGame: IExistingGame = {

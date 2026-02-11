@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
 @Component({
-  selector: 'app-action-selection-button',
-  imports: [],
+    selector: 'app-action-selection-button',
+    imports: [],
     template: `
         <button
             type="button"
@@ -21,7 +21,7 @@ import { Component, Input } from '@angular/core';
     `,
 })
 export class ActionSelectionButtonComponent {
-  @Input() isSelected: boolean = false;
-  @Input() tooltip?: string;
-  @Input() disabled = false;
+    @Input() isSelected: boolean = false;
+    @Input() tooltip?: string;
+    @Input() disabled = false;
 }

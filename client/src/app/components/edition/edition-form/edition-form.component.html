@@ -1,10 +1,10 @@
 <form [formGroup]="gameEditFormService.form" (ngSubmit)="submitGameForm()">
-    @if(isSubmittingFlag()) {
-    <div class="fixed w-screen h-screen top-0 left-0 opacity-50 bg-gray-500 z-50">
-        <div class="size-8 border-4 border-black border-t-transparent rounded-full animate-spin relative top-[50%] left-[50%]"></div>
-    </div>
+    @if (isSubmittingFlag()) {
+        <div class="fixed w-screen h-screen top-0 left-0 opacity-50 bg-gray-500 z-50">
+            <div class="size-8 border-4 border-black border-t-transparent rounded-full animate-spin relative top-[50%] left-[50%]"></div>
+        </div>
     }
-    
+
     <div class="flex flex-col gap-2">
         <div class="flex flex-col">
             <label>Titre</label>
@@ -19,9 +19,11 @@
 
     <div class="mt-auto py-4 border-t">
         <div class="text-xs text-gray-600 space-y-1 max-h-64 overflow-y-auto">
-            @for (log of gameEditFormService.formErrors; track $index) { @if (!gameEditFormService.formValid) {
-            <div class="text-red-600">{{ log }}</div>
-            } }
+            @for (log of gameEditFormService.formErrors; track $index) {
+                @if (!gameEditFormService.formValid) {
+                    <div class="text-red-600">{{ log }}</div>
+                }
+            }
         </div>
     </div>
 
