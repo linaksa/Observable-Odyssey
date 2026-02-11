@@ -1,12 +1,12 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
 
 @Injectable()
 export class AngularHttpClientAdapter implements HttpClientPort {
-    constructor(private readonly http: HttpClient) {}
+    private readonly http = inject(HttpClient);
 
     get<T>(url: string, options?: HttpOptions): Observable<T> {
         return this.http.get<T>(url, { ...this.mapOptions(options), observe: 'response' }).pipe(

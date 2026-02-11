@@ -1,5 +1,3 @@
-import { HttpException } from '@app/classes/http.exception';
-import { DateController } from '@app/controllers/date.controller';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -7,6 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Service } from 'typedi';
+import { HttpException } from './classes/http.exception';
 import { GameController } from './controllers/game.controller';
 
 @Service()
@@ -15,10 +14,7 @@ export class Application {
     private readonly internalError: number = StatusCodes.INTERNAL_SERVER_ERROR;
     private readonly swaggerOptions: swaggerJSDoc.Options;
 
-    constructor(
-        private readonly dateController: DateController,
-        private readonly gameController: GameController,
-    ) {
+    constructor(private readonly gameController: GameController) {
         this.app = express();
 
         this.swaggerOptions = {
@@ -39,7 +35,6 @@ export class Application {
 
     bindRoutes(): void {
         this.app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerJSDoc(this.swaggerOptions)));
-        this.app.use('/api/date', this.dateController.router);
         this.app.use('/api/games', this.gameController.router);
         this.app.use('/', (req, res) => {
             res.redirect('/api/docs');
