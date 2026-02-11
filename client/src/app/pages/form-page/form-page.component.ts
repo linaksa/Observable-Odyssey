@@ -13,6 +13,13 @@ import { Avatar, DiceType, PLAYER_NAME_MAX_LENGTH, PLAYER_NAME_MIN_LENGTH, RANDO
 
 type DiceSelectionType = 'attack' | 'defense';
 
+const BONUS_AMOUNT = 2;
+const RANDOM_CHOICE_PROBABILITY = 0.5;
+const AVATAR_COUNT = 12;
+const AVATAR_ASSET_BASE = 'assets/form-page';
+// Latin letters (with accents) and numbers only. No spaces or symbols
+const PLAYER_NAME_PATTERN = /^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/;
+
 @Component({
     selector: 'app-form-page',
     imports: [
@@ -35,7 +42,7 @@ export class FormPageComponent {
                 Validators.required,
                 Validators.minLength(PLAYER_NAME_MIN_LENGTH),
                 Validators.maxLength(PLAYER_NAME_MAX_LENGTH),
-                Validators.pattern(/^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/),
+                Validators.pattern(PLAYER_NAME_PATTERN),
             ],
         }),
         avatarIndex: new FormControl<number | null>(null, {
@@ -49,35 +56,49 @@ export class FormPageComponent {
         }),
     });
 
-    avatars: AvatarI[] = Array.from({ length: 12 }, (_, i) => ({
-        name: `Avatar ${i + 1}`,
-        avatar: `avatar${i + 1}` as Avatar,
-        image: `assets/form-page/avatar${i + 1}.png`,
-        character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
-    }));
+    private readonly random = Math.random;
+    readonly avatars: AvatarI[] = this.buildAvatars();
 
-    selectedAvatarIndex: number | null = null;
-    selectedDiceType: DiceSelectionType | null = null;
-    selectedBonusType: BonusType | null = null;
+    private get playerNameCtrl(): FormControl<string> {
+        return this.form.controls.playerName;
+    }
+
+    private get avatarIndexCtrl(): FormControl<number | null> {
+        return this.form.controls.avatarIndex;
+    }
+
+    private get bonusTypeCtrl(): FormControl<BonusType | null> {
+        return this.form.controls.bonusType;
+    }
+
+    private get diceTypeCtrl(): FormControl<DiceSelectionType | null> {
+        return this.form.controls.diceType;
+    }
+
+    get selectedAvatarIndex(): number | null {
+        return this.avatarIndexCtrl.value;
+    }
+
+    get selectedDiceType(): DiceSelectionType | null {
+        return this.diceTypeCtrl.value;
+    }
+
+    get selectedBonusType(): BonusType | null {
+        return this.bonusTypeCtrl.value;
+    }
 
     generateRandomCharacter(): void {
-        this.form.controls.playerName.setValue(RANDOM_PLAYER_NAMES[Math.floor(Math.random() * RANDOM_PLAYER_NAMES.length)]);
-
-        let avatarIndex = Math.floor(Math.random() * this.avatars.length);
-        if (this.selectedAvatarIndex !== null && this.avatars.length > 1) {
-            while (avatarIndex === this.selectedAvatarIndex) {
-                avatarIndex = Math.floor(Math.random() * this.avatars.length);
-            }
+        if (this.avatars.length === 0) {
+            return;
         }
+
+        this.playerNameCtrl.setValue(this.pickRandomName());
+
+        const avatarIndex = this.pickRandomAvatarIndex(this.avatarIndexCtrl.value);
         this.selectAvatar(avatarIndex);
 
-        const randomChances = 0.5;
-
-        const bonus: BonusType = Math.random() < randomChances ? 'life' : 'speed';
-        this.addBonus(bonus);
-
-        const dice: DiceSelectionType = Math.random() < randomChances ? 'attack' : 'defense';
-        this.addDice(dice);
+        this.addBonus(this.pickRandomBonus());
+        this.addDice(this.pickRandomDice());
     }
 
     selectAvatar(avatarIndex: number): void {
@@ -85,76 +106,135 @@ export class FormPageComponent {
             return;
         }
 
-        if (this.selectedAvatarIndex === avatarIndex) {
-            this.selectedAvatarIndex = null;
-            this.selectedBonusType = null;
-            this.selectedDiceType = null;
-            this.form.controls.avatarIndex.setValue(null);
-            this.form.controls.bonusType.setValue(null);
-            this.form.controls.diceType.setValue(null);
+        if (this.avatarIndexCtrl.value === avatarIndex) {
+            this.avatarIndexCtrl.setValue(null);
             return;
         }
 
-        this.selectedAvatarIndex = avatarIndex;
+        this.avatarIndexCtrl.setValue(avatarIndex);
         this.avatars[avatarIndex].character = CharacterModel.createDefault(this.avatars[avatarIndex].avatar);
-        this.selectedBonusType = null;
-        this.selectedDiceType = null;
-        this.form.controls.avatarIndex.setValue(avatarIndex);
-        this.form.controls.bonusType.setValue(null);
-        this.form.controls.diceType.setValue(null);
+        this.applySelectionsToAvatar(avatarIndex);
     }
 
     addBonus(type: BonusType): void {
-        if (this.selectedAvatarIndex === null) {
-            return;
-        }
-
-        const selectedAvatar = this.avatars[this.selectedAvatarIndex];
-
-        if (this.selectedBonusType) {
-            selectedAvatar.character.removeBonus(this.selectedBonusType, 2);
-        }
-
-        if (this.selectedBonusType === type) {
-            this.selectedBonusType = null;
-            this.form.controls.bonusType.setValue(null);
-            return;
-        }
-
-        this.selectedBonusType = type;
-        selectedAvatar.character.addBonus(type, 2);
-        this.form.controls.bonusType.setValue(type);
+        this.toggleSelection(this.bonusTypeCtrl, type, (previous, next, selectedAvatar) => {
+            if (previous) {
+                selectedAvatar.character.removeBonus(previous, BONUS_AMOUNT);
+            }
+            if (next) {
+                selectedAvatar.character.addBonus(next, BONUS_AMOUNT);
+            }
+        });
     }
 
     addDice(type: DiceSelectionType): void {
-        if (this.selectedAvatarIndex === null) {
-            return;
-        }
+        this.toggleSelection(this.diceTypeCtrl, type, (_previous, next, selectedAvatar) => {
+            if (next === null) {
+                selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
+                selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
+                return;
+            }
 
-        const selectedAvatar = this.avatars[this.selectedAvatarIndex];
+            if (next === 'attack') {
+                selectedAvatar.character.attackBonusDiceType = DiceType.SixSided;
+                selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
+                return;
+            }
 
-        if (this.selectedDiceType === type) {
-            this.selectedDiceType = null;
             selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-            selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
-            this.form.controls.diceType.setValue(null);
+            selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+        });
+    }
+
+    onFormSubmitted() {
+        this.router.navigate(['wait']);
+    }
+
+    private toggleSelection<T>(
+        control: FormControl<T | null>,
+        type: T,
+        apply: (previous: T | null, next: T | null, selectedAvatar: AvatarI) => void,
+    ): void {
+        const previous = control.value;
+        const next = previous === type ? null : type;
+
+        control.setValue(next);
+
+        const selectedAvatarIndex = this.avatarIndexCtrl.value;
+        if (selectedAvatarIndex === null) {
             return;
         }
 
-        this.selectedDiceType = type;
-        this.form.controls.diceType.setValue(type);
+        const selectedAvatar = this.avatars[selectedAvatarIndex];
+        apply(previous, next, selectedAvatar);
+    }
 
-        if (type === 'attack') {
+    private applySelectionsToAvatar(avatarIndex: number): void {
+        if (!this.avatars[avatarIndex]) {
+            return;
+        }
+
+        const selectedAvatar = this.avatars[avatarIndex];
+        const bonusType = this.bonusTypeCtrl.value;
+        const diceType = this.diceTypeCtrl.value;
+
+        if (bonusType) {
+            selectedAvatar.character.addBonus(bonusType, BONUS_AMOUNT);
+        }
+
+        if (diceType === 'attack') {
             selectedAvatar.character.attackBonusDiceType = DiceType.SixSided;
             selectedAvatar.character.defenseBonusDiceType = DiceType.FourSided;
             return;
         }
 
-        selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
-        selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+        if (diceType === 'defense') {
+            selectedAvatar.character.attackBonusDiceType = DiceType.FourSided;
+            selectedAvatar.character.defenseBonusDiceType = DiceType.SixSided;
+        }
     }
 
-    onFormSubmitted() {
-        this.router.navigate(['wait']);
+    private pickRandomName(): string {
+        return RANDOM_PLAYER_NAMES[this.pickRandomIndex(RANDOM_PLAYER_NAMES.length)];
+    }
+
+    private pickRandomBonus(): BonusType {
+        return this.nextRandom() < RANDOM_CHOICE_PROBABILITY ? 'life' : 'speed';
+    }
+
+    private pickRandomDice(): DiceSelectionType {
+        return this.nextRandom() < RANDOM_CHOICE_PROBABILITY ? 'attack' : 'defense';
+    }
+
+    private pickRandomAvatarIndex(excludeIndex: number | null): number {
+        if (this.avatars.length <= 1 || excludeIndex === null) {
+            return this.pickRandomIndex(this.avatars.length);
+        }
+
+        let avatarIndex = this.pickRandomIndex(this.avatars.length);
+        while (avatarIndex === excludeIndex) {
+            avatarIndex = this.pickRandomIndex(this.avatars.length);
+        }
+        return avatarIndex;
+    }
+
+    private pickRandomIndex(max: number): number {
+        if (max <= 0) {
+            return 0;
+        }
+        return Math.floor(this.nextRandom() * max);
+    }
+
+    private nextRandom(): number {
+        return this.random();
+    }
+
+    private buildAvatars(): AvatarI[] {
+        return Array.from({ length: AVATAR_COUNT }, (_, i) => ({
+            name: `Avatar ${i + 1}`,
+            avatar: `avatar${i + 1}` as Avatar,
+            image: `${AVATAR_ASSET_BASE}/avatar${i + 1}.png`,
+            character: CharacterModel.createDefault(`avatar${i + 1}` as Avatar),
+        }));
     }
 }
