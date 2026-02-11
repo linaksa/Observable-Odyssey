@@ -44,7 +44,6 @@ export class BoardEditorService {
     selectedMaterial: CellType = CellType.Empty;
     selectedObject: ItemType | null;
 
-
     objectSizesMap = {
         [ItemType.LifeSanctuary]: SANCTUARY_SIZE,
         [ItemType.FightSanctuary]: SANCTUARY_SIZE,
@@ -107,7 +106,7 @@ export class BoardEditorService {
     applyTile(rowIndex: number, colIndex: number): void {
         if (this.activeTool !== ToolOption.Placement) return;
 
-        if (this.selectedMaterial === CellType.OpenDoor ) {
+        if (this.selectedMaterial === CellType.OpenDoor) {
             this.eraseObject(rowIndex, colIndex);
             this.gameCells[rowIndex][colIndex] = this.gameCells[rowIndex][colIndex] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
             return;

@@ -1,0 +1,15 @@
+<div class="flex flex-col min-h-screen p-4 gap-4">
+    @if (editedGame) {
+        <app-game-edition [gameToEdit]="editedGame"></app-game-edition>
+    } @else {
+        <div class="flex flex-1 justify-center items-center">
+            <app-loading-overlay loadingText="Chargement du jeu..." class="flex flex-col gap-8 items-center justify-center"></app-loading-overlay>
+        </div>
+
+        <div class="absolute bottom-4 w-full flex justify-center">
+            @if (showButton) {
+                <button class="btn" routerLink="/admin">Retour vers la vue d'administration</button>
+            }
+        </div>
+    }
+</div>

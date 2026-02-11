@@ -112,7 +112,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         this.form.get('isCTF')?.setValue(isCTF);
     }
 
-
     get isCTFMode(): boolean {
         return this.form.get('isCTF')?.value ?? this.defaultIsCTF;
     }

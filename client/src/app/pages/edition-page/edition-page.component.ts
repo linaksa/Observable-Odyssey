@@ -5,28 +5,26 @@ import { GameService } from '@app/services/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 
 import { GameEditionComponent } from '@app/components/edition/game-edition/game-edition.component';
+import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 import { CellType } from '@common/board';
 import { GameSize } from '@common/constants';
 
 @Component({
     selector: 'app-edition-page',
-    imports: [CommonModule, GameEditionComponent],
-    template: `
-        <div>
-            @if (editedGame) {
-                <app-game-edition [gameToEdit]="editedGame"></app-game-edition>
-            } @else {
-                <p>Chargement du jeu en cours...</p>
-            }
-        </div>
-    `,
+    imports: [CommonModule, GameEditionComponent, LoadingOverlayComponent],
+    templateUrl: './edition-page.component.html',
 })
 export class EditionPageComponent implements OnInit {
-    editedGame: IExistingGame;
     private readonly route = inject(ActivatedRoute);
     private readonly gameService = inject(GameService);
+    private readonly timeout = 0;
+
+    editedGame: IExistingGame;
+    showButton: boolean = false;
 
     ngOnInit(): void {
+        this.initializeButtonTimeout();
+
         this.route.params.subscribe((params) => {
             if (params.gameId === 'creation') {
                 if (this.gameService.gameUnderCreation) {
@@ -54,5 +52,11 @@ export class EditionPageComponent implements OnInit {
                 });
             }
         });
+    }
+
+    private initializeButtonTimeout(): void {
+        setTimeout(() => {
+            this.showButton = true;
+        }, this.timeout);
     }
 }

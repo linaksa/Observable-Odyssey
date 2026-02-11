@@ -10,72 +10,76 @@ import { EditionFormComponent } from './edition-form.component';
 import SpyObj = jasmine.SpyObj;
 
 describe('EditionFormComponent', () => {
-  let component: EditionFormComponent;
-  let fixture: ComponentFixture<EditionFormComponent>;
+    let component: EditionFormComponent;
+    let fixture: ComponentFixture<EditionFormComponent>;
 
-  let editFormServiceSpy: SpyObj<GameEditFormService>;
-  const formBuilder: FormBuilder = new FormBuilder();
+    let editFormServiceSpy: SpyObj<GameEditFormService>;
+    const formBuilder: FormBuilder = new FormBuilder();
 
-  const randomBoard: IBoard = { cells: [[]], items: [] };
-  const randomGame: IExistingGame = {
-      _id: '1',
-      gameTitle: 'Test Game',
-      description: 'A game for testing',
-      board: randomBoard,
-      gameMode: GameType.Classic,
-      lastModifiedDate: new Date(),
-      visibility: Visibility.Hidden,
-      dateCreated: new Date(),
-      preview: '',
+    const randomBoard: IBoard = { cells: [[]], items: [] };
+    const randomGame: IExistingGame = {
+        _id: '1',
+        gameTitle: 'Test Game',
+        description: 'A game for testing',
+        board: randomBoard,
+        gameMode: GameType.Classic,
+        lastModifiedDate: new Date(),
+        visibility: Visibility.Hidden,
+        dateCreated: new Date(),
+        preview: '',
     };
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [EditionFormComponent, RouterLink],
-      providers: [provideRouter([]), { provide: FormBuilder, useValue: formBuilder }],
-    }).compileComponents();
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [EditionFormComponent, RouterLink],
+            providers: [provideRouter([]), { provide: FormBuilder, useValue: formBuilder }],
+        }).compileComponents();
 
-    editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm', 'resetForm'], {isSubmitting: signal(false) });
-    editFormServiceSpy.form = formBuilder.group({
-      gameTitle: [''],
-      description: [''],
+        editFormServiceSpy = jasmine.createSpyObj('GameEditFormService', ['init', 'submitForm', 'resetForm'], { isSubmitting: signal(false) });
+        editFormServiceSpy.form = formBuilder.group({
+            gameTitle: [''],
+            description: [''],
+        });
+
+        TestBed.overrideProvider(GameEditFormService, { useValue: editFormServiceSpy });
+
+        fixture = TestBed.createComponent(EditionFormComponent);
+        component = fixture.componentInstance;
+
+        component.game = randomGame;
+        component.cells = randomGame.board.cells;
+        component.objects = randomGame.board.items;
+        component.gridSelector = null;
+        await fixture.whenStable();
     });
 
-    TestBed.overrideProvider(GameEditFormService, { useValue: editFormServiceSpy });
+    it('should init gameService with the received game', () => {
+        expect(editFormServiceSpy.init).toHaveBeenCalledWith(randomGame);
+    });
 
-    fixture = TestBed.createComponent(EditionFormComponent);
-    component = fixture.componentInstance;
+    it('should call submitForm on submitGameForm', () => {
+        editFormServiceSpy.submitForm.and.returnValue(Promise.resolve());
 
-    component.game = randomGame;
-    component.cells = randomGame.board.cells;
-    component.objects = randomGame.board.items;
-    component.gridSelector = null;
-    await fixture.whenStable();
-  });
+        component.submitGameForm();
+        expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(
+            randomGame._id,
+            randomGame.gameMode,
+            component.cells,
+            component.objects,
+            component.gridSelector,
+        );
+    });
 
-  it('should init gameService with the received game', () => {
-    expect(editFormServiceSpy.init).toHaveBeenCalledWith(randomGame);
-  });
+    it('should call gameEditFormService.resetForm on resetForm', () => {
+        component.resetForm(randomGame);
 
-  it('should call submitForm on submitGameForm', () => {
-    editFormServiceSpy.submitForm.and.returnValue(Promise.resolve());
+        expect(editFormServiceSpy.resetForm).toHaveBeenCalledWith(randomGame);
+    });
 
-    component.submitGameForm();
-    expect(editFormServiceSpy.submitForm).toHaveBeenCalledWith(
-      randomGame._id, randomGame.gameMode, component.cells, component.objects, component.gridSelector);
-  });
+    it('should catch the error is submitForm rejects the promise', () => {
+        editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
 
-  it('should call gameEditFormService.resetForm on resetForm', () => {
-
-      component.resetForm(randomGame);
-
-      expect(editFormServiceSpy.resetForm).toHaveBeenCalledWith(randomGame);
-  });
-
-  it('should catch the error is submitForm rejects the promise', () => {
-      editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
-
-      component.submitGameForm();
-      expect(editFormServiceSpy.submitForm).toHaveBeenCalled();
-  });
+        component.submitGameForm();
+        expect(editFormServiceSpy.submitForm).toHaveBeenCalled();
+    });
 });

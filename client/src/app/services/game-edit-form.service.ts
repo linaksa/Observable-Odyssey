@@ -11,8 +11,7 @@ import { GameService } from './game.service';
     providedIn: 'root',
 })
 export class GameEditFormService {
-    private readonly gameService = inject(GameService);
-    private readonly formBuilder = inject(FormBuilder);
+    gameService = inject(GameService);
 
     form: FormGroup;
     formValid: boolean = false;
@@ -21,7 +20,7 @@ export class GameEditFormService {
 
     customHtml2Canvas = html2canvas;
 
-    constructor() {
+    constructor(private formBuilder: FormBuilder) {
         this.form = this.formBuilder.group({
             gameTitle: [''],
             description: [''],

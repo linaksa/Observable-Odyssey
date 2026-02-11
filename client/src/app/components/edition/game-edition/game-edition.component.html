@@ -9,7 +9,8 @@
                             <app-action-selection-button
                                 [isSelected]="boardEditorService.selectedMaterial === type"
                                 (click)="selectMaterial(type)"
-                                [tooltip]="cellTypesDescToolTip[type]">
+                                [tooltip]="cellTypesDescToolTip[type]"
+                            >
                                 <div class="size-16 bg-cover m-auto" [ngClass]="cellTypeBackgrounds[type]"></div>
                             </app-action-selection-button>
                         }
@@ -27,18 +28,14 @@
                                 [disabled]="boardEditorService.getRemainingObjectCount(type) === 0"
                                 (click)="selectObject(type)"
                             >
-                            <div class="size-16 bg-cover m-auto" [ngClass]="toolIcons[type]"></div>
-                                <span
-                                    class="text-sm text-red-500"> {{ boardEditorService.getRemainingObjectCount(type) }}
-                                    restant </span>
+                                <div class="size-16 bg-cover m-auto" [ngClass]="toolIcons[type]"></div>
+                                <span class="text-sm text-red-500"> {{ boardEditorService.getRemainingObjectCount(type) }} restant </span>
                             </app-action-selection-button>
                         }
                     </div>
                 </div>
             }
-            <button class="mt-auto w-full rounded-lg border px-4 py-2 hover:bg-gray-100" routerLink="/admin">Retour a la
-                page admin
-            </button>
+            <button class="mt-auto w-full rounded-lg border px-4 py-2 hover:bg-gray-100" routerLink="/admin">Retour a la page admin</button>
         </aside>
 
         <main class="bg-gray-50 rounded-xl border flex flex-col flex-1">
@@ -63,9 +60,7 @@
                 </div>
             </div>
             <div class="h-12 px-4 border-t flex items-center justify-center gap-2 bg-white">
-                <button type="button" (click)="this.resetAll()"
-                        class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">Reset
-                </button>
+                <button type="button" (click)="this.resetAll()" class="px-3 py-1.5 rounded border text-sm hover:bg-gray-200">Reset</button>
             </div>
         </main>
 
@@ -79,8 +74,7 @@
                         [tooltip]="toolDescToolTip[tool]"
                         (click)="selectTool(tool)"
                     >
-                        <img class="size-8 m-auto" [src]="boardEditorService.availableToolsIcons[tool]"
-                             alt="{{ tool }}" />
+                        <img class="size-8 m-auto" [src]="boardEditorService.availableToolsIcons[tool]" alt="{{ tool }}" />
                     </app-action-selection-button>
                 }
             </div>
