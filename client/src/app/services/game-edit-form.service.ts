@@ -11,7 +11,8 @@ import { GameService } from './game.service';
     providedIn: 'root',
 })
 export class GameEditFormService {
-    gameService = inject(GameService);
+    private readonly gameService = inject(GameService);
+    private readonly formBuilder = inject(FormBuilder);
 
     form: FormGroup;
     formValid: boolean = false;
@@ -20,7 +21,7 @@ export class GameEditFormService {
 
     customHtml2Canvas = html2canvas;
 
-    constructor(private formBuilder: FormBuilder) {
+    constructor() {
         this.form = this.formBuilder.group({
             gameTitle: [''],
             description: [''],
@@ -66,7 +67,7 @@ export class GameEditFormService {
         const previewImage = await this.getPreviewImage(gridSelector);
         if (!previewImage) {
             this.formValid = false;
-            this.formErrors = ['Une erreur est survenue lors de la génération de l\'aperçu du plateau.'];
+            this.formErrors = ["Une erreur est survenue lors de la génération de l'aperçu du plateau."];
             this.isSubmitting.set(false);
             return Promise.reject();
         }
@@ -102,11 +103,8 @@ export class GameEditFormService {
                 error: (err) => {
                     this.formValid = false;
                     const serverError = err.originalError?.error;
-                        
-                    this.formErrors = [
-                        'Une erreur est survenue lors de la sauvegarde du jeu.',
-                        serverError?.error || 'Erreur inconnue',
-                    ];
+
+                    this.formErrors = ['Une erreur est survenue lors de la sauvegarde du jeu.', serverError?.error || 'Erreur inconnue'];
                     this.isSubmitting.set(false);
                     reject();
                 },

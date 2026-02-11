@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GameService } from '@app/services/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
@@ -14,20 +14,17 @@ import { GameSize } from '@common/constants';
     template: `
         <div>
             @if (editedGame) {
-            <app-game-edition [gameToEdit]="editedGame"></app-game-edition>
+                <app-game-edition [gameToEdit]="editedGame"></app-game-edition>
             } @else {
-            <p>Chargement du jeu en cours...</p>
+                <p>Chargement du jeu en cours...</p>
             }
         </div>
     `,
 })
 export class EditionPageComponent implements OnInit {
     editedGame: IExistingGame;
-
-    constructor(
-        private route: ActivatedRoute,
-        private gameService: GameService,
-    ) {}
+    private readonly route = inject(ActivatedRoute);
+    private readonly gameService = inject(GameService);
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {
