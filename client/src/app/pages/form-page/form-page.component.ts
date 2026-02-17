@@ -112,7 +112,6 @@ export class FormPageComponent {
         }
 
         this.avatarIndexCtrl.setValue(avatarIndex);
-        this.avatars[avatarIndex].character = CharacterModel.createDefault(this.avatars[avatarIndex].avatar);
         this.applySelectionsToAvatar(avatarIndex);
     }
 
@@ -156,7 +155,11 @@ export class FormPageComponent {
         apply: (previous: T | null, next: T | null, selectedAvatar: AvatarI) => void,
     ): void {
         const previous = control.value;
-        const next = previous === type ? null : type;
+        if (previous === type) {
+            // already selected; do nothing
+            return;
+        }
+        const next = type;
 
         control.setValue(next);
 
