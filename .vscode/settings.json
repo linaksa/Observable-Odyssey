@@ -9,5 +9,6 @@
     "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
     "files.associations": {
         "*.css": "tailwindcss"
-    }
+    },
+    "eslint.enable": true
 }
