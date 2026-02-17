@@ -8,6 +8,7 @@ import { EditionFormComponent } from '@app/components/edition/edition-form/editi
 import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
 import { BoardEditorService, Tool, ToolOption } from '@app/services/edition.service';
 import { GameService } from '@app/services/game.service';
+import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { ItemType } from '@common/items';
@@ -17,7 +18,7 @@ import { ItemType } from '@common/items';
     selector: 'app-game-edition',
     imports: [CommonModule, ReactiveFormsModule, EditionCellComponent, ActionSelectionButtonComponent, EditionFormComponent, RouterLink],
     templateUrl: './game-edition.component.html',
-    styleUrl: './game-edition.component.scss',
+    styleUrl: '../../../styles/game-cell.scss',
 })
 export class GameEditionComponent implements OnInit {
     @Input() gameToEdit: IExistingGame;
@@ -29,6 +30,7 @@ export class GameEditionComponent implements OnInit {
 
     gameService: GameService = inject(GameService);
     boardEditorService: BoardEditorService = inject(BoardEditorService);
+    boardSharedService: BoardSharedService = inject(BoardSharedService);
 
     cellTypeBackgrounds = CELL_TYPE_BACKGROUNDS;
     toolIcons = OBJECT_IMAGES;

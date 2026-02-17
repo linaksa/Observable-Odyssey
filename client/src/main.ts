@@ -9,6 +9,7 @@ import { AppComponent } from '@app/pages/app/app.component';
 import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { FormPageComponent } from '@app/pages/form-page/form-page.component';
+import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
 import { environment } from './environments/environment';
@@ -25,6 +26,7 @@ const routes: Routes = [
     { path: 'form', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
     { path: 'wait', component: WaitPageComponent },
+    { path: 'play', component: GamePageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

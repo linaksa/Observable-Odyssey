@@ -1,0 +1,24 @@
+<div class="flex flex-col">
+    <div class="flex gap-4 text-white">
+        <div class="m-auto">
+            <img class="w-24 h-24 rounded-full" [src]="avatarUrl" alt="Player Avatar" />
+        </div>
+        <div>
+            <p>{{ activeGameService.activeGame.game.gameTitle }} ({{ boardSize }})</p>
+
+            <p>{{ player?.name }}</p>
+            <p>{{ player?.currentHealth }} / {{ player?.initialHealth }}</p>
+            <div class="flex gap-4">
+                <p>
+                    <img class="w-4 h-4 inline-block" src="assets/form-page/heart.svg"/> {{ player?.rapidityPoints }}
+                </p>
+                <p>
+                    <img class="w-4 h-4 inline-block" src="assets/form-page/runner.svg"/> {{ player?.attackPoints }}
+                </p>
+                <p>
+                    <img class="w-4 h-4 inline-block" src="assets/form-page/shield.svg"/> {{ player?.defensePoints }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
