@@ -2,7 +2,7 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { model, Schema } from 'mongoose';
 import { gameBoard } from './board';
 
-const gameSchema = new Schema<IGame>({
+export const gameSchema = new Schema<IGame>({
     gameTitle: {
         type: String,
         required: true,
