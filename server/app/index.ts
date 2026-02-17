@@ -5,10 +5,16 @@ import 'reflect-metadata';
 import { Server } from '@app/server';
 import { Container } from 'typedi';
 
-import 'dotenv/config';
-import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
+import { dbServer, inMemoryDb } from './database';
 
-mongoose.connect(process.env.DATABASE_CONNECTION_STRING);
+async function startServer() {
+    const mongoMemoryServerInstance = await MongoMemoryServer.create();
+    const mongoUri = mongoMemoryServerInstance.getUri();
+    await inMemoryDb.openUri(mongoUri);
+    await dbServer.asPromise();
 
-const server: Server = Container.get(Server);
-server.init();
+    const server: Server = Container.get(Server);
+    server.init();
+}
+startServer();

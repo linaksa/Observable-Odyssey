@@ -1,5 +1,6 @@
+import { inMemoryDb } from '@app/database';
 import { IActiveGame } from '@common/activeGame';
-import { model, Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import { characterSchema } from './character';
 import { gameSchema } from './game';
 import { itemSchema } from './items';
@@ -10,4 +11,4 @@ const activeGameSchema = new Schema<IActiveGame>({
     itemsState: [itemSchema],
 });
 
-export const activeGame = model<IActiveGame>('ActiveGame', activeGameSchema);
+export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
