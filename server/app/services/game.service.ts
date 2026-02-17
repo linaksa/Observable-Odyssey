@@ -95,6 +95,7 @@ export class GameService {
                 description: gameData.description,
                 gameMode: gameData.gameMode,
                 board: gameData.board,
+                visibility: Visibility.Hidden,
                 preview: gameData.preview,
                 lastModifiedDate: new Date(),
             },
