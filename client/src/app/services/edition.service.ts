@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items';
+import { BoardSharedService } from '@app/services/shared/boardShared.service';
+
 
 export type Tool = 'placement' | 'objects' | 'erase';
 
@@ -35,6 +37,8 @@ export class BoardEditorService {
         [ToolOption.Placement]: 'assets/edit-page/tools/cursor.svg',
         [ToolOption.Objects]: 'assets/edit-page/tools/cube.svg',
     };
+
+    boardSharedService: BoardSharedService =  inject(BoardSharedService);
 
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
@@ -71,20 +75,11 @@ export class BoardEditorService {
         this.updateMaxAmount();
     }
 
-    cellBelongsToObject(obj: IItem, row: number, col: number): boolean {
-        if (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) {
-            return row >= obj.x && row <= obj.x + 1 && col >= obj.y && col <= obj.y + 1;
-        }
-        return obj.x === row && obj.y === col;
-    }
 
     isCellOccupied(row: number, col: number): boolean {
-        return this.objects.some((obj) => this.cellBelongsToObject(obj, row, col));
+        return this.objects.some((obj) => this.boardSharedService.cellBelongsToObject(obj, row, col));
     }
 
-    getObjectAt(row: number, col: number): IItem | null {
-        return this.objects.find((obj) => this.cellBelongsToObject(obj, row, col)) ?? null;
-    }
 
     updateMaxAmount() {
         if (this.gameCells.length === GridSize.SMALL) {
@@ -177,7 +172,7 @@ export class BoardEditorService {
     }
 
     eraseObject(row: number, col: number): void {
-        const obj = this.objects.find((o) => this.cellBelongsToObject(o, row, col));
+        const obj = this.objects.find((o) => this.boardSharedService.cellBelongsToObject(o, row, col));
 
         if (!obj) return;
 
