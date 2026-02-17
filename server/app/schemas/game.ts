@@ -1,5 +1,6 @@
+import { dbServer } from '@app/database';
 import { GameType, IGame, Visibility } from '@common/game';
-import { model, Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import { gameBoard } from './board';
 
 export const gameSchema = new Schema<IGame>({
@@ -38,4 +39,4 @@ export const gameSchema = new Schema<IGame>({
     board: gameBoard,
 });
 
-export const game = model<IGame>('Game', gameSchema);
+export const game = dbServer.model<IGame>('Game', gameSchema);

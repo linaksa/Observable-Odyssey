@@ -1,4 +1,5 @@
-export interface Message {
-    title: string;
-    body: string;
+export interface IMessage {
+    author: string;
+    content: string;
+    postedAt: Date;
 }
