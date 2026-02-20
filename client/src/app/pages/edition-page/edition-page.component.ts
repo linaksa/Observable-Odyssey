@@ -4,8 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { GameService } from '@app/services/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 
+import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { GameEditionComponent } from '@app/components/edition/game-edition/game-edition.component';
-import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 import { CellType } from '@common/board';
 import { GameSize } from '@common/constants';
 
