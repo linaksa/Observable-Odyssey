@@ -1,17 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 
 @Component({
     selector: 'app-wait-page',
-    imports: [LoadingOverlayComponent, RouterLink],
+    imports: [NavButtonsComponent, PageTitleComponent],
     templateUrl: './wait-page.component.html',
 })
-export class WaitPageComponent {
-    timeout: number = 0;
-    showButton: boolean = false;
-
-    constructor() {
-        setTimeout(() => (this.showButton = true), this.timeout);
-    }
-}
+export class WaitPageComponent {}

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { AvatarI } from '@app/classes/character/AvatarI';
-import { AttributeDisplayComponent } from '@app/components/attribute-display/attribute-display.component';
+import { AttributeDisplayComponent } from '@app/components/character-form/attribute-display/attribute-display.component';
 
 @Component({
     selector: 'app-character-attributes-grid',
