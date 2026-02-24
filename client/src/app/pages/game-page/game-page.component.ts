@@ -5,10 +5,8 @@ import { PlayerInfoComponent } from '@app/components/game/player-info/player-inf
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 
 @Component({
-  selector: 'app-game-page',
-  imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent],
-  templateUrl: './game-page.component.html',
+    selector: 'app-game-page',
+    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent],
+    templateUrl: './game-page.component.html',
 })
-export class GamePageComponent {
-
-}
+export class GamePageComponent {}

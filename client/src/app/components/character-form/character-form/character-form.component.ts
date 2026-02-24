@@ -18,18 +18,12 @@ const AVATAR_ASSET_BASE = 'assets/form-page';
 // Latin letters (with accents) and numbers only. No spaces or symbols
 const PLAYER_NAME_PATTERN = /^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/;
 @Component({
-  selector: 'app-character-form',
-      imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        AvatarSelectorComponent,
-        CharacterInfoPanelComponent,
-        CharacterModifierPanelComponent,
-    ],
-  templateUrl: './character-form.component.html',
+    selector: 'app-character-form',
+    imports: [CommonModule, ReactiveFormsModule, AvatarSelectorComponent, CharacterInfoPanelComponent, CharacterModifierPanelComponent],
+    templateUrl: './character-form.component.html',
 })
 export class CharacterFormComponent {
-  @Output() submitForm = new EventEmitter<CharacterFormData>();
+    @Output() submitForm = new EventEmitter<CharacterFormData>();
 
     readonly form = new FormGroup({
         playerName: new FormControl('', {
@@ -154,7 +148,7 @@ export class CharacterFormComponent {
             defensePoints: this.avatars[this.avatarIndexCtrl.value!].character.defensePoints,
         };
         this.submitForm.emit(data);
-      }
+    }
     /* eslint-enable @typescript-eslint/no-non-null-assertion */
 
     private toggleSelection<T>(

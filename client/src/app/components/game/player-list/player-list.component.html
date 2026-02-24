@@ -1,12 +1,13 @@
 <div class="flex flex-col text-white gap-4">
-    @for (player of activeGameService.activeGame.players; track $index){
-
-    <div class="flex justify-around justify-items-center rounded-lg p-2"
-        [ngClass]="{'border-2 border-red-500': player === currentPlayer, 'opacity-50 line-through': player.hasAbandoned}">
-        <img [src]="buildPlayerAvatarUrl(player.avatar)" alt="Player Avatar" class="w-8 h-8 rounded-full" />
-        <span class="p-0">{{ player.name}}</span>
-        <span>-</span>
-        <span class="p-0">{{ player.wonCombatCount }} victoires</span>
-    </div>
+    @for (player of activeGameService.activeGame.players; track $index) {
+        <div
+            class="flex justify-around justify-items-center rounded-lg p-2"
+            [ngClass]="{ 'border-2 border-red-500': player === currentPlayer, 'opacity-50 line-through': player.hasAbandoned }"
+        >
+            <img [src]="buildPlayerAvatarUrl(player.avatar)" alt="Player Avatar" class="w-8 h-8 rounded-full" />
+            <span class="p-0">{{ player.name }}</span>
+            <span>-</span>
+            <span class="p-0">{{ player.wonCombatCount }} victoires</span>
+        </div>
     }
 </div>

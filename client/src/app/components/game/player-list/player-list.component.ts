@@ -5,18 +5,18 @@ import { ICharacter } from '@common/character';
 import { Avatar } from '@common/constants';
 
 @Component({
-  selector: 'app-player-list',
-  imports: [CommonModule],
-  templateUrl: './player-list.component.html',
+    selector: 'app-player-list',
+    imports: [CommonModule],
+    templateUrl: './player-list.component.html',
 })
 export class PlayerListComponent {
-  activeGameService = inject(ActiveGameService);
+    activeGameService = inject(ActiveGameService);
 
-  buildPlayerAvatarUrl(avatar: Avatar): string {
-    return `assets/form-page/${avatar}.png`;
-  }
+    buildPlayerAvatarUrl(avatar: Avatar): string {
+        return `assets/form-page/${avatar}.png`;
+    }
 
-  get currentPlayer(): ICharacter{
-    return this.activeGameService.activeGame.players[this.activeGameService.activeGame.currentPlayerIndex];
-  }
+    get currentPlayer(): ICharacter {
+        return this.activeGameService.activeGame.players[this.activeGameService.activeGame.currentPlayerIndex];
+    }
 }

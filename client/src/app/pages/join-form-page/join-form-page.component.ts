@@ -7,9 +7,9 @@ import { ToastService } from '@app/services/toast.service';
 import { CharacterFormData } from '@common/character';
 
 @Component({
-  selector: 'app-join-form-page',
-  imports: [RouterLink, CharacterFormComponent, ToastComponent],
-  templateUrl: './join-form-page.component.html',
+    selector: 'app-join-form-page',
+    imports: [RouterLink, CharacterFormComponent, ToastComponent],
+    templateUrl: './join-form-page.component.html',
 })
 export class JoinFormPageComponent implements OnInit {
     characterFormService = inject(CharacterFormService);
@@ -25,20 +25,19 @@ export class JoinFormPageComponent implements OnInit {
         });
     }
 
-
-  joinGameAsCharacter(characterData: CharacterFormData): void {
-    if(!this.activeGameId){
-        this.toastService.show('L\'ID de la partie à rejoindre est manquant.');
-        return;
+    joinGameAsCharacter(characterData: CharacterFormData): void {
+        if (!this.activeGameId) {
+            this.toastService.show("L'ID de la partie à rejoindre est manquant.");
+            return;
+        }
+        this.characterFormService.joinActiveGameWithCharacter(this.activeGameId, characterData).subscribe({
+            next: (activeGame) => {
+                this.toastService.show('Vous avez rejoint la partie avec succès.');
+                this.navigator.navigate(['/wait', activeGame._id]);
+            },
+            error: () => {
+                this.toastService.show('Erreur lors de la tentative de rejoindre la partie.');
+            },
+        });
     }
-    this.characterFormService.joinActiveGameWithCharacter(this.activeGameId, characterData).subscribe({
-      next: (activeGame) => {
-        this.toastService.show('Vous avez rejoint la partie avec succès.');
-        this.navigator.navigate(['/wait', activeGame._id]);
-      },  
-      error: () => {
-        this.toastService.show('Erreur lors de la tentative de rejoindre la partie.');
-      },
-    });
-  }
 }

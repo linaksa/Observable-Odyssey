@@ -3,10 +3,8 @@ import { RouterLink } from '@angular/router';
 import { ActiveGameTableComponent } from '@app/components/common/active-game-table/active-game-table.component';
 
 @Component({
-  selector: 'app-join-page',
-  imports: [ActiveGameTableComponent, RouterLink],
-  templateUrl: './join-page.component.html',
+    selector: 'app-join-page',
+    imports: [ActiveGameTableComponent, RouterLink],
+    templateUrl: './join-page.component.html',
 })
-export class JoinPageComponent {
-
-}
+export class JoinPageComponent {}

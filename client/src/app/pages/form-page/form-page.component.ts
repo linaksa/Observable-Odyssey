@@ -28,7 +28,7 @@ export class FormPageComponent implements OnInit {
     }
 
     submitCharacterForm(formData: CharacterFormData): void {
-        if(!this.gameId) {
+        if (!this.gameId) {
             this.toastService.show('ID de jeu manquant. Impossible de créer le personnage.');
             return;
         }
@@ -38,8 +38,8 @@ export class FormPageComponent implements OnInit {
                 this.navigator.navigate(['/wait', response._id]);
             },
             error: (response) => {
-                this.toastService.show(response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');   
+                this.toastService.show(response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');
             },
-        }); 
+        });
     }
 }
