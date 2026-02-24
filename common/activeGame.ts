@@ -4,8 +4,10 @@ import { IItem } from './items';
 import { IMessage } from './message';
 
 export interface IActiveGame {
+    _id: string;
     game: IGame;
     players: ICharacter[];
     itemsState: IItem[];
+    currentPlayerIndex: number;
     messages: IMessage[];
 }

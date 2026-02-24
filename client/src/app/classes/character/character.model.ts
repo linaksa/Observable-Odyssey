@@ -20,6 +20,8 @@ export class CharacterModel {
             movementLeft: 6,
             x: 0,
             y: 0,
+            wonCombatCount: 0,
+            hasAbandoned: false,
         });
     }
 

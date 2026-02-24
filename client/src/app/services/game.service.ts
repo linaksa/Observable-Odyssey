@@ -2,6 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { HttpClientPort } from '@app/http/http-client-port';
 import { HTTP_CLIENT } from '@app/http/http-interface';
+import { IActiveGame } from '@common/activeGame';
 import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -38,6 +39,11 @@ export class GameService {
 
     deleteGame(game: IExistingGame): Observable<HttpResponse<string>> {
         return this.httpClient.delete(`${this.baseUrl}/games/${game._id}`, { responseType: 'text' });
+    }
+
+    featchJoinableActiveGames(): Observable<IActiveGame[]> {
+        return this.httpClient.get<IActiveGame[]>(`${this.baseUrl}/activeGame/joinable`).pipe(
+            catchError(this.handleError<IActiveGame[]>('fetchJoinableActiveGames')));
     }
 
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
