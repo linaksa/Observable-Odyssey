@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IItem, ItemType } from '@common/items';
 
 @Injectable({
-  providedIn: 'root',
+    providedIn: 'root',
 })
 export class BoardSharedService {
     cellBelongsToObject(obj: IItem, row: number, col: number): boolean {

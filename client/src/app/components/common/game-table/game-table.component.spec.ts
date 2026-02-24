@@ -123,7 +123,7 @@ describe('GameTableComponent', () => {
         component.deleteGame(gamesMock[0]);
         expect(gameTableServiceSpy.tableData.length).toBe(1);
     });
-    
+
     it('ngOnDestroy should call disconnect on adminSocketService', () => {
         component.ngOnDestroy();
         expect(adminSocketServiceSpy.disconnect).toHaveBeenCalled();

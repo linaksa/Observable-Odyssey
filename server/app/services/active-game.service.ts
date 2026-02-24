@@ -83,6 +83,9 @@ export class ActiveGameService {
         activeGameToUpdate.players.push(newPlayerCharacter);
         return await activeGameToUpdate.save();
     }
+    async getActiveGameById(activeGameId: string): Promise<IActiveGame> {
+        return await activeGame.findById(activeGameId).exec();
+    }
 
     async getAllActiveGames(): Promise<IActiveGame[]> {
         return await activeGame.find().exec();

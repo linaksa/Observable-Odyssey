@@ -11,6 +11,13 @@ export class ActiveGameController {
         this.configureRouter();
     }
 
+    private getParamAsString(req: Request, key: string): string | null {
+        const value = (req.params as Record<string, unknown>)[key];
+        if (typeof value === 'string') return value;
+        if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+        return null;
+    }
+
     private configureRouter() {
         this.router = Router();
 
@@ -56,6 +63,25 @@ export class ActiveGameController {
                 res.status(StatusCodes.OK).json(allActiveGames);
             } catch (error) {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                    message: 'Erreur interne du serveur',
+                    error,
+                });
+            }
+        });
+
+        this.router.get('/:id', async (req: Request, res: Response) => {
+            try {
+                const activeGameId = this.getParamAsString(req, 'id');
+                if (!activeGameId) {
+                    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'ID de partie active invalide' });
+                }
+                const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
+                if (!activeGame) {
+                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
+                }
+                return res.status(StatusCodes.OK).json(activeGame);
+            } catch (error) {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                     message: 'Erreur interne du serveur',
                     error,
                 });

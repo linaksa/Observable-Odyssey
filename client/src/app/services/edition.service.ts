@@ -4,7 +4,6 @@ import { GameType, IExistingGame } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 
-
 export type Tool = 'placement' | 'objects' | 'erase';
 
 export enum GridSize {
@@ -38,7 +37,7 @@ export class BoardEditorService {
         [ToolOption.Objects]: 'assets/edit-page/tools/cube.svg',
     };
 
-    boardSharedService: BoardSharedService =  inject(BoardSharedService);
+    boardSharedService: BoardSharedService = inject(BoardSharedService);
 
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
@@ -75,11 +74,9 @@ export class BoardEditorService {
         this.updateMaxAmount();
     }
 
-
     isCellOccupied(row: number, col: number): boolean {
         return this.objects.some((obj) => this.boardSharedService.cellBelongsToObject(obj, row, col));
     }
-
 
     updateMaxAmount() {
         if (this.gameCells.length === GridSize.SMALL) {

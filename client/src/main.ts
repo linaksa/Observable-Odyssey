@@ -29,8 +29,8 @@ const routes: Routes = [
     { path: 'edit/:gameId', component: EditionPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent },
     { path: 'play', component: GamePageComponent },
-    { path: 'join', component: JoinPageComponent},
-    { path: 'join/:activeGameId', component: JoinFormPageComponent},
+    { path: 'join', component: JoinPageComponent },
+    { path: 'join/:activeGameId', component: JoinFormPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

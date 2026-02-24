@@ -25,6 +25,16 @@ export class GameService {
         return this.httpClient.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));
     }
 
+    getAllActiveGames(): Observable<IActiveGame> {
+        return this.httpClient.get<IActiveGame>(`${this.baseUrl}/activeGames`).pipe(catchError(this.handleError<IActiveGame>('basicGet')));
+    }
+
+    getActiveGameById(activeGameId: string): Observable<IActiveGame> {
+        return this.httpClient
+            .get<IActiveGame>(`${this.baseUrl}/activeGames/${activeGameId}`)
+            .pipe(catchError(this.handleError<IActiveGame>('getActiveGameById')));
+    }
+
     changeGameVisibility(gameId: string, visibility: Visibility): Observable<HttpResponse<string>> {
         return this.httpClient.patch(`${this.baseUrl}/games/${gameId}/visibility`, { visibility }, { responseType: 'text' });
     }
@@ -42,8 +52,9 @@ export class GameService {
     }
 
     featchJoinableActiveGames(): Observable<IActiveGame[]> {
-        return this.httpClient.get<IActiveGame[]>(`${this.baseUrl}/activeGame/joinable`).pipe(
-            catchError(this.handleError<IActiveGame[]>('fetchJoinableActiveGames')));
+        return this.httpClient
+            .get<IActiveGame[]>(`${this.baseUrl}/activeGame/joinable`)
+            .pipe(catchError(this.handleError<IActiveGame[]>('fetchJoinableActiveGames')));
     }
 
     private handleError<T>(request: string, result?: T): (error: Error) => Observable<T> {
