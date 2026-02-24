@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BonusType } from '@app/classes/character/character.model';
 import { BonusSelectorComponent } from '@app/components/character-form/bonus-selector/bonus-selector.component';
+import { DiceSelectorComponent } from '@app/components/character-form/dice-selector/dice-selector.component';
 import { FormActionsComponent } from '@app/components/character-form/form-actions/form-actions.component';
-import { DiceSelectorComponent } from '@app/components/dice-selector/dice-selector.component';
 
 type DiceSelectionType = 'attack' | 'defense';
 

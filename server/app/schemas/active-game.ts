@@ -10,6 +10,10 @@ const activeGameSchema = new Schema<IActiveGame>({
     game: gameSchema,
     players: [characterSchema],
     itemsState: [itemSchema],
+    currentPlayerIndex: {
+        type: Number,
+        required: true,
+    },
     messages: [messageSchema],
 });
 

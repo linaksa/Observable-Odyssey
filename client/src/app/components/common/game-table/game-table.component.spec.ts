@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminSocketService } from '@app/services/admin.socket.service';
 import { AdministrationService } from '@app/services/administration.service';
 import { GameTableService } from '@app/services/game-table.service';
@@ -123,21 +123,7 @@ describe('GameTableComponent', () => {
         component.deleteGame(gamesMock[0]);
         expect(gameTableServiceSpy.tableData.length).toBe(1);
     });
-
-    it('deleteGame error should open snackbar with custom message', () => {
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => ({ error: { error: 'delete failed' } })));
-
-        component.deleteGame(gamesMock[0]);
-        expect(component.toastMessage()).toBe('delete failed');
-    });
-
-    it('deleteGame error should open snackbar with default message when no custom error', () => {
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => ({ error: {} })));
-
-        component.deleteGame(gamesMock[0]);
-        expect(component.toastMessage()).toBe('Il y a eu un problème lors de la suppression.');
-    });
-
+    
     it('ngOnDestroy should call disconnect on adminSocketService', () => {
         component.ngOnDestroy();
         expect(adminSocketServiceSpy.disconnect).toHaveBeenCalled();
@@ -157,89 +143,4 @@ describe('GameTableComponent', () => {
         signalSubject.next();
         expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledTimes(2);
     });
-
-    it('ngOnInit should handle socket signal error and open snackbar with custom message', () => {
-        component.ngOnInit();
-        const customError = { error: { error: 'Erreur personnalisée du serveur' } };
-        signalSubject.error(customError);
-        expect(component.toastMessage()).toBe('Erreur personnalisée du serveur');
-    });
-
-    it('ngOnInit should handle socket signal error with default message', () => {
-        component.ngOnInit();
-        const error = { error: {} };
-        signalSubject.error(error);
-        expect(component.toastMessage()).toBe("Il y a eu un problème lors de l'ajout des jeux.");
-    });
-
-    it('showToast should show toast with custom error message when deleteGame fails', () => {
-        const customError = { error: { error: 'Custom deletion message' } };
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => customError));
-
-        component.deleteGame(gamesMock[0]);
-
-        expect(component.toastMessage()).toBe('Custom deletion message');
-    });
-
-    it('showToast should show toast with default error message when deleteGame fails without a custom error', () => {
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => ({ error: {} })));
-
-        component.deleteGame(gamesMock[0]);
-
-        expect(component.toastMessage()).toBe('Il y a eu un problème lors de la suppression.');
-    });
-
-    it('showToast should show toast with error message when toggleVisibility fails', () => {
-        const input = { checked: true, disabled: false } as HTMLInputElement;
-        adminServiceSpy.changeGameVisibility.and.returnValue(throwError(() => new Error('Visibility toggle failed')));
-
-        component.toggleVisibility({ target: input } as unknown as Event, gamesMock[0]);
-
-        expect(component.toastMessage()).toBe('Il y a eu un problème lors du changement de visibilité.');
-    });
-
-    it('showToast should show toast with custom error message when a socket signal error occurs', () => {
-        const customError = { error: { error: 'Socket error occurred' } };
-        component.ngOnInit();
-        signalSubject.error(customError);
-
-        expect(component.toastMessage()).toBe('Socket error occurred');
-    });
-
-    it('showToast should show toast with default error message when a socket signal error occurs without a custom error', () => {
-        component.ngOnInit();
-        signalSubject.error({ error: {} });
-
-        expect(component.toastMessage()).toBe("Il y a eu un problème lors de l'ajout des jeux.");
-    });
-
-    it('showToast should replace previous toast message with new message', () => {
-        const error1 = { error: { error: 'First error' } };
-        const error2 = { error: { error: 'Second error' } };
-
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => error1));
-        component.deleteGame(gamesMock[0]);
-        expect(component.toastMessage()).toBe('First error');
-
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => error2));
-        component.deleteGame(gamesMock[0]);
-        expect(component.toastMessage()).toBe('Second error');
-    });
-
-    it('showToast should clear toastMessage after timeout', fakeAsync(() => {
-        // Mock the failing scenario for `gameService.deleteGame`
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => new Error('error occurred')));
-
-        // Call the method
-        component.deleteGame(gamesMock[0]);
-
-        // Verify the `toastMessage` immediately after the error
-        expect(component.toastMessage()).toBe('Il y a eu un problème lors de la suppression.');
-
-        // Tick the timer to simulate the timeout
-        tick(component.timeout);
-
-        // After the timeout has passed, the toastMessage should be cleared
-        expect(component.toastMessage()).toBeNull();
-    }));
 });

@@ -1,0 +1,9 @@
+@if (toastService.showToast()) {
+    <div
+        class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-neutral-800 text-white px-4 py-3 rounded-lg shadow-lg max-w-[90vw] sm:max-w-xl text-center font-semibold tracking-wide"
+        role="status"
+        aria-live="polite"
+    >
+        {{ toastService.toastMessage() }}
+    </div>
+}

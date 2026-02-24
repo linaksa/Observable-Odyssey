@@ -1,13 +1,5 @@
 <div class="overflow-hidden bg-[#233f74] rounded-lg relative">
-    @if (toastMessage()) {
-        <div
-            class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-neutral-800 text-white px-4 py-3 rounded-lg shadow-lg max-w-[90vw] sm:max-w-xl text-center font-semibold tracking-wide"
-            role="status"
-            aria-live="polite"
-        >
-            {{ toastMessage() }}
-        </div>
-    }
+    <app-toast/>
 
     @if (gameTableService.isLoading() && !gameTableService.tableData.length) {
         <app-loading-overlay
@@ -59,7 +51,7 @@
                             <button class="btn h-full" [routerLink]="['/edit', element._id]">Modification</button>
                             <button class="btn h-full" (click)="deleteGame(element)">Suppression</button>
                         } @else {
-                            <button class="btn btn-blue h-full" routerLink="/form">Créer une partie</button>
+                            <button class="btn btn-blue h-full" [routerLink]="['/form', element._id]">Créer une partie</button>
                         }
                     </section>
                 </article>

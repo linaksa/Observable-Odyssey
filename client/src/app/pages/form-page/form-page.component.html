@@ -3,31 +3,7 @@
 
     <app-form-page-header />
 
-    <section class="flex flex-col lg:flex-row justify-center gap-4">
-        <app-avatar-selector
-            class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
-            [avatars]="avatars"
-            [selectedAvatarIndex]="selectedAvatarIndex"
-            (avatarSelected)="selectAvatar($event)"
-        />
+    <app-character-form (submitForm)="submitCharacterForm($event)" />
 
-        <app-character-info-panel
-            class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
-            [form]="form"
-            [avatars]="avatars"
-            [selectedAvatarIndex]="selectedAvatarIndex"
-        />
-
-        <app-character-modifier-panel
-            class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
-            [selectedAvatarIndex]="selectedAvatarIndex"
-            [selectedBonusType]="selectedBonusType"
-            [selectedDiceType]="selectedDiceType"
-            [formValid]="form.valid"
-            (bonusSelected)="addBonus($event)"
-            (diceSelected)="addDice($event)"
-            (randomCharacterRequested)="generateRandomCharacter()"
-            (formSubmitted)="onFormSubmitted()"
-        />
-    </section>
+    <app-toast/>
 </div>

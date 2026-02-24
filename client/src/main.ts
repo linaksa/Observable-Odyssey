@@ -10,6 +10,8 @@ import { CreatePageComponent } from '@app/pages/create-page/create-page.componen
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
 import { FormPageComponent } from '@app/pages/form-page/form-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
+import { JoinFormPageComponent } from '@app/pages/join-form-page/join-form-page.component';
+import { JoinPageComponent } from '@app/pages/join-page/join-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
 import { environment } from './environments/environment';
@@ -23,10 +25,12 @@ const routes: Routes = [
     { path: 'home', component: MainPageComponent },
     { path: 'create', component: CreatePageComponent },
     { path: 'admin', component: AdministrationPageComponent },
-    { path: 'form', component: FormPageComponent },
+    { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
-    { path: 'wait', component: WaitPageComponent },
+    { path: 'wait/:activeGameId', component: WaitPageComponent },
     { path: 'play', component: GamePageComponent },
+    { path: 'join', component: JoinPageComponent},
+    { path: 'join/:activeGameId', component: JoinFormPageComponent},
     { path: '**', redirectTo: '/home' },
 ];
 

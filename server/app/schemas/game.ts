@@ -8,7 +8,7 @@ export const gameSchema = new Schema<IGame>({
         type: String,
         required: true,
         maxLength: 50,
-        unique: true,
+        //unique: true,
     },
     description: {
         type: String,
