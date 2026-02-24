@@ -4,11 +4,13 @@ import { Schema } from 'mongoose';
 import { characterSchema } from './character';
 import { gameSchema } from './game';
 import { itemSchema } from './items';
+import { messageSchema } from './message';
 
 const activeGameSchema = new Schema<IActiveGame>({
     game: gameSchema,
     players: [characterSchema],
     itemsState: [itemSchema],
+    messages: [messageSchema],
 });
 
 export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
