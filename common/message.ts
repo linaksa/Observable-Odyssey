@@ -3,3 +3,9 @@ export interface IMessage {
     content: string;
     postedAt: Date;
 }
+
+export interface INewMessage {
+    roomId: string;
+    author: string;
+    content: string;
+}

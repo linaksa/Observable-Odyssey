@@ -3,12 +3,14 @@ import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
 import { AdminSocketsService } from './services/admin-sockets.service';
+import { ChatService } from './services/chat.service';
+import { SocketService } from './services/socket.service';
 
 @Service()
 export class Server {
     private static readonly appPort: string | number | boolean = Server.normalizePort(process.env.PORT || '3000');
     private static readonly baseDix: number = 10;
-    private server: http.Server;
+    private server?: http.Server;
 
     constructor(private readonly application: Application) {}
 
@@ -21,10 +23,14 @@ export class Server {
 
         this.server = http.createServer(this.application.app);
 
-        // This is to avoid injecting the HttpServer into the Websocket service
-        // before its initialized, which would cause a crash
+        // Avoid circular dependencies issues, as socketService needs httpServer
+        const socketService = Container.get(SocketService);
+        socketService.initialize(this.server);
+
         const adminSocketsService = Container.get(AdminSocketsService);
-        adminSocketsService.initialize(this.server);
+        adminSocketsService.initialize();
+        const chatService = Container.get(ChatService);
+        chatService.initialize();
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

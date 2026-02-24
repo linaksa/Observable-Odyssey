@@ -44,13 +44,13 @@ describe('GameTableComponent', () => {
 
     beforeEach(async () => {
         gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames', 'fetchVisibleGames', 'isLoading'], { tableData: [] });
-        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['fetchGamesOnSignal', 'connect', 'disconnect']);
+        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['onGamesModified', 'connect', 'disconnect']);
         adminServiceSpy = jasmine.createSpyObj('AdministrationService', ['changeGameVisibility']);
         gameServiceSpy = jasmine.createSpyObj('GameService', ['deleteGame']);
 
         // mock le signal avec un Subject pour pouvoir émettre
         signalSubject = new Subject<void>();
-        adminSocketServiceSpy.fetchGamesOnSignal.and.returnValue(signalSubject.asObservable());
+        adminSocketServiceSpy.onGamesModified.and.returnValue(signalSubject.asObservable());
 
         await TestBed.configureTestingModule({
             imports: [],

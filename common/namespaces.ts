@@ -1,0 +1,4 @@
+export const enum Namespaces {
+    Admin = 'admin',
+    Chat = 'chat',
+}

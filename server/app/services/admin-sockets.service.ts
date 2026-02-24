@@ -1,26 +1,17 @@
-import { Server as HttpServer } from 'http';
-import { Server as IOServer } from 'socket.io';
+import { Namespaces } from '@common/namespaces';
+import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
+import { SocketService } from './socket.service';
 
 @Service()
 export class AdminSocketsService {
-    private sio: IOServer;
+    constructor(private readonly socketService: SocketService) {}
 
-    initialize(server: HttpServer) {
-        this.sio = new IOServer(server, {
-            transports: ['websocket'],
-            cors: {
-                origin: '*',
-                methods: ['GET', 'POST'],
-            },
-            path: '/ws/admin',
-        });
+    initialize() {
+        this.socketService.createNamespace(Namespaces.Admin);
     }
 
     emitNewData() {
-        if (!this.sio) {
-            throw new Error('AdminSocketsService not initialized. Call initialize() first.');
-        }
-        this.sio.emit('new-games');
+        this.socketService.emit(Namespaces.Admin, SocketEvent.GameModified);
     }
 }

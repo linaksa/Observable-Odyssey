@@ -51,7 +51,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
         this.fetchCorrectGames();
 
         this.adminSocketService.connect();
-        this.socketSubscription = this.adminSocketService.fetchGamesOnSignal().subscribe({
+        this.socketSubscription = this.adminSocketService.onGamesModified().subscribe({
             next: () => {
                 this.fetchCorrectGames();
             },
