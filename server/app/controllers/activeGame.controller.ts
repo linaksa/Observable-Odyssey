@@ -69,25 +69,6 @@ export class ActiveGameController {
             }
         });
 
-        this.router.get('/:id', async (req: Request, res: Response) => {
-            try {
-                const activeGameId = this.getParamAsString(req, 'id');
-                if (!activeGameId) {
-                    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'ID de partie active invalide' });
-                }
-                const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
-                if (!activeGame) {
-                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
-                }
-                return res.status(StatusCodes.OK).json(activeGame);
-            } catch (error) {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                    message: 'Erreur interne du serveur',
-                    error,
-                });
-            }
-        });
-
         /**
          * @swagger
          *
@@ -116,6 +97,25 @@ export class ActiveGameController {
                 res.status(StatusCodes.OK).json(joinableActiveGames);
             } catch {
                 res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+            }
+        });
+
+        this.router.get('/:id', async (req: Request, res: Response) => {
+            try {
+                const activeGameId = this.getParamAsString(req, 'id');
+                if (!activeGameId) {
+                    return res.status(StatusCodes.BAD_REQUEST).json({ message: 'ID de partie active invalide' });
+                }
+                const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
+                if (!activeGame) {
+                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
+                }
+                return res.status(StatusCodes.OK).json(activeGame);
+            } catch (error) {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                    message: 'Erreur interne du serveur',
+                    error,
+                });
             }
         });
     }

@@ -52,4 +52,8 @@ export class SocketService {
             };
         });
     }
+
+    emit<T, U>(namespace: string, event: string, data: T, callback?: (response: U) => void): void {
+        this.namespaces.get(namespace)?.emit(event, data, callback);
+    }
 }

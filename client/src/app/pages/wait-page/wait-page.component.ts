@@ -1,23 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, InputSignal, OnInit } from '@angular/core';
+import { Component, effect, inject, input, InputSignal, OnInit } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
+import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
-import { GameService } from '@app/services/game.service';
+import { ActiveGameService } from '@app/services/active-game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { WaitGridService } from '@app/services/wait-grid.service';
-import { IActiveGame } from '@common/activeGame';
-import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { Avatar, DiceType, GameSize } from '@common/constants';
-import { GameType, IExistingGame, Visibility } from '@common/game';
+import { IExistingGame } from '@common/game';
 
 @Component({
     selector: 'app-wait-page',
-    imports: [NavButtonsComponent, PageTitleComponent, CommonModule, ReactiveFormsModule, EditionCellComponent],
+    imports: [
+        NavButtonsComponent,
+        PageTitleComponent,
+        CommonModule,
+        ReactiveFormsModule,
+        EditionCellComponent,
+        ChatPanelComponent,
+        LoadingOverlayComponent,
+    ],
     templateUrl: './wait-page.component.html',
     styleUrl: '../../styles/game-cell.scss',
 })
@@ -25,111 +32,42 @@ export class WaitPageComponent implements OnInit {
     readonly gameToEdit: InputSignal<IExistingGame> = input.required<IExistingGame>();
 
     private readonly route: ActivatedRoute = inject(ActivatedRoute);
-    private readonly gameService: GameService = inject(GameService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
+    readonly activeGameService = inject(ActiveGameService);
 
     readonly waitGridService: WaitGridService = inject(WaitGridService);
     readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
 
-    activeGame: IActiveGame;
     localPlayer?: ICharacter;
     otherPlayers: ICharacter[] = [];
 
-    ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            if (params.activeGameId === 'admin') {
-                const size = Math.sqrt(GameSize.Small);
-                this.activeGame = {
-                    _id: '',
-                    game: {
-                        gameTitle: '',
-                        gameMode: GameType.Classic,
-                        description: '',
-                        lastModifiedDate: new Date(),
-                        dateCreated: new Date(),
-                        visibility: Visibility.Hidden,
-                        preview: '',
-                        board: {
-                            items: [],
-                            cells: Array.from({ length: size }, () => Array(size).fill(CellType.Empty)),
-                        },
-                    },
-                    players: [
-                        {
-                            name: 'Player 1',
-                            avatar: Avatar.Avatar2,
-                            initialHealth: 10,
-                            currentHealth: 10,
-                            attackBonusDiceType: DiceType.FourSided,
-                            defenseBonusDiceType: DiceType.FourSided,
-                            rapidityPoints: 5,
-                            attackPoints: 3,
-                            defensePoints: 2,
-                            actionsLeft: 2,
-                            movementLeft: 3,
-                            wonCombatCount: 0,
-                            hasAbandoned: false,
-                            x: 0,
-                            y: 0,
-                        },
-                        {
-                            name: 'Player 2',
-                            avatar: Avatar.Avatar8,
-                            initialHealth: 10,
-                            currentHealth: 10,
-                            attackBonusDiceType: DiceType.FourSided,
-                            defenseBonusDiceType: DiceType.FourSided,
-                            rapidityPoints: 5,
-                            attackPoints: 3,
-                            defensePoints: 2,
-                            actionsLeft: 2,
-                            movementLeft: 3,
-                            wonCombatCount: 0,
-                            hasAbandoned: false,
-                            x: 0,
-                            y: 0,
-                        },
-                        {
-                            name: 'Player 3',
-                            avatar: Avatar.Avatar6,
-                            initialHealth: 10,
-                            currentHealth: 10,
-                            attackBonusDiceType: DiceType.FourSided,
-                            defenseBonusDiceType: DiceType.FourSided,
-                            rapidityPoints: 5,
-                            attackPoints: 3,
-                            defensePoints: 2,
-                            actionsLeft: 2,
-                            movementLeft: 3,
-                            wonCombatCount: 0,
-                            hasAbandoned: true,
-                            x: 0,
-                            y: 0,
-                        },
-                    ],
-                    itemsState: [],
-                    currentPlayerIndex: 0,
-                    messages: [],
-                };
+    constructor() {
+        effect(() => {
+            if (!this.activeGameService.isLoading()) {
                 this.initializeActiveGameData();
-            } else {
-                this.gameService.getActiveGameById(params.activeGameId).subscribe((game) => {
-                    this.activeGame = game;
-                    this.initializeActiveGameData();
-                });
             }
         });
     }
 
+    ngOnInit(): void {
+        this.route.params.subscribe((params) => {
+            this.activeGameService.setActiveGame(params.activeGameId);
+        });
+    }
+
     private initializeActiveGameData(): void {
-        this.waitGridService.buildGrid(this.activeGame.game.board.cells.length);
-        this.waitGridService.initFromExistingBoard(structuredClone(this.activeGame));
+        if (!this.activeGameService.activeGame || !this.activeGameService.activeGame.game) {
+            return;
+        }
+
+        this.waitGridService.buildGrid(this.activeGameService.activeGame.game.board.cells.length);
+        this.waitGridService.initFromExistingBoard(structuredClone(this.activeGameService.activeGame));
 
         this.localPlayer = this.localPlayerService.getLocalPlayer();
         if (this.localPlayer) {
-            this.otherPlayers = this.activeGame.players.filter((p) => p.name !== this.localPlayer?.name);
+            this.otherPlayers = this.activeGameService.activeGame.players.filter((p) => p.name !== this.localPlayer?.name);
         } else {
-            this.otherPlayers = this.activeGame.players.slice();
+            this.otherPlayers = this.activeGameService.activeGame.players.slice();
         }
     }
 }

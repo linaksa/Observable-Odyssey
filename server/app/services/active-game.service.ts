@@ -2,7 +2,7 @@ import { activeGame } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
-import { INewMessage } from '@common/message';
+import { IMessage, INewMessage } from '@common/message';
 import { Service } from 'typedi';
 
 @Service()
@@ -40,17 +40,13 @@ export class ActiveGameService {
             active: true,
             isCarried: false,
         };
-        const exampleMessage = {
-            author: 'System',
-            content: 'Test',
-            postedAt: new Date(),
-        };
+
         const newActiveGame = {
             game: gameChosen,
             players: [playerCharacter],
             itemsState: [exampleItem],
             currentPlayerIndex: 0,
-            messages: [exampleMessage],
+            messages: [] as IMessage[],
         };
         return await activeGame.create(newActiveGame);
     }
@@ -91,11 +87,21 @@ export class ActiveGameService {
         return await activeGame.find().exec();
     }
 
-    async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame.find().exec();
+    async addMessageToGame(newMessage: INewMessage): Promise<IActiveGame | null> {
+        const message: IMessage = {
+            postedAt: new Date(),
+            content: newMessage.content,
+            author: newMessage.author,
+        };
+        return await activeGame.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true }).exec();
     }
 
-    async addMessageToGame(message: INewMessage): Promise<IActiveGame | null> {
-        return await activeGame.findOneAndUpdate({ _id: message.roomId }, { $push: { messages: message } }, { new: true }).exec();
+    async getMessagesFromGame(id: string): Promise<IMessage[]> {
+        const gameMessages = await activeGame.findOne({ _id: id }).select('messages');
+        if (!gameMessages) return [];
+        return gameMessages.messages;
+    }
+    async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
+        return await activeGame.find().exec();
     }
 }
