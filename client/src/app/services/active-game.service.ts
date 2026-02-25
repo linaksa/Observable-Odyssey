@@ -1,102 +1,31 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
-import { Avatar, DiceType } from '@common/constants';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root',
 })
 export class ActiveGameService {
+    httpService = inject(HTTP_CLIENT);
     playerName: string = 'Player 1';
 
-    activeGame: IActiveGame = {
-        _id: '699485279b3aa7b27b28f4ee',
-        game: {
-            gameTitle: 'ermlk534ejr534 v2',
-            description: 'rgdrgdrfgrgerdgerfsdfsfas',
-            gameMode: 'classic',
-            lastModifiedDate: new Date(),
-            dateCreated: new Date(),
-            visibility: 'hidden',
-            preview: '',
-            board: {
-                cells: [
-                    ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['ICE', 'ICE', 'EMPTY', 'ICE', 'EMPTY', 'EMPTY', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['EMPTY', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'WATER'],
-                    ['EMPTY', 'ICE', 'ICE', 'WATER', 'ICE', 'ICE', 'WATER', 'WATER', 'WATER', 'EMPTY'],
-                    ['ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'ICE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                ],
-                items: [
-                    { x: 0, y: 5, size: 4, itemType: 'fightSanctuary' },
-                    { x: 0, y: 7, size: 4, itemType: 'lifeSanctuary' },
-                    { x: 0, y: 1, size: 1, itemType: 'startingPosition' },
-                    { x: 1, y: 1, size: 1, itemType: 'startingPosition' },
-                ],
+    activeGame: IActiveGame;
+
+    isLoading = signal(false);
+
+    setActiveGame(id: string): void {
+        this.isLoading.set(true);
+        this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
+            next: (game) => {
+                this.activeGame = game;
             },
-        },
-        players: [
-            {
-                name: 'Player 1',
-                avatar: Avatar.Avatar2,
-                initialHealth: 10,
-                currentHealth: 10,
-                attackBonusDiceType: DiceType.FourSided,
-                defenseBonusDiceType: DiceType.FourSided,
-                rapidityPoints: 5,
-                attackPoints: 3,
-                defensePoints: 2,
-                actionsLeft: 2,
-                movementLeft: 3,
-                wonCombatCount: 0,
-                hasAbandoned: false,
-                x: 0,
-                y: 0,
+            complete: () => {
+                this.isLoading.set(false);
             },
-            {
-                name: 'Player 2',
-                avatar: Avatar.Avatar8,
-                initialHealth: 10,
-                currentHealth: 10,
-                attackBonusDiceType: DiceType.FourSided,
-                defenseBonusDiceType: DiceType.FourSided,
-                rapidityPoints: 5,
-                attackPoints: 3,
-                defensePoints: 2,
-                actionsLeft: 2,
-                movementLeft: 3,
-                wonCombatCount: 0,
-                hasAbandoned: false,
-                x: 0,
-                y: 0,
-            },
-            {
-                name: 'Player 3',
-                avatar: Avatar.Avatar6,
-                initialHealth: 10,
-                currentHealth: 10,
-                attackBonusDiceType: DiceType.FourSided,
-                defenseBonusDiceType: DiceType.FourSided,
-                rapidityPoints: 5,
-                attackPoints: 3,
-                defensePoints: 2,
-                actionsLeft: 2,
-                movementLeft: 3,
-                wonCombatCount: 0,
-                hasAbandoned: true,
-                x: 0,
-                y: 0,
-            },
-        ],
-        itemsState: [],
-        currentPlayerIndex: 0,
-        messages: [],
-    } as IActiveGame;
+        });
+    }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
         return this.activeGame.players.find((player) => player.name === playerName);

@@ -1,71 +1,75 @@
 <div class="content">
-    <app-nav-buttons />
-    <app-page-title title="Vue d'attente" />
+    @if (activeGameService.isLoading()) {
+        <app-loading-overlay></app-loading-overlay>
+    } @else if (this.activeGameService.activeGame) {
+        <app-nav-buttons />
+        <app-page-title title="Vue d'attente" />
 
-    <section class="flex grow flex-col lg:flex-row justify-center gap-4">
-        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
-            <div class="text-2xl text-white tracking-wider text-center">Liste des joueurs</div>
+        <section class="flex grow flex-col lg:flex-row justify-center gap-4">
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+                <div class="text-2xl text-white tracking-wider text-center">Liste des joueurs</div>
 
-            <div class="flex grow flex-col">
-                @if (localPlayer) {
-                    <div class="flex items-center gap-3">
-                        <img [src]="'assets/form-page/' + localPlayer.avatar + '.png'" [alt]="localPlayer.name" class="w-16 h-16 rounded-full" />
-                        <div class="text-white">{{ localPlayer.name }} (Vous)</div>
-                    </div>
-                }
-
-                <div class="border-t border-white mt-4 mb-2"></div>
-
-                <div class="flex flex-col gap-2">
-                    @for (player of otherPlayers; track $index) {
+                <div class="flex grow flex-col">
+                    @if (localPlayer) {
                         <div class="flex items-center gap-3">
-                            <img [src]="'assets/form-page/' + player.avatar + '.png'" [alt]="player.name" class="w-12 h-12 rounded-full" />
-                            <div class="text-white">{{ player.name }}</div>
+                            <img [src]="'assets/form-page/' + localPlayer.avatar + '.png'" [alt]="localPlayer.name" class="w-16 h-16 rounded-full" />
+                            <div class="text-white">{{ localPlayer.name }} (Vous)</div>
                         </div>
-                    } @empty {
-                        <div class="text-white mt-2">Aucun autre joueur connecté</div>
                     }
-                </div>
-            </div>
-        </div>
 
-        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4">
-            <div class="text-2xl text-white tracking-wider text-center">Carte du jeu</div>
+                    <div class="border-t border-white mt-4 mb-2"></div>
 
-            <div id="grid-container" class="flex-1 flex items-center justify-center">
-                <div
-                    #grid
-                    class="grid bg-[#0f1528] w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
-                    [ngClass]="'grid-' + waitGridService.gameCells.length"
-                >
-                    @for (row of waitGridService.gameCells; track $index; let rowIndex = $index) {
-                        @for (cell of row; track $index; let colIndex = $index) {
-                            <app-edition-cell
-                                [cellType]="cell"
-                                [rowIndex]="rowIndex"
-                                [colIndex]="colIndex"
-                                [item]="waitGridService.getObjectAt(rowIndex, colIndex)"
-                            ></app-edition-cell>
+                    <div class="flex flex-col gap-2">
+                        @for (player of otherPlayers; track $index) {
+                            <div class="flex items-center gap-3">
+                                <img [src]="'assets/form-page/' + player.avatar + '.png'" [alt]="player.name" class="w-12 h-12 rounded-full" />
+                                <div class="text-white">{{ player.name }}</div>
+                            </div>
+                        } @empty {
+                            <div class="text-white mt-2">Aucun autre joueur connecté</div>
                         }
-                    }
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
-            <div class="text-2xl text-white tracking-wider text-center">Clavardage</div>
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4">
+                <div class="text-2xl text-white tracking-wider text-center">Carte du jeu</div>
 
-            <div class="flex grow flex-col">
-                <div class="border-t border-white mt-4 mb-2"></div>
-
-                <div class="border-t border-white mt-4"></div>
+                <div id="grid-container" class="flex-1 flex items-center justify-center">
+                    <div
+                        #grid
+                        class="grid bg-[#0f1528] w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
+                        [ngClass]="'grid-' + waitGridService.gameCells.length"
+                    >
+                        @for (row of waitGridService.gameCells; track $index; let rowIndex = $index) {
+                            @for (cell of row; track $index; let colIndex = $index) {
+                                <app-edition-cell
+                                    [cellType]="cell"
+                                    [rowIndex]="rowIndex"
+                                    [colIndex]="colIndex"
+                                    [item]="waitGridService.getObjectAt(rowIndex, colIndex)"
+                                ></app-edition-cell>
+                            }
+                        }
+                    </div>
+                </div>
             </div>
 
-            <div class="flex shrink flex-col gap-2">
-                <button class="btn btn-green" type="submit">
-                    <span>Commencer</span>
-                </button>
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+                <div class="text-2xl text-white tracking-wider text-center">Clavardage</div>
+
+                <div class="flex grow flex-col">
+                    <div class="border-t border-white mt-4 mb-2"></div>
+                    <app-chat-panel></app-chat-panel>
+                    <div class="border-t border-white mt-4"></div>
+                </div>
+
+                <div class="flex shrink flex-col gap-2">
+                    <button class="btn btn-green" type="submit">
+                        <span>Commencer</span>
+                    </button>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    }
 </div>

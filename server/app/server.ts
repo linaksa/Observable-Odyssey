@@ -18,6 +18,7 @@ export class Server {
         const port: number = typeof val === 'string' ? parseInt(val, this.baseDix) : val;
         return isNaN(port) ? val : port >= 0 ? port : false;
     }
+
     init(): void {
         this.application.app.set('port', Server.appPort);
 

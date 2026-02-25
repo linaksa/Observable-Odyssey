@@ -4,7 +4,6 @@ import { Service } from 'typedi';
 
 @Service()
 export class ActiveGameService {
-
     fetchJoinableActiveGames(): Promise<IExistingGame[]> {
         return activeGame.find({});
     }
