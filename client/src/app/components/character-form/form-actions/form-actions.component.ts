@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { CharacterFormService } from '@app/services/character-form.service';
 
 @Component({
     selector: 'app-form-actions',
@@ -7,13 +8,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     templateUrl: './form-actions.component.html',
 })
 export class FormActionsComponent {
-    @Input() formValid = false;
+    characterFormService = inject(CharacterFormService);
+
     @Input() isLoading = false;
-    @Output() randomRequested = new EventEmitter<void>();
     @Output() submitRequested = new EventEmitter<void>();
 
     generateRandom(): void {
-        this.randomRequested.emit();
+        this.characterFormService.populateWithRandomData();
     }
 
     submit(): void {

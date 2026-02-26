@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { AvatarI } from '@app/classes/character/AvatarI';
+import { AVATAR_IMAGE_PATH_MODEL } from '@app/constants/character-form';
+import { Avatar } from '@common/constants';
 
 @Component({
     selector: 'app-avatar-preview',
@@ -8,6 +9,12 @@ import { AvatarI } from '@app/classes/character/AvatarI';
     templateUrl: './avatar-preview.component.html',
 })
 export class AvatarPreviewComponent {
-    @Input() avatars: AvatarI[] = [];
-    @Input() selectedAvatarIndex: number | null = null;
+    @Input() avatar: Avatar | null = null;
+
+    getImageForAvatar(avatar: Avatar): string {
+        if(!avatar) {
+            return '';
+        }
+        return AVATAR_IMAGE_PATH_MODEL.replace('{}', avatar);
+    }
 }

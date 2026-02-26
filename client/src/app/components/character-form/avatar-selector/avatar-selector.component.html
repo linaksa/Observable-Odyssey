@@ -1,10 +1,8 @@
 <div class="text-2xl text-white tracking-wider text-center">Avatar</div>
 
-<app-avatar-preview class="flex grow justify-center" [avatars]="avatars" [selectedAvatarIndex]="selectedAvatarIndex" />
+<app-avatar-preview class="flex grow justify-center" [avatar]="selectedAvatar" />
 
 <app-avatar-grid
     class="flex shrink flex-wrap justify-center gap-1"
-    [avatars]="avatars"
-    [selectedAvatarIndex]="selectedAvatarIndex"
-    (avatarSelected)="selectAvatar($event)"
+    [form]="form"
 />
