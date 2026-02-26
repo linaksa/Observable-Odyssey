@@ -1,13 +1,13 @@
 <div class="text-2xl text-white tracking-wider text-center">Modifier les attributs</div>
 
 <div class="flex grow flex-col">
-    <app-bonus-selector [selectedBonusType]="selectedBonusType" (bonusSelected)="selectBonus($event)" />
+    <app-bonus-selector [form]="form" />
 
     <div class="border-t border-white mt-4 mb-2"></div>
 
-    <app-dice-selector [selectedDiceType]="selectedDiceType" (diceSelected)="selectDice($event)" />
+    <app-dice-selector [form]="form" />
 
     <div class="border-t border-white mt-4"></div>
 </div>
 
-<app-form-actions [formValid]="formValid" (randomRequested)="generateRandom()" (submitRequested)="submitForm()" />
+<app-form-actions (submitRequested)="submitForm()" />

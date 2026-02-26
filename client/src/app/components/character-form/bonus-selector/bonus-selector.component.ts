@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { BonusType } from '@app/classes/character/character.model';
+import { Component, Input } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { AVAILABLE_BONUS_TYPES, BonusType } from '@app/constants/character-form';
 
 @Component({
     selector: 'app-bonus-selector',
@@ -8,11 +9,20 @@ import { BonusType } from '@app/classes/character/character.model';
     templateUrl: './bonus-selector.component.html',
 })
 export class BonusSelectorComponent {
-    @Input() selectedBonusType: BonusType | null = null;
-    @Input() disabled = false;
-    @Output() bonusSelected = new EventEmitter<BonusType>();
+    @Input() form: FormGroup;
+
+    availableBonusTypes = AVAILABLE_BONUS_TYPES;
+
+    bonusLabels = {
+        [BonusType.Life]: '+2 vie',
+        [BonusType.Speed]: '+2 rapidité',
+    };
 
     selectBonus(type: BonusType): void {
-        this.bonusSelected.emit(type);
+        this.form.patchValue({ bonusType: type });
+    }
+
+    get selectedBonus(): BonusType | null {
+        return this.form.get('bonusType')?.value ?? null;
     }
 }

@@ -1,9 +1,9 @@
 <div class="flex flex-col gap-2">
     <div class="text-white tracking-wider">Assigner les dés</div>
-    <button class="btn" [disabled]="disabled" [ngClass]="selectedDiceType === 'attack' ? 'btn-blue' : ''" (click)="selectDice('attack')">
-        Dé à 6 faces pour l'Attaque et dé à 4 faces pour la Défense
-    </button>
-    <button class="btn" [disabled]="disabled" [ngClass]="selectedDiceType === 'defense' ? 'btn-blue' : ''" (click)="selectDice('defense')">
-        Dé à 6 faces pour la Défense et dé à 4 faces pour l'Attaque
-    </button>
+
+    @for(diceType of availableDiceTypes; track $index){
+        <button class="btn" [ngClass]="selectedDiceType === diceType ? 'btn-blue' : ''" (click)="selectDice(diceType)">
+            {{ diceTypeLabels[diceType] }}
+        </button>
+    }
 </div>

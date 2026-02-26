@@ -1,4 +1,4 @@
-export const enum Avatar {
+export enum Avatar {
     Avatar1 = 'avatar1',
     Avatar2 = 'avatar2',
     Avatar3 = 'avatar3',
@@ -47,6 +47,11 @@ export const BAD_DESCRIPTION_LENGTH = 201;
 export const BAD_TITLE_LENGTH = 51;
 export const PLAYER_NAME_MIN_LENGTH = 3;
 export const PLAYER_NAME_MAX_LENGTH = 20;
+
+export const DEFAULT_PLAYER_LIFE_POINTS = 6;
+export const DEFAULT_PLAYER_SPEED_POINTS = 6;
+export const DEFAULT_PLAYER_ATTACK_POINTS = 4;
+export const DEFAULT_PLAYER_DEFENSE_POINTS = 4;
 
 export enum GameSize {
     Small = 100,

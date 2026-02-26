@@ -1,9 +1,8 @@
 <div class="flex flex-col gap-2">
     <div class="text-white tracking-wider">Attribuer un bonus</div>
-    <button class="btn" [disabled]="disabled" [ngClass]="selectedBonusType === 'life' ? 'btn-blue' : ''" (click)="selectBonus('life')">
-        +2 à la Vie
-    </button>
-    <button class="btn" [disabled]="disabled" [ngClass]="selectedBonusType === 'speed' ? 'btn-blue' : ''" (click)="selectBonus('speed')">
-        +2 à la Rapidité
-    </button>
+    @for(bonusType of availableBonusTypes; track $index){
+        <button class="btn" [ngClass]="selectedBonus === bonusType ? 'btn-blue' : ''" (click)="selectBonus(bonusType)">
+            {{ bonusLabels[bonusType] }}
+        </button>
+    }
 </div>

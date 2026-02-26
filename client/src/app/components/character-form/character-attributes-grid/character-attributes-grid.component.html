@@ -2,23 +2,23 @@
     <div class="text-white tracking-wider">Attributs</div>
     <div class="grid grid-cols-2 gap-2">
         <app-attribute-display
-            [name]="'Vie'"
-            [value]="selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.initialHealth : '-'"
+            name="Vie"
+            [value]="characterFormService.lifePoints"
             [bgColor]="'bg-[#a39fff]'"
         />
         <app-attribute-display
-            [name]="'Rapidité'"
-            [value]="selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.rapidityPoints : '-'"
+            name="Rapidité"
+            [value]="characterFormService.speedPoints"
             [bgColor]="'bg-[#f1969a]'"
         />
         <app-attribute-display
-            [name]="'Attaque'"
-            [value]="selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.attackPoints : '-'"
+            name="Attaque"
+            [value]="characterFormService.attackPoints"
             [bgColor]="'bg-[#fdb7c5]'"
         />
         <app-attribute-display
-            [name]="'Défense'"
-            [value]="selectedAvatarIndex !== null ? avatars[selectedAvatarIndex].character.defensePoints : '-'"
+            name="Défense"
+            [value]="characterFormService.defensePoints"
             [bgColor]="'bg-[#cea0d9]'"
         />
     </div>

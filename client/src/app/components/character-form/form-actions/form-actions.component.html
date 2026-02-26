@@ -1,7 +1,7 @@
 <div class="flex shrink flex-col gap-2">
     <button class="btn" (click)="generateRandom()">Générer un personnage aléatoire</button>
-    <button class="btn btn-green h-12 inline-flex items-center gap-2" type="submit" [disabled]="!formValid" (click)="submit()">
-        @if (isLoading) {
+    <button class="btn btn-green h-12 inline-flex items-center gap-2" type="submit" [disabled]="characterFormService.characterForm.invalid" (click)="submit()">
+        @if (characterFormService.isLoading()) {
             <img
                 src="assets/loading/cogwheel.png"
                 alt="Chargement"

@@ -1,11 +1,11 @@
-@for (avatar of avatars; track avatar.image; let i = $index) {
+@for (avatar of availableAvatars; track $index;) {
     <button
         class="relative w-16 h-auto aspect-square rounded-full overflow-hidden"
-        [ngClass]="selectedAvatarIndex === i ? 'outline-4 outline-blue-600' : ''"
-        (click)="selectAvatar(i)"
+        [ngClass]="selectedAvatar === avatar? 'outline-4 outline-blue-600' : ''"
+        (click)="selectAvatar(avatar)"
     >
-        <img [src]="avatar.image" [alt]="avatar.name" class="h-full w-full object-cover" />
-        @if (selectedAvatarIndex === i) {
+        <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover" />
+        @if (selectedAvatar === avatar) {
             <div class="absolute inset-0 bg-blue-600/30"></div>
         }
     </button>

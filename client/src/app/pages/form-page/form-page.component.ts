@@ -34,9 +34,11 @@ export class FormPageComponent implements OnInit {
             this.toastService.show('ID de jeu manquant. Impossible de créer le personnage.');
             return;
         }
+        this.characterFormService.isLoading.set(true);
 
         this.characterFormService.createActiveGameWithCharacter(this.gameId, formData).subscribe({
             next: (response) => {
+                this.characterFormService.isLoading.set(false);
                 const serverPlayer = response?.players?.find((p) => p.name === formData.name) ?? response?.players?.[0];
 
                 if (serverPlayer) {
@@ -49,7 +51,8 @@ export class FormPageComponent implements OnInit {
                 this.navigator.navigate(['/wait', response._id]);
             },
             error: (response) => {
-                this.toastService.show(response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');
+                this.characterFormService.isLoading.set(false);
+                this.toastService.show(response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');   
             },
         });
     }
