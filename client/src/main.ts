@@ -28,6 +28,7 @@ const routes: Routes = [
     { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent },
+    { path: 'play/:activeGameId', component: GamePageComponent },
     { path: 'play', component: GamePageComponent },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
