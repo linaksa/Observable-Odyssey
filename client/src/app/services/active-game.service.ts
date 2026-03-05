@@ -30,4 +30,14 @@ export class ActiveGameService {
     getPlayerByName(playerName: string): ICharacter | undefined {
         return this.activeGame.players.find((player) => player.name === playerName);
     }
+
+    updatePlayers(players: ICharacter[]): void {
+        if (!this.activeGame) {
+            return;
+        }
+        this.activeGame = {
+            ...this.activeGame,
+            players: [...players],
+        };
+    }
 }

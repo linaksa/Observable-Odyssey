@@ -4,6 +4,7 @@ import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
 import { AdminSocketsService } from './services/admin-sockets.service';
 import { ChatService } from './services/chat.service';
+import { GameSocketsService } from './services/game-sockets.service';
 import { SocketService } from './services/socket.service';
 
 @Service()
@@ -30,6 +31,8 @@ export class Server {
 
         const adminSocketsService = Container.get(AdminSocketsService);
         adminSocketsService.initialize();
+        const gameSocketsService = Container.get(GameSocketsService);
+        gameSocketsService.initialize();
         const chatService = Container.get(ChatService);
         chatService.initialize();
 

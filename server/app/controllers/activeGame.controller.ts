@@ -1,4 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game.service';
+import { GameSocketsService } from '@app/services/game-sockets.service';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -7,7 +8,10 @@ import { Service } from 'typedi';
 export class ActiveGameController {
     router: Router;
 
-    constructor(private readonly activeGameService: ActiveGameService) {
+    constructor(
+        private readonly activeGameService: ActiveGameService,
+        private readonly gameSocketsService: GameSocketsService,
+    ) {
         this.configureRouter();
     }
 
@@ -30,6 +34,7 @@ export class ActiveGameController {
                     });
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
+                this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
                 return res.status(StatusCodes.CREATED).json(newActiveGame);
             } catch (error) {
                 if (error.message === 'Game introuvable') {
@@ -48,6 +53,9 @@ export class ActiveGameController {
                     });
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
+                if (updatedActiveGame) {
+                    this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
+                }
                 return res.status(StatusCodes.OK).json(updatedActiveGame);
             } catch (error) {
                 if (error.message === 'Active game not found') {
