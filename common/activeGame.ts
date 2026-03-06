@@ -10,4 +10,5 @@ export interface IActiveGame {
     itemsState: IItem[];
     currentPlayerIndex: number;
     messages: IMessage[];
+    organizerName: string;
 }

@@ -2,6 +2,7 @@
 /.vscode/chrome
 /.vs/
 
+/.github
 package-lock.json
 .DS_Store
 

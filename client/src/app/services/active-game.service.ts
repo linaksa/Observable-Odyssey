@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
+import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -29,6 +30,25 @@ export class ActiveGameService {
 
     getPlayerByName(playerName: string): ICharacter | undefined {
         return this.activeGame.players.find((player) => player.name === playerName);
+    }
+
+    leaveActiveGame(playerName: string): Observable<IActiveGame | null> {
+        // TODO : supprimer le player ou la partie via api ou socket
+
+        /* Exemple simple :
+
+        if (activeGameToUpdate.organizerName === playerName) {
+            await activeGame.findByIdAndDelete(activeGameId);
+        } else {
+            const playerIndex = activeGameToUpdate.players.findIndex((player) => player.name === playerName);
+            activeGameToUpdate.players.splice(playerIndex, 1);
+        }
+
+        */
+        return this.httpService.patch<IActiveGame | null, { activeGameId: string; playerName: string }>(`${environment.apiUrl}/activeGame/leave`, {
+            activeGameId: this.activeGame._id,
+            playerName,
+        });
     }
 
     updatePlayers(players: ICharacter[]): void {
