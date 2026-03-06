@@ -4,6 +4,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ActiveGameService } from './active-game.service';
 import { SocketService } from './socket.service';
+import { LocalPlayerService } from './local-player.service';
 
 @Injectable({
     providedIn: 'root',
@@ -11,7 +12,7 @@ import { SocketService } from './socket.service';
 export class ChatService {
     private readonly socketService = inject(SocketService);
     private readonly activeGameService = inject(ActiveGameService);
-
+    private readonly localPlayerService = inject(LocalPlayerService);
     connect() {
         this.socketService.connect(Namespaces.Chat);
         this.socketService.emit<string, IMessage[]>(Namespaces.Chat, SocketEvent.JoinChat, this.activeGameService.activeGame._id, (response) => {
@@ -25,14 +26,16 @@ export class ChatService {
     }
 
     sendMessage(content: string) {
+        // object for saving to db
         const newMessage: INewMessage = {
             content,
             roomId: this.activeGameService.activeGame._id,
-            author: 'PLACEHOLDER',
+            author: this.localPlayerService.getLocalPlayer()?.name ?? 'ERROR',
         };
+        // object for sending to display onscreen
         const message: IMessage = {
             content,
-            author: 'PLACEHOLDER',
+            author: this.localPlayerService.getLocalPlayer()?.name ?? 'ERROR',
             postedAt: new Date(),
         };
         this.socketService.emit<INewMessage, unknown>(Namespaces.Chat, SocketEvent.NewMessage, newMessage);

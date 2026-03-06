@@ -1,5 +1,6 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
@@ -13,7 +14,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-page',
-    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent],
+    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent],
     templateUrl: './game-page.component.html',
 })
 export class GamePageComponent implements OnInit, OnDestroy {

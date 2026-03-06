@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TextMessageComponent } from '@app/components/text-message/text-message.component';
 import { ActiveGameService } from '@app/services/active-game.service';
@@ -11,15 +11,20 @@ import { ChatService } from '@app/services/chat.service';
 })
 export class ChatPanelComponent implements OnInit, AfterViewChecked {
     private readonly autoScrollBoundary = 80;
+    private readonly maxMessageLength = 200;
+    private readonly minMessageLength = 1;
+    private readonly invalidSubmissionFeedbackDuration = 2000;
 
     private readonly chatService = inject(ChatService);
     readonly activeGameService = inject(ActiveGameService);
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
 
+    invalidSubmission = signal(false);
+
     constructor(private fb: FormBuilder) {
         this.messageForm = this.fb.group({
-            message: ['', Validators.required],
+            message: ['', [Validators.required, Validators.maxLength(this.maxMessageLength), Validators.minLength(this.minMessageLength)]],
         });
     }
 
@@ -28,7 +33,14 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
     }
 
     onNewMessage() {
+        if (this.messageForm.invalid) {
+            this.invalidSubmission.set(true);
+            setTimeout(() => this.invalidSubmission.set(false), this.invalidSubmissionFeedbackDuration);
+            return;
+        }
+
         this.chatService.sendMessage(this.messageForm.value.message);
+        this.messageForm.reset();
     }
 
     private lastMessageCount = 0;
