@@ -5,6 +5,7 @@ import { SocketEvent } from '@common/socket-events';
 import { ActiveGameService } from './active-game.service';
 import { LocalPlayerService } from './local-player.service';
 import { SocketService } from './socket.service';
+import { LocalPlayerService } from './local-player.service';
 
 @Injectable({
     providedIn: 'root',

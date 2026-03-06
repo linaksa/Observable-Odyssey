@@ -40,6 +40,7 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
         }
 
         this.chatService.sendMessage(this.messageForm.value.message);
+        this.messageForm.reset();
     }
 
     private lastMessageCount = 0;
