@@ -15,6 +15,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         required: true,
     },
     messages: [messageSchema],
+    organizerName: {
+        type: String,
+        required: true,
+    },
 });
 
 export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);

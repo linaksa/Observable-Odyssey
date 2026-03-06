@@ -16,10 +16,10 @@ import { Avatar } from '@common/constants';
 export class CharacterFormComponent {
     @Output() submitForm = new EventEmitter<CharacterFormData>();
 
-  characterFormService = inject(CharacterFormService);
-    
+    characterFormService = inject(CharacterFormService);
+
     onFormSubmitted() {
-        if(!this.characterFormService.characterForm.valid) return;
+        if (!this.characterFormService.characterForm.valid) return;
 
         const data: CharacterFormData = {
             name: this.characterFormService.characterForm.controls.playerName.value,
@@ -32,5 +32,5 @@ export class CharacterFormComponent {
             defenseBonusDiceType: this.characterFormService.defenseDiceType,
         };
         this.submitForm.emit(data);
-      }
+    }
 }

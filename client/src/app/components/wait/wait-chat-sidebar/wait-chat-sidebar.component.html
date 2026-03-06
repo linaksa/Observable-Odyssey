@@ -1,0 +1,12 @@
+<div class="text-2xl text-white tracking-wider text-center">Clavardage</div>
+
+<app-chat-panel class="flex h-full"></app-chat-panel>
+
+@if (canStartGame) {
+    <div class="border-t border-white"></div>
+    <div class="flex shrink flex-col gap-2">
+        <button class="btn btn-green" type="submit" [disabled]="isStartDisabled">
+            <span>Commencer</span>
+        </button>
+    </div>
+}

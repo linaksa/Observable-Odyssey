@@ -4,6 +4,7 @@ import { CharacterFormComponent } from '@app/components/character-form/character
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/character-form.service';
 import { ToastService } from '@app/services/toast.service';
+import { LocalPlayerService } from '@app/services/local-player.service';
 import { CharacterFormData } from '@common/character';
 
 @Component({
@@ -14,6 +15,7 @@ import { CharacterFormData } from '@common/character';
 export class JoinFormPageComponent implements OnInit {
     characterFormService = inject(CharacterFormService);
     toastService = inject(ToastService);
+    localPlayerService = inject(LocalPlayerService);
     navigator = inject(Router);
 
     router = inject(ActivatedRoute);
@@ -33,6 +35,15 @@ export class JoinFormPageComponent implements OnInit {
         this.characterFormService.joinActiveGameWithCharacter(this.activeGameId, characterData).subscribe({
             next: (activeGame) => {
                 this.toastService.show('Vous avez rejoint la partie avec succès.');
+                const serverPlayer = activeGame?.players?.find((p) => p.name === characterData.name) ?? activeGame?.players?.[0];
+
+                if (serverPlayer) {
+                    this.localPlayerService.setLocalPlayer(serverPlayer);
+                } else {
+                    this.toastService.show('Impossible de rejoindre la partie.');
+                    return;
+                }
+
                 this.navigator.navigate(['/wait', activeGame._id]);
             },
             error: () => {

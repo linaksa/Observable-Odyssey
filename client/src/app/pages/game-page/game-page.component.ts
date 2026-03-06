@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-page',
-    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent],
+    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent],
     templateUrl: './game-page.component.html',
 })
 export class GamePageComponent implements OnInit, OnDestroy {
