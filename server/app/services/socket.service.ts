@@ -29,7 +29,7 @@ export class SocketService {
         }
 
         if (this.namespaces.has(name)) {
-            throw new Error(`Namespace '${name}' already exists`);
+            return this.namespaces.get(name);
         }
 
         const namespace = this.ioServer.of(name);

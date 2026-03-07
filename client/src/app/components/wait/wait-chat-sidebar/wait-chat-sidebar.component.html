@@ -5,7 +5,7 @@
 @if (canStartGame) {
     <div class="border-t border-white"></div>
     <div class="flex shrink flex-col gap-2">
-        <button class="btn btn-green" type="submit" [disabled]="isStartDisabled">
+        <button class="btn btn-green" type="submit" [disabled]="isStartDisabled" (click)="startGame()">
             <span>Commencer</span>
         </button>
     </div>

@@ -1,9 +1,11 @@
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { Namespace } from 'socket.io';
+import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
+import { ChatService } from './chat.service';
+import { DebugSocketService } from './debug-socket.service';
 import { SocketService } from './socket.service';
 
 @Service()
@@ -13,19 +15,27 @@ export class GameSocketsService {
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
+        private readonly chatService: ChatService,
+        private readonly debugSocketService: DebugSocketService,
     ) {}
 
     initialize(): void {
         this.namespace = this.socketService.createNamespace(Namespaces.Game);
-        this.namespace.on('connection', (socket) => {
+
+        this.namespace.on('connection', (socket: Socket) => {
+            this.chatService.register(socket);
+            this.debugSocketService.register(socket);
+
             socket.on(SocketEvent.JoinGame, async (activeGameId: string) => {
                 if (!activeGameId) {
                     return;
                 }
+
                 socket.join(activeGameId);
 
                 try {
                     const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
+
                     if (activeGame?.players) {
                         this.namespace?.to(activeGameId).emit(SocketEvent.PlayersUpdated, activeGame.players);
                     }
@@ -38,10 +48,11 @@ export class GameSocketsService {
                 if (!activeGameId) {
                     return;
                 }
-                
+
                 if (!socket.rooms.has(activeGameId)) {
                     return;
                 }
+
                 this.namespace?.to(activeGameId).emit(SocketEvent.StartGame, activeGameId);
             });
         });
@@ -51,6 +62,7 @@ export class GameSocketsService {
         if (!this.namespace || !activeGameId) {
             return;
         }
+
         this.namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, players);
     }
 }

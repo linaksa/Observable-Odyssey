@@ -1,15 +1,16 @@
-import { AfterViewChecked, Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TextMessageComponent } from '@app/components/text-message/text-message.component';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { ChatService } from '@app/services/chat.service';
+import { LocalPlayerService } from '@app/services/local-player.service';
 
 @Component({
     selector: 'app-chat-panel',
     imports: [TextMessageComponent, ReactiveFormsModule],
     templateUrl: './chat-panel.component.html',
 })
-export class ChatPanelComponent implements OnInit, AfterViewChecked {
+export class ChatPanelComponent implements AfterViewChecked {
     private readonly autoScrollBoundary = 80;
     private readonly maxMessageLength = 200;
     private readonly minMessageLength = 1;
@@ -17,6 +18,7 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
 
     private readonly chatService = inject(ChatService);
     readonly activeGameService = inject(ActiveGameService);
+    readonly localPlayerService = inject(LocalPlayerService);
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
 
@@ -26,10 +28,12 @@ export class ChatPanelComponent implements OnInit, AfterViewChecked {
         this.messageForm = this.fb.group({
             message: ['', [Validators.required, Validators.maxLength(this.maxMessageLength), Validators.minLength(this.minMessageLength)]],
         });
-    }
 
-    ngOnInit() {
-        this.chatService.connect();
+        effect(() => {
+            if (!this.activeGameService.isLoading() && this.activeGameService.activeGame?._id) {
+                this.chatService.connect();
+            }
+        });
     }
 
     onNewMessage() {

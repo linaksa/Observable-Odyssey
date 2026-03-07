@@ -56,4 +56,8 @@ export class SocketService {
     emit<T, U>(namespace: string, event: string, data: T, callback?: (response: U) => void): void {
         this.namespaces.get(namespace)?.emit(event, data, callback);
     }
+
+    emitMany(namespace: string, event: string, ...args: unknown[]): void {
+        this.namespaces.get(namespace)?.emit(event, ...args);
+    }
 }

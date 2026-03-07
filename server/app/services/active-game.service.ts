@@ -47,6 +47,7 @@ export class ActiveGameService {
             itemsState: [exampleItem],
             currentPlayerIndex: 0,
             messages: [] as IMessage[],
+            isDebugMode: false,
             organizerName: characterForm.name,
         };
         return await activeGame.create(newActiveGame);

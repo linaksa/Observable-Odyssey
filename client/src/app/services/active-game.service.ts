@@ -16,6 +16,15 @@ export class ActiveGameService {
 
     isLoading = signal(false);
 
+    private _isDebugMode = signal(false);
+
+    isDebugMode = this._isDebugMode.asReadonly();
+
+    toggleDebugMode(playerName: string) {
+        if (playerName !== this.activeGame.organizerName) return;
+        this._isDebugMode.set(!this._isDebugMode());
+    }
+
     setActiveGame(id: string): void {
         this.isLoading.set(true);
         this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
