@@ -2,7 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal } from '@angular/core';
 import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
 import { ActiveGameService } from '@app/services/active-game.service';
+import { SocketService } from '@app/services/socket.service';
 import { ICharacter } from '@common/character';
+import { Namespaces } from '@common/namespaces';
+import { SocketEvent } from '@common/socket-events';
 
 @Component({
     selector: 'app-wait-chat-sidebar',
@@ -10,6 +13,8 @@ import { ICharacter } from '@common/character';
     templateUrl: './wait-chat-sidebar.component.html',
 })
 export class WaitChatSidebarComponent {
+    private readonly socketService = inject(SocketService);
+
     readonly localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
 
     readonly activeGameService: ActiveGameService = inject(ActiveGameService);
@@ -22,5 +27,12 @@ export class WaitChatSidebarComponent {
     get canStartGame(): boolean {
         const local = this.localPlayer();
         return !!local && local.name === this.activeGameService.activeGame?.organizerName;
+    }
+
+    startGame(): void {
+        if (!this.activeGameService.activeGame._id) {
+            return;
+        }
+        this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.StartGame, this.activeGameService.activeGame._id);
     }
 }

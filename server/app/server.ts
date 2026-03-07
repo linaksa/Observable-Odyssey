@@ -3,7 +3,6 @@ import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
 import { AdminSocketsService } from './services/admin-sockets.service';
-import { ChatService } from './services/chat.service';
 import { GameSocketsService } from './services/game-sockets.service';
 import { SocketService } from './services/socket.service';
 
@@ -33,8 +32,6 @@ export class Server {
         adminSocketsService.initialize();
         const gameSocketsService = Container.get(GameSocketsService);
         gameSocketsService.initialize();
-        const chatService = Container.get(ChatService);
-        chatService.initialize();
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

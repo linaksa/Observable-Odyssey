@@ -15,6 +15,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         required: true,
     },
     messages: [messageSchema],
+    isDebugMode: {
+        type: Boolean,
+        required: true,
+    },
     organizerName: {
         type: String,
         required: true,

@@ -1,25 +1,27 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, OnDestroy } from '@angular/core';
 import { IMessage, INewMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { Subscription } from 'rxjs';
 import { ActiveGameService } from './active-game.service';
 import { LocalPlayerService } from './local-player.service';
 import { SocketService } from './socket.service';
-import { LocalPlayerService } from './local-player.service';
 
 @Injectable({
     providedIn: 'root',
 })
-export class ChatService {
+export class ChatService implements OnDestroy {
     private readonly socketService = inject(SocketService);
     private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
+    private chatSubscription: Subscription;
     connect() {
-        this.socketService.connect(Namespaces.Chat);
-        this.socketService.emit<string, IMessage[]>(Namespaces.Chat, SocketEvent.JoinChat, this.activeGameService.activeGame._id, (response) => {
+        this.chatSubscription?.unsubscribe();
+        this.socketService.connect(Namespaces.Game);
+        this.socketService.emit<string, IMessage[]>(Namespaces.Game, SocketEvent.JoinChat, this.activeGameService.activeGame._id, (response) => {
             this.activeGameService.activeGame.messages = response;
         });
-        this.socketService.on<IMessage>(Namespaces.Chat, SocketEvent.NewMessage).subscribe({
+        this.chatSubscription = this.socketService.on<IMessage>(Namespaces.Game, SocketEvent.NewMessage).subscribe({
             next: (message: IMessage) => {
                 this.activeGameService.activeGame.messages.push(message);
             },
@@ -39,7 +41,11 @@ export class ChatService {
             author: this.localPlayerService.getLocalPlayer()?.name ?? 'ERROR',
             postedAt: new Date(),
         };
-        this.socketService.emit<INewMessage, unknown>(Namespaces.Chat, SocketEvent.NewMessage, newMessage);
+        this.socketService.emit<INewMessage, unknown>(Namespaces.Game, SocketEvent.NewMessage, newMessage);
         this.activeGameService.activeGame.messages.push(message);
+    }
+
+    ngOnDestroy(): void {
+        this.chatSubscription.unsubscribe();
     }
 }

@@ -51,9 +51,9 @@ describe('SocketService', () => {
             expect(() => uninitializedService.createNamespace('test')).to.throw('Socket.IO server not initialized. Call initialize() first.');
         });
 
-        it('should throw error if namespace already exists', () => {
-            service.createNamespace('test');
-            expect(() => service.createNamespace('test')).to.throw("Namespace 'test' already exists");
+        it('should return namespace if namespace already exists', () => {
+            const namespace = service.createNamespace('test');
+            expect(service.createNamespace('test')).to.equal(namespace);
         });
     });
 
