@@ -17,8 +17,8 @@ export class ChatPanelComponent implements AfterViewChecked {
     private readonly invalidSubmissionFeedbackDuration = 2000;
 
     private readonly chatService = inject(ChatService);
-    readonly activeGameService = inject(ActiveGameService);
-    readonly localPlayerService = inject(LocalPlayerService);
+    protected readonly activeGameService = inject(ActiveGameService);
+    protected readonly localPlayerService = inject(LocalPlayerService);
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
 

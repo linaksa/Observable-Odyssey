@@ -1,3 +1,18 @@
+/**
+ * Stratégie de test – AdminSocketsService
+ *
+ * Approche : tests unitaires avec Sinon pour les stubs/spies.
+ * Le service réel est instancié avec un SocketService réel, ce qui permet de
+ * vérifier l'intégration entre les deux services sans toucher au réseau.
+ * Un serveur HTTP utilitaire est créé uniquement pour initialiser Socket.IO.
+ *
+ * Cas limites couverts :
+ * - Appel à emitNewData avant initialize : vérifie que l'utilisation prématurée
+ *   du service lève une erreur explicite plutôt que de produire un comportement
+ *   silencieux inattendu.
+ * - Appel à emitNewData après initialize : vérifie le chemin nominal et s'assure
+ *   que l'évènement est bien transmis via le bon namespace.
+ */
 import { expect } from 'chai';
 import { createServer, Server as HttpServer } from 'http';
 import * as sinon from 'sinon';
@@ -32,6 +47,8 @@ describe('AdminSocketsService', () => {
     });
 
     describe('emitNewData', () => {
+        // Cas limite : appel avant initialisation du namespace. L'absence de namespace
+        // doit être signalée explicitement par une exception pour éviter un comportement silencieux.
         it('should throw error if not initialized', () => {
             socketService.initialize(httpServer);
             expect(() => service.emitNewData()).to.throw("Namespace 'admin' not found. Call createNamespace() first.");

@@ -10,7 +10,7 @@ import { Avatar } from '@common/constants';
     templateUrl: './player-list.component.html',
 })
 export class PlayerListComponent {
-    activeGameService = inject(ActiveGameService);
+    protected readonly activeGameService = inject(ActiveGameService);
 
     buildPlayerAvatarUrl(avatar: Avatar): string {
         return `assets/form-page/${avatar}.png`;

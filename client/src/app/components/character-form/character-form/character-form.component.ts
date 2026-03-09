@@ -16,7 +16,7 @@ import { Avatar } from '@common/constants';
 export class CharacterFormComponent {
     @Output() submitForm = new EventEmitter<CharacterFormData>();
 
-    characterFormService = inject(CharacterFormService);
+    protected readonly characterFormService = inject(CharacterFormService);
 
     onFormSubmitted() {
         if (!this.characterFormService.characterForm.valid) return;

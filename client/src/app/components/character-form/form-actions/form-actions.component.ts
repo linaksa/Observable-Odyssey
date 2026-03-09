@@ -8,7 +8,7 @@ import { CharacterFormService } from '@app/services/character-form.service';
     templateUrl: './form-actions.component.html',
 })
 export class FormActionsComponent {
-    characterFormService = inject(CharacterFormService);
+    protected readonly characterFormService = inject(CharacterFormService);
 
     @Input() isLoading = false;
     @Output() submitRequested = new EventEmitter<void>();

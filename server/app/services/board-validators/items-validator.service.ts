@@ -16,6 +16,12 @@ enum ExpectedStartingPoints {
     Large = 6,
 }
 
+interface ExpectedCounts {
+    expectedStartingPoints: number;
+    expectedLifeSanctuaries: number;
+    expectedFightSanctuaries: number;
+}
+
 @Service()
 export class ItemsValidator implements IBoardValidator {
     validate(board: IBoard): string[] {
@@ -53,11 +59,7 @@ export class ItemsValidator implements IBoardValidator {
         return errors;
     }
 
-    private getExpectedCounts(gameSize: number): {
-        expectedStartingPoints: number;
-        expectedLifeSanctuaries: number;
-        expectedFightSanctuaries: number;
-    } | null {
+    private getExpectedCounts(gameSize: number): ExpectedCounts | null {
         if (gameSize === GameSize.Small) {
             return {
                 expectedStartingPoints: ExpectedStartingPoints.Small,

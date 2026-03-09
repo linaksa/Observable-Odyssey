@@ -1,3 +1,21 @@
+/**
+ * Stratégie de test – GameTableService
+ *
+ * Approche : tests unitaires Angular avec GameService substitué par un spy Jasmine.
+ * Les données de test contiennent intentionnellement un jeu visible et un jeu
+ * caché pour permettre de tester le filtrage par visibilité.
+ *
+ * Cas limites couverts :
+ * - Réponse vide (tableau vide) : fetchGames() avec ou sans filtre de visibilité
+ *   doit renvoyer un tableData vide sans erreur.
+ * - Réponse null : le serveur peut théoriquement renvoyer null en cas d'anomalie ;
+ *   fetchGames() doit normaliser cette valeur en tableau vide pour protéger les
+ *   consommateurs du tableData.
+ * - Filtre visibilité désactivé (false) : tous les jeux, y compris les cachés,
+ *   doivent apparaître dans tableData.
+ * - Filtre visibilité activé (true) : seuls les jeux avec Visibility.Viewable
+ *   doivent être conservés.
+ */
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
@@ -72,29 +90,34 @@ describe('GameTableService', () => {
     it('should fetch only visible games', () => {
         gameServiceSpy.getAllGames.and.returnValue(of(gamesMock));
 
-        service.fetchVisibleGames();
+        service.fetchGames(true);
 
         expect(gameServiceSpy.getAllGames).toHaveBeenCalled();
         expect(service.tableData).toEqual([gamesMock[0]]);
     });
 
+    // Cas limite : le serveur renvoie un tableau vide, avec et sans filtre de visibilité.
+    // tableData doit rester [] dans les deux cas sans erreur.
     it('should handle empty response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of([]));
 
         service.fetchGames();
         expect(service.tableData).toEqual([]);
 
-        service.fetchVisibleGames();
+        service.fetchGames(true);
         expect(service.tableData).toEqual([]);
     });
 
+    // Cas limite : le serveur renvoie null au lieu d'un tableau (anomalie serveur ou
+    // réseau). fetchGames() doit normaliser cette valeur en tableau vide pour éviter
+    // que les consommateurs de tableData reçoivent null et plantent.
     it('should handle null response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of(null as unknown as IExistingGame[]));
 
         service.fetchGames();
         expect(service.tableData).toEqual([]);
 
-        service.fetchVisibleGames();
+        service.fetchGames(true);
         expect(service.tableData).toEqual([]);
     });
 });

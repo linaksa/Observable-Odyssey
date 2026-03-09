@@ -11,7 +11,7 @@ import { GameService } from './game.service';
     providedIn: 'root',
 })
 export class GameEditFormService {
-    gameService = inject(GameService);
+    private readonly gameService = inject(GameService);
 
     form: FormGroup;
     formValid: boolean = false;
@@ -41,7 +41,7 @@ export class GameEditFormService {
         });
     }
 
-    async getPreviewImage(gridSelector: HTMLElement | null): Promise<Base64URLString | null> {
+    private async getPreviewImage(gridSelector: HTMLElement | null): Promise<Base64URLString | null> {
         if (!gridSelector) {
             return null;
         }
@@ -85,12 +85,7 @@ export class GameEditFormService {
             board,
         };
 
-        let observable;
-        if (id) {
-            observable = this.gameService.saveGame(id, gameData);
-        } else {
-            observable = this.gameService.createGame(gameData);
-        }
+        const observable = id ? this.gameService.saveGame(id, gameData) : this.gameService.createGame(gameData);
 
         return new Promise((resolve, reject) => {
             observable.subscribe({

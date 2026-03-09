@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GameService } from '@app/services/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
@@ -8,16 +8,19 @@ import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/
 import { GameEditionComponent } from '@app/components/edition/game-edition/game-edition.component';
 import { CellType } from '@common/board';
 import { GameSize } from '@common/constants';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-edition-page',
     imports: [CommonModule, GameEditionComponent, LoadingOverlayComponent],
     templateUrl: './edition-page.component.html',
 })
-export class EditionPageComponent implements OnInit {
+export class EditionPageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly gameService = inject(GameService);
     private readonly timeout = 0;
+
+    private routeSubscription?: Subscription;
 
     editedGame: IExistingGame;
     showButton: boolean = false;
@@ -58,5 +61,9 @@ export class EditionPageComponent implements OnInit {
         setTimeout(() => {
             this.showButton = true;
         }, this.timeout);
+    }
+
+    ngOnDestroy(): void {
+        this.routeSubscription?.unsubscribe();
     }
 }

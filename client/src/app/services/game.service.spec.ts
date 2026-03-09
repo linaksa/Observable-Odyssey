@@ -1,3 +1,17 @@
+/**
+ * Stratégie de test – GameService (client)
+ *
+ * Approche : tests unitaires par spy Jasmine sur le port HTTP (HTTP_CLIENT).
+ * L'interface HTTP abstraite est substituée par un objet spy, ce qui permet de
+ * vérifier les URLs et les corps de requêtes sans appels réseau réels.
+ * Chaque méthode publique est testée indépendamment en s'assurant que le bon
+ * endpoint est construit avec les bons paramètres.
+ *
+ * Cas limites couverts :
+ * - Erreur réseau (throwError) : vérifie que getAllGames() ne plante pas
+ *   l'application lorsque le serveur est inaccessible ; le flux d'erreur doit
+ *   être propageable à l'abonné sans exception non gérée.
+ */
 import { TestBed } from '@angular/core/testing';
 
 import { HTTP_CLIENT } from '@app/http/http-interface';
@@ -96,6 +110,8 @@ describe('GameService', () => {
         expect(httpSpy.delete).toHaveBeenCalledWith(`${dummyBaseURL}/games/${gamesMock._id}`, jasmine.any(Object));
     });
 
+    // Cas limite : le serveur répond avec une erreur (ex: 404). Vérifie que le service
+    // propage correctement l'observable d'erreur sans lever d'exception synchrone.
     it('should not crash when the request fails', () => {
         httpSpy.get.and.returnValue(throwError(() => new Error('404')));
 

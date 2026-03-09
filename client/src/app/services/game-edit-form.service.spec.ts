@@ -1,3 +1,22 @@
+/**
+ * Stratégie de test – GameEditFormService
+ *
+ * Approche : tests unitaires Angular avec GameService substitué par un spy Jasmine.
+ * L'objet formulaire réactif est inspecté directement pour valider les valeurs
+ * initiales et les transformations. Les méthodes async (submitForm, getPreviewImage)
+ * sont testées avec des spies sur les fonctions de capture d'image.
+ *
+ * Cas limites couverts :
+ * - Échec de la génération de l'image de prévisualisation (null) : submitForm()
+ *   doit être interrompu, formValid mis à false et formErrors non vide, sans
+ *   appeler saveGame ni createGame.
+ * - Erreur HTTP 500 lors de la sauvegarde : submitForm() doit lever une exception,
+ *   formValid mis à false et isSubmitting remis à false.
+ * - Erreur HTTP 500 lors de la création : même comportement que la sauvegarde.
+ * - ID vide (nouveau jeu) : submitForm() doit appeler createGame au lieu de saveGame.
+ * - Élément DOM null pour getPreviewImage : doit retourner null sans lever d'exception.
+ * - Erreur canvas (toDataURL) : getPreviewImage doit absorber l'erreur et retourner null.
+ */
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
@@ -46,8 +65,11 @@ describe('GameEditFormService', () => {
         expect(service.form.get('description')?.value).toBe(randomGame.description);
     });
 
+    // Cas limite : la capture d'image retourne null (canvas inaccessible ou DOM non prêt).
+    // submitForm() doit être stoppé avant tout appel HTTP et signaler l'erreur via formErrors.
     it('should not submit if preview image fails', async () => {
-        spyOn(service, 'getPreviewImage').and.returnValue(Promise.resolve(null));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        spyOn(service as any, 'getPreviewImage').and.returnValue(Promise.resolve(null));
 
         try {
             await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
@@ -57,13 +79,15 @@ describe('GameEditFormService', () => {
             expect(service.formErrors).toHaveSize(1);
             expect(service.isSubmitting()).toBeFalse();
 
-            expect(service.gameService.saveGame).not.toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((service as any).gameService.saveGame).not.toHaveBeenCalled();
         }
     });
 
     it('should submit form with correct data', async () => {
         const fakeImage = 'data:image/png;base64,fakeImageData' as Base64URLString;
-        spyOn(service, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        spyOn(service as any, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
 
         randomGame._id = '1';
         gameServiceSpy.saveGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
@@ -83,19 +107,23 @@ describe('GameEditFormService', () => {
         };
 
         await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
-        expect(service.gameService.saveGame).toHaveBeenCalled();
-        expect(service.gameService.saveGame).toHaveBeenCalledWith(randomGame._id, expectedGameData);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((service as any).gameService.saveGame).toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((service as any).gameService.saveGame).toHaveBeenCalledWith(randomGame._id, expectedGameData);
     });
 
     it('should submit form successfully with existing object', async () => {
         const fakeImage = 'data:image/png;base64,fakeImageData' as Base64URLString;
-        spyOn(service, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        spyOn(service as any, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
 
         gameServiceSpy.saveGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
         randomGame._id = '1';
 
         await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
-        expect(service.gameService.saveGame).toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((service as any).gameService.saveGame).toHaveBeenCalled();
 
         expect(service.formValid).toBeTrue();
         expect(service.formErrors).toHaveSize(0);
@@ -107,7 +135,8 @@ describe('GameEditFormService', () => {
             await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
             fail('Submit form should have thrown an error');
         } catch {
-            expect(service.gameService.saveGame).toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((service as any).gameService.saveGame).toHaveBeenCalled();
 
             expect(service.formValid).toBeFalse();
             expect(service.formErrors).not.toHaveSize(0);
@@ -117,13 +146,15 @@ describe('GameEditFormService', () => {
 
     it('should submit form successfully with newly created game', async () => {
         const fakeImage = 'data:image/png;base64,fakeImageData' as Base64URLString;
-        spyOn(service, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        spyOn(service as any, 'getPreviewImage').and.callFake(() => Promise.resolve(fakeImage));
 
         gameServiceSpy.createGame.and.returnValue(of(new HttpResponse<string>({ body: 'ok', status: 200 })));
         randomGame._id = '';
 
         await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
-        expect(service.gameService.createGame).toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((service as any).gameService.createGame).toHaveBeenCalled();
 
         expect(service.formValid).toBeTrue();
         expect(service.formErrors).toHaveSize(0);
@@ -135,7 +166,8 @@ describe('GameEditFormService', () => {
             await service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items, null);
             fail('Submit form should have thrown an error');
         } catch {
-            expect(service.gameService.createGame).toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((service as any).gameService.createGame).toHaveBeenCalled();
 
             expect(service.formValid).toBeFalse();
             expect(service.formErrors).not.toHaveSize(0);
@@ -143,9 +175,12 @@ describe('GameEditFormService', () => {
         }
     });
 
+    // Cas limite : l'élément DOM de la grille est null (composant non encore rendu ou
+    // détruit). getPreviewImage() doit retourner null sans lever d'exception.
     it('should return null if grid element does not exists', async () => {
         const grid = null;
-        const result = await service.getPreviewImage(grid);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await (service as any).getPreviewImage(grid);
         expect(result).toBeNull();
     });
 
@@ -153,7 +188,8 @@ describe('GameEditFormService', () => {
         const fakeElement = document.createElement('div');
         spyOn(HTMLCanvasElement.prototype, 'toDataURL').and.throwError('Canvas error');
 
-        const result = await service.getPreviewImage(fakeElement);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await (service as any).getPreviewImage(fakeElement);
         expect(result).toBeNull();
     });
 
@@ -164,7 +200,8 @@ describe('GameEditFormService', () => {
         spyOn(fakeCanvas, 'toDataURL').and.returnValue('data:image/png;base64,FAKE_BASE64');
         spyOn(service, 'customHtml2Canvas').and.returnValue(Promise.resolve(fakeCanvas));
 
-        const result = await service.getPreviewImage(fakeElement);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await (service as any).getPreviewImage(fakeElement);
         expect(result).not.toBeNull();
     });
 

@@ -9,6 +9,7 @@ import {
     PLAYER_NAME_PATTERN,
 } from '@app/constants/character-form';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
+import { ResponseType } from '@app/http/http-model';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
 import {
@@ -118,10 +119,14 @@ export class CharacterFormService {
 
     createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
         // Logic to create an active game with the provided character data
-        return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: 'text' });
+        return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
     }
 
     joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
-        return this.httpClient.patch(`${this.baseUrl}/activeGame/join`, { activeGameId, characterForm: characterData }, { responseType: 'text' });
+        return this.httpClient.patch(
+            `${this.baseUrl}/activeGame/join`,
+            { activeGameId, characterForm: characterData },
+            { responseType: ResponseType.Text },
+        );
     }
 }

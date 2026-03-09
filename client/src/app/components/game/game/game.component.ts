@@ -13,8 +13,8 @@ import { IItem } from '@common/items';
     templateUrl: './game.component.html',
 })
 export class GameComponent {
-    activeGameService: ActiveGameService = inject(ActiveGameService);
-    boardSharedService: BoardSharedService = inject(BoardSharedService);
+    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
+    protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
 
     @Input() cellType: CellType;
     @Input() rowIndex: number;

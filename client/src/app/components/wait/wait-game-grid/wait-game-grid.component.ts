@@ -11,7 +11,7 @@ import { IItem, ItemType } from '@common/items';
     templateUrl: './wait-game-grid.component.html',
 })
 export class WaitGameGridComponent {
-    readonly waitGridService: WaitGridService = inject(WaitGridService);
+    protected readonly waitGridService: WaitGridService = inject(WaitGridService);
 
     cellImagePath(cellType: CellType): string {
         return CELL_TYPE_PATHS[cellType];

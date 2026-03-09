@@ -14,7 +14,7 @@ const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     templateUrl: './player-info.component.html',
 })
 export class PlayerInfoComponent implements OnInit {
-    activeGameService = inject(ActiveGameService);
+    protected readonly activeGameService = inject(ActiveGameService);
     player: ICharacter | undefined;
 
     ngOnInit() {

@@ -8,9 +8,9 @@ import { ICharacter } from '@common/character';
     templateUrl: './wait-player-list.component.html',
 })
 export class WaitPlayerListComponent {
-    readonly players: InputSignal<ICharacter[]> = input.required<ICharacter[]>();
-    readonly localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
-    readonly organizerName: InputSignal<string> = input.required<string>();
+    players: InputSignal<ICharacter[]> = input.required<ICharacter[]>();
+    localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
+    organizerName: InputSignal<string> = input.required<string>();
 
     get otherPlayers(): ICharacter[] {
         const localName = this.localPlayer()?.name;

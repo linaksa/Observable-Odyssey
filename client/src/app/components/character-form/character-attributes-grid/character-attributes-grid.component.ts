@@ -9,5 +9,5 @@ import { CharacterFormService } from '@app/services/character-form.service';
     templateUrl: './character-attributes-grid.component.html',
 })
 export class CharacterAttributesGridComponent {
-    characterFormService = inject(CharacterFormService);
+    protected readonly characterFormService = inject(CharacterFormService);
 }
