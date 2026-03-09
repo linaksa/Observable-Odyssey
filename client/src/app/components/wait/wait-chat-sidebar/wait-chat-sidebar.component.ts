@@ -17,7 +17,7 @@ export class WaitChatSidebarComponent {
 
     readonly localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
 
-    readonly activeGameService: ActiveGameService = inject(ActiveGameService);
+    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
 
     get isStartDisabled(): boolean {
         const players = this.activeGameService.activeGame.players;

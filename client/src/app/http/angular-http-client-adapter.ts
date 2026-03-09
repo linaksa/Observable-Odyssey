@@ -4,6 +4,13 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
 
+interface MappedHttpOptions {
+    headers?: Record<string, string>;
+    params?: HttpParams;
+    responseType?: 'json';
+    withCredentials?: boolean;
+}
+
 @Injectable()
 export class AngularHttpClientAdapter implements HttpClientPort {
     private readonly http = inject(HttpClient);
@@ -45,12 +52,7 @@ export class AngularHttpClientAdapter implements HttpClientPort {
         );
     }
 
-    private mapOptions(options?: HttpOptions): {
-        headers?: Record<string, string>;
-        params?: HttpParams;
-        responseType?: 'json';
-        withCredentials?: boolean;
-    } {
+    private mapOptions(options?: HttpOptions): MappedHttpOptions {
         if (!options) return {};
         return {
             headers: options.headers,

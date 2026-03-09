@@ -7,5 +7,5 @@ import { ToastService } from '@app/services/toast.service';
     templateUrl: './toast.component.html',
 })
 export class ToastComponent {
-    toastService = inject(ToastService);
+    protected readonly toastService = inject(ToastService);
 }

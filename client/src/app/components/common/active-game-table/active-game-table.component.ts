@@ -9,7 +9,7 @@ import { ActiveGameTableService } from '@app/services/active-game-table.service'
     templateUrl: './active-game-table.component.html',
 })
 export class ActiveGameTableComponent implements OnInit {
-    activeGameTableService = inject(ActiveGameTableService);
+    protected readonly activeGameTableService = inject(ActiveGameTableService);
 
     ngOnInit(): void {
         this.activeGameTableService.fetchJoinableActiveGames();

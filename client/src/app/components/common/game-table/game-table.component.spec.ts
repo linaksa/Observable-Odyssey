@@ -1,3 +1,21 @@
+/**
+ * Stratégie de test – GameTableComponent
+ *
+ * Approche : tests unitaires de composant Angular avec spies Jasmine.
+ * Toutes les dépendances (GameTableService, AdminSocketService, AdministrationService,
+ * GameService) sont substituées par des spies pour isoler la logique du composant.
+ * Un Subject RxJS simule le flux d'événements socket (onGamesModified) afin de
+ * tester la réactivité du composant aux mises à jour en temps réel.
+ *
+ * Cas limites couverts :
+ * - toggleVisibility avec erreur HTTP : le checkbox doit être remis à son état
+ *   précédent (checked inversé) et réactivé pour éviter un état incohérent de l'UI.
+ * - ngOnInit avec socket signal : vérifie que chaque émission du Subject déclenche
+ *   un rechargement des jeux, validant la réactivité aux événements WebSocket.
+ * - deleteGame avec succès : le jeu supprimé doit être retiré du tableData local
+ *   sans rechargement complet de la liste.
+ * - ngOnDestroy : le service socket doit être déconnecté pour libérer les ressources.
+ */
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminSocketService } from '@app/services/admin.socket.service';
@@ -43,7 +61,7 @@ describe('GameTableComponent', () => {
     ];
 
     beforeEach(async () => {
-        gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames', 'fetchVisibleGames', 'isLoading'], { tableData: [] });
+        gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames', 'isLoading'], { tableData: [] });
         adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['onGamesModified', 'connect', 'disconnect']);
         adminServiceSpy = jasmine.createSpyObj('AdministrationService', ['changeGameVisibility']);
         gameServiceSpy = jasmine.createSpyObj('GameService', ['deleteGame']);
@@ -74,17 +92,17 @@ describe('GameTableComponent', () => {
     it('should fetch all games if isAdmin is true', () => {
         // good
         component.isAdmin = true;
-        component.fetchCorrectGames();
-        expect(gameTableServiceSpy.fetchGames).toHaveBeenCalled();
-        expect(gameTableServiceSpy.fetchVisibleGames).not.toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (component as any).fetchCorrectGames();
+        expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledWith(false);
     });
 
     it('should fetch visible games if isAdmin is false', () => {
         // good
         component.isAdmin = false;
-        component.fetchCorrectGames();
-        expect(gameTableServiceSpy.fetchVisibleGames).toHaveBeenCalled();
-        expect(gameTableServiceSpy.fetchGames).not.toHaveBeenCalled();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (component as any).fetchCorrectGames();
+        expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledWith(true);
     });
 
     it('gameIsViewable should return true only for Visibility.Viewable', () => {
@@ -106,6 +124,9 @@ describe('GameTableComponent', () => {
         expect(gameTableServiceSpy.fetchGames).toHaveBeenCalled();
     });
     // good
+    // Cas limite : l'appel HTTP changeGameVisibility échoue (ex: timeout réseau).
+    // Le checkbox doit être remis dans son état précédent (checked inversé) et
+    // réactivé pour éviter un état UI incohérent (input bloqué indéfiniment).
     it('toggleVisibility error should revert checked and re-enable input', () => {
         const input = { checked: true, disabled: false } as HTMLInputElement;
         adminServiceSpy.changeGameVisibility.and.returnValue(throwError(() => new Error('error')));

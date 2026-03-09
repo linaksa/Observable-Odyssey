@@ -49,8 +49,6 @@ export class ReachabilityValidator implements IBoardValidator {
     }
 
     private floodFill(board: IBoard, visited: boolean[][], startRow: number, startCol: number): void {
-        const rows = board.cells.length;
-        const cols = board.cells[0].length;
         const queue: [number, number][] = [[startRow, startCol]];
         visited[startRow][startCol] = true;
 
@@ -62,25 +60,24 @@ export class ReachabilityValidator implements IBoardValidator {
         ];
 
         while (queue.length > 0) {
-            const current = queue.shift();
+            const current = queue.shift() as [number, number];
             const [row, col] = current;
 
             for (const [dRow, dCol] of directions) {
                 const newRow = row + dRow;
                 const newCol = col + dCol;
 
-                if (
-                    newRow >= 0 &&
-                    newRow < rows &&
-                    newCol >= 0 &&
-                    newCol < cols &&
-                    !visited[newRow][newCol] &&
-                    board.cells[newRow][newCol] !== CellType.Wall
-                ) {
+                if (this.isVisitableCell(board, visited, newRow, newCol)) {
                     visited[newRow][newCol] = true;
                     queue.push([newRow, newCol]);
                 }
             }
         }
+    }
+
+    private isVisitableCell(board: IBoard, visited: boolean[][], row: number, col: number): boolean {
+        const rows = board.cells.length;
+        const cols = board.cells[0].length;
+        return row >= 0 && row < rows && col >= 0 && col < cols && !visited[row][col] && board.cells[row][col] !== CellType.Wall;
     }
 }

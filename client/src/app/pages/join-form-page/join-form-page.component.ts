@@ -3,8 +3,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/character-form.service';
-import { ToastService } from '@app/services/toast.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
+import { ToastService } from '@app/services/toast.service';
 import { CharacterFormData } from '@common/character';
 
 @Component({
@@ -13,10 +13,10 @@ import { CharacterFormData } from '@common/character';
     templateUrl: './join-form-page.component.html',
 })
 export class JoinFormPageComponent implements OnInit {
-    characterFormService = inject(CharacterFormService);
-    toastService = inject(ToastService);
-    localPlayerService = inject(LocalPlayerService);
-    navigator = inject(Router);
+    private readonly characterFormService = inject(CharacterFormService);
+    private readonly toastService = inject(ToastService);
+    private readonly localPlayerService = inject(LocalPlayerService);
+    private readonly navigator = inject(Router);
 
     router = inject(ActivatedRoute);
     activeGameId: string | null = null;

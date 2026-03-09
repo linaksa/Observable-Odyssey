@@ -19,21 +19,17 @@ import { Subscription } from 'rxjs';
 })
 export class GameTableComponent implements OnInit, OnDestroy {
     private socketSubscription?: Subscription;
+    private readonly adminService: AdministrationService = inject(AdministrationService);
+    private readonly gameService: GameService = inject(GameService);
+    private readonly toastService = inject(ToastService);
+    private readonly adminSocketService: AdminSocketService = inject(AdminSocketService);
 
-    adminService: AdministrationService = inject(AdministrationService);
-    gameTableService: GameTableService = inject(GameTableService);
-    gameService: GameService = inject(GameService);
-    adminSocketService: AdminSocketService = inject(AdminSocketService);
-    toastService = inject(ToastService);
+    protected readonly gameTableService: GameTableService = inject(GameTableService);
 
     @Input() isAdmin = false;
 
-    fetchCorrectGames(): void {
-        if (this.isAdmin) {
-            this.gameTableService.fetchGames();
-        } else {
-            this.gameTableService.fetchVisibleGames();
-        }
+    private fetchCorrectGames(): void {
+        this.gameTableService.fetchGames(!this.isAdmin);
     }
 
     ngOnInit(): void {
@@ -62,7 +58,7 @@ export class GameTableComponent implements OnInit, OnDestroy {
 
         this.adminService.changeGameVisibility(element._id, input.checked).subscribe({
             next: () => {
-                this.gameTableService.fetchGames();
+                this.gameTableService.fetchGames(false);
                 input.disabled = false;
             },
             error: () => {

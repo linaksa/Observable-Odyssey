@@ -12,23 +12,11 @@ export class GameTableService {
 
     isLoading = signal(false);
 
-    fetchGames(): void {
+    fetchGames(onlyVisible = false): void {
         this.isLoading.set(true);
         this.gameService.getAllGames().subscribe({
             next: (fetchedGames) => {
-                this.tableData = fetchedGames ?? [];
-            },
-            complete: () => {
-                this.isLoading.set(false);
-            },
-        });
-    }
-
-    fetchVisibleGames(): void {
-        this.isLoading.set(true);
-        this.gameService.getAllGames().subscribe({
-            next: (fetchedGames) => {
-                this.tableData = fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? [];
+                this.tableData = onlyVisible ? (fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? []) : (fetchedGames ?? []);
             },
             complete: () => {
                 this.isLoading.set(false);

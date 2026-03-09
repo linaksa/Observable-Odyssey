@@ -41,8 +41,8 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     private routeSubscription?: Subscription;
 
     readonly gameToEdit: InputSignal<IExistingGame> = input.required<IExistingGame>();
-    readonly activeGameService: ActiveGameService = inject(ActiveGameService);
-    readonly waitGridService: WaitGridService = inject(WaitGridService);
+    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
+    protected readonly waitGridService: WaitGridService = inject(WaitGridService);
 
     localPlayer?: ICharacter;
     showButton: boolean = false;
