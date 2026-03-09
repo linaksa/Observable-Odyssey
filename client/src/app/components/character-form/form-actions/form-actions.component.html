@@ -11,4 +11,7 @@
         }
         <span>Confirmer</span>
     </button>
+    @if (characterFormService.errors()) {
+        <p class="text-red-500">{{ characterFormService.errors() }}</p>
+    }
 </div>

@@ -32,8 +32,14 @@ export class JoinFormPageComponent implements OnInit {
             this.toastService.show("L'ID de la partie à rejoindre est manquant.");
             return;
         }
+
+        this.characterFormService.isLoading.set(true);
+        this.characterFormService.errors.set(null);
+
         this.characterFormService.joinActiveGameWithCharacter(this.activeGameId, characterData).subscribe({
             next: (activeGame) => {
+                this.characterFormService.isLoading.set(false);
+
                 this.toastService.show('Vous avez rejoint la partie avec succès.');
                 const serverPlayer = activeGame?.players?.find((p) => p.name === characterData.name) ?? activeGame?.players?.[0];
 
@@ -46,8 +52,10 @@ export class JoinFormPageComponent implements OnInit {
 
                 this.navigator.navigate(['/wait', activeGame._id]);
             },
-            error: () => {
+            error: (error) => {
+                this.characterFormService.isLoading.set(false);
                 this.toastService.show('Erreur lors de la tentative de rejoindre la partie.');
+                this.characterFormService.errors.set(error.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');
             },
         });
     }

@@ -1,6 +1,7 @@
 import { activeGame } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame } from '@common/activeGame';
+import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData } from '@common/character';
 import { IMessage, INewMessage } from '@common/message';
 import { Service } from 'typedi';
@@ -49,6 +50,7 @@ export class ActiveGameService {
             messages: [] as IMessage[],
             isDebugMode: false,
             organizerName: characterForm.name,
+            maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
         };
         return await activeGame.create(newActiveGame);
     }
@@ -58,6 +60,13 @@ export class ActiveGameService {
         if (!activeGameToUpdate) {
             throw new Error('Active game not found');
         }
+
+        const boardSize = activeGameToUpdate.game.board.cells.length;
+        const maxPlayers = BOARD_SIZE_TO_PLAYER_COUNT[boardSize];
+        if (activeGameToUpdate.players.length >= maxPlayers) {
+            throw new Error('Nombre maximum de joueurs atteint pour cette partie');
+        }
+
         const newPlayerCharacter = {
             name: characterForm.name,
             avatar: characterForm.avatar,
@@ -104,6 +113,10 @@ export class ActiveGameService {
         return gameMessages.messages;
     }
     async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame.find().exec();
+        return await activeGame.find({
+            $expr: {
+                $lt: [{ $size: '$players' }, '$maxPlayerCount'],
+            },
+        }).exec();
     }
 }

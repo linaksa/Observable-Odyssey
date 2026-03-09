@@ -36,6 +36,7 @@ export class CharacterFormService {
     private readonly baseUrl: string = environment.apiUrl;
 
     isLoading = signal<boolean>(false);
+    errors = signal<string | null>(null);
 
     characterForm = new FormGroup({
         playerName: new FormControl('', {

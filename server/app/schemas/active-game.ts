@@ -23,6 +23,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: String,
         required: true,
     },
+    maxPlayerCount: {
+        type: Number,
+        required: true,
+    },
 });
 
 export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);

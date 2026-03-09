@@ -1,3 +1,4 @@
+import { ActiveGameListSocketsService } from '@app/services/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { GameSocketsService } from '@app/services/game-sockets.service';
 import { Request, Response, Router } from 'express';
@@ -11,6 +12,7 @@ export class ActiveGameController {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly gameSocketsService: GameSocketsService,
+        private readonly activeGameListSocketsService: ActiveGameListSocketsService,
     ) {
         this.configureRouter();
     }
@@ -35,6 +37,7 @@ export class ActiveGameController {
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
                 this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
+                this.activeGameListSocketsService.emitJoinableGamesUpdated();
                 return res.status(StatusCodes.CREATED).json(newActiveGame);
             } catch (error) {
                 if (error.message === 'Game introuvable') {
@@ -56,12 +59,14 @@ export class ActiveGameController {
                 if (updatedActiveGame) {
                     this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
                 }
+                this.activeGameListSocketsService.emitJoinableGamesUpdated();
                 return res.status(StatusCodes.OK).json(updatedActiveGame);
             } catch (error) {
                 if (error.message === 'Active game not found') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur', error });
+
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message || 'Erreur interne du serveur' });
             }
         });
 
