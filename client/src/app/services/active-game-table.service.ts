@@ -14,7 +14,7 @@ export class ActiveGameTableService {
 
     fetchJoinableActiveGames(): void {
         this.isLoading.set(true);
-        this.gameService.featchJoinableActiveGames().subscribe({
+        this.gameService.fetchJoinableActiveGames().subscribe({
             next: (fetchedJoinableActiveGames) => {
                 this.tableData = fetchedJoinableActiveGames ?? [];
             },

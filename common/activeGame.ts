@@ -12,4 +12,5 @@ export interface IActiveGame {
     messages: IMessage[];
     isDebugMode: boolean;
     organizerName: string;
+    maxPlayerCount: number;
 }
