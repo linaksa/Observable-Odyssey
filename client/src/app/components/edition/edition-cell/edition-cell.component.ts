@@ -38,7 +38,7 @@ export class EditionCellComponent {
         return {};
     }
 
-    getSanctuaryBgPosition(row: number, col: number, item: IItem): string {
+    private getSanctuaryBgPosition(row: number, col: number, item: IItem): string {
         if (row === item.x && col === item.y) {
             return '0% 0%';
         } else if (row === item.x && col === item.y + 1) {

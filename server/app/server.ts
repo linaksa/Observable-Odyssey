@@ -2,13 +2,16 @@ import { Application } from '@app/app';
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
+import { ActiveGameListSocketsService } from './services/active-game-list-sockets.service';
 import { AdminSocketsService } from './services/admin-sockets.service';
+import { GameSocketsService } from './services/game-sockets.service';
+import { SocketService } from './services/socket.service';
 
 @Service()
 export class Server {
     private static readonly appPort: string | number | boolean = Server.normalizePort(process.env.PORT || '3000');
     private static readonly baseDix: number = 10;
-    private server: http.Server;
+    private server?: http.Server;
 
     constructor(private readonly application: Application) {}
 
@@ -16,15 +19,22 @@ export class Server {
         const port: number = typeof val === 'string' ? parseInt(val, this.baseDix) : val;
         return isNaN(port) ? val : port >= 0 ? port : false;
     }
+
     init(): void {
         this.application.app.set('port', Server.appPort);
 
         this.server = http.createServer(this.application.app);
 
-        // This is to avoid injecting the HttpServer into the Websocket service
-        // before its initialized, which would cause a crash
+        // Avoid circular dependencies issues, as socketService needs httpServer
+        const socketService = Container.get(SocketService);
+        socketService.initialize(this.server);
+
         const adminSocketsService = Container.get(AdminSocketsService);
-        adminSocketsService.initialize(this.server);
+        adminSocketsService.initialize();
+        const gameSocketsService = Container.get(GameSocketsService);
+        gameSocketsService.initialize();
+        const activeGameListSocketsService = Container.get(ActiveGameListSocketsService);
+        activeGameListSocketsService.initialize();
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

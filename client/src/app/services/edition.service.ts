@@ -1,20 +1,9 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { GridSize, ToolOption } from '@app/constants/grid-edition';
+import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items';
-
-export type Tool = 'placement' | 'objects' | 'erase';
-
-export enum GridSize {
-    SMALL = 10,
-    MEDIUM = 15,
-    LARGE = 20,
-}
-
-export enum ToolOption {
-    Placement = 'placement',
-    Objects = 'objects',
-}
 
 const MAX_SANCTUARY_AMOUNT_LARGE = 4;
 const MAX_SANCTUARY_AMOUNT_MEDIUM = 2;
@@ -23,6 +12,7 @@ const MAX_SANCTUARY_AMOUNT_SMALL = 1;
 const MAX_SPAWNPOINT_AMOUNT_LARGE = 6;
 const MAX_SPAWNPOINT_AMOUNT_MEDIUM = 4;
 const MAX_SPAWNPOINT_AMOUNT_SMALL = 2;
+const MAX_FLAG_AMOUNT = 1;
 
 @Injectable({
     providedIn: 'root',
@@ -36,11 +26,13 @@ export class BoardEditorService {
         [ToolOption.Objects]: 'assets/edit-page/tools/cube.svg',
     };
 
+    boardSharedService: BoardSharedService = inject(BoardSharedService);
+
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
     gameMode: GameType;
 
-    activeTool: Tool = ToolOption.Placement;
+    activeTool: ToolOption = ToolOption.Placement;
     selectedMaterial: CellType = CellType.Empty;
     selectedObject: ItemType | null;
 
@@ -51,11 +43,23 @@ export class BoardEditorService {
         [ItemType.Flag]: SMALL_ITEM_SIZE,
     };
 
-    sanctuaryMaxAmount = 1;
-    spawnpointMaxAmount = 2;
-    flagMaxAmount = 1;
+    private get sanctuaryMaxAmount(): number {
+        if (this.gameCells.length === GridSize.SMALL) return MAX_SANCTUARY_AMOUNT_SMALL;
+        if (this.gameCells.length === GridSize.MEDIUM) return MAX_SANCTUARY_AMOUNT_MEDIUM;
+        return MAX_SANCTUARY_AMOUNT_LARGE;
+    }
 
-    blockingCells = new Set<CellType>([CellType.Wall, CellType.OpenDoor, CellType.ClosedDoor]);
+    private get spawnpointMaxAmount(): number {
+        if (this.gameCells.length === GridSize.SMALL) return MAX_SPAWNPOINT_AMOUNT_SMALL;
+        if (this.gameCells.length === GridSize.MEDIUM) return MAX_SPAWNPOINT_AMOUNT_MEDIUM;
+        return MAX_SPAWNPOINT_AMOUNT_LARGE;
+    }
+
+    private get flagMaxAmount(): number {
+        return MAX_FLAG_AMOUNT;
+    }
+
+    private blockingCells = new Set<CellType>([CellType.Wall, CellType.OpenDoor, CellType.ClosedDoor]);
 
     initFromExistingBoard(game: IExistingGame): void {
         this.gameCells = structuredClone(game.board.cells);
@@ -67,36 +71,10 @@ export class BoardEditorService {
         this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Empty));
 
         this.objects = [];
-
-        this.updateMaxAmount();
-    }
-
-    cellBelongsToObject(obj: IItem, row: number, col: number): boolean {
-        if (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) {
-            return row >= obj.x && row <= obj.x + 1 && col >= obj.y && col <= obj.y + 1;
-        }
-        return obj.x === row && obj.y === col;
     }
 
     isCellOccupied(row: number, col: number): boolean {
-        return this.objects.some((obj) => this.cellBelongsToObject(obj, row, col));
-    }
-
-    getObjectAt(row: number, col: number): IItem | null {
-        return this.objects.find((obj) => this.cellBelongsToObject(obj, row, col)) ?? null;
-    }
-
-    updateMaxAmount() {
-        if (this.gameCells.length === GridSize.SMALL) {
-            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_SMALL;
-            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_SMALL;
-        } else if (this.gameCells.length === GridSize.MEDIUM) {
-            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_MEDIUM;
-            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_MEDIUM;
-        } else if (this.gameCells.length === GridSize.LARGE) {
-            this.sanctuaryMaxAmount = MAX_SANCTUARY_AMOUNT_LARGE;
-            this.spawnpointMaxAmount = MAX_SPAWNPOINT_AMOUNT_LARGE;
-        }
+        return this.objects.some((obj) => this.boardSharedService.cellBelongsToObject(obj, row, col));
     }
 
     revertGrid(game: IExistingGame): void {
@@ -177,7 +155,7 @@ export class BoardEditorService {
     }
 
     eraseObject(row: number, col: number): void {
-        const obj = this.objects.find((o) => this.cellBelongsToObject(o, row, col));
+        const obj = this.objects.find((o) => this.boardSharedService.cellBelongsToObject(o, row, col));
 
         if (!obj) return;
 

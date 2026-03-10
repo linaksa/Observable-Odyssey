@@ -1,0 +1,38 @@
+<div class="overflow-hidden bg-[#233f74] rounded-lg relative">
+    <div class="divide-y-4 divide-[#0f1528]">
+        @for (element of activeGameTableService.tableData; track $index) {
+            <article class="flex flex-col sm:flex-row justify-between gap-4 p-4">
+                <section class="flex flex-row gap-4">
+                    <img
+                        class="rounded-lg object-cover w-32 h-32"
+                        [src]="element.game.preview"
+                        [alt]="element.game.gameTitle"
+                        [attr.title]="element.game.description"
+                    />
+
+                    <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider">
+                        <span class="text-2xl font-black text-white">{{ element.game.gameTitle }}</span>
+                        <span class="">Mode : {{ element.game.gameMode }}</span>
+                        <span class="">Taille : {{ element.game.board.cells.length }}×{{ element.game.board.cells[0].length }}</span>
+                        <span class="">Joueurs : {{ element.players.length }} / {{ getMaxPlayerCountForGame(element) }}</span>
+                    </div>
+                </section>
+
+                <section class="flex shrink flex-wrap self-start align-middle gap-4 w-full sm:w-min md:w-auto h-12 justify-center sm:justify-end">
+                    <button class="btn" type="button" [routerLink]="['/join', element._id]">Rejoindre</button>
+                </section>
+            </article>
+        } @empty {
+            @if (!activeGameTableService.isLoading()) {
+                <div class="text-2xl text-white/80 tracking-wider text-center p-4">Aucune partie disponible</div>
+            }
+        }
+
+        @if (activeGameTableService.isLoading()) {
+            <app-loading-overlay
+                loadingText="Chargement des jeux..."
+                class="flex flex-row justify-center self-center items-center gap-4 p-4"
+            ></app-loading-overlay>
+        }
+    </div>
+</div>

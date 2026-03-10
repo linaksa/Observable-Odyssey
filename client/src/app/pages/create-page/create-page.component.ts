@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { GameTableComponent } from '@app/components/game-table/game-table.component';
+import { GameTableComponent } from '@app/components/common/game-table/game-table.component';
 
 @Component({
     selector: 'app-create-page',

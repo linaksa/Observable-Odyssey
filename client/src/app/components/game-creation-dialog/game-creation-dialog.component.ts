@@ -2,19 +2,29 @@ import { NgClass } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GridSize } from '@app/services/edition.service';
+import { GridSize } from '@app/constants/grid-edition';
 import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { Subject, takeUntil } from 'rxjs';
 
-type DimensionSize = 'small' | 'medium' | 'large';
+enum DimensionSize {
+    Small = 'small',
+    Medium = 'medium',
+    Large = 'large',
+}
 
 interface DimensionConfig {
     label: string;
     displaySize: string;
     numberOfPlayers: string;
     size: number;
+}
+
+interface DimensionOption {
+    value: DimensionSize;
+    label: string;
+    displaySize: string;
 }
 
 @Component({
@@ -29,23 +39,23 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
     private readonly gameService = inject(GameService);
 
     private readonly dimensionConfigs: Record<DimensionSize, DimensionConfig> = {
-        small: { label: 'Petite', displaySize: '10x10', numberOfPlayers: '2', size: GridSize.SMALL },
-        medium: { label: 'Moyenne', displaySize: '15x15', numberOfPlayers: '2 à 4', size: GridSize.MEDIUM },
-        large: { label: 'Grande', displaySize: '20x20', numberOfPlayers: '2 à 6', size: GridSize.LARGE },
+        [DimensionSize.Small]: { label: 'Petite', displaySize: '10x10', numberOfPlayers: '2', size: GridSize.SMALL },
+        [DimensionSize.Medium]: { label: 'Moyenne', displaySize: '15x15', numberOfPlayers: '2 à 4', size: GridSize.MEDIUM },
+        [DimensionSize.Large]: { label: 'Grande', displaySize: '20x20', numberOfPlayers: '2 à 6', size: GridSize.LARGE },
     };
 
     form: FormGroup;
     numberOfPlayers: string = '';
     displaySize: string = '';
-    size: number = 0;
+    private size: number = 0;
 
-    private readonly defaultDimension: DimensionSize = 'small';
+    private readonly defaultDimension: DimensionSize = DimensionSize.Small;
     private readonly defaultIsCTF = false;
 
-    readonly dimensionOptions: { value: DimensionSize; label: string; displaySize: string }[] = [
-        { value: 'small', label: 'Petite', displaySize: '10x10' },
-        { value: 'medium', label: 'Moyenne', displaySize: '15x15' },
-        { value: 'large', label: 'Grande', displaySize: '20x20' },
+    readonly dimensionOptions: DimensionOption[] = [
+        { value: DimensionSize.Small, label: 'Petite', displaySize: '10x10' },
+        { value: DimensionSize.Medium, label: 'Moyenne', displaySize: '15x15' },
+        { value: DimensionSize.Large, label: 'Grande', displaySize: '20x20' },
     ];
 
     ngOnInit() {

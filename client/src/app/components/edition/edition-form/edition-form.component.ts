@@ -13,7 +13,7 @@ import { IItem } from '@common/items';
     templateUrl: './edition-form.component.html',
 })
 export class EditionFormComponent implements OnInit {
-    gameEditFormService = inject(GameEditFormService);
+    protected readonly gameEditFormService = inject(GameEditFormService);
     private readonly router = inject(Router);
 
     isSubmittingFlag: Signal<boolean> = this.gameEditFormService.isSubmitting.asReadonly();

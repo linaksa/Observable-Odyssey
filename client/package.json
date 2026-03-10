@@ -14,7 +14,8 @@
         "lint:fix": "eslint --config eslint.config.mjs \"src/**/*.ts\" --fix",
         "start-chromium": "BROWSER=chromium ng serve --open",
         "test-chromium": "ng test --browsers Chromium",
-        "coverage-chromium": "ng test --code-coverage --source-map=true --browsers Chromium"
+        "coverage-chromium": "ng test --code-coverage --source-map=true --browsers Chromium",
+        "clean": "rm -rf .angular coverage dist node_modules package-lock.json && git fetch --all --prune && git remote prune origin && for br in $(git branch -vv | awk '/: gone]/{print $1}'); do git branch -d \"$br\" --force; done"
     },
     "prettier": {
         "printWidth": 150,
