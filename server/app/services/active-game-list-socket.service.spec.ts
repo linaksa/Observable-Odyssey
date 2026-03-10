@@ -36,7 +36,8 @@ describe('ActiveGameListSocketsService', () => {
         it('should throw error if not initialized', () => {
             socketService.initialize(httpServer);
             expect(() => service.emitJoinableGamesUpdated({} as IActiveGame)).to.throw(
-                "Namespace 'active-game-admin' not found. Call createNamespace() first.");
+                "Namespace 'active-game-admin' not found. Call createNamespace() first.",
+            );
         });
 
         it('should emit joinable-games-updated event when initialized', () => {

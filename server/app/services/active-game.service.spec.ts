@@ -105,12 +105,7 @@ describe('ActiveGameService', () => {
 
             const fullActiveGame = dummyActiveGame;
             fullActiveGame.maxPlayerCount = 4;
-            fullActiveGame.players = [
-                dummyPlayerCharacter,
-                dummyPlayerCharacter,
-                dummyPlayerCharacter,
-                dummyPlayerCharacter,
-            ]; // Simule une partie active déjà pleine
+            fullActiveGame.players = [dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter]; // Simule une partie active déjà pleine
 
             findByIdStub.resolves(fullActiveGame);
 
@@ -155,7 +150,7 @@ describe('ActiveGameService', () => {
             }
         });
 
-        it('should append a number to the player\'s name if another player in the active game has the same base name', async () => {
+        it("should append a number to the player's name if another player in the active game has the same base name", async () => {
             // Cas limite:
             // Si un joueur tente de rejoindre une partie active avec un nom de personnage déjà utilisé par un autre
             //  joueur dans la même partie, le service devrait automatiquement ajouter un numéro à la fin du nom du nouveau joueur pour le différencier (ex: "PlayerName - 2")

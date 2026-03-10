@@ -26,13 +26,6 @@ export const ITEM_TYPE_PATHS: { [key in ItemType]: string } = {
     [ItemType.Flag]: './assets/edit-page/sprites/flag.png',
 };
 
-export const ITEM_TYPE_PATHS: { [key in ItemType]: string } = {
-    [ItemType.LifeSanctuary]: '/assets/edit-page/sprites/healSanctuary.png',
-    [ItemType.FightSanctuary]: '/assets/edit-page/sprites/fightSanctuary.png',
-    [ItemType.StartingPosition]: '/assets/edit-page/sprites/spawnpoint.png',
-    [ItemType.Flag]: '/assets/edit-page/sprites/flag.png',
-};
-
 export const OBJECT_IMAGES: { [key in ItemType]: string } = {
     [ItemType.LifeSanctuary]: 'bg-[url(./assets/edit-page/sprites/healSanctuary.png)]',
     [ItemType.FightSanctuary]: 'bg-[url(./assets/edit-page/sprites/fightSanctuary.png)]',

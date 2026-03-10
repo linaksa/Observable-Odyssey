@@ -67,7 +67,7 @@ export class ActiveGameService {
         }
 
         const newPlayerAvatar = characterForm.avatar;
-        if (activeGameToUpdate.players.some(player => player.avatar === newPlayerAvatar)) {
+        if (activeGameToUpdate.players.some((player) => player.avatar === newPlayerAvatar)) {
             throw new Error('Avatar déjà utilisé par un autre joueur dans cette partie');
         }
 
@@ -119,11 +119,13 @@ export class ActiveGameService {
         return gameMessages.messages;
     }
     async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame.find({
-            $expr: {
-                $lt: [{ $size: '$players' }, '$maxPlayerCount'],
-            },
-        }).exec();
+        return await activeGame
+            .find({
+                $expr: {
+                    $lt: [{ $size: '$players' }, '$maxPlayerCount'],
+                },
+            })
+            .exec();
     }
 
     private generateUniquePlayerName(newPlayerName: string, existingPlayers: ICharacter[]): string {
@@ -133,7 +135,7 @@ export class ActiveGameService {
         const regex = /^(.*)-(\d+)$/; // match "PlayerName - 1234" et capture "PlayerName" et "1234"
         let uniquePlayerIdToAppend = 1;
 
-        existingPlayers.forEach(player => {
+        existingPlayers.forEach((player) => {
             let name = player.name;
             let uniqueAddedId = null;
 
@@ -144,7 +146,7 @@ export class ActiveGameService {
             }
 
             if (name === newPlayerName) {
-                uniquePlayerIdToAppend = Math.max(uniquePlayerIdToAppend, (uniqueAddedId || 0)) + 1;
+                uniquePlayerIdToAppend = Math.max(uniquePlayerIdToAppend, uniqueAddedId || 0) + 1;
             }
         });
 

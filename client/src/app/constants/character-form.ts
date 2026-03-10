@@ -3,13 +3,13 @@ export const PLAYER_NAME_PATTERN = /^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-
 export const AVATAR_IMAGE_PATH_MODEL = './assets/form-page/{}.png';
 
 export enum BonusType {
-  Life,
-  Speed,
+    Life,
+    Speed,
 }
 
 export enum DiceSelectionType {
-  D6AttackAndD4Defense,
-  D4AttackAndD6Defense,
+    D6AttackAndD4Defense,
+    D4AttackAndD6Defense,
 }
 
 export const AVAILABLE_BONUS_TYPES = [BonusType.Life, BonusType.Speed];
