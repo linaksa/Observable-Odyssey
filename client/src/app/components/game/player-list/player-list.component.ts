@@ -13,7 +13,7 @@ export class PlayerListComponent {
     protected readonly activeGameService = inject(ActiveGameService);
 
     buildPlayerAvatarUrl(avatar: Avatar): string {
-        return `assets/form-page/${avatar}.png`;
+        return `./assets/form-page/${avatar}.png`;
     }
 
     get currentPlayer(): ICharacter {

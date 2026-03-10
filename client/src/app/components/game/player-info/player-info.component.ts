@@ -4,8 +4,8 @@ import { ICharacter } from '@common/character';
 import { DiceType } from '@common/constants';
 
 const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
-    [DiceType.FourSided]: 'assets/form-page/4_sided_dice.svg',
-    [DiceType.SixSided]: 'assets/form-page/6_sided_dice.svg',
+    [DiceType.FourSided]: './assets/form-page/4_sided_dice.svg',
+    [DiceType.SixSided]: './assets/form-page/6_sided_dice.svg',
 };
 
 @Component({
@@ -22,7 +22,7 @@ export class PlayerInfoComponent implements OnInit {
     }
 
     get avatarUrl(): string {
-        return this.player ? `assets/form-page/${this.player.avatar}.png` : '';
+        return this.player ? `./assets/form-page/${this.player.avatar}.png` : '';
     }
 
     get attackDiceIconUrl(): string {

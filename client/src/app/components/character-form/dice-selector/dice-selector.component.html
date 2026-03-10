@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2">
     <div class="text-white tracking-wider">Assigner les dés</div>
 
-    @for(diceType of availableDiceTypes; track $index){
+    @for (diceType of availableDiceTypes; track $index) {
         <button class="btn" [ngClass]="selectedDiceType === diceType ? 'btn-blue' : ''" (click)="selectDice(diceType)">
             {{ diceTypeLabels[diceType] }}
         </button>
