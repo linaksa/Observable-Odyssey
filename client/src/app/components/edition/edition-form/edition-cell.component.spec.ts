@@ -1,3 +1,16 @@
+/**
+ * Stratégie de test – EditionFormComponent
+ *
+ * Approche : tests unitaires de composant Angular avec spy Jasmine sur
+ * GameEditFormService. Le formulaire réactif est fourni directement via
+ * un FormBuilder réel afin de tester les liaisons entre le composant et
+ * le service sans dépendre de l'implémentation interne du service.
+ *
+ * Cas limites couverts :
+ * - Promesse rejetée par submitForm : le composant doit capturer l'erreur sans
+ *   propager d'exception non gérée, garantissant que l'UI ne se bloque pas en
+ *   cas d'échec de soumission.
+ */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { signal } from '@angular/core';
@@ -76,6 +89,9 @@ describe('EditionFormComponent', () => {
         expect(editFormServiceSpy.resetForm).toHaveBeenCalledWith(randomGame);
     });
 
+    // Cas limite : submitForm() retourne une promesse rejetée (ex: erreur de validation
+    // ou perte de connexion). Le composant doit attraper le rejet sans propager
+    // l'exception et laisser le service gérer l'affichage de l'erreur.
     it('should catch the error is submitForm rejects the promise', () => {
         editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
 

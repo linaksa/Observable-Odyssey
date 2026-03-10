@@ -3,7 +3,7 @@
         "esModuleInterop": true,
         "baseUrl": "./",
         "rootDir": "../",
-        "target": "es6",
+        "target": "es2022",
         "types": ["reflect-metadata", "@types/mocha", "mocha"],
         "module": "commonjs",
         "moduleResolution": "node",

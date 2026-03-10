@@ -1,0 +1,7 @@
+<div class="w-64 h-64 aspect-square bg-[#0f1528] text-white/60 rounded-lg overflow-hidden">
+    @if (avatar) {
+        <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover object-top" />
+    } @else {
+        <span class="flex h-full w-full items-center justify-center p-3 text-center"> Veuillez en choisir un ci-dessous </span>
+    }
+</div>

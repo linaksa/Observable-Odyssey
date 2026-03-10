@@ -34,39 +34,34 @@ export class GameService {
     }
 
     private validateGameData(gameData: IGame): void {
-        const title = gameData.gameTitle?.trim();
-        const description = gameData.description?.trim();
-        if (!description?.length) {
-            throw new ValidationError("Il n'y a pas de description");
-        }
-        if (description.length > MAX_DESCRIPTION_LENGTH) {
-            throw new ValidationError('La description ne peut pas dépasser 200 caractères');
-        }
+        this.validateTitle(gameData.gameTitle);
+        this.validateDescription(gameData.description);
+        this.validateGameMode(gameData.gameMode);
+        this.validateBoard(gameData);
+    }
 
-        if (!title?.length) {
-            throw new ValidationError("Il n'y a pas de titre");
-        }
+    private validateTitle(title: string): void {
+        const trimmed = title?.trim();
+        if (!trimmed?.length) throw new ValidationError("Il n'y a pas de titre");
+        if (trimmed.length > MAX_TITLE_LENGTH) throw new ValidationError('Le titre ne peut pas dépasser 50 caractères');
+    }
 
-        if (title.length > MAX_TITLE_LENGTH) {
-            throw new ValidationError('Le titre ne peut pas dépasser 50 caractères');
-        }
+    private validateDescription(description: string): void {
+        const trimmed = description?.trim();
+        if (!trimmed?.length) throw new ValidationError("Il n'y a pas de description");
+        if (trimmed.length > MAX_DESCRIPTION_LENGTH) throw new ValidationError('La description ne peut pas dépasser 200 caractères');
+    }
 
-        if (!Object.values(GameType).includes(gameData.gameMode)) {
-            throw new ValidationError('Mode de jeu invalide');
-        }
+    private validateGameMode(gameMode: GameType): void {
+        if (!Object.values(GameType).includes(gameMode)) throw new ValidationError('Mode de jeu invalide');
+    }
 
-        if (!gameData.board) {
-            throw new ValidationError("Il n'y a pas de carte");
-        }
+    private validateBoard(gameData: IGame): void {
+        if (!gameData.board) throw new ValidationError("Il n'y a pas de carte");
+        if (!gameData.preview) throw new ValidationError('Il manque une image de preview du jeu');
 
-        if (!gameData.preview) {
-            throw new ValidationError('Il manque une image de preview du jeu');
-        }
         const boardErrors = this.boardService.validateBoard(gameData.board, gameData.gameMode);
-
-        if (boardErrors.length > 0) {
-            throw new ValidationError(boardErrors.join(' '));
-        }
+        if (boardErrors.length > 0) throw new ValidationError(boardErrors.join(' '));
     }
 
     async updateGame(id: string, gameData: IGame): Promise<UpdatedGame> {
@@ -95,6 +90,7 @@ export class GameService {
                 description: gameData.description,
                 gameMode: gameData.gameMode,
                 board: gameData.board,
+                visibility: Visibility.Hidden,
                 preview: gameData.preview,
                 lastModifiedDate: new Date(),
             },

@@ -8,7 +8,7 @@ import { GameService } from './game.service';
     providedIn: 'root',
 })
 export class AdministrationService {
-    gameService: GameService = inject(GameService);
+    private readonly gameService: GameService = inject(GameService);
 
     changeGameVisibility(gameId: string, visible: boolean): Observable<HttpResponse<string>> {
         const visibility: Visibility = visible ? Visibility.Viewable : Visibility.Hidden;

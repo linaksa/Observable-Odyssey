@@ -6,6 +6,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Service } from 'typedi';
 import { HttpException } from './classes/http.exception';
+import { ActiveGameController } from './controllers/activeGame.controller';
 import { GameController } from './controllers/game.controller';
 
 @Service()
@@ -14,7 +15,10 @@ export class Application {
     private readonly internalError: number = StatusCodes.INTERNAL_SERVER_ERROR;
     private readonly swaggerOptions: swaggerJSDoc.Options;
 
-    constructor(private readonly gameController: GameController) {
+    constructor(
+        private readonly gameController: GameController,
+        private readonly activeGameController: ActiveGameController,
+    ) {
         this.app = express();
 
         this.swaggerOptions = {
@@ -36,6 +40,7 @@ export class Application {
     bindRoutes(): void {
         this.app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerJSDoc(this.swaggerOptions)));
         this.app.use('/api/games', this.gameController.router);
+        this.app.use('/api/activeGame', this.activeGameController.router);
         this.app.use('/', (req, res) => {
             res.redirect('/api/docs');
         });

@@ -37,17 +37,16 @@ export class DoorValidator implements IBoardValidator {
         return isHorizontalValid || isVerticalValid;
     }
 
+    private isInBounds(board: IBoard, row: number, col: number): boolean {
+        return row >= 0 && row < board.cells.length && col >= 0 && col < board.cells[0].length;
+    }
+
     private isWall(board: IBoard, row: number, col: number): boolean {
-        if (row < 0 || row >= board.cells.length || col < 0 || col >= board.cells[0].length) {
-            return false;
-        }
-        return board.cells[row][col] === CellType.Wall;
+        return this.isInBounds(board, row, col) && board.cells[row][col] === CellType.Wall;
     }
 
     private isTerrain(board: IBoard, row: number, col: number): boolean {
-        if (row < 0 || row >= board.cells.length || col < 0 || col >= board.cells[0].length) {
-            return false;
-        }
+        if (!this.isInBounds(board, row, col)) return false;
         const cell = board.cells[row][col];
         return cell !== CellType.Wall && cell !== CellType.OpenDoor && cell !== CellType.ClosedDoor;
     }

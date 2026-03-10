@@ -53,7 +53,7 @@
                                 [colIndex]="colIndex"
                                 (mousedDownCell)="onMouseDown(rowIndex, colIndex, $event)"
                                 (mouseEnterCell)="onMouseEnter(rowIndex, colIndex, $event)"
-                                [item]="boardEditorService.getObjectAt(rowIndex, colIndex)"
+                                [item]="boardSharedService.getObjectAt(rowIndex, colIndex, boardEditorService.objects)"
                             ></app-edition-cell>
                         }
                     }

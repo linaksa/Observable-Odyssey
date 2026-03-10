@@ -6,8 +6,9 @@ import { ActionSelectionButtonComponent } from '@app/components/edition/action-s
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
 import { EditionFormComponent } from '@app/components/edition/edition-form/edition-form.component';
 import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
-import { BoardEditorService, Tool, ToolOption } from '@app/services/edition.service';
-import { GameService } from '@app/services/game.service';
+import { ToolOption } from '@app/constants/grid-edition';
+import { BoardEditorService } from '@app/services/edition.service';
+import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { ItemType } from '@common/items';
@@ -17,7 +18,7 @@ import { ItemType } from '@common/items';
     selector: 'app-game-edition',
     imports: [CommonModule, ReactiveFormsModule, EditionCellComponent, ActionSelectionButtonComponent, EditionFormComponent, RouterLink],
     templateUrl: './game-edition.component.html',
-    styleUrl: './game-edition.component.scss',
+    styleUrl: '../../../styles/game-cell.scss',
 })
 export class GameEditionComponent implements OnInit {
     @Input() gameToEdit: IExistingGame;
@@ -27,8 +28,8 @@ export class GameEditionComponent implements OnInit {
     @ViewChild(EditionFormComponent)
     editionForm!: EditionFormComponent;
 
-    gameService: GameService = inject(GameService);
-    boardEditorService: BoardEditorService = inject(BoardEditorService);
+    protected readonly boardEditorService: BoardEditorService = inject(BoardEditorService);
+    protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
 
     cellTypeBackgrounds = CELL_TYPE_BACKGROUNDS;
     toolIcons = OBJECT_IMAGES;
@@ -54,13 +55,12 @@ export class GameEditionComponent implements OnInit {
         [CellType.ClosedDoor]: 'Une porte fermée',
     };
 
-    isDrawing = false;
-    isShiftPressed = false;
-    lastIndexes: [number, number] = [0, 0];
-    currentCell: [number, number] | null = null;
-    isRightClick: boolean = false;
-
-    previousVersion: IExistingGame;
+    private isDrawing = false;
+    private isShiftPressed = false;
+    private lastIndexes: [number, number] = [0, 0];
+    private currentCell: [number, number] | null = null;
+    private isRightClick: boolean = false;
+    private previousVersion: IExistingGame;
 
     ngOnInit(): void {
         this.boardEditorService.buildGrid(this.gameToEdit.board.cells.length);
@@ -68,7 +68,7 @@ export class GameEditionComponent implements OnInit {
         this.boardEditorService.initFromExistingBoard(structuredClone(this.previousVersion));
     }
 
-    selectTool(tool: Tool): void {
+    selectTool(tool: ToolOption): void {
         this.boardEditorService.activeTool = tool;
     }
 

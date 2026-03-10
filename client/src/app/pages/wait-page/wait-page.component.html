@@ -1,11 +1,32 @@
-<div class="flex flex-col min-h-screen p-4 gap-4">
-    <div class="flex flex-1 justify-center items-center">
-        <app-loading-overlay loadingText="Création de la partie..." class="flex flex-col gap-8 justify-center items-center"></app-loading-overlay>
-    </div>
+<div class="content">
+    @if (activeGameService.isLoading() || !this.activeGameService.activeGame) {
+        <div class="flex flex-1 justify-center items-center">
+            <app-loading-overlay
+                loadingText="Chargement de la partie..."
+                class="flex flex-col gap-8 items-center justify-center"
+            ></app-loading-overlay>
+        </div>
 
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-        @if (showButton) {
-            <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
-        }
-    </div>
+        <div class="absolute bottom-4 w-full flex justify-center">
+            @if (showButton) {
+                <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
+            }
+        </div>
+    } @else {
+        <app-nav-buttons />
+        <app-page-title title="Vue d'attente" />
+
+        <section class="flex flex-col lg:flex-row justify-center gap-4">
+            <app-wait-player-list
+                class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
+                [players]="activeGameService.activeGame.players"
+                [localPlayer]="localPlayer"
+                [organizerName]="activeGameService.activeGame.organizerName"
+            />
+
+            <app-wait-game-grid class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4" />
+
+            <app-wait-chat-sidebar class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" [localPlayer]="localPlayer" />
+        </section>
+    }
 </div>

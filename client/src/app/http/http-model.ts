@@ -1,7 +1,14 @@
+export enum ResponseType {
+    Json = 'json',
+    Text = 'text',
+    Blob = 'blob',
+    ArrayBuffer = 'arraybuffer',
+}
+
 export interface HttpOptions {
     headers?: Record<string, string>;
     params?: Record<string, string | number | boolean>;
-    responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
+    responseType?: ResponseType;
     withCredentials?: boolean;
 }
 export interface HttpError {
