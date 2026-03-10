@@ -32,6 +32,10 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
+        attackPoints: {
+            type: Number,
+            required: true,
+        },
         defensePoints: {
             type: Number,
             required: true,

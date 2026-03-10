@@ -18,7 +18,7 @@ export class PlayerInfoComponent implements OnInit {
     player: ICharacter | undefined;
 
     ngOnInit() {
-        this.player = this.activeGameService.getPlayerByName(this.activeGameService.playerName);
+        this.player = this.activeGameService.activeGame.players[this.activeGameService.activeGame.currentPlayerIndex];
     }
 
     get avatarUrl(): string {
