@@ -139,7 +139,7 @@ deploy:server:
     script:
         - 'which ssh-agent || (apt-get update -qq && apt-get install -qq openssh-client )'
         - eval $(ssh-agent -s)
-        - sprintf '%s\n' "$EC2_PEM_FILE_CONTENT" | tr -d '\r' | ssh-add -
+        - ssh-add <(echo "$EC2_PEM_FILE_CONTENT")
         - mkdir -p ~/.ssh
         - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
         - |
