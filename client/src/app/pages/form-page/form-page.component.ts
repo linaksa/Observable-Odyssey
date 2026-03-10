@@ -40,16 +40,8 @@ export class FormPageComponent implements OnInit {
         this.characterFormService.createActiveGameWithCharacter(this.gameId, formData).subscribe({
             next: (response) => {
                 this.characterFormService.isLoading.set(false);
-                const serverPlayer = response?.players?.find((p) => p.name === formData.name) ?? response?.players?.[0];
-
-                if (serverPlayer) {
-                    this.localPlayerService.setLocalPlayer(serverPlayer);
-                } else {
-                    this.toastService.show('Impossible de créer le personnage.');
-                    return;
-                }
-
-                this.navigator.navigate(['/wait', response._id]);
+                this.localPlayerService.setLocalPlayer(response.player);
+                this.navigator.navigate(['/wait', response.activeGame._id]);
             },
             error: (response) => {
                 this.characterFormService.isLoading.set(false);

@@ -10,7 +10,6 @@ import { environment } from 'src/environments/environment';
 })
 export class ActiveGameService {
     httpService = inject(HTTP_CLIENT);
-    playerName: string = 'Player 1';
 
     activeGame: IActiveGame;
 
