@@ -40,7 +40,7 @@ export class ActiveGameController {
                 this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame);
                 return res.status(StatusCodes.CREATED).json(newActiveGame);
             } catch (error) {
-                if (error.message === 'Game introuvable') {
+                if (error.message === 'GAME_NOT_FOUND') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Jeu introuvable' });
                 }
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur', error });
@@ -67,18 +67,6 @@ export class ActiveGameController {
                 }
 
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message || 'Erreur interne du serveur' });
-            }
-        });
-
-        this.router.get('/', async (_req: Request, res: Response) => {
-            try {
-                const allActiveGames = await this.activeGameService.getAllActiveGames();
-                res.status(StatusCodes.OK).json(allActiveGames);
-            } catch (error) {
-                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                    message: 'Erreur interne du serveur',
-                    error,
-                });
             }
         });
 
