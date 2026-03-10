@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-2">
     <div class="text-white tracking-wider">Attribuer un bonus</div>
-    @for(bonusType of availableBonusTypes; track $index){
+    @for (bonusType of availableBonusTypes; track $index) {
         <button class="btn" [ngClass]="selectedBonus === bonusType ? 'btn-blue' : ''" (click)="selectBonus(bonusType)">
             {{ bonusLabels[bonusType] }}
         </button>

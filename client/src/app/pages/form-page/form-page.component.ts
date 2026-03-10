@@ -53,8 +53,9 @@ export class FormPageComponent implements OnInit {
             },
             error: (response) => {
                 this.characterFormService.isLoading.set(false);
-                this.characterFormService.errors.set(response.originalError.error.message
-                    || 'Il y a eu un problème lors de la création du personnage.');
+                this.characterFormService.errors.set(
+                    response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.',
+                );
             },
         });
     }
