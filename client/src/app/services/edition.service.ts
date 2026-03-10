@@ -1,18 +1,19 @@
 import { inject, Injectable } from '@angular/core';
-import { GridSize, ToolOption } from '@app/constants/grid-edition';
+import {
+    GridSize,
+    MAX_FLAG_AMOUNT,
+    MAX_SANCTUARY_AMOUNT_LARGE,
+    MAX_SANCTUARY_AMOUNT_MEDIUM,
+    MAX_SANCTUARY_AMOUNT_SMALL,
+    MAX_SPAWNPOINT_AMOUNT_LARGE,
+    MAX_SPAWNPOINT_AMOUNT_MEDIUM,
+    MAX_SPAWNPOINT_AMOUNT_SMALL,
+    ToolOption,
+} from '@app/constants/grid-edition';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items';
-
-const MAX_SANCTUARY_AMOUNT_LARGE = 4;
-const MAX_SANCTUARY_AMOUNT_MEDIUM = 2;
-const MAX_SANCTUARY_AMOUNT_SMALL = 1;
-
-const MAX_SPAWNPOINT_AMOUNT_LARGE = 6;
-const MAX_SPAWNPOINT_AMOUNT_MEDIUM = 4;
-const MAX_SPAWNPOINT_AMOUNT_SMALL = 2;
-const MAX_FLAG_AMOUNT = 1;
 
 @Injectable({
     providedIn: 'root',
