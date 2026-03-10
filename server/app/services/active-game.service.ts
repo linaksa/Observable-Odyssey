@@ -11,7 +11,7 @@ export class ActiveGameService {
     async createActiveGame(gameId: string, characterForm: CharacterFormData): Promise<IActiveGame> {
         const gameChosen = await game.findById(gameId);
         if (!gameChosen) {
-            throw new Error('Game introuvable');
+            throw new Error('GAME_NOT_FOUND');
         }
         const playerCharacter = {
             name: characterForm.name,
@@ -25,9 +25,6 @@ export class ActiveGameService {
             defensePoints: characterForm.defensePoints,
             actionsLeft: 1, // à revoir
             movementLeft: characterForm.rapidityPoints, // à revoir
-            //positionGrille: { x: 0, y: 0 }, // à revoir
-            //spawnPoint: { x: 0, y: 0 }, // à revoir
-            //victories: 0,
             x: 0, // TO BE REMOVED
             y: 0, // TO BE REMOVED
             wonCombatCount: 0,
@@ -96,12 +93,9 @@ export class ActiveGameService {
         activeGameToUpdate.players.push(newPlayerCharacter);
         return await activeGameToUpdate.save();
     }
-    async getActiveGameById(activeGameId: string): Promise<IActiveGame> {
-        return await activeGame.findById(activeGameId).exec();
-    }
 
-    async getAllActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame.find().exec();
+    async getActiveGameById(activeGameId: string): Promise<IActiveGame> {
+        return await activeGame.findById(activeGameId);
     }
 
     async addMessageToGame(newMessage: INewMessage): Promise<IActiveGame | null> {
@@ -110,22 +104,21 @@ export class ActiveGameService {
             content: newMessage.content,
             author: newMessage.author,
         };
-        return await activeGame.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true }).exec();
+        return await activeGame.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true });
     }
 
     async getMessagesFromGame(id: string): Promise<IMessage[]> {
-        const gameMessages = await activeGame.findOne({ _id: id }).select('messages');
-        if (!gameMessages) return [];
-        return gameMessages.messages;
+        const fetchedActiveGame = await this.getActiveGameById(id);
+        if (!fetchedActiveGame) return [];
+        return fetchedActiveGame.messages;
     }
+
     async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame
-            .find({
-                $expr: {
-                    $lt: [{ $size: '$players' }, '$maxPlayerCount'],
-                },
-            })
-            .exec();
+        return await activeGame.find({
+            $expr: {
+                $lt: [{ $size: '$players' }, '$maxPlayerCount'],
+            },
+        });
     }
 
     private generateUniquePlayerName(newPlayerName: string, existingPlayers: ICharacter[]): string {
