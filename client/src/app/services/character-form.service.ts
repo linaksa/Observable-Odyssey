@@ -37,6 +37,7 @@ export class CharacterFormService {
 
     isLoading = signal<boolean>(false);
     errors = signal<string | null>(null);
+    unavailableAvatars = signal<Avatar[]>([]);
 
     characterForm = new FormGroup({
         playerName: new FormControl('', {
@@ -105,7 +106,7 @@ export class CharacterFormService {
         const random = Math.random;
         const randomName = `${RANDOM_PLAYER_NAME_PREFIX}${Math.floor(random() * RANDOM_NUMBER_SCALE)}`;
 
-        const availableAvatars = Object.values(Avatar);
+        const availableAvatars = Object.values(Avatar).filter((avatar) => !this.unavailableAvatars().includes(avatar));
         const randomAvatar = availableAvatars[Math.floor(random() * availableAvatars.length)];
 
         const randomBonus = AVAILABLE_BONUS_TYPES[Math.floor(random() * AVAILABLE_BONUS_TYPES.length)];

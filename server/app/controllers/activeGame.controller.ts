@@ -37,7 +37,7 @@ export class ActiveGameController {
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
                 this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
-                this.activeGameListSocketsService.emitJoinableGamesUpdated();
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame);
                 return res.status(StatusCodes.CREATED).json(newActiveGame);
             } catch (error) {
                 if (error.message === 'Game introuvable') {
@@ -59,7 +59,7 @@ export class ActiveGameController {
                 if (updatedActiveGame) {
                     this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
                 }
-                this.activeGameListSocketsService.emitJoinableGamesUpdated();
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame);
                 return res.status(StatusCodes.OK).json(updatedActiveGame);
             } catch (error) {
                 if (error.message === 'Active game not found') {

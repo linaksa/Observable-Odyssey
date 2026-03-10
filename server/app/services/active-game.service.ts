@@ -2,7 +2,7 @@ import { activeGame } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame } from '@common/activeGame';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
-import { CharacterFormData } from '@common/character';
+import { CharacterFormData, ICharacter } from '@common/character';
 import { IMessage, INewMessage } from '@common/message';
 import { Service } from 'typedi';
 
@@ -61,14 +61,20 @@ export class ActiveGameService {
             throw new Error('Active game not found');
         }
 
-        const boardSize = activeGameToUpdate.game.board.cells.length;
-        const maxPlayers = BOARD_SIZE_TO_PLAYER_COUNT[boardSize];
+        const maxPlayers = activeGameToUpdate.maxPlayerCount;
         if (activeGameToUpdate.players.length >= maxPlayers) {
             throw new Error('Nombre maximum de joueurs atteint pour cette partie');
         }
 
+        const newPlayerAvatar = characterForm.avatar;
+        if (activeGameToUpdate.players.some(player => player.avatar === newPlayerAvatar)) {
+            throw new Error('Avatar déjà utilisé par un autre joueur dans cette partie');
+        }
+
+        const uniquePlayerName = this.generateUniquePlayerName(characterForm.name, activeGameToUpdate.players);
+
         const newPlayerCharacter = {
-            name: characterForm.name,
+            name: uniquePlayerName,
             avatar: characterForm.avatar,
             initialHealth: characterForm.initialHealth,
             currentHealth: characterForm.initialHealth,
@@ -118,5 +124,33 @@ export class ActiveGameService {
                 $lt: [{ $size: '$players' }, '$maxPlayerCount'],
             },
         }).exec();
+    }
+
+    private generateUniquePlayerName(newPlayerName: string, existingPlayers: ICharacter[]): string {
+        // remove any existing -{number} suffix from malicious players
+        newPlayerName = newPlayerName.trim().replace(/-\d+$/, '');
+
+        const regex = /^(.*)-(\d+)$/; // match "PlayerName - 1234" et capture "PlayerName" et "1234"
+        let uniquePlayerIdToAppend = 1;
+
+        existingPlayers.forEach(player => {
+            let name = player.name;
+            let uniqueAddedId = null;
+
+            const match = name.match(regex);
+            if (match) {
+                name = match[1].trim();
+                uniqueAddedId = parseInt(match[2], 10);
+            }
+
+            if (name === newPlayerName) {
+                uniquePlayerIdToAppend = Math.max(uniquePlayerIdToAppend, (uniqueAddedId || 0)) + 1;
+            }
+        });
+
+        if (uniquePlayerIdToAppend > 1) {
+            return `${newPlayerName}-${uniquePlayerIdToAppend}`;
+        }
+        return newPlayerName;
     }
 }

@@ -4,7 +4,8 @@
         [ngClass]="selectedAvatar === avatar? 'outline-4 outline-blue-600' : ''"
         (click)="selectAvatar(avatar)"
     >
-        <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover" />
+        <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover"
+         [class.opacity-25]="unavailableAvatars.includes(avatar)"/>
         @if (selectedAvatar === avatar) {
             <div class="absolute inset-0 bg-blue-600/30"></div>
         }

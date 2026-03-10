@@ -1,29 +1,67 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/character-form.service';
+import { GameService } from '@app/services/game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
+import { SocketService } from '@app/services/socket.service';
 import { ToastService } from '@app/services/toast.service';
+import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
+import { Namespaces } from '@common/namespaces';
+import { SocketEvent } from '@common/socket-events';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-join-form-page',
     imports: [RouterLink, CharacterFormComponent, ToastComponent],
     templateUrl: './join-form-page.component.html',
 })
-export class JoinFormPageComponent implements OnInit {
+export class JoinFormPageComponent implements OnInit, OnDestroy {
     private readonly characterFormService = inject(CharacterFormService);
+    private readonly socketService = inject(SocketService);
+
+    private readonly gameService = inject(GameService);
     private readonly toastService = inject(ToastService);
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly navigator = inject(Router);
 
+    private socketSubscription: Subscription;
+    private readonly socketNamespace = Namespaces.ActiveGameAdmin;
+
     router = inject(ActivatedRoute);
     activeGameId: string | null = null;
+    activeGame: IActiveGame | null = null;
 
     ngOnInit(): void {
         this.router.params.subscribe((params) => {
             this.activeGameId = params.activeGameId || null;
+            this.fetchAvailableAvatars();
+
+            this.socketSubscription = this.socketService.on<IActiveGame>(this.socketNamespace, SocketEvent.JoinableGamesUpdated).subscribe({
+                next: (activeGame) => {
+                    if (activeGame._id === this.activeGameId) {
+                        this.fetchAvailableAvatars();
+                    }
+                },
+            });
+        });
+
+        this.socketSubscription?.unsubscribe();
+        this.socketService.connect(this.socketNamespace);
+    }
+
+    ngOnDestroy(): void {
+        this.socketSubscription?.unsubscribe();
+    }
+
+    fetchAvailableAvatars(): void {
+        this.gameService.fetchActiveGame(this.activeGameId).subscribe({
+            next: (activeGame) => {
+                this.characterFormService.unavailableAvatars.set(
+                    activeGame.players.map(player => player.avatar) || []);
+            },
         });
     }
 
@@ -41,7 +79,7 @@ export class JoinFormPageComponent implements OnInit {
                 this.characterFormService.isLoading.set(false);
 
                 this.toastService.show('Vous avez rejoint la partie avec succès.');
-                const serverPlayer = activeGame?.players?.find((p) => p.name === characterData.name) ?? activeGame?.players?.[0];
+                const serverPlayer = activeGame.players.find((p) => p.name === characterData.name);
 
                 if (serverPlayer) {
                     this.localPlayerService.setLocalPlayer(serverPlayer);
