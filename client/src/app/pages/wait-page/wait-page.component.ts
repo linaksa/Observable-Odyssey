@@ -110,8 +110,12 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.waitGridService.buildGrid(this.activeGameService.activeGame.game.board.cells.length);
         this.waitGridService.initFromExistingBoard(structuredClone(this.activeGameService.activeGame));
 
-        this.localPlayerService.restoreFromActiveGame(this.activeGameService.activeGame);
         this.localPlayer = this.localPlayerService.getLocalPlayer();
+
+        if (!this.localPlayer) {
+            this.router.navigate(['/error']);
+            return;
+        }
     }
 
     private initializeButtonTimeout(): void {

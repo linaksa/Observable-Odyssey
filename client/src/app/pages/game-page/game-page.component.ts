@@ -1,4 +1,4 @@
-import { Component, effect, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
@@ -27,14 +27,6 @@ export class GamePageComponent implements OnInit, OnDestroy {
     private readonly localPlayerService = inject(LocalPlayerService);
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
-
-    constructor() {
-        effect(() => {
-            if (!this.activeGameService.isLoading()) {
-                this.localPlayerService.restoreFromActiveGame(this.activeGameService.activeGame);
-            }
-        });
-    }
 
     ngOnInit(): void {
         this.debugSocketService.connect();
