@@ -1,6 +1,9 @@
 <section class="flex flex-col lg:flex-row justify-center gap-4">
-    <app-avatar-selector class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" [form]="characterFormService.characterForm"
-        [unavailableAvatars]="characterFormService.unavailableAvatars()" />
+    <app-avatar-selector
+        class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
+        [form]="characterFormService.characterForm"
+        [unavailableAvatars]="characterFormService.unavailableAvatars()"
+    />
 
     <app-character-info-panel
         class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"

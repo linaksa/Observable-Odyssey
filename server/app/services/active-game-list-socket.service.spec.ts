@@ -6,7 +6,6 @@ import { ActiveGameListSocketsService } from './active-game-list-sockets.service
 import { SocketService } from './socket.service';
 
 describe('ActiveGameListSocketsService', () => {
-
     let service: ActiveGameListSocketsService;
     let socketService: SocketService;
     let httpServer: HttpServer;

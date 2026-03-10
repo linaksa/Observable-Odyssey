@@ -1,5 +1,5 @@
 import { AfterViewChecked, Component, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TextMessageComponent } from '@app/components/text-message/text-message.component';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { ChatService } from '@app/services/chat.service';
@@ -19,7 +19,6 @@ export class ChatPanelComponent implements AfterViewChecked {
     private readonly chatService = inject(ChatService);
     protected readonly activeGameService = inject(ActiveGameService);
     protected readonly localPlayerService = inject(LocalPlayerService);
-
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
 
@@ -27,9 +26,7 @@ export class ChatPanelComponent implements AfterViewChecked {
 
     constructor(private fb: FormBuilder) {
         this.messageForm = this.fb.group({
-            message: ['', [Validators.required, Validators.maxLength(this.maxMessageLength), (control: AbstractControl) => {
-                return control.value?.trim().length >= this.minMessageLength ? null : { whitespace: true };
-            }]],
+            message: ['', [Validators.required, Validators.maxLength(this.maxMessageLength), Validators.minLength(this.minMessageLength)]],
         });
 
         effect(() => {
@@ -46,7 +43,7 @@ export class ChatPanelComponent implements AfterViewChecked {
             return;
         }
 
-        this.chatService.sendMessage(this.messageForm.value.message.trim());
+        this.chatService.sendMessage(this.messageForm.value.message);
         this.messageForm.reset();
     }
 
@@ -70,6 +67,4 @@ export class ChatPanelComponent implements AfterViewChecked {
             el.scrollTop = el.scrollHeight;
         }
     }
-
-
 }

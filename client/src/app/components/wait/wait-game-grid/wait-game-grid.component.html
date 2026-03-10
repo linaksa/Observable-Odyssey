@@ -1,16 +1,19 @@
 <div class="text-2xl text-white tracking-wider text-center">Carte du jeu</div>
 
 <div class="flex grow flex-col gap-2 min-h-0 min-w-0">
-    @if(activeGameService.activeGame) {
+    @if (activeGameService.activeGame) {
         <div class="text-white">
-            <p>{{ activeGameService.activeGame.game.gameTitle }} ({{ activeGameService.activeGame.game.board.cells.length }} x {{ activeGameService.activeGame.game.board.cells.length }})</p>
+            <p>
+                {{ activeGameService.activeGame.game.gameTitle }} ({{ activeGameService.activeGame.game.board.cells.length }} x
+                {{ activeGameService.activeGame.game.board.cells.length }})
+            </p>
             <p>{{ activeGameService.activeGame.game.description }}</p>
             <p>Mode de jeu: {{ activeGameService.activeGame.game.gameMode }}</p>
         </div>
     }
-    
+
     <div id="grid-container" class="flex-1 aspect-square md:aspect-auto flex items-center justify-center p-4">
-        <div    
+        <div
             #grid
             class="grid bg-gray-400 w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
             [ngClass]="'grid-' + waitGridService.gameCells.length"

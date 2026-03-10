@@ -1,19 +1,6 @@
-import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
-import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
-import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
-import { WaitChatSidebarComponent } from '@app/components/wait/wait-chat-sidebar/wait-chat-sidebar.component';
-import { WaitGameGridComponent } from '@app/components/wait/wait-game-grid/wait-game-grid.component';
-import { WaitPlayerListComponent } from '@app/components/wait/wait-player-list/wait-player-list.component';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
-import { SocketService } from '@app/services/socket.service';
-import { WaitGridService } from '@app/services/wait-grid.service';
-import { ICharacter } from '@common/character';
-import { Namespaces } from '@common/namespaces';
-import { SocketEvent } from '@common/socket-events';
-import { Subscription } from 'rxjs';
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { LoadingOverlayComponent } from '@app/components/loading-overlay/loading-overlay.component';
 
 @Component({
     selector: 'app-wait-page',
@@ -28,21 +15,8 @@ import { Subscription } from 'rxjs';
     ],
     templateUrl: './wait-page.component.html',
 })
-export class WaitPageComponent implements OnInit, OnDestroy {
-    private readonly socketService = inject(SocketService);
-    private readonly router = inject(Router);
-    private readonly route: ActivatedRoute = inject(ActivatedRoute);
-    private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
-    private readonly timeout: number = 3000;
-
-    private playersUpdatedSubscription?: Subscription;
-    private startGameSubscription?: Subscription;
-    private routeSubscription?: Subscription;
-
-    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
-    protected readonly waitGridService: WaitGridService = inject(WaitGridService);
-
-    localPlayer?: ICharacter;
+export class WaitPageComponent {
+    timeout: number = 0;
     showButton: boolean = false;
     private gameStarted: boolean = false;
 

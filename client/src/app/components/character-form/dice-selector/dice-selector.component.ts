@@ -11,10 +11,7 @@ import { DiceSelectionType } from '@app/constants/character-form';
 export class DiceSelectorComponent {
     @Input() form: FormGroup;
 
-    availableDiceTypes = [
-        DiceSelectionType.D4AttackAndD6Defense,
-        DiceSelectionType.D6AttackAndD4Defense,
-    ];
+    availableDiceTypes = [DiceSelectionType.D4AttackAndD6Defense, DiceSelectionType.D6AttackAndD4Defense];
 
     diceTypeLabels = {
         [DiceSelectionType.D6AttackAndD4Defense]: 'Attaque 6, défense 4',

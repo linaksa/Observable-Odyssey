@@ -23,8 +23,8 @@ export class BoardEditorService {
 
     availableTools = Object.values(ToolOption);
     availableToolsIcons: { [key in ToolOption]: string } = {
-        [ToolOption.Placement]: 'assets/edit-page/tools/cursor.svg',
-        [ToolOption.Objects]: 'assets/edit-page/tools/cube.svg',
+        [ToolOption.Placement]: './assets/edit-page/tools/cursor.svg',
+        [ToolOption.Objects]: './assets/edit-page/tools/cube.svg',
     };
 
     boardSharedService: BoardSharedService = inject(BoardSharedService);
