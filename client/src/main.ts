@@ -14,6 +14,7 @@ import { JoinFormPageComponent } from '@app/pages/join-form-page/join-form-page.
 import { JoinPageComponent } from '@app/pages/join-page/join-page.component';
 import { MainPageComponent } from '@app/pages/main-page/main-page.component';
 import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
+import { ErrorPageComponent } from '@app/pages/error-page/error-page.component';
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -32,6 +33,7 @@ const routes: Routes = [
     { path: 'play', component: GamePageComponent },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
+    { path: 'error', component: ErrorPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 
