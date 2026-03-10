@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, InputSignal, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -11,7 +11,6 @@ import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
 import { WaitGridService } from '@app/services/wait-grid.service';
 import { ICharacter } from '@common/character';
-import { IExistingGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subscription } from 'rxjs';
@@ -40,7 +39,6 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     private startGameSubscription?: Subscription;
     private routeSubscription?: Subscription;
 
-    readonly gameToEdit: InputSignal<IExistingGame> = input.required<IExistingGame>();
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly waitGridService: WaitGridService = inject(WaitGridService);
 
