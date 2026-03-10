@@ -1,3 +1,4 @@
+import { IActiveGame } from '@common/activeGame';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
@@ -11,7 +12,7 @@ export class ActiveGameListSocketsService {
         this.socketService.createNamespace(Namespaces.ActiveGameAdmin);
     }
 
-    emitJoinableGamesUpdated() {
-        this.socketService.emit(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    emitJoinableGamesUpdated(activeGame: IActiveGame): void {
+        this.socketService.emit(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated, activeGame);
     }
 }

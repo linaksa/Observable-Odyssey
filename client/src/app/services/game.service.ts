@@ -52,6 +52,11 @@ export class GameService {
         return this.httpClient.delete(`${this.baseUrl}/games/${game._id}`, { responseType: ResponseType.Text });
     }
 
+    fetchActiveGame(activeGameId: string): Observable<IActiveGame> {
+        return this.httpClient.get<IActiveGame>(`${this.baseUrl}/activeGame/${activeGameId}`).pipe(
+            catchError(this.handleError<IActiveGame>('fetchActiveGame')));
+    }
+
     fetchJoinableActiveGames(): Observable<IActiveGame[]> {
         return this.httpClient
             .get<IActiveGame[]>(`${this.baseUrl}/activeGame/joinable`)
