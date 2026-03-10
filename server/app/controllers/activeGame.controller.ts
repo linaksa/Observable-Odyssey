@@ -1,6 +1,7 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { GameSocketsService } from '@app/services/game-sockets.service';
+import { IActiveGameWithPlayer } from '@common/activeGame';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -36,9 +37,14 @@ export class ActiveGameController {
                     });
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
+                const createdPlayer = newActiveGame.players[0];
+                if (!createdPlayer) {
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de créer le joueur local' });
+                }
                 this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
                 this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame);
-                return res.status(StatusCodes.CREATED).json(newActiveGame);
+                const payload: IActiveGameWithPlayer = { activeGame: newActiveGame, player: createdPlayer };
+                return res.status(StatusCodes.CREATED).json(payload);
             } catch (error) {
                 if (error.message === 'GAME_NOT_FOUND') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Jeu introuvable' });
@@ -56,11 +62,19 @@ export class ActiveGameController {
                     });
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
-                if (updatedActiveGame) {
-                    this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
+                if (!updatedActiveGame) {
+                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
+
+                const joinedPlayer = updatedActiveGame.players.find((player) => player.avatar === characterForm.avatar);
+                if (!joinedPlayer) {
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de trouver le joueur ajouté' });
+                }
+
+                this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
                 this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame);
-                return res.status(StatusCodes.OK).json(updatedActiveGame);
+                const payload: IActiveGameWithPlayer = { activeGame: updatedActiveGame, player: joinedPlayer };
+                return res.status(StatusCodes.OK).json(payload);
             } catch (error) {
                 if (error.message === 'Active game not found') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });

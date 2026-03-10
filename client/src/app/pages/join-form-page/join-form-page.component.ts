@@ -78,20 +78,12 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
         this.characterFormService.errors.set(null);
 
         this.characterFormService.joinActiveGameWithCharacter(this.activeGameId, characterData).subscribe({
-            next: (activeGame) => {
+            next: (response) => {
                 this.characterFormService.isLoading.set(false);
 
                 this.toastService.show('Vous avez rejoint la partie avec succès.');
-                const serverPlayer = activeGame.players.find((p) => p.name === characterData.name);
-
-                if (serverPlayer) {
-                    this.localPlayerService.setLocalPlayer(serverPlayer);
-                } else {
-                    this.toastService.show('Impossible de rejoindre la partie.');
-                    return;
-                }
-
-                this.navigator.navigate(['/wait', activeGame._id]);
+                this.localPlayerService.setLocalPlayer(response.player);
+                this.navigator.navigate(['/wait', response.activeGame._id]);
             },
             error: (error) => {
                 this.characterFormService.isLoading.set(false);

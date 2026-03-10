@@ -10,7 +10,7 @@ import {
 } from '@app/constants/character-form';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
 import { ResponseType } from '@app/http/http-model';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGameWithPlayer } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
 import {
     Avatar,
@@ -119,12 +119,12 @@ export class CharacterFormService {
         this.characterForm.controls.diceType.setValue(randomDice as DiceSelectionType);
     }
 
-    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
+    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
         // Logic to create an active game with the provided character data
         return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
     }
 
-    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
+    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
         return this.httpClient.patch(
             `${this.baseUrl}/activeGame/join`,
             { activeGameId, characterForm: characterData },

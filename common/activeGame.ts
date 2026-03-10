@@ -14,3 +14,8 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
 }
+
+export interface IActiveGameWithPlayer {
+    activeGame: IActiveGame;
+    player: ICharacter;
+}
