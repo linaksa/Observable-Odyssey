@@ -37,6 +37,9 @@ describe('ActiveGameService', () => {
         players: [],
         itemsState: [],
         currentPlayerIndex: 0,
+        turnOrder: [],
+        isFinished: false,
+        winner: null,
         messages: [],
         isDebugMode: false,
         organizerName: 'Dummy Organizer',
@@ -66,9 +69,9 @@ describe('ActiveGameService', () => {
         defensePoints: dummyCharacterForm.defensePoints,
         actionsLeft: 1,
         movementLeft: dummyCharacterForm.rapidityPoints,
-        x: 0,
-        y: 0,
-        wonCombatCount: 0,
+        victories: 0,
+        positionDepart: { x: 0, y: 0 },
+        positionGrille: { x: 0, y: 0 },
         hasAbandoned: false,
     };
 

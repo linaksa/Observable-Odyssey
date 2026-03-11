@@ -7,6 +7,7 @@ import { PlayerInfoComponent } from '@app/components/game/player-info/player-inf
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { DebugSocketService } from '@app/services/debug.socket.service';
+import { GameTurnService } from '@app/services/game-turn.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
 import { ICharacter } from '@common/character';
@@ -17,14 +18,16 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-game-page',
     imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent],
+    providers: [GameTurnService],
     templateUrl: './game-page.component.html',
 })
 export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly debugSocketService = inject(DebugSocketService);
     private readonly socketService = inject(SocketService);
-    private readonly activeGameService = inject(ActiveGameService);
+    readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
+    readonly gameTurnService = inject(GameTurnService);
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
@@ -45,9 +48,13 @@ export class GamePageComponent implements OnInit, OnDestroy {
                         this.activeGameService.updatePlayers(players);
                     },
                 });
+                this.gameTurnService.initializeTurnListeners();
             }
 
-            this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.JoinGame, activeGameId);
+            this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
+                activeGameId,
+                playerName: this.localPlayerService.getKnownPlayerName(),
+            });
         });
     }
 
@@ -64,6 +71,19 @@ export class GamePageComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
         this.playersSubscription?.unsubscribe();
+        this.gameTurnService.destroy();
         this.socketService.disconnect(Namespaces.Game);
+    }
+
+    get currentPlayerName(): string | null {
+        return this.gameTurnService.currentPlayerName;
+    }
+
+    get canEndTurn(): boolean {
+        return this.gameTurnService.canEndTurn;
+    }
+
+    endTurn(): void {
+        this.gameTurnService.endTurn();
     }
 }

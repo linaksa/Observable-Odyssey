@@ -59,7 +59,10 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
         this.routeSubscription = this.route.params.subscribe((params) => {
             this.socketService.connect(Namespaces.Game);
-            this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.JoinGame, params.activeGameId);
+            this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
+                activeGameId: params.activeGameId,
+                playerName: this.localPlayerService.getKnownPlayerName(),
+            });
             this.activeGameService.setActiveGame(params.activeGameId);
             this.playersUpdatedSubscription?.unsubscribe();
             this.playersUpdatedSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({

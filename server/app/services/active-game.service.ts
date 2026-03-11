@@ -8,6 +8,7 @@ import { Service } from 'typedi';
 
 @Service()
 export class ActiveGameService {
+    private activeGamesMemory: Map<string, IActiveGame> = new Map();
     async createActiveGame(gameId: string, characterForm: CharacterFormData): Promise<IActiveGame> {
         const gameChosen = await game.findById(gameId);
         if (!gameChosen) {
@@ -23,10 +24,11 @@ export class ActiveGameService {
             rapidityPoints: characterForm.rapidityPoints,
             attackPoints: characterForm.attackPoints,
             defensePoints: characterForm.defensePoints,
-            actionsLeft: 1, // à revoir
-            movementLeft: characterForm.rapidityPoints, // à revoir
-            x: 0, // TO BE REMOVED
-            y: 0, // TO BE REMOVED
+            actionsLeft: 1,
+            movementLeft: characterForm.rapidityPoints,
+            victories: 0,
+            positionGrille: { x: 0, y: 0 },
+            positionDepart: { x: 0, y: 0 },
             wonCombatCount: 0,
             hasAbandoned: false,
         };
@@ -80,15 +82,12 @@ export class ActiveGameService {
             rapidityPoints: characterForm.rapidityPoints,
             attackPoints: characterForm.attackPoints,
             defensePoints: characterForm.defensePoints,
-            actionsLeft: 1, // à revoir
-            movementLeft: characterForm.rapidityPoints, // à revoir
-            //positionGrille: { x: 0, y: 0 }, // à revoir
-            //spawnPoint: { x: 0, y: 0 }, // à revoir
-            //victories: 0,
-            x: 0, // TO BE REMOVED
-            y: 0, // TO BE REMOVED
-            wonCombatCount: 0,
+            actionsLeft: 1,
+            movementLeft: characterForm.rapidityPoints,
+            victories: 0,
             hasAbandoned: false,
+            positionDepart: { x: 0, y: 0 },
+            positionGrille: { x: 0, y: 0 },
         };
         activeGameToUpdate.players.push(newPlayerCharacter);
         return await activeGameToUpdate.save();
@@ -147,5 +146,33 @@ export class ActiveGameService {
             return `${newPlayerName}-${uniquePlayerIdToAppend}`;
         }
         return newPlayerName;
+    }
+
+    /* async addMessageToGame(message: INewMessage): Promise<IActiveGame | null> {
+        return await activeGame.findOneAndUpdate({ _id: message.roomId }, { $push: { messages: message } }, { new: true }).exec();
+    }
+    */
+    // ==============================
+    // RAM METHODS (GAMEPLAY)
+    // ==============================
+
+    addActiveGameToMemory(newActiveGame: IActiveGame): void {
+        this.activeGamesMemory.set(newActiveGame._id.toString(), newActiveGame);
+    }
+
+    getActiveGameFromMemory(gameId: string): IActiveGame | undefined {
+        return this.activeGamesMemory.get(gameId);
+    }
+
+    removeActiveGameFromMemory(gameId: string): void {
+        this.activeGamesMemory.delete(gameId);
+    }
+
+    isGameActive(gameId: string): boolean {
+        return this.activeGamesMemory.has(gameId);
+    }
+
+    getAllActiveGamesFromMemory(): IActiveGame[] {
+        return Array.from(this.activeGamesMemory.values());
     }
 }

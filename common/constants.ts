@@ -40,13 +40,22 @@ export const RANDOM_PLAYER_NAMES: string[] = [
     'Joueur19',
     'Joueur20',
 ];
-
+export const TEMPS_PREPA_TOUR = 3000; // 3 secondes
+export const TEMPS_TOUR = 30000; // 30 secondes
+export const MILLISECONDS_PER_SECOND = 1000;
+export const COUNTDOWN_TICK_INTERVAL_MS = 250;
+export const COUNTDOWN_MIN_REMAINING_MS = 0;
+export const VICTORIES_TO_WIN = 3;
+export const ALL_EXCEPT_ONE_PLAYER_ABANDONED = 1;
 export const MAX_TITLE_LENGTH = 50;
 export const MAX_DESCRIPTION_LENGTH = 200;
 export const BAD_DESCRIPTION_LENGTH = 201;
 export const BAD_TITLE_LENGTH = 51;
 export const PLAYER_NAME_MIN_LENGTH = 3;
 export const PLAYER_NAME_MAX_LENGTH = 20;
+export const PRIX_PORTE_GAZON = 1;
+export const PRIX_GLACE = 0;
+export const PRIX_EAU = 1;
 
 export const DEFAULT_PLAYER_LIFE_POINTS = 6;
 export const DEFAULT_PLAYER_SPEED_POINTS = 6;
