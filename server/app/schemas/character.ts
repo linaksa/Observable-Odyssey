@@ -1,5 +1,6 @@
 import { ICharacter } from '@common/character';
 import { Schema } from 'mongoose';
+import { positionSchema } from './position';
 
 export const characterSchema = new Schema<ICharacter>(
     {
@@ -48,11 +49,11 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
-        x: {
-            type: Number,
+        positionGrille: {
+            type: positionSchema,
             required: true,
         },
-        y: {
+        victories: {
             type: Number,
             required: true,
         },
