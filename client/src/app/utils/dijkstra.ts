@@ -3,7 +3,6 @@
 import { MinimumHeap } from './min-heap';
 
 export function dijkstra(adj: [number, number][][], src: number): number[] {
-
     const V = adj.length;
 
     // Min-heap (priority queue) storing pairs of (distance, node)
@@ -27,7 +26,6 @@ export function dijkstra(adj: [number, number][][], src: number): number[] {
 
         // Explore all neighbors of the current vertex
         for (const [v, w] of adj[u]) {
-
             // If we found a shorter path to v through u, update it
             if (dist[u] + w < dist[v]) {
                 dist[v] = dist[u] + w;

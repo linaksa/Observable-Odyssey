@@ -21,7 +21,6 @@ const activeGameSchema = new Schema<IActiveGame>({
     isFinished: {
         type: Boolean,
         required: true,
-
     },
     winner: {
         type: String,

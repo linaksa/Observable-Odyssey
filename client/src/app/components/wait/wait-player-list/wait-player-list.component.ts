@@ -28,6 +28,6 @@ export class WaitPlayerListComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     kickPlayer(playerName: string): void {
-        // TODO : kick le player via api ou socket
+        // TODO: kick the player via API or socket
     }
 }

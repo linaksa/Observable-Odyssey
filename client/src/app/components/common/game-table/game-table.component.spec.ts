@@ -1,20 +1,20 @@
 /**
- * Stratégie de test – GameTableComponent
+ * Testing strategy — GameTableComponent
  *
- * Approche : tests unitaires de composant Angular avec spies Jasmine.
- * Toutes les dépendances (GameTableService, AdminSocketService, AdministrationService,
- * GameService) sont substituées par des spies pour isoler la logique du composant.
- * Un Subject RxJS simule le flux d'événements socket (onGamesModified) afin de
- * tester la réactivité du composant aux mises à jour en temps réel.
+ * Approach: Angular component unit tests with Jasmine spies.
+ * All dependencies (GameTableService, AdminSocketService, AdministrationService,
+ * GameService) are substituted by spies to isolate the component logic.
+ * An RxJS Subject simulates the socket event stream (onGamesModified) to
+ * test the component's reactivity to real-time updates.
  *
- * Cas limites couverts :
- * - toggleVisibility avec erreur HTTP : le checkbox doit être remis à son état
- *   précédent (checked inversé) et réactivé pour éviter un état incohérent de l'UI.
- * - ngOnInit avec socket signal : vérifie que chaque émission du Subject déclenche
- *   un rechargement des jeux, validant la réactivité aux événements WebSocket.
- * - deleteGame avec succès : le jeu supprimé doit être retiré du tableData local
- *   sans rechargement complet de la liste.
- * - ngOnDestroy : le service socket doit être déconnecté pour libérer les ressources.
+ * Edge cases covered:
+ * - toggleVisibility with HTTP error: the checkbox should be reverted to its previous
+ *   state (checked toggled back) and re-enabled to avoid an inconsistent UI state.
+ * - ngOnInit with socket signal: verifies each Subject emission triggers a reload
+ *   of games, validating reactivity to WebSocket events.
+ * - deleteGame success: the removed game should be removed from local tableData
+ *   without a full list reload.
+ * - ngOnDestroy: the socket service should be disconnected to free resources.
  */
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -66,7 +66,7 @@ describe('GameTableComponent', () => {
         adminServiceSpy = jasmine.createSpyObj('AdministrationService', ['changeGameVisibility']);
         gameServiceSpy = jasmine.createSpyObj('GameService', ['deleteGame']);
 
-        // mock le signal avec un Subject pour pouvoir émettre
+        // mock the signal with a Subject so it can emit
         signalSubject = new Subject<void>();
         adminSocketServiceSpy.onGamesModified.and.returnValue(signalSubject.asObservable());
 
@@ -124,9 +124,9 @@ describe('GameTableComponent', () => {
         expect(gameTableServiceSpy.fetchGames).toHaveBeenCalled();
     });
     // good
-    // Cas limite : l'appel HTTP changeGameVisibility échoue (ex: timeout réseau).
-    // Le checkbox doit être remis dans son état précédent (checked inversé) et
-    // réactivé pour éviter un état UI incohérent (input bloqué indéfiniment).
+    // Edge case: the HTTP call changeGameVisibility fails (e.g., network timeout).
+    // The checkbox should be reverted to its previous state (checked toggled back) and
+    // re-enabled to avoid a stuck/inconsistent UI state.
     it('toggleVisibility error should revert checked and re-enable input', () => {
         const input = { checked: true, disabled: false } as HTMLInputElement;
         adminServiceSpy.changeGameVisibility.and.returnValue(throwError(() => new Error('error')));

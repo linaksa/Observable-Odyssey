@@ -2,10 +2,8 @@ import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/const
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
 
-
 @Service()
 export class EndGameService {
-
     constructor(private readonly activeGameService: ActiveGameService) {}
 
     async checkEndGame(gameId: string): Promise<boolean> {

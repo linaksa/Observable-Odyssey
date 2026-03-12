@@ -2,13 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
-import {
-    COUNTDOWN_MIN_REMAINING_MS,
-    COUNTDOWN_TICK_INTERVAL_MS,
-    MILLISECONDS_PER_SECOND,
-    TEMPS_PREPA_TOUR,
-    TEMPS_TOUR,
-} from '@common/constants';
+import { COUNTDOWN_MIN_REMAINING_MS, COUNTDOWN_TICK_INTERVAL_MS, MILLISECONDS_PER_SECOND, TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subscription } from 'rxjs';

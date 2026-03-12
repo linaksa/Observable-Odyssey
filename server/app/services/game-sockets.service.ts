@@ -25,7 +25,6 @@ export class GameSocketsService {
     initialize(): void {
         this.namespace = this.socketService.createNamespace(Namespaces.Game);
 
-
         this.namespace.on('connection', (socket: Socket) => {
             this.chatService.register(socket);
             this.debugSocketService.register(socket);
@@ -67,7 +66,6 @@ export class GameSocketsService {
                     });
                     return;
                 }
-
 
                 // Initialize the game
                 await this.gameplayService.startGameService.initializeGame(activeGameId);
@@ -211,4 +209,3 @@ export class GameSocketsService {
         data.playerNamesByGameId[gameId] = playerName;
     }
 }
-

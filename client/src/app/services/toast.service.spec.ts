@@ -1,9 +1,9 @@
 /**
- * Stratégie de test – ToastService
+ * Testing strategy — ToastService
  *
- * Approche : test de création minimal avec Angular TestBed.
- * Vérifie que le service est instancié correctement par l'injecteur Angular
- * sans dépendances supplémentaires à configurer.
+ * Approach: minimal creation test using Angular TestBed.
+ * Verifies the service is correctly instantiated by the Angular injector
+ * without additional dependencies to configure.
  */
 import { TestBed } from '@angular/core/testing';
 

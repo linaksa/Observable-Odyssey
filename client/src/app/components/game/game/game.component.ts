@@ -16,7 +16,6 @@ import { IItem } from '@common/items';
     templateUrl: './game.component.html',
 })
 export class GameComponent implements OnInit {
-
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
@@ -40,17 +39,14 @@ export class GameComponent implements OnInit {
     @Input() players: ICharacter[] = [];
 
     constructor() {
-
         effect(() => {
             this.activeGameService.currentPlayer();
             this.activeGameService.hasChangedLocation();
             this.activeGameService.updateMovementRange(this.totalColumns, this.graph);
         });
-
     }
 
     ngOnInit() {
-
         const board = this.activeGameService.activeGame.game.board.cells;
         this.totalRows = board.length;
         this.totalColumns = board[0].length;
@@ -89,6 +85,4 @@ export class GameComponent implements OnInit {
 
         this.activeGameService.attackMode.set(false);
     }
-
-
 }
