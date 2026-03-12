@@ -12,13 +12,14 @@ export class DebugSocketService {
             if (!activeGameId) {
                 return;
             }
-
             try {
                 const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
 
                 if (activeGame.organizerName === playerName) {
                     activeGame.isDebugMode = !activeGame.isDebugMode;
                     socket.to(activeGameId).emit(SocketEvent.DebugToggle, playerName);
+                    socket.emit(SocketEvent.DebugToggle, playerName);
+
                 }
             } catch {
                 return;

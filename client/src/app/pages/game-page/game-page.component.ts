@@ -14,6 +14,7 @@ import { SocketService } from '@app/services/socket.service';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -52,7 +53,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
                 this.gameTurnService.initializeTurnListeners();
             }
 
-            this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
+            this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
                 activeGameId,
                 playerName: this.localPlayerService.getLocalPlayer()?.name,
             });

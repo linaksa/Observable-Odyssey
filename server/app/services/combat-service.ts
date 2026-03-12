@@ -1,4 +1,3 @@
-import { activeGameModel } from '@app/schemas/active-game';
 import { IActiveGame } from '@common/activeGame';
 import { Position } from '@common/character';
 import { Service } from 'typedi';
@@ -40,7 +39,7 @@ export class CombatService {
     }
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
     async resolveCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {
-        const currentActiveGame = await activeGameModel.findById(activeGameId);
+        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         const attacker = currentActiveGame?.players.find((p) => p.name === attackerName);
         const defender = currentActiveGame?.players.find((p) => p.name === defenderName);
         if (!currentActiveGame || !attacker || !defender) {
@@ -53,7 +52,7 @@ export class CombatService {
             attackerVictories: attacker.victories,
             defenderNewPosition: defender.positionGrille,
         };
-        currentActiveGame.save();
+        await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         return combatResult;
     }
     // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)

@@ -1,9 +1,9 @@
-import { activeGameModel } from '@app/schemas/active-game';
 import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
+import { ActiveGameService } from './active-game.service';
 import { MovementService } from './movement-service';
 import { SocketService } from './socket.service';
 
@@ -13,17 +13,25 @@ export class TurnService {
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
 
     constructor(
-        private socketService: SocketService,
-        private movementService: MovementService,
+        private readonly socketService: SocketService,
+        private readonly movementService: MovementService,
+        private readonly activeGameService: ActiveGameService,
     ) {}
 
     // logic for the 3-second delay before the start of a turn
     async startTurn(gameId: string) {
-        const activeGame = await activeGameModel.findById(gameId);
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return;
+        if (activeGame.isFinished) return;
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
+
+        // If the scheduled player has since abandoned, skip their turn immediately
+        if (player.hasAbandoned) {
+            await this.endTurn(gameId);
+            return;
+        }
 
         // Always clear old timers before creating new ones.
         this.clearPreparationTimer(gameId);
@@ -44,7 +52,7 @@ export class TurnService {
     }
     // logic for the 30-second turn timer
     private async beginTurn(gameId: string) {
-        const activeGame = await activeGameModel.findById(gameId);
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return;
 
         const player = this.getCurrentPlayer(activeGame);
@@ -60,7 +68,6 @@ export class TurnService {
         const positions = this.movementService.getReachablePositions(player.name, gameId);
 
         namespace.to(gameId).emit(SocketEvent.ReachablePositions, {
-            // TODO: change this to send only to the player
             player: player.name,
             positions,
         });
@@ -75,13 +82,25 @@ export class TurnService {
 
     // end the turn and move to the next player
     async endTurn(gameId: string) {
-        const activeGame = await activeGameModel.findById(gameId);
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return;
 
+        // Always clear timers, even if the game is already finished
         this.clearPreparationTimer(gameId);
         this.clearTurnTimer(gameId);
 
-        activeGame.currentPlayerIndex = (activeGame.currentPlayerIndex + 1) % activeGame.turnOrder.length;
+        if (activeGame.isFinished) return;
+
+        // Advance to the next non-abandoned player
+        const totalPlayers = activeGame.turnOrder.length;
+        let nextIndex = (activeGame.currentPlayerIndex + 1) % totalPlayers;
+        for (let i = 0; i < totalPlayers; i++) {
+            const candidateName = activeGame.turnOrder[nextIndex];
+            const candidate = activeGame.players.find((p) => p.name === candidateName);
+            if (candidate && !candidate.hasAbandoned) break;
+            nextIndex = (nextIndex + 1) % totalPlayers;
+        }
+        activeGame.currentPlayerIndex = nextIndex;
 
         // Reset movement points for the next player
         const nextPlayer = activeGame.players.find((p) => p.name === activeGame.turnOrder[activeGame.currentPlayerIndex]);
@@ -89,7 +108,7 @@ export class TurnService {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;
         }
 
-        await activeGame.save();
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
         this.startTurn(gameId); // move to the next player's turn
     }
