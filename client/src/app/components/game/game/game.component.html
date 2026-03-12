@@ -1,4 +1,8 @@
-<div id="grid-container" class="flex items-center h-full w-full justify-center p-4">
+<div
+    id="grid-container"
+    class="flex items-center h-full w-full justify-center p-4"
+    [class.cursor-crosshair]="activeGameService.attackMode()"
+>
     <div
         #grid
         class="grid bg-gray-400 w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
@@ -6,12 +10,26 @@
     >
         @for (row of activeGameService.activeGame.game.board.cells; track $index; let rowIndex = $index) {
             @for (cell of row; track $index; let colIndex = $index) {
-                <app-edition-cell
-                    [cellType]="cell"
-                    [rowIndex]="rowIndex"
-                    [colIndex]="colIndex"
-                    [item]="boardSharedService.getObjectAt(rowIndex, colIndex, activeGameService.activeGame.game.board.items)"
-                ></app-edition-cell>
+                <div class="relative w-full h-full">
+
+                    @if (this.activeGameService.reachableTiles.has(this.activeGameService.getIndex(rowIndex, colIndex, this.totalColumns))) {
+                        <div class="absolute inset-0 bg-blue-400/40 z-10"></div>
+                    }
+
+                    <app-edition-cell
+                        [cellType]="cell"
+                        [rowIndex]="rowIndex"
+                        [colIndex]="colIndex"
+                        [item]="boardSharedService.getObjectAt(rowIndex, colIndex, activeGameService.activeGame.game.board.items)"
+                    ></app-edition-cell>
+                    @for (player of activeGameService.getPlayersAtPosition(rowIndex, colIndex); track player.name) {
+                        <div
+                            class="absolute inset-0 z-40 bg-center bg-[length:150%_150%] bg-no-repeat "
+                            style="background-image: url('assets/active-game/img.png')"
+                            (click)="onPlayerClicked(player.name); $event.stopPropagation()"
+                        ></div>
+                    }
+                </div>
             }
         }
     </div>

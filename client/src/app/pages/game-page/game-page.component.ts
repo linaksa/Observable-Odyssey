@@ -1,6 +1,7 @@
 import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
+import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
@@ -17,7 +18,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-page',
-    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent],
+    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent, GameAttackComponent],
     providers: [GameTurnService],
     templateUrl: './game-page.component.html',
 })
@@ -53,7 +54,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
             this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
                 activeGameId,
-                playerName: this.localPlayerService.getKnownPlayerName(),
+                playerName: this.localPlayerService.getLocalPlayer()?.name,
             });
         });
     }

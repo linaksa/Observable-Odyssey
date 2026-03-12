@@ -1,3 +1,4 @@
+import { activeGameModel } from '@app/schemas/active-game';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
@@ -12,53 +13,101 @@ export class MovementService {
         private readonly activeGameService: ActiveGameService,
         private readonly positionValidatorService: PositionValidatorService,
     ) {}
-    // vérifie si un joueur peut se déplacer vers une nouvelle position selon les règles du jeu
-    canMove(playerName: string, activeGameId: string, newPosition: Position): boolean {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(activeGameId);
+
+    // Valide et applique le déplacement en un seul accès DB. Lance une erreur si invalide.
+    async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
+        const activeGame = await activeGameModel.findById(activeGameId);
+        if (!activeGame) throw new Error(`activeGame introuvable pour id=${activeGameId}`);
         const player = activeGame.players.find((p) => p.name === playerName);
-        // Vérifie que la case est valide
-        if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) return false;
-        // Vérifie si le joueur a des mouvements restants
-        if (player.movementLeft < this.getPriceTile(activeGame, newPosition)) return false;
-        // Vérifie que la nouvelle position est adjacente à la position actuelle du joueur
-        if (!this.positionValidatorService.isAdjacent(player.positionGrille, newPosition)) return false;
-        // Vérifie qu'il n'y a pas déjà un joueur sur la case
-        if (this.positionValidatorService.isOccupiedByPlayer(newPosition, activeGame)) return false;
-        return true;
-    }
-    // Logique pour déplacer le joueur sur la grille
-    movePlayer(playerName: string, activeGameId: string, newPosition: Position): Position {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(activeGameId);
-        const player = activeGame.players.find((p) => p.name === playerName);
+        if (!player) throw new Error(`joueur '${playerName}' introuvable`);
+
+        const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
+        if (playerName !== currentPlayerName) {
+            throw new Error(`Ce n'est pas le tour de '${playerName}'`);
+        }
+
+        if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) {
+            throw new Error('Position non marchable');
+        }
+        if (!this.positionValidatorService.isAdjacent(player.positionGrille, newPosition)) {
+            throw new Error(`Position non adjacente: de ${JSON.stringify(player.positionGrille)} vers ${JSON.stringify(newPosition)}`);
+        }
+        if (this.positionValidatorService.isOccupiedByPlayer(newPosition, activeGame)) {
+            throw new Error('Case occupée par un autre joueur');
+        }
+        const price = this.getPriceTile(activeGame, newPosition);
+        if (player.movementLeft < price) {
+            throw new Error(`Mouvements insuffisants (restant: ${player.movementLeft}, coût: ${price})`);
+        }
+
         player.positionGrille = newPosition;
-        player.movementLeft -= this.getPriceTile(activeGame, newPosition);
-        return newPosition;
+        player.movementLeft -= price;
+        await activeGame.save();
+        return { newPosition, movementLeft: player.movementLeft };
     }
-    // retourne les positions atteignables pour un joueur qui veut se déplacer dans le tour actuel
-    getReachablePositions(playerName: string, activeGameId: string): Position[] {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(activeGameId);
+
+    // Retourne toutes les cases atteignables depuis la position actuelle du joueur (BFS avec budget).
+    async getReachablePositions(playerName: string, activeGameId: string): Promise<Position[]> {
+        const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
+        if (!activeGame) return [];
         const player = activeGame.players.find((p) => p.name === playerName);
-        const { x, y } = player.positionGrille;
-        const possibleMoves: Position[] = [
-            { x: x + 1, y },
-            { x: x - 1, y },
-            { x, y: y + 1 },
-            { x, y: y - 1 },
-        ];
-        return possibleMoves.filter((pos) => this.canMove(playerName, activeGameId, pos));
+        if (!player) return [];
+
+        const reachable: Position[] = [];
+        const visited = new Set<string>();
+        const queue: { pos: Position; costSoFar: number }[] = [{ pos: player.positionGrille, costSoFar: 0 }];
+        visited.add(`${player.positionGrille.x},${player.positionGrille.y}`);
+
+        while (queue.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const { pos, costSoFar } = queue.shift()!;
+            const neighbors: Position[] = [
+                { x: pos.x + 1, y: pos.y },
+                { x: pos.x - 1, y: pos.y },
+                { x: pos.x, y: pos.y + 1 },
+                { x: pos.x, y: pos.y - 1 },
+            ];
+            for (const neighbor of neighbors) {
+                const key = `${neighbor.x},${neighbor.y}`;
+                if (visited.has(key)) continue;
+                if (!this.positionValidatorService.isWalkable(neighbor, activeGame)) continue;
+                if (this.positionValidatorService.isOccupiedByPlayer(neighbor, activeGame)) continue;
+                const price = this.getPriceTile(activeGame, neighbor);
+                const newCost = costSoFar + price;
+                if (newCost <= player.movementLeft) {
+                    visited.add(key);
+                    reachable.push(neighbor);
+                    queue.push({ pos: neighbor, costSoFar: newCost });
+                }
+            }
+        }
+        return reachable;
     }
-    // retourne le coût de déplacement d'une case selon son type
+
     private getPriceTile(activeGame: IActiveGame, pos: Position): number {
+        // guard: ensure indices exist
+        if (!this.isPositionWithinBounds(pos, activeGame)) return Infinity;
+
         const cell = activeGame.game.board.cells[pos.y][pos.x];
         switch (cell) {
-            case CellType.OpenDoor || CellType.Empty:
+            case CellType.OpenDoor:
+            case CellType.Empty:
                 return PRIX_PORTE_GAZON;
             case CellType.Ice:
                 return PRIX_GLACE;
             case CellType.Water:
                 return PRIX_EAU;
             default:
-                return Infinity; // Impossible
+                return Infinity;
         }
+    }
+
+    private isPositionWithinBounds(pos: Position, activeGame: IActiveGame): boolean {
+        if (!activeGame || !activeGame.game || !activeGame.game.board || !Array.isArray(activeGame.game.board.cells)) return false;
+        const rows = activeGame.game.board.cells.length;
+        if (pos.y < 0 || pos.y >= rows) return false;
+        const cols = activeGame.game.board.cells[pos.y].length;
+        if (pos.x < 0 || pos.x >= cols) return false;
+        return true;
     }
 }

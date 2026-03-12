@@ -28,6 +28,7 @@ const routes: Routes = [
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
+    { path: 'wait', component: WaitPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent },
     { path: 'play/:activeGameId', component: GamePageComponent },
     { path: 'play', component: GamePageComponent },

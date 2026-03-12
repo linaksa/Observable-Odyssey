@@ -61,7 +61,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
             this.socketService.connect(Namespaces.Game);
             this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
                 activeGameId: params.activeGameId,
-                playerName: this.localPlayerService.getKnownPlayerName(),
+                playerName: this.localPlayerService.getLocalPlayer()?.name,
             });
             this.activeGameService.setActiveGame(params.activeGameId);
             this.playersUpdatedSubscription?.unsubscribe();
@@ -72,7 +72,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
                 },
             });
             this.startGameSubscription?.unsubscribe();
-            this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.StartGame).subscribe({
+            this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted).subscribe({
                 next: (startedGameId) => {
                     if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
                         return;

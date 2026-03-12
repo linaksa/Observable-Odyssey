@@ -1,9 +1,9 @@
+import { activeGameModel } from '@app/schemas/active-game';
 import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
-import { ActiveGameService } from './active-game.service';
 import { MovementService } from './movement-service';
 import { SocketService } from './socket.service';
 
@@ -13,24 +13,23 @@ export class TurnService {
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
 
     constructor(
-        private activeGameService: ActiveGameService,
         private socketService: SocketService,
         private movementService: MovementService,
     ) {}
 
-    // logique pour le delai de 3 secondes avant le debut du tour
-    startTurn(gameId: string) {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(gameId);
+    // logic for the 3-second delay before the start of a turn
+    async startTurn(gameId: string) {
+        const activeGame = await activeGameModel.findById(gameId);
         if (!activeGame) return;
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
-        // Toujours nettoyer les anciens timers avant d'en creer de nouveaux.
+        // Always clear old timers before creating new ones.
         this.clearPreparationTimer(gameId);
         this.clearTurnTimer(gameId);
 
-        // notifier la room
+        // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         namespace.to(gameId).emit(SocketEvent.TurnPreparing, {
             player: player.name,
@@ -43,39 +42,40 @@ export class TurnService {
 
         this.preparationTimers.set(gameId, preparationTimer);
     }
-    // logique pour le tour 30 de 30 sec
-    private beginTurn(gameId: string) {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(gameId);
+    // logic for the 30-second turn timer
+    private async beginTurn(gameId: string) {
+        const activeGame = await activeGameModel.findById(gameId);
         if (!activeGame) return;
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
         this.clearTurnTimer(gameId);
-        // notifier la room
+        // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         namespace.to(gameId).emit(SocketEvent.TurnStarted, {
             player: player.name,
+            movementLeft: player?.movementLeft ?? 0,
         });
         const positions = this.movementService.getReachablePositions(player.name, gameId);
 
         namespace.to(gameId).emit(SocketEvent.ReachablePositions, {
-            // changer ca pour que ca envoie seulement au joueur
+            // TODO: change this to send only to the player
             player: player.name,
             positions,
         });
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
-            this.endTurn(gameId); // si le joueur ne joue pas dans les 30 secondes, on passe au tour suivant
+            this.endTurn(gameId); // if the player does not play within 30 seconds, move to the next turn
         }, TEMPS_TOUR);
 
         this.turnTimers.set(gameId, timer);
     }
 
-    // finir le tour puis passer au joueur suivant
-    endTurn(gameId: string) {
-        const activeGame = this.activeGameService.getActiveGameFromMemory(gameId);
+    // end the turn and move to the next player
+    async endTurn(gameId: string) {
+        const activeGame = await activeGameModel.findById(gameId);
         if (!activeGame) return;
 
         this.clearPreparationTimer(gameId);
@@ -83,7 +83,15 @@ export class TurnService {
 
         activeGame.currentPlayerIndex = (activeGame.currentPlayerIndex + 1) % activeGame.turnOrder.length;
 
-        this.startTurn(gameId); // on passe au tour du joueur suivant
+        // Reset movement points for the next player
+        const nextPlayer = activeGame.players.find((p) => p.name === activeGame.turnOrder[activeGame.currentPlayerIndex]);
+        if (nextPlayer) {
+            nextPlayer.movementLeft = nextPlayer.rapidityPoints;
+        }
+
+        await activeGame.save();
+
+        this.startTurn(gameId); // move to the next player's turn
     }
 
     private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {

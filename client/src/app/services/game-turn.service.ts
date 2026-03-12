@@ -93,10 +93,7 @@ export class GameTurnService {
             return;
         }
 
-        this.socketService.emit<{ gameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.EndTurn, {
-            gameId: activeGameId,
-            playerName: this.localPlayerService.getKnownPlayerName(),
-        });
+        this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.EndTurn, activeGameId);
     }
 
     // Cleanup when the consuming component is destroyed

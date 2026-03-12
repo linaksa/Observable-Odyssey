@@ -1,5 +1,6 @@
 import { ICharacter, Position } from '@common/character';
 import { Namespaces } from '@common/namespaces';
+import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
@@ -12,7 +13,6 @@ import { SocketService } from './socket.service';
 @Service()
 export class GameSocketsService {
     private namespace?: Namespace;
-
     constructor(
         private readonly gameplayService: GameplayServices,
         private readonly socketService: SocketService,
@@ -23,6 +23,7 @@ export class GameSocketsService {
 
     initialize(): void {
         this.namespace = this.socketService.createNamespace(Namespaces.Game);
+
 
         this.namespace.on('connection', (socket: Socket) => {
             this.chatService.register(socket);
@@ -50,7 +51,7 @@ export class GameSocketsService {
             });
 
             socket.on(SocketEvent.StartGame, async (activeGameId: string) => {
-                // Server receives the start-game event from the Start button
+                const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
                 if (!activeGameId) {
                     return;
                 }
@@ -59,63 +60,48 @@ export class GameSocketsService {
                     return;
                 }
 
-                // The game is already active, so do not restart the first turn
-                if (this.activeGameService.isGameActive(activeGameId)) {
-                    return;
-                }
-
-                const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-                if (!currentActiveGame || !currentActiveGame.players?.length) {
-                    return;
-                }
-
-                if (currentActiveGame.players.length < 2) {
+                if (activeGame.players.length < 2) {
                     socket.emit(SocketEvent.StartGameError, {
                         message: 'Il faut au moins 2 joueurs pour démarrer la partie.',
                     });
                     return;
                 }
 
-                // Keep the game state in memory
-                this.activeGameService.addActiveGameToMemory(currentActiveGame);
 
-                // Initialize the game state
-                this.gameplayService.startGameService.initializeGame(activeGameId);
+                // Initialise la partie
+                await this.gameplayService.startGameService.initializeGame(activeGameId);
 
-                const activeGameDoc = this.activeGameService.getActiveGameFromMemory(activeGameId) as unknown as {
-                    save: () => Promise<{ players: ICharacter[] }>;
-                };
-                const savedActiveGame = await activeGameDoc.save();
-                this.namespace?.to(activeGameId).emit(SocketEvent.PlayersUpdated, savedActiveGame.players);
+                // Notifie tous les joueurs avec les positions mises à jour
+                const updatedGame = await this.activeGameService.getActiveGameById(activeGameId);
+                this.namespace?.to(activeGameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
 
-                // Notify all players in the room
-                this.namespace?.to(activeGameId).emit(SocketEvent.StartGame, activeGameId);
-                this.namespace?.to(activeGameId).emit(SocketEvent.GameStarted, { activeGame: currentActiveGame });
+                // Notifie tous les joueurs
+                this.namespace?.to(activeGameId).emit(SocketEvent.GameStarted, activeGameId);
 
-                // Start the first player's turn
+                // Démarre le tour du premier joueur
                 this.gameplayService.turnService.startTurn(activeGameId);
             });
-
             // =======================
-            // Player movement
+            // Déplacement d'un joueur
             // =======================
-            socket.on(SocketEvent.PlayerMove, (data: { gameId: string; playerId: string; direction: Position }) => {
+            socket.on(SocketEvent.PlayerMove, async (data: { gameId: string; playerId: string; direction: Position }) => {
                 const { gameId, playerId, direction } = data;
+                try {
+                    const { newPosition, movementLeft } = await this.gameplayService.movementService.movePlayer(playerId, gameId, direction);
+                    this.namespace?.to(gameId).emit(SocketEvent.PlayerMoved, { playerId, newPosition, movementLeft } as PlayerMovedResult);
 
-                const canMove = this.gameplayService.movementService.canMove(playerId, gameId, direction);
-                if (!canMove) {
-                    socket.emit(SocketEvent.PlayerMoveError, { message: 'Déplacement non autorisé' });
-                    return;
+                    const reachable = await this.gameplayService.movementService.getReachablePositions(playerId, gameId);
+                    if (reachable.length === 0) {
+                        await this.gameplayService.turnService.endTurn(gameId);
+                    }
+                } catch (error) {
+                    socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
                 }
-
-                const newPosition = this.gameplayService.movementService.movePlayer(playerId, gameId, direction);
-                this.namespace?.to(gameId).emit(SocketEvent.PlayerMoved, { playerId, newPosition });
             });
-
             // =======================
             // Combat
             // =======================
-            socket.on(SocketEvent.Attack, (data: { gameId: string; attackerName: string; defenderName: string }) => {
+            socket.on(SocketEvent.Attack, async (data: { gameId: string; attackerName: string; defenderName: string }) => {
                 const { gameId, attackerName, defenderName } = data;
 
                 const allowed = this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
@@ -128,55 +114,36 @@ export class GameSocketsService {
                 this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
                     attackerName,
                     defenderName,
-                    attackerVictories: result.attackerVictories,
-                    defenderNewPosition: result.defenderNewPosition,
+                    attackerVictories: (await result).attackerVictories,
+                    defenderNewPosition: (await result).defenderNewPosition,
                 });
 
-                const gameEnded = this.gameplayService.endGameService.checkEndGame(gameId);
+                const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
                 }
             });
-
             /**
              * =========================
-             * END TURN (end-turn button)
+             * END TURN (bouton finir tour)
              * =========================
              */
-            socket.on(SocketEvent.EndTurn, (payload: string | { gameId: string; playerName?: string }) => {
-                const { gameId, playerName } = this.parseEndTurnPayload(payload);
-                if (!gameId) {
-                    return;
-                }
-
-                const activeGame = this.activeGameService.getActiveGameFromMemory(gameId);
-                if (!activeGame?.turnOrder?.length) {
-                    return;
-                }
-
-                const activePlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
-                const requesterName = this.getSocketPlayerName(socket, gameId) ?? playerName;
-
-                if (!requesterName || requesterName !== activePlayerName) {
-                    return;
-                }
-
+            socket.on(SocketEvent.EndTurn, (gameId: string) => {
                 this.gameplayService.turnService.endTurn(gameId);
             });
-
             // =======================
-            // Player abandonment
+            // Abandon d'un joueur
             // =======================
-            socket.on(SocketEvent.PlayerAbandon, (data: { gameId: string; playerId: string }) => {
+            socket.on(SocketEvent.PlayerAbandon, async (data: { gameId: string; playerId: string }) => {
                 const { gameId, playerId } = data;
                 this.gameplayService.endGameService.handlePlayerAbandon(gameId, playerId);
 
-                // Notify other players that this player abandoned.
+                // pour notifier tous les autres joueurs que ce joueur a abandonné ( peut etre pas necessaire)
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
 
-                const gameEnded = this.gameplayService.endGameService.checkEndGame(gameId);
+                const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null }); // Pas de gagnant clair, tous les autres ont abandonné
                 }
             });
         });
@@ -200,27 +167,12 @@ export class GameSocketsService {
         };
     }
 
-    private parseEndTurnPayload(payload: string | { gameId: string; playerName?: string }): { gameId: string; playerName?: string } {
-        if (typeof payload === 'string') {
-            return { gameId: payload };
-        }
-        return {
-            gameId: payload?.gameId ?? '',
-            playerName: payload?.playerName,
-        };
-    }
-
     private setSocketPlayerName(socket: Socket, gameId: string, playerName: string): void {
         const data = socket.data as { playerNamesByGameId?: Record<string, string> };
         if (!data.playerNamesByGameId) {
             data.playerNamesByGameId = {};
         }
         data.playerNamesByGameId[gameId] = playerName;
-    }
-
-    private getSocketPlayerName(socket: Socket, gameId: string): string | undefined {
-        const data = socket.data as { playerNamesByGameId?: Record<string, string> };
-        return data.playerNamesByGameId?.[gameId];
     }
 }
 

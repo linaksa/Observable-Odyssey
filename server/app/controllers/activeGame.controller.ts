@@ -62,7 +62,11 @@ export class ActiveGameController {
                     });
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
-                if (!updatedActiveGame) {
+                // emmetre un socket au client quand un joueur rejoint la partie active.
+                if (updatedActiveGame) {
+                    this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
+
+                } else {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
 

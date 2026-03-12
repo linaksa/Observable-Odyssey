@@ -1,3 +1,4 @@
+import { activeGameModel } from '@app/schemas/active-game';
 import { IActiveGame } from '@common/activeGame';
 import { Position } from '@common/character';
 import { Service } from 'typedi';
@@ -8,10 +9,10 @@ import { PositionValidatorService } from './position-validator.service';
 @Service()
 export class CombatService {
     private readonly directions: Position[] = [
-        { x: 0, y: -1 }, // haut
-        { x: -1, y: 0 }, // gauche
-        { x: 0, y: 1 }, // bas
-        { x: 1, y: 0 }, // droite
+        { x: 0, y: -1 }, // up
+        { x: -1, y: 0 }, // left
+        { x: 0, y: 1 }, // down
+        { x: 1, y: 0 }, // right
     ];
 
     constructor(
@@ -19,9 +20,9 @@ export class CombatService {
         private positionValidatorService: PositionValidatorService,
     ) {}
 
-    // vérifie si l'attaquant peut attaquer le défenseur selon les règles du jeu
-    canAttack(activeGameId: string, attackerName: string, defenderName: string): boolean {
-        const currentActiveGame = this.activeGameService.getActiveGameFromMemory(activeGameId);
+    // checks if the attacker can attack the defender according to the game rules
+    async canAttack(activeGameId: string, attackerName: string, defenderName: string): Promise<boolean> {
+        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {
             return false;
         }
@@ -37,20 +38,25 @@ export class CombatService {
         if (!this.positionValidatorService.isAdjacent(attacker.positionGrille, defender.positionGrille)) return false;
         return true;
     }
-    // applique les conséquences du combat: retourne un objet contenant le nombre de victoire de l'attaquant et la nouvelle position du defendeur
-    resolveCombat(activeGameId: string, attackerName: string, defenderName: string): CombatResult {
-        const currentActiveGame = this.activeGameService.getActiveGameFromMemory(activeGameId);
-        const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
-        const defender = currentActiveGame.players.find((p) => p.name === defenderName);
+    // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
+    async resolveCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {
+        const currentActiveGame = await activeGameModel.findById(activeGameId);
+        const attacker = currentActiveGame?.players.find((p) => p.name === attackerName);
+        const defender = currentActiveGame?.players.find((p) => p.name === defenderName);
+        if (!currentActiveGame || !attacker || !defender) {
+            throw new Error(`resolveCombat called with invalid state: ${activeGameId}`);
+        }
+
         attacker.victories++;
-        defender.positionGrille = this.findNearestAvailableSpawn(defender.positionGrille, currentActiveGame);
+        defender.positionGrille = this.findNearestAvailableSpawn(defender.positionDepart, currentActiveGame);
         const combatResult: CombatResult = {
             attackerVictories: attacker.victories,
             defenderNewPosition: defender.positionGrille,
         };
+        currentActiveGame.save();
         return combatResult;
     }
-    // trouve la position de respawn la plus proche pour le defendeur mort en utilisant la recherche de largeur (BFS)
+    // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)
     findNearestAvailableSpawn(spawn: Position, currentActiveGame: IActiveGame): Position {
         const queue: Position[] = [];
         const visited = new Set<string>();
@@ -66,7 +72,7 @@ export class CombatService {
 
             for (const dir of this.directions) {
                 const next: Position = { x: current.x + dir.x, y: current.y + dir.y };
-                const key = `${next.x},${next.y}`; // obligé pcq il faut que la clé soit une string pour le set
+                const key = `${next.x},${next.y}`; // required because the key must be a string for the Set
                 if (!visited.has(key)) {
                     visited.add(key);
                     queue.push(next);

@@ -1,4 +1,4 @@
-import { activeGame } from '@app/schemas/active-game';
+import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame } from '@common/activeGame';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
@@ -8,7 +8,6 @@ import { Service } from 'typedi';
 
 @Service()
 export class ActiveGameService {
-    private activeGamesMemory: Map<string, IActiveGame> = new Map();
     async createActiveGame(gameId: string, characterForm: CharacterFormData): Promise<IActiveGame> {
         const gameChosen = await game.findById(gameId);
         if (!gameChosen) {
@@ -45,17 +44,20 @@ export class ActiveGameService {
             game: gameChosen,
             players: [playerCharacter],
             itemsState: [exampleItem],
+            turnOrder: [] as string[],
             currentPlayerIndex: 0,
+            isFinished: false,
+            winner: '',
             messages: [] as IMessage[],
             isDebugMode: false,
             organizerName: characterForm.name,
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
         };
-        return await activeGame.create(newActiveGame);
+        return await activeGameModel.create(newActiveGame);
     }
 
     async addPlayerToActiveGame(activeGameId: string, characterForm: CharacterFormData): Promise<IActiveGame | null> {
-        const activeGameToUpdate = await activeGame.findById(activeGameId);
+        const activeGameToUpdate = await activeGameModel.findById(activeGameId);
         if (!activeGameToUpdate) {
             throw new Error('Active game not found');
         }
@@ -92,9 +94,12 @@ export class ActiveGameService {
         activeGameToUpdate.players.push(newPlayerCharacter);
         return await activeGameToUpdate.save();
     }
-
     async getActiveGameById(activeGameId: string): Promise<IActiveGame> {
-        return await activeGame.findById(activeGameId);
+        return await activeGameModel.findById(activeGameId);
+    }
+
+    async getAllActiveGames(): Promise<IActiveGame[]> {
+        return await activeGameModel.find();
     }
 
     async addMessageToGame(newMessage: INewMessage): Promise<IActiveGame | null> {
@@ -103,17 +108,17 @@ export class ActiveGameService {
             content: newMessage.content,
             author: newMessage.author,
         };
-        return await activeGame.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true });
+        return await activeGameModel.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true });
     }
 
     async getMessagesFromGame(id: string): Promise<IMessage[]> {
-        const fetchedActiveGame = await this.getActiveGameById(id);
-        if (!fetchedActiveGame) return [];
-        return fetchedActiveGame.messages;
+        const currentActiveGame = await this.getActiveGameById(id);
+        if (!currentActiveGame) return [];
+        return currentActiveGame.messages;
     }
 
     async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
-        return await activeGame.find({
+        return await activeGameModel.find({
             $expr: {
                 $lt: [{ $size: '$players' }, '$maxPlayerCount'],
             },
@@ -146,33 +151,5 @@ export class ActiveGameService {
             return `${newPlayerName}-${uniquePlayerIdToAppend}`;
         }
         return newPlayerName;
-    }
-
-    /* async addMessageToGame(message: INewMessage): Promise<IActiveGame | null> {
-        return await activeGame.findOneAndUpdate({ _id: message.roomId }, { $push: { messages: message } }, { new: true }).exec();
-    }
-    */
-    // ==============================
-    // RAM METHODS (GAMEPLAY)
-    // ==============================
-
-    addActiveGameToMemory(newActiveGame: IActiveGame): void {
-        this.activeGamesMemory.set(newActiveGame._id.toString(), newActiveGame);
-    }
-
-    getActiveGameFromMemory(gameId: string): IActiveGame | undefined {
-        return this.activeGamesMemory.get(gameId);
-    }
-
-    removeActiveGameFromMemory(gameId: string): void {
-        this.activeGamesMemory.delete(gameId);
-    }
-
-    isGameActive(gameId: string): boolean {
-        return this.activeGamesMemory.has(gameId);
-    }
-
-    getAllActiveGamesFromMemory(): IActiveGame[] {
-        return Array.from(this.activeGamesMemory.values());
     }
 }
