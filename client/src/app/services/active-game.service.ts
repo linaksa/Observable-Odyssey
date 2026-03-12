@@ -9,6 +9,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
+import { IAttackData, IPlayerMoveData } from '@common/socket-payloads';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -185,7 +186,7 @@ export class ActiveGameService {
             return;
         }
 
-        this.socket.emit('game', SocketEvent.PlayerMove, {
+        this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove, {
             gameId: this.activeGame._id,
             playerId: player.name,
             direction: {
@@ -210,7 +211,7 @@ export class ActiveGameService {
 
         if (dx + dy !== 1) return;
 
-        this.socket.emit(Namespaces.Game, SocketEvent.Attack, {
+        this.socket.emit<IAttackData, void>(Namespaces.Game, SocketEvent.Attack, {
             gameId: this.activeGame._id,
             attackerName: attacker.name,
             defenderName: target.name,

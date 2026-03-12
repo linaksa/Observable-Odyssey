@@ -98,6 +98,10 @@ export class ActiveGameService {
         return await activeGameModel.findById(activeGameId);
     }
 
+    async saveActiveGameById(activeGameId: string, update: Partial<IActiveGame>): Promise<IActiveGame | null> {
+        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
+    }
+
     async getAllActiveGames(): Promise<IActiveGame[]> {
         return await activeGameModel.find();
     }

@@ -1,7 +1,8 @@
-import { ICharacter, Position } from '@common/character';
+import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
+import { IAbandonData, IAttackData, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
@@ -29,7 +30,7 @@ export class GameSocketsService {
             this.chatService.register(socket);
             this.debugSocketService.register(socket);
 
-            socket.on(SocketEvent.JoinGame, async (payload: string | { activeGameId: string; playerName?: string }) => {
+            socket.on(SocketEvent.JoinGame, async (payload: string | IJoinGamePayload) => {
                 const { activeGameId, playerName } = this.parseJoinGamePayload(payload);
                 if (!activeGameId) {
                     return;
@@ -68,23 +69,23 @@ export class GameSocketsService {
                 }
 
 
-                // Initialise la partie
+                // Initialize the game
                 await this.gameplayService.startGameService.initializeGame(activeGameId);
 
-                // Notifie tous les joueurs avec les positions mises à jour
+                // Notify all players with updated positions
                 const updatedGame = await this.activeGameService.getActiveGameById(activeGameId);
                 this.namespace?.to(activeGameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
 
-                // Notifie tous les joueurs
+                // Notify all players
                 this.namespace?.to(activeGameId).emit(SocketEvent.GameStarted, activeGameId);
 
-                // Démarre le tour du premier joueur
+                // Start the first player's turn
                 this.gameplayService.turnService.startTurn(activeGameId);
             });
             // =======================
-            // Déplacement d'un joueur
+            // Player movement
             // =======================
-            socket.on(SocketEvent.PlayerMove, async (data: { gameId: string; playerId: string; direction: Position }) => {
+            socket.on(SocketEvent.PlayerMove, async (data: IPlayerMoveData) => {
                 const { gameId, playerId, direction } = data;
                 try {
                     const { newPosition, movementLeft } = await this.gameplayService.movementService.movePlayer(playerId, gameId, direction);
@@ -101,7 +102,7 @@ export class GameSocketsService {
             // =======================
             // Combat
             // =======================
-            socket.on(SocketEvent.Attack, async (data: { gameId: string; attackerName: string; defenderName: string }) => {
+            socket.on(SocketEvent.Attack, async (data: IAttackData) => {
                 const { gameId, attackerName, defenderName } = data;
 
                 const allowed = this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
@@ -123,27 +124,62 @@ export class GameSocketsService {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
                 }
             });
-            /**
-             * =========================
-             * END TURN (bouton finir tour)
-             * =========================
-             */
+            // =======================
+            // End turn
+            // =======================
             socket.on(SocketEvent.EndTurn, (gameId: string) => {
                 this.gameplayService.turnService.endTurn(gameId);
             });
             // =======================
-            // Abandon d'un joueur
+            // Player abandon
             // =======================
-            socket.on(SocketEvent.PlayerAbandon, async (data: { gameId: string; playerId: string }) => {
+            socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
-                this.gameplayService.endGameService.handlePlayerAbandon(gameId, playerId);
+                await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
 
-                // pour notifier tous les autres joueurs que ce joueur a abandonné ( peut etre pas necessaire)
+                const updatedGame = await this.activeGameService.getActiveGameById(gameId);
+                this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
+
+                const isCurrentPlayer = updatedGame.turnOrder[updatedGame.currentPlayerIndex] === playerId;
 
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null }); // Pas de gagnant clair, tous les autres ont abandonné
+                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                }
+
+                // If it was this player's turn, end it immediately (clears timers; no-op if game is finished)
+                if (isCurrentPlayer) {
+                    await this.gameplayService.turnService.endTurn(gameId);
+                }
+            });
+
+            // =======================
+            // Disconnect (e.g. page refresh)
+            // =======================
+            socket.on('disconnect', async () => {
+                const data = socket.data as ISocketData;
+                const playerNamesByGameId = data.playerNamesByGameId;
+                if (!playerNamesByGameId) return;
+
+                for (const [gameId, playerId] of Object.entries(playerNamesByGameId)) {
+                    await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+
+                    const updatedGame = await this.activeGameService.getActiveGameById(gameId);
+                    this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
+                    this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
+
+                    const isCurrentPlayer = updatedGame.turnOrder[updatedGame.currentPlayerIndex] === playerId;
+
+                    const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+                    if (gameEnded) {
+                        this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    }
+
+                    // If it was this player's turn, end it immediately (clears timers; no-op if game is finished)
+                    if (isCurrentPlayer) {
+                        await this.gameplayService.turnService.endTurn(gameId);
+                    }
                 }
             });
         });
@@ -157,7 +193,7 @@ export class GameSocketsService {
         this.namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, players);
     }
 
-    private parseJoinGamePayload(payload: string | { activeGameId: string; playerName?: string }): { activeGameId: string; playerName?: string } {
+    private parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
         if (typeof payload === 'string') {
             return { activeGameId: payload };
         }
@@ -168,7 +204,7 @@ export class GameSocketsService {
     }
 
     private setSocketPlayerName(socket: Socket, gameId: string, playerName: string): void {
-        const data = socket.data as { playerNamesByGameId?: Record<string, string> };
+        const data = socket.data as ISocketData;
         if (!data.playerNamesByGameId) {
             data.playerNamesByGameId = {};
         }

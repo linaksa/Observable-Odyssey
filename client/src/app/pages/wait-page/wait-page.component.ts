@@ -13,6 +13,7 @@ import { WaitGridService } from '@app/services/wait-grid.service';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -59,7 +60,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
         this.routeSubscription = this.route.params.subscribe((params) => {
             this.socketService.connect(Namespaces.Game);
-            this.socketService.emit<{ activeGameId: string; playerName?: string }, void>(Namespaces.Game, SocketEvent.JoinGame, {
+            this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
                 activeGameId: params.activeGameId,
                 playerName: this.localPlayerService.getLocalPlayer()?.name,
             });

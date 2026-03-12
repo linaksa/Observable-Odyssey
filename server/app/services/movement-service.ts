@@ -1,4 +1,3 @@
-import { activeGameModel } from '@app/schemas/active-game';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
@@ -16,7 +15,7 @@ export class MovementService {
 
     // Valide et applique le déplacement en un seul accès DB. Lance une erreur si invalide.
     async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
-        const activeGame = await activeGameModel.findById(activeGameId);
+        const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) throw new Error(`activeGame introuvable pour id=${activeGameId}`);
         const player = activeGame.players.find((p) => p.name === playerName);
         if (!player) throw new Error(`joueur '${playerName}' introuvable`);
@@ -42,7 +41,7 @@ export class MovementService {
 
         player.positionGrille = newPosition;
         player.movementLeft -= price;
-        await activeGame.save();
+        await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
         return { newPosition, movementLeft: player.movementLeft };
     }
 
