@@ -1,4 +1,4 @@
-import { activeGame } from '@app/schemas/active-game';
+import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
@@ -69,19 +69,25 @@ describe('ActiveGameService', () => {
         defensePoints: dummyCharacterForm.defensePoints,
         actionsLeft: 1,
         movementLeft: dummyCharacterForm.rapidityPoints,
-        victories: 0,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
         hasAbandoned: false,
+        victories: 0,
+        positionDepart: {
+            x: 1,
+            y: 1,
+        },
+        positionGrille: {
+            x: 1,
+            y: 1,
+        },
     };
 
     beforeEach(async () => {
         activeGameService = new ActiveGameService();
 
-        activeGameCreateStub = sinon.stub(activeGame, 'create');
+        activeGameCreateStub = sinon.stub(activeGameModel, 'create');
         findGameByIdStub = sinon.stub(game, 'findById');
-        findActiveGameByIdStub = sinon.stub(activeGame, 'findById');
-        findOneAndUpdateStub = sinon.stub(activeGame, 'findOneAndUpdate');
+        findActiveGameByIdStub = sinon.stub(activeGameModel, 'findById');
+        findOneAndUpdateStub = sinon.stub(activeGameModel, 'findOneAndUpdate');
     });
 
     afterEach(() => {
@@ -259,7 +265,7 @@ describe('ActiveGameService', () => {
             // Cas nominal:
             // Le service devrait retourner une liste de parties actives joinables en faisant une query
 
-            const findStub = sinon.stub(activeGame, 'find');
+            const findStub = sinon.stub(activeGameModel, 'find');
 
             await activeGameService.fetchJoinableActiveGames();
 

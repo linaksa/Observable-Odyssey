@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { ICharacter } from '@common/character';
@@ -14,13 +14,14 @@ const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     imports: [],
     templateUrl: './player-info.component.html',
 })
-export class PlayerInfoComponent implements OnInit {
+export class PlayerInfoComponent {
     protected readonly activeGameService = inject(ActiveGameService);
     localPlayerService = inject(LocalPlayerService);
-    player?: ICharacter;
 
-    ngOnInit() {
-        this.player = this.localPlayerService.getLocalPlayer();
+    get player(): ICharacter | undefined {
+        const localPlayer = this.localPlayerService.getLocalPlayer();
+        if (!localPlayer) return undefined;
+        return this.activeGameService.activeGame?.players.find(p => p.name === localPlayer.name);
     }
 
     get avatarUrl(): string {

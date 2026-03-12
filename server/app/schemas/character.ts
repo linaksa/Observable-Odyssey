@@ -53,9 +53,17 @@ export const characterSchema = new Schema<ICharacter>(
             type: positionSchema,
             required: true,
         },
+        positionDepart: {
+            type: positionSchema,
+            default: { x: 0, y: 0 },
+        },
         victories: {
             type: Number,
             required: true,
+        },
+        hasAbandoned: {
+            type: Boolean,
+            default: false,
         },
     },
     { _id: false },
