@@ -19,7 +19,6 @@ export class DebugSocketService {
                     activeGame.isDebugMode = !activeGame.isDebugMode;
                     socket.to(activeGameId).emit(SocketEvent.DebugToggle, playerName);
                     socket.emit(SocketEvent.DebugToggle, playerName);
-
                 }
             } catch {
                 return;

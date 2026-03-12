@@ -27,9 +27,16 @@ export class ChatPanelComponent implements AfterViewChecked {
 
     constructor(private fb: FormBuilder) {
         this.messageForm = this.fb.group({
-            message: ['', [Validators.required, Validators.maxLength(this.maxMessageLength), (control: AbstractControl) => {
-                return control.value?.trim().length >= this.minMessageLength ? null : { whitespace: true };
-            }]],
+            message: [
+                '',
+                [
+                    Validators.required,
+                    Validators.maxLength(this.maxMessageLength),
+                    (control: AbstractControl) => {
+                        return control.value?.trim().length >= this.minMessageLength ? null : { whitespace: true };
+                    },
+                ],
+            ],
         });
 
         effect(() => {
@@ -70,6 +77,4 @@ export class ChatPanelComponent implements AfterViewChecked {
             el.scrollTop = el.scrollHeight;
         }
     }
-
-
 }

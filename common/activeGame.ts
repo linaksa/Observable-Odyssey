@@ -7,9 +7,9 @@ export interface IActiveGame {
     _id: string;
     game: IGame;
     players: ICharacter[];
-    itemsState: IItem[]; // vraiment nécessaire ?
+    itemsState: IItem[]; // really necessary ?
     currentPlayerIndex: number;
-    turnOrder: string[]; // Liste des noms de joueurs dans l'ordre des tours
+    turnOrder: string[]; // List of player names in turn order
     isFinished: boolean;
     winner: string | null;
     messages: IMessage[];

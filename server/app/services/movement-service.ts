@@ -13,7 +13,7 @@ export class MovementService {
         private readonly positionValidatorService: PositionValidatorService,
     ) {}
 
-    // Valide et applique le déplacement en un seul accès DB. Lance une erreur si invalide.
+    // Validates and applies the movement in a single DB access. Throws an error if invalid.
     async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) throw new Error(`activeGame introuvable pour id=${activeGameId}`);
@@ -45,7 +45,7 @@ export class MovementService {
         return { newPosition, movementLeft: player.movementLeft };
     }
 
-    // Retourne toutes les cases atteignables depuis la position actuelle du joueur (BFS avec budget).
+    // Returns all tiles reachable from the player's current position (budgeted BFS).
     async getReachablePositions(playerName: string, activeGameId: string): Promise<Position[]> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) return [];

@@ -52,7 +52,7 @@ export class ActiveGameController {
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur', error });
             }
         });
-        // route pour qu'un joueur puisse rejoindre une partie active existante
+        // Route for a player to join an existing active game
         this.router.patch('/join', async (req: Request, res: Response) => {
             try {
                 const { activeGameId, characterForm } = req.body;
@@ -62,10 +62,9 @@ export class ActiveGameController {
                     });
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
-                // emmetre un socket au client quand un joueur rejoint la partie active.
+                // Emit a socket to clients when a player joins the active game.
                 if (updatedActiveGame) {
                     this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
-
                 } else {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }

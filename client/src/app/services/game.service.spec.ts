@@ -1,16 +1,16 @@
 /**
- * Stratégie de test – GameService (client)
+ * Testing strategy — GameService (client)
  *
- * Approche : tests unitaires par spy Jasmine sur le port HTTP (HTTP_CLIENT).
- * L'interface HTTP abstraite est substituée par un objet spy, ce qui permet de
- * vérifier les URLs et les corps de requêtes sans appels réseau réels.
- * Chaque méthode publique est testée indépendamment en s'assurant que le bon
- * endpoint est construit avec les bons paramètres.
+ * Approach: unit tests using Jasmine spies for the HTTP layer (HTTP_CLIENT).
+ * The abstract HTTP interface is replaced by a spy object, allowing verification
+ * of URLs and request bodies without real network calls.
+ * Each public method is tested independently to ensure the correct
+ * endpoint is constructed with the right parameters.
  *
- * Cas limites couverts :
- * - Erreur réseau (throwError) : vérifie que getAllGames() ne plante pas
- *   l'application lorsque le serveur est inaccessible ; le flux d'erreur doit
- *   être propageable à l'abonné sans exception non gérée.
+ * Edge cases covered:
+ * - Network error (throwError): verifies getAllGames() does not crash
+ *   the application when the server is unreachable; the error stream should
+ *   be propagated to the subscriber without an unhandled exception.
  */
 import { TestBed } from '@angular/core/testing';
 
@@ -110,8 +110,8 @@ describe('GameService', () => {
         expect(httpSpy.delete).toHaveBeenCalledWith(`${dummyBaseURL}/games/${gamesMock._id}`, jasmine.any(Object));
     });
 
-    // Cas limite : le serveur répond avec une erreur (ex: 404). Vérifie que le service
-    // propage correctement l'observable d'erreur sans lever d'exception synchrone.
+    // Edge case: the server responds with an error (e.g., 404). Verifies that the service
+    // correctly propagates the error observable without throwing a synchronous exception.
     it('should not crash when the request fails', () => {
         httpSpy.get.and.returnValue(throwError(() => new Error('404')));
 

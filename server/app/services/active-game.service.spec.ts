@@ -96,8 +96,8 @@ describe('ActiveGameService', () => {
 
     describe('test creation of a new IActiveGame', () => {
         it('should throw if game does not exist, async ()', async () => {
-            // Cas limite:
-            // Une erreur devrait être levée si aucun game n'est trouvé avec l'ID fourni
+            // Edge case:
+            // An error should be thrown if no game is found with the provided ID
 
             findGameByIdStub.resolves(null);
 
@@ -110,8 +110,8 @@ describe('ActiveGameService', () => {
         });
 
         it('should create a new active game successfully', async () => {
-            // Cas nominal:
-            // Un nouvel active game devrait être créé avec succès lorsque des données valides sont fournies
+            // Nominal case:
+            // A new active game should be created successfully when valid data is provided
 
             findGameByIdStub.resolves(dummyGame);
             await activeGameService.createActiveGame('dummyGameId', dummyCharacterForm);
@@ -122,8 +122,8 @@ describe('ActiveGameService', () => {
 
     describe('test adding players to an existing IActiveGame', () => {
         it('should throw if activeGame doesnt exists', async () => {
-            // Cas limite:
-            // Une erreur devrait être levée si aucun activeGame n'est trouvé avec l'ID fourni
+            // Edge case:
+            // An error should be thrown if no activeGame is found with the provided ID
 
             findActiveGameByIdStub.resolves(null);
 
@@ -136,12 +136,12 @@ describe('ActiveGameService', () => {
         });
 
         it('should not allow adding a player if the active game is already full', async () => {
-            // Cas limite:
-            // Une erreur devrait être levée si le nombre maximum de joueurs pour la partie active est déjà atteint
+            // Edge case:
+            // An error should be thrown if the active game's maximum player count has already been reached
 
             const fullActiveGame = dummyActiveGame;
             fullActiveGame.maxPlayerCount = 4;
-            fullActiveGame.players = [dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter]; // Simule une partie active déjà pleine
+            fullActiveGame.players = [dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter]; // Simulates an active game that is already full
 
             findActiveGameByIdStub.resolves(fullActiveGame);
 
@@ -154,13 +154,13 @@ describe('ActiveGameService', () => {
         });
 
         it('should not allow adding a player with an avatar that is already taken in the active game', async () => {
-            // Cas limite:
-            // Une erreur devrait être levée si un joueur tente de rejoindre une partie active avec un avatar déjà utilisé par un autre joueur dans la même partie
+            // Edge case:
+            // An error should be thrown if a player tries to join an active game with an avatar that is already used by another player in the same game
 
             const collisionedAvatar = Avatar.Avatar1;
 
             const inGamePlayer = dummyPlayerCharacter;
-            inGamePlayer.avatar = collisionedAvatar; // Simule un joueur dans la partie active qui utilise l'avatar Avatar1
+            inGamePlayer.avatar = collisionedAvatar; // Simulates a player in the active game who uses the Avatar1 avatar
 
             const activeGameWithAvatarConflict = dummyActiveGame;
             activeGameWithAvatarConflict.players = [inGamePlayer];
@@ -169,7 +169,7 @@ describe('ActiveGameService', () => {
 
             const characterForm: CharacterFormData = {
                 name: 'Player 2',
-                avatar: collisionedAvatar, // Avatar déjà utilisé par Player 1
+                avatar: collisionedAvatar, // Avatar already used by Player 1
                 initialHealth: 100,
                 attackBonusDiceType: DiceType.SixSided,
                 defenseBonusDiceType: DiceType.SixSided,
@@ -187,14 +187,14 @@ describe('ActiveGameService', () => {
         });
 
         it("should append a number to the player's name if another player in the active game has the same base name", async () => {
-            // Cas limite:
-            // Si un joueur tente de rejoindre une partie active avec un nom de personnage déjà utilisé par un autre
-            //  joueur dans la même partie, le service devrait automatiquement ajouter un numéro à la fin du nom du nouveau joueur pour le différencier (ex: "PlayerName - 2")
+            // Edge case:
+            // If a player tries to join an active game with a character name already used by another
+            //  player in the same game, the service should automatically append a number to the new player's name to differentiate it (e.g., "PlayerName - 2")
 
             const collisionedName = 'Robert Bourassa';
 
             const inGamePlayer = dummyPlayerCharacter;
-            inGamePlayer.name = collisionedName; // Simule un joueur dans la partie active qui utilise le nom Robert Bourassa
+            inGamePlayer.name = collisionedName; // Simulates a player in the active game who uses the name Robert Bourassa
 
             const activeGameWithAvatarConflict = dummyActiveGame;
             activeGameWithAvatarConflict.players = [inGamePlayer];
@@ -204,28 +204,28 @@ describe('ActiveGameService', () => {
 
             const characterForm: CharacterFormData = {
                 ...dummyCharacterForm,
-                name: collisionedName, // Même nom de personnage que le joueur déjà dans la partie active
+                name: collisionedName, // Same character name as a player already in the active game
             };
 
-            characterForm.avatar = Avatar.Avatar2; // Changement d'avatar pour éviter le conflit d'avatar
+            characterForm.avatar = Avatar.Avatar2; // Change avatar to avoid avatar conflict
             let updatedGame = await activeGameService.addPlayerToActiveGame('activeGameWithAvatarConflictId', characterForm);
             expect(updatedGame.players[updatedGame.players.length - 1].name).to.equal('Robert Bourassa-2');
 
-            characterForm.avatar = Avatar.Avatar3; // Changement d'avatar pour éviter le conflit d'avatar
+            characterForm.avatar = Avatar.Avatar3; // Change avatar to avoid avatar conflict
             updatedGame = await activeGameService.addPlayerToActiveGame('activeGameWithAvatarConflictId', characterForm);
             expect(updatedGame.players[updatedGame.players.length - 1].name).to.equal('Robert Bourassa-3');
 
-            // Cas limite: Si un joueur ajoute lui même un nom de personnage avec un -{numéro} à la fin
-            // Comportement attendu: le système enlève le suffixe -{numéro} avant de processer le nom
-            characterForm.avatar = Avatar.Avatar4; // Changement d'avatar pour éviter le conflit d'avatar
-            characterForm.name = 'Robert Bourassa-2'; // Même nom que le joueur déjà dans la partie active, mais avec un -2 à la fin
+            // Edge case: If a player adds a character name that already ends with a -{number}
+            // Expected behavior: the system should remove the -{number} suffix before processing the name
+            characterForm.avatar = Avatar.Avatar4; // Change avatar to avoid avatar conflict
+            characterForm.name = 'Robert Bourassa-2'; // Same name as a player already in the active game, but with a -2 suffix
             updatedGame = await activeGameService.addPlayerToActiveGame('activeGameWithAvatarConflictId', characterForm);
             expect(updatedGame.players[updatedGame.players.length - 1].name).to.equal('Robert Bourassa-4');
         });
     });
 
     it('should append the player to the database ', async () => {
-        // Cas nominal
+        // Nominal case
 
         const testName = 'TestPlayer';
         const avatar = Avatar.Avatar8;
@@ -235,8 +235,8 @@ describe('ActiveGameService', () => {
 
         const characterForm: CharacterFormData = {
             ...dummyCharacterForm,
-            name: testName, // Même nom de personnage que le joueur déjà dans la partie active
-            avatar, // Avatar pour le nouveau joueur
+            name: testName, // Same character name as a player already in the active game
+            avatar, // Avatar for the new player
         };
 
         const updatedGame = await activeGameService.addPlayerToActiveGame('test', characterForm);
@@ -248,8 +248,8 @@ describe('ActiveGameService', () => {
 
     describe('test fetching an IActiveGame by ID', () => {
         it('should return the active game if it exists', async () => {
-            // Cas nominal:
-            // Le service devrait retourner la partie active correspondante à l'ID fourni si elle existe
+            // Nominal case:
+            // The service should return the active game corresponding to the provided ID if it exists
 
             findActiveGameByIdStub.resolves(dummyActiveGame);
 
@@ -262,8 +262,8 @@ describe('ActiveGameService', () => {
 
     describe('test fetching joinable active games', () => {
         it('should return a list of joinable active games', async () => {
-            // Cas nominal:
-            // Le service devrait retourner une liste de parties actives joinables en faisant une query
+            // Nominal case:
+            // The service should return a list of joinable active games by querying the database
 
             const findStub = sinon.stub(activeGameModel, 'find');
 
@@ -280,8 +280,8 @@ describe('ActiveGameService', () => {
 
     describe('test message management in the active game', () => {
         it('should add a message to the active game', async () => {
-            // Cas nominal:
-            // Le service devrait ajouter un message à la partie active correspondante à l\'ID fourni et retourner la partie active mise à jour
+            // Nominal case:
+            // The service should add a message to the active game matching the provided ID and return the updated active game
 
             const newMessage: INewMessage = {
                 roomId: 'dummyActiveGameId',
@@ -300,8 +300,8 @@ describe('ActiveGameService', () => {
         });
 
         it('should return an empty array if the active game is not found', async () => {
-            // Cas limite:
-            // L'id de ActiveGame passée à la fonction n'existe pas dans la base de données
+            // Edge case:
+            // The ActiveGame id passed to the function does not exist in the database
             const getActiveGameByIdStub = sinon.stub(activeGameService, 'getActiveGameById');
             getActiveGameByIdStub.resolves(null);
 
@@ -310,8 +310,8 @@ describe('ActiveGameService', () => {
         });
 
         it('should return the messages of the active game', async () => {
-            // Cas nominal:
-            // Le service devrait retourner la liste des messages de la partie active correspondante à l\'ID fourni
+            // Nominal case:
+            // The service should return the list of messages for the active game corresponding to the provided ID
 
             const messages = [
                 {

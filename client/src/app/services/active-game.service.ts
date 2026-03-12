@@ -17,7 +17,6 @@ import { environment } from 'src/environments/environment';
     providedIn: 'root',
 })
 export class ActiveGameService {
-
     timeService: TimeService = inject(TimeService);
 
     httpService = inject(HTTP_CLIENT);
@@ -36,50 +35,44 @@ export class ActiveGameService {
     attackMode = signal(false);
 
     constructor() {
-
         this.socket.connect(Namespaces.Game);
 
-        this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved)
-            .subscribe((playerMove) => {
-                const player = this.getPlayerByName(playerMove.playerId);
-                if (!player) return;
+        this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {
+            const player = this.getPlayerByName(playerMove.playerId);
+            if (!player) return;
 
-                player.positionGrille.x = playerMove.newPosition.x;
-                player.positionGrille.y = playerMove.newPosition.y;
-                player.movementLeft = playerMove.movementLeft;
+            player.positionGrille.x = playerMove.newPosition.x;
+            player.positionGrille.y = playerMove.newPosition.y;
+            player.movementLeft = playerMove.movementLeft;
 
+            this.hasChangedLocation.set(!this.hasChangedLocation());
+        });
+
+        this.socket.on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
+            const index = this.activeGame.players.findIndex((p) => p.name === data.player);
+
+            if (index !== -1) {
+                this.activeGame.players[index].movementLeft = data.movementLeft;
+                this.activeGame.currentPlayerIndex = index;
+                this.currentPlayer.set(index);
                 this.hasChangedLocation.set(!this.hasChangedLocation());
-            });
+            }
+        });
 
-        this.socket.on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted)
-            .subscribe((data) => {
-                const index = this.activeGame.players.findIndex(p => p.name === data.player);
+        this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
+            const defender = this.getPlayerByName(data.defenderName);
+            if (!defender) return;
 
-                if (index !== -1) {
-                    this.activeGame.players[index].movementLeft = data.movementLeft;
-                    this.activeGame.currentPlayerIndex = index;
-                    this.currentPlayer.set(index);
-                    this.hasChangedLocation.set(!this.hasChangedLocation());
-                }
-            });
+            defender.positionGrille.x = data.defenderNewPosition.x;
+            defender.positionGrille.y = data.defenderNewPosition.y;
 
-        this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult)
-            .subscribe((data) => {
+            this.hasChangedLocation.set(!this.hasChangedLocation());
+        });
 
-                const defender = this.getPlayerByName(data.defenderName);
-                if (!defender) return;
-
-                defender.positionGrille.x = data.defenderNewPosition.x;
-                defender.positionGrille.y = data.defenderNewPosition.y;
-
-                this.hasChangedLocation.set(!this.hasChangedLocation());
-            });
-
-        this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
-            .subscribe((data) => {
-                this.activeGame.winner = data.winner;
-                this.activeGame.isFinished = true;
-            });
+        this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
+            this.activeGame.winner = data.winner;
+            this.activeGame.isFinished = true;
+        });
     }
 
     toggleDebugMode(playerName: string) {
@@ -105,17 +98,15 @@ export class ActiveGameService {
     currentPlayer = signal<number>(0);
 
     toggleAttackMode(): void {
-        this.attackMode.update(v => !v);
+        this.attackMode.update((v) => !v);
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
-        return this.activeGame.players.find(player => player.name === playerName);
+        return this.activeGame.players.find((player) => player.name === playerName);
     }
 
     getPlayersAtPosition(row: number, col: number): ICharacter[] {
-        return this.activeGame.players.filter(player =>
-            !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col,
-        );
+        return this.activeGame.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col);
     }
 
     getCurrentPlayer(): ICharacter {
@@ -127,9 +118,9 @@ export class ActiveGameService {
     }
 
     leaveActiveGame(playerName: string): Observable<IActiveGame | null> {
-        // TODO : supprimer le player ou la partie via api ou socket
+        // TODO: remove the player or the game via API or socket
 
-        /* Exemple simple :
+        /* Simple example:
 
         if (activeGameToUpdate.organizerName === playerName) {
             await activeGame.findByIdAndDelete(activeGameId);
@@ -156,7 +147,6 @@ export class ActiveGameService {
     }
 
     updateMovementRange(totalColumns: number, graph: [number, number][][]) {
-
         const player = this.activeGame.players[this.currentPlayer()];
 
         const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
@@ -173,8 +163,6 @@ export class ActiveGameService {
     }
 
     tryMove(rowOffset: number, colOffset: number, totalColumns: number) {
-
-
         const player = this.activeGame.players[this.currentPlayer()];
 
         const newRow = player.positionGrille.y + rowOffset;
@@ -197,7 +185,6 @@ export class ActiveGameService {
     }
 
     attackPlayer(targetPlayerName: string): void {
-
         const attacker = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
@@ -208,7 +195,6 @@ export class ActiveGameService {
         const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
         const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
 
-
         if (dx + dy !== 1) return;
 
         this.socket.emit<IAttackData, void>(Namespaces.Game, SocketEvent.Attack, {
@@ -216,7 +202,6 @@ export class ActiveGameService {
             attackerName: attacker.name,
             defenderName: target.name,
         });
-
 
         this.attackMode.set(false);
     }

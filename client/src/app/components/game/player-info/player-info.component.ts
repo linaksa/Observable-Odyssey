@@ -21,7 +21,7 @@ export class PlayerInfoComponent {
     get player(): ICharacter | undefined {
         const localPlayer = this.localPlayerService.getLocalPlayer();
         if (!localPlayer) return undefined;
-        return this.activeGameService.activeGame?.players.find(p => p.name === localPlayer.name);
+        return this.activeGameService.activeGame?.players.find((p) => p.name === localPlayer.name);
     }
 
     get avatarUrl(): string {
