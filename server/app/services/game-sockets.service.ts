@@ -49,6 +49,12 @@ export class GameSocketsService {
                     return;
                 }
             });
+            socket.on(SocketEvent.PlayerKick, async (data: IAbandonData) => {
+                const { gameId, playerId } = data;
+                await this.activeGameService.kickPlayer(gameId, playerId);
+                this.namespace?.to(gameId).emit(SocketEvent.PlayerKicked, { playerId });
+            });
+
 
             socket.on(SocketEvent.StartGame, async (activeGameId: string) => {
                 const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
@@ -134,29 +140,11 @@ export class GameSocketsService {
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
                 await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
-                const updatedGame = await this.activeGameService.getActiveGameById(gameId);
-                this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
+                // pour notifier tous les autres joueurs que ce joueur a abandonné ( peut etre pas necessaire)
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
-
-
-                // If the organizer leaves during an active game, disable debug mode instead of ending the game
-                const gameHasStarted = updatedGame.turnOrder.length > 0;
-                if (playerId === updatedGame.organizerName && gameHasStarted && updatedGame.isDebugMode) {
-                    updatedGame.isDebugMode = false;
-                    await this.activeGameService.saveActiveGameById(gameId, updatedGame);
-                    this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, playerId);
-                }
-
-                const isCurrentPlayer = updatedGame.turnOrder[updatedGame.currentPlayerIndex] === playerId;
-
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
-                }
-
-                // If it was this player's turn, end it immediately (clears timers; no-op if game is finished)
-                if (isCurrentPlayer) {
-                    await this.gameplayService.turnService.endTurn(gameId);
                 }
             });
 

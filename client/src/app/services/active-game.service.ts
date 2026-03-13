@@ -1,4 +1,5 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { SocketService } from '@app/services/socket.service';
 import { TimeService } from '@app/services/time-service.service';
@@ -12,6 +13,7 @@ import { SocketEvent } from '@common/socket-events';
 import { IAttackData, IDebugTeleportData, IPlayerMoveData } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { LocalPlayerService } from './local-player.service';
 
 @Injectable({
     providedIn: 'root',
@@ -21,10 +23,12 @@ export class ActiveGameService implements OnDestroy {
 
     httpService = inject(HTTP_CLIENT);
     socket = inject(SocketService);
-
+    localPlayer = inject(LocalPlayerService);
     activeGame: IActiveGame;
 
     isLoading = signal(false);
+
+    router = inject(Router);
 
     private _isDebugMode = signal(false);
 
@@ -38,6 +42,7 @@ export class ActiveGameService implements OnDestroy {
 
     attackMode = signal(false);
 
+    private playerKickedSubscription?: Subscription;
     private playerMovedSubscription?: Subscription;
     private turnStartedSubscription?: Subscription;
     private attackResultSubscription?: Subscription;
@@ -91,6 +96,16 @@ export class ActiveGameService implements OnDestroy {
                 player.hasAbandoned = true;
 
                 this.hasAbandonned.set(!this.hasAbandonned());
+            });
+        this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked)
+            .subscribe((data) => {
+                const player = this.getPlayerByName(data.playerId);
+                if (!player) return;
+                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+                if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
+                    this.router.navigate(['/']);
+                }
+
             });
 
         this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
@@ -171,6 +186,13 @@ export class ActiveGameService implements OnDestroy {
         });
     }
 
+    kickPlayer(playerName: string) {
+        this.socket.emit(Namespaces.Game, SocketEvent.PlayerKick, {
+            gameId: this.activeGame._id,
+            playerId: playerName,
+        });
+    }
+
     leaveActiveGameOnUnload(playerName: string, activeGameId: string): void {
         const payload = { activeGameId, playerName };
         const url = `${environment.apiUrl}/activeGame/leave`;
@@ -190,6 +212,7 @@ export class ActiveGameService implements OnDestroy {
         this.playerMovedSubscription?.unsubscribe();
         this.turnStartedSubscription?.unsubscribe();
         this.attackResultSubscription?.unsubscribe();
+        this.playerKickedSubscription?.unsubscribe();
         this.playerAbandonedSubscription?.unsubscribe();
         this.gameEndedSubscription?.unsubscribe();
         this.setActiveGameSubscription?.unsubscribe();
@@ -245,7 +268,7 @@ export class ActiveGameService implements OnDestroy {
             },
         };
 
-        this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove,  moveData );
+        this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove, moveData);
     }
 
     abandonGame(playerName: string): void {
