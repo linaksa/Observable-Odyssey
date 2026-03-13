@@ -271,6 +271,8 @@ describe('ActiveGameService', () => {
 
             expect(findStub.calledOnce).to.equal(true);
             expect(findStub.firstCall.args[0]).to.deep.equal({
+                isFinished: false,
+                turnOrder: { $size: 0 },
                 $expr: {
                     $lt: [{ $size: '$players' }, '$maxPlayerCount'],
                 },

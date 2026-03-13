@@ -60,6 +60,12 @@ export class CharacterFormService {
         }),
     });
 
+    initializeForm(): void {
+        this.characterForm.reset();
+        this.isLoading.set(false);
+        this.errors.set(null);
+    }
+
     get lifePoints(): number {
         let life = DEFAULT_PLAYER_LIFE_POINTS;
         if (this.characterForm.get('bonusType')?.value === BonusType.Life) {

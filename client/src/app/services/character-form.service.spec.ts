@@ -125,4 +125,19 @@ describe('CharacterFormService', () => {
             jasmine.any(Object),
         );
     });
+
+    it('should initialize form correctly', () => {
+        // Nominal case
+        // Validate that initializeForm resets the form and sets loading and error states to default values
+
+        service.characterForm.controls.playerName.setValue('Test');
+        service.isLoading.set(true);
+        service.errors.set('Error');
+
+        service.initializeForm();
+
+        expect(service.characterForm.controls.playerName.value).toBe('');
+        expect(service.isLoading()).toBeFalse();
+        expect(service.errors()).toBeNull();
+    });
 });

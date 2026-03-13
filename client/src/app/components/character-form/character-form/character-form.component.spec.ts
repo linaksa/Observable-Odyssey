@@ -53,7 +53,7 @@ describe('CharacterFormComponent', () => {
         };
         TestBed.overrideComponent(CharacterFormComponent, overrideInfo);
 
-        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', [], {
+        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', ['initializeForm'], {
             unavailableAvatars: signal([]),
             lifePoints: dummyPointsValue,
             speedPoints: dummyPointsValue,
@@ -82,6 +82,10 @@ describe('CharacterFormComponent', () => {
         component = fixture.componentInstance;
 
         fixture.detectChanges();
+    });
+
+    it('should initialize the form on ngOnInit', () => {
+        expect(characterFormServiceSpy.initializeForm).toHaveBeenCalled();
     });
 
     it('should not emit submitForm if the form is invalid', () => {

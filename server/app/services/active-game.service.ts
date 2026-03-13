@@ -130,6 +130,8 @@ export class ActiveGameService {
 
     async fetchJoinableActiveGames(): Promise<IActiveGame[]> {
         return await activeGameModel.find({
+            isFinished: false,
+            turnOrder: { $size: 0 },
             $expr: {
                 $lt: [{ $size: '$players' }, '$maxPlayerCount'],
             },

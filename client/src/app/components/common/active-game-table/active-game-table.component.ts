@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
 })
 export class ActiveGameTableComponent implements OnInit, OnDestroy {
     private readonly socketService = inject(SocketService);
-    activeGameTableService = inject(ActiveGameTableService);
+    protected activeGameTableService = inject(ActiveGameTableService);
     private socketNamespace = Namespaces.ActiveGameAdmin;
 
     private socketSubscription: Subscription;

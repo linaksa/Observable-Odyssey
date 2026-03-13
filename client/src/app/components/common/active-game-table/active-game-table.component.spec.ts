@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 
 import { ActiveGameTableService } from '@app/services/active-game-table.service';
 import { SocketService } from '@app/services/socket.service';
@@ -65,7 +65,7 @@ describe('ActiveGameTableComponent', () => {
   it('should unsubscribe on destroy', () => {
     component.ngOnInit();
 
-    const unsubscribeSpy = spyOn(component['socketSubscription'], 'unsubscribe');
+    const unsubscribeSpy = spyOn(component['socketSubscription'] as Subscription, 'unsubscribe');
 
     component.ngOnDestroy();
     expect(unsubscribeSpy).toHaveBeenCalled();

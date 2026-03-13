@@ -65,7 +65,7 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
 
         this.gameService.getActiveGameById(this.activeGameId).subscribe({
             next: (activeGame) => {
-                this.characterFormService.unavailableAvatars.set(activeGame.players.map((player) => player.avatar) || []);
+                this.characterFormService.unavailableAvatars.set(activeGame.players.map((player) => player.avatar));
             },
         });
     }
