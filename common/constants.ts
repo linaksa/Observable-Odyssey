@@ -56,7 +56,7 @@ export const PLAYER_NAME_MAX_LENGTH = 20;
 export const PRIX_PORTE_GAZON = 1;
 export const PRIX_GLACE = 0;
 export const PRIX_EAU = 1;
-
+export const TEMPS_ECRAN_FIN_PARTIE = 5000;
 export const DEFAULT_PLAYER_LIFE_POINTS = 6;
 export const DEFAULT_PLAYER_SPEED_POINTS = 6;
 export const DEFAULT_PLAYER_ATTACK_POINTS = 4;

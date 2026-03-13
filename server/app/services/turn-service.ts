@@ -27,10 +27,13 @@ export class TurnService {
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
+        if (activeGame.isFinished) {
+            return;
+        }
         // If the scheduled player has since abandoned, skip their turn immediately
         if (player.hasAbandoned) {
             await this.endTurn(gameId);
-            return;
+
         }
 
         // Always clear old timers before creating new ones.
@@ -54,6 +57,10 @@ export class TurnService {
     private async beginTurn(gameId: string) {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return;
+
+        if (activeGame.isFinished) {
+            return;
+        }
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
@@ -89,28 +96,37 @@ export class TurnService {
         this.clearPreparationTimer(gameId);
         this.clearTurnTimer(gameId);
 
-        if (activeGame.isFinished) return;
-
-        // Advance to the next non-abandoned player
-        const totalPlayers = activeGame.turnOrder.length;
-        let nextIndex = (activeGame.currentPlayerIndex + 1) % totalPlayers;
-        for (let i = 0; i < totalPlayers; i++) {
-            const candidateName = activeGame.turnOrder[nextIndex];
-            const candidate = activeGame.players.find((p) => p.name === candidateName);
-            if (candidate && !candidate.hasAbandoned) break;
-            nextIndex = (nextIndex + 1) % totalPlayers;
+        if (activeGame.isFinished) {
+            return;
         }
+
+        const totalPlayers = activeGame.turnOrder.length;
+
+        let nextIndex = activeGame.currentPlayerIndex;
+        for (let i = 0; i < totalPlayers; i++) {
+            nextIndex = (nextIndex + 1) % totalPlayers;
+
+            const playerName = activeGame.turnOrder[nextIndex];
+            const player = activeGame.players.find((p) => p.name === playerName);
+
+            if (player && !player.hasAbandoned) {
+                break;
+            }
+        }
+
         activeGame.currentPlayerIndex = nextIndex;
 
-        // Reset movement points for the next player
-        const nextPlayer = activeGame.players.find((p) => p.name === activeGame.turnOrder[activeGame.currentPlayerIndex]);
+        const nextPlayer = activeGame.players.find(
+            (p) => p.name === activeGame.turnOrder[nextIndex],
+        );
+
         if (nextPlayer) {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;
         }
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
-        this.startTurn(gameId); // move to the next player's turn
+        this.startTurn(gameId);
     }
 
     private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {

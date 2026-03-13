@@ -42,6 +42,8 @@ export class GameComponent implements OnInit {
         effect(() => {
             this.activeGameService.currentPlayer();
             this.activeGameService.hasChangedLocation();
+            this.activeGameService.hasAbandonned();
+            this.activeGameService.gameHasEnded();
             this.activeGameService.updateMovementRange(this.totalColumns, this.graph);
         });
     }

@@ -32,6 +32,10 @@ export class ActiveGameService {
 
     hasChangedLocation = signal(false);
 
+    hasAbandonned = signal(false);
+
+    gameHasEnded = signal(false);
+
     attackMode = signal(false);
 
     constructor() {
@@ -60,19 +64,33 @@ export class ActiveGameService {
         });
 
         this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
+            const attacker = this.getPlayerByName(data.attackerName);
             const defender = this.getPlayerByName(data.defenderName);
-            if (!defender) return;
+            if (!defender || !attacker) return;
 
+            attacker.victories = data.attackerVictories;
             defender.positionGrille.x = data.defenderNewPosition.x;
             defender.positionGrille.y = data.defenderNewPosition.y;
 
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
+        this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned)
+            .subscribe((data) => {
+                const player = this.getPlayerByName(data.playerId);
+                if (!player) return;
 
-        this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
-            this.activeGame.winner = data.winner;
-            this.activeGame.isFinished = true;
-        });
+                player.hasAbandoned = true;
+
+                this.hasAbandonned.set(!this.hasAbandonned());
+            });
+
+        this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
+            .subscribe((data) => {
+                this.activeGame.winner = data.winner;
+                this.activeGame.isFinished = true;
+
+                this.gameHasEnded.set(!this.gameHasEnded());
+            });
     }
 
     toggleDebugMode(playerName: string) {
@@ -181,6 +199,13 @@ export class ActiveGameService {
                 x: newCol,
                 y: newRow,
             },
+        });
+    }
+
+    abandonGame(playerName: string): void {
+        this.socket.emit(Namespaces.Game, SocketEvent.PlayerAbandon, {
+            gameId: this.activeGame._id,
+            playerId: playerName,
         });
     }
 
