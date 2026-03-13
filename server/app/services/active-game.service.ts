@@ -101,6 +101,9 @@ export class ActiveGameService {
     async saveActiveGameById(activeGameId: string, update: Partial<IActiveGame>): Promise<IActiveGame | null> {
         return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
     }
+    async deleteGameById(activeGameId: string): Promise<void> {
+        return await activeGameModel.findByIdAndDelete(activeGameId);
+    }
 
     async addMessageToGame(newMessage: INewMessage): Promise<IActiveGame | null> {
         const message: IMessage = {
@@ -109,6 +112,14 @@ export class ActiveGameService {
             author: newMessage.author,
         };
         return await activeGameModel.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { returnDocument: 'after' });
+    }
+    async kickPlayer(gameId: string, playerName: string): Promise<void> {
+        const activeGame = await this.getActiveGameById(gameId);
+        if (!activeGame) return null;
+        activeGame.players = activeGame.players.filter(
+            (player) => player.name !== playerName,
+        );
+        await this.saveActiveGameById(gameId, activeGame);
     }
 
     async getMessagesFromGame(id: string): Promise<IMessage[]> {

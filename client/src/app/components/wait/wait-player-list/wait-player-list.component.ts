@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, InputSignal } from '@angular/core';
+import { Component, inject, input, InputSignal } from '@angular/core';
+import { ActiveGameService } from '@app/services/active-game.service';
 import { ICharacter } from '@common/character';
 
 @Component({
@@ -8,6 +9,7 @@ import { ICharacter } from '@common/character';
     templateUrl: './wait-player-list.component.html',
 })
 export class WaitPlayerListComponent {
+    activeGameService = inject(ActiveGameService);
     players: InputSignal<ICharacter[]> = input.required<ICharacter[]>();
     localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
     organizerName: InputSignal<string> = input.required<string>();
@@ -22,12 +24,16 @@ export class WaitPlayerListComponent {
         return !!local && this.isOrganizer(local.name);
     }
 
-    isOrganizer(playerName: string): boolean {
+    isOrganizer(playerName: string | undefined): boolean {
         return playerName === this.organizerName();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     kickPlayer(playerName: string): void {
-        // TODO: kick the player via API or socket
+        const localName = this.localPlayer()?.name;
+        if (this.isOrganizer(localName)) {
+            this.activeGameService.kickPlayer(playerName);
+        }
+
     }
 }
