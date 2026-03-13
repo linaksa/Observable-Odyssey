@@ -102,10 +102,6 @@ export class ActiveGameService {
         return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
     }
 
-    async getAllActiveGames(): Promise<IActiveGame[]> {
-        return await activeGameModel.find();
-    }
-
     async addMessageToGame(newMessage: INewMessage): Promise<IActiveGame | null> {
         const message: IMessage = {
             postedAt: new Date(),

@@ -1,13 +1,13 @@
-import { NgClass } from '@angular/common';
-import { Component, input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
 
 @Component({
     selector: 'app-attribute-display',
-    imports: [NgClass],
+    imports: [CommonModule],
     templateUrl: './attribute-display.component.html',
 })
 export class AttributeDisplayComponent {
-    name = input.required<string>();
-    value = input.required<number | string>();
-    bgColor = input.required<string>();
+    @Input() name: string;
+    @Input() value: number | string;
+    @Input() bgColor: string;
 }

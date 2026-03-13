@@ -1,12 +1,10 @@
 @for (avatar of availableAvatars; track $index) {
-    <button
-        class="relative w-16 h-auto aspect-square rounded-full overflow-hidden"
-        [ngClass]="selectedAvatar === avatar ? 'outline-4 outline-blue-600' : ''"
-        (click)="selectAvatar(avatar)"
-    >
-        <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover" />
-        @if (selectedAvatar === avatar) {
-            <div class="absolute inset-0 bg-blue-600/30"></div>
-        }
-    </button>
+<button class="relative w-16 h-auto aspect-square rounded-full overflow-hidden"
+    [ngClass]="selectedAvatar === avatar ? 'outline-4 outline-blue-600' : ''" (click)="selectAvatar(avatar)">
+    <img [src]="getImageForAvatar(avatar)" [alt]="avatar" class="h-full w-full object-cover"
+        [class.opacity-25]="unavailableAvatars.includes(avatar)" />
+    @if (selectedAvatar === avatar) {
+    <div class="absolute inset-0 bg-blue-600/30"></div>
+    }
+</button>
 }

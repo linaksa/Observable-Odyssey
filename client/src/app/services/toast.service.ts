@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-
-const DEFAULT_TOAST_DURATION_MS = 4000;
+import { DEFAULT_TOAST_DURATION_MS } from '@app/constants/utils';
 
 @Injectable({
     providedIn: 'root',
@@ -17,6 +16,10 @@ export class ToastService {
     showWithDuration(message: string, durationMs: number) {
         this.toastMessage.set(message);
         this.showToast.set(true);
+
+        if (this.toastTimeoutId) {
+            clearTimeout(this.toastTimeoutId);
+        }
 
         this.toastTimeoutId = setTimeout(() => {
             this.hide();
