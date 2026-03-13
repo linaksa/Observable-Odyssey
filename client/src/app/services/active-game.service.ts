@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { SocketService } from '@app/services/socket.service';
 import { TimeService } from '@app/services/time-service.service';
@@ -10,13 +10,13 @@ import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { IAttackData, IDebugTeleportData, IPlayerMoveData } from '@common/socket-payloads';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root',
 })
-export class ActiveGameService {
+export class ActiveGameService implements OnDestroy {
     timeService: TimeService = inject(TimeService);
 
     httpService = inject(HTTP_CLIENT);
@@ -38,10 +38,17 @@ export class ActiveGameService {
 
     attackMode = signal(false);
 
+    private playerMovedSubscription?: Subscription;
+    private turnStartedSubscription?: Subscription;
+    private attackResultSubscription?: Subscription;
+    private playerAbandonedSubscription?: Subscription;
+    private gameEndedSubscription?: Subscription;
+    private setActiveGameSubscription?: Subscription;
+
     constructor() {
         this.socket.connect(Namespaces.Game);
 
-        this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {
+        this.playerMovedSubscription = this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {
             const player = this.getPlayerByName(playerMove.playerId);
             if (!player) return;
 
@@ -52,18 +59,20 @@ export class ActiveGameService {
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
 
-        this.socket.on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
-            const index = this.activeGame.players.findIndex((p) => p.name === data.player);
+        this.turnStartedSubscription = this.socket
+            .on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted)
+            .subscribe((data) => {
+                const index = this.activeGame.players.findIndex((p) => p.name === data.player);
 
-            if (index !== -1) {
-                this.activeGame.players[index].movementLeft = data.movementLeft;
-                this.activeGame.currentPlayerIndex = index;
-                this.currentPlayer.set(index);
-                this.hasChangedLocation.set(!this.hasChangedLocation());
-            }
-        });
+                if (index !== -1) {
+                    this.activeGame.players[index].movementLeft = data.movementLeft;
+                    this.activeGame.currentPlayerIndex = index;
+                    this.currentPlayer.set(index);
+                    this.hasChangedLocation.set(!this.hasChangedLocation());
+                }
+            });
 
-        this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
+        this.attackResultSubscription = this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
             const attacker = this.getPlayerByName(data.attackerName);
             const defender = this.getPlayerByName(data.defenderName);
             if (!defender || !attacker) return;
@@ -74,7 +83,7 @@ export class ActiveGameService {
 
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
-        this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned)
+        this.playerAbandonedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned)
             .subscribe((data) => {
                 const player = this.getPlayerByName(data.playerId);
                 if (!player) return;
@@ -84,7 +93,7 @@ export class ActiveGameService {
                 this.hasAbandonned.set(!this.hasAbandonned());
             });
 
-        this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
+        this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
             .subscribe((data) => {
                 this.activeGame.winner = data.winner;
                 this.activeGame.isFinished = true;
@@ -100,14 +109,20 @@ export class ActiveGameService {
 
     setActiveGame(id: string): void {
         this.isLoading.set(true);
-        this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
+        this.setActiveGameSubscription?.unsubscribe();
+        this.setActiveGameSubscription = this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
             next: (game) => {
                 this.activeGame = game;
 
                 this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
             },
+            error: () => {
+                this.isLoading.set(false);
+                this.setActiveGameSubscription = undefined;
+            },
             complete: () => {
                 this.isLoading.set(false);
+                this.setActiveGameSubscription = undefined;
             },
         });
     }
@@ -152,6 +167,30 @@ export class ActiveGameService {
             activeGameId: this.activeGame._id,
             playerName,
         });
+    }
+
+    leaveActiveGameOnUnload(playerName: string, activeGameId: string): void {
+        const payload = { activeGameId, playerName };
+        const url = `${environment.apiUrl}/activeGame/leave`;
+        const headers = new Headers();
+        headers.set('Content-Type', 'application/json');
+
+        // keepalive allows the browser to continue sending during unload/refresh.
+        void fetch(url, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(payload),
+            keepalive: true,
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.playerMovedSubscription?.unsubscribe();
+        this.turnStartedSubscription?.unsubscribe();
+        this.attackResultSubscription?.unsubscribe();
+        this.playerAbandonedSubscription?.unsubscribe();
+        this.gameEndedSubscription?.unsubscribe();
+        this.setActiveGameSubscription?.unsubscribe();
     }
 
     updatePlayers(players: ICharacter[]): void {

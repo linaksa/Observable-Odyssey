@@ -1,16 +1,19 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { IExistingGame, Visibility } from '@common/game';
+import { Subscription } from 'rxjs';
 import { GameService } from './game.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class GameTableService {
-    gameService: GameService = inject(GameService);
+    private readonly gameService: GameService = inject(GameService);
+    private gameServiceSubscription?: Subscription;
 
     tableData: IExistingGame[] = [];
 
     isLoading = signal(false);
+
 
     fetchGames(onlyVisible = false): void {
         this.isLoading.set(true);
@@ -22,5 +25,9 @@ export class GameTableService {
                 this.isLoading.set(false);
             },
         });
+    }
+
+    onDestroy() {
+        this.gameServiceSubscription?.unsubscribe();
     }
 }

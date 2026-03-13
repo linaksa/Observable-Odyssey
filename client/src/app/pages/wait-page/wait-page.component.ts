@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -38,6 +38,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     private playersUpdatedSubscription?: Subscription;
     private startGameSubscription?: Subscription;
+    private gameEndedSubscription?: Subscription;
     private routeSubscription?: Subscription;
 
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
@@ -46,6 +47,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     localPlayer?: ICharacter;
     showButton: boolean = false;
     private gameStarted: boolean = false;
+    private hasRequestedLeave = false;
 
     constructor() {
         effect(() => {
@@ -82,6 +84,15 @@ export class WaitPageComponent implements OnInit, OnDestroy {
                     this.router.navigate(['/play', startedGameId]);
                 },
             });
+
+            this.gameEndedSubscription?.unsubscribe();
+            this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
+                next: () => {
+                    this.hasRequestedLeave = true;
+                    this.localPlayerService.clear();
+                    this.router.navigate(['/home']);
+                },
+            });
         });
     }
 
@@ -89,21 +100,35 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.routeSubscription?.unsubscribe();
         this.playersUpdatedSubscription?.unsubscribe();
         this.startGameSubscription?.unsubscribe();
+        this.gameEndedSubscription?.unsubscribe();
 
+        this.leaveActiveGameIfNeeded();
+    }
+
+    @HostListener('window:pagehide')
+    onPageHide(): void {
+        this.leaveActiveGameIfNeeded();
+    }
+
+    private leaveActiveGameIfNeeded(): void {
         if (this.gameStarted) {
             return;
         }
 
-        const localPlayerName = this.localPlayer?.name;
+        if (this.hasRequestedLeave) {
+            return;
+        }
+
+        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
         const activeGameId = this.activeGameService.activeGame?._id;
 
         if (!localPlayerName || !activeGameId) {
             return;
         }
 
-        this.activeGameService.leaveActiveGame(localPlayerName).subscribe({
-            complete: () => this.localPlayerService.clear(),
-        });
+        this.hasRequestedLeave = true;
+        this.activeGameService.leaveActiveGameOnUnload(localPlayerName, activeGameId);
+        this.localPlayerService.clear();
     }
 
     private initializeActiveGameData(): void {

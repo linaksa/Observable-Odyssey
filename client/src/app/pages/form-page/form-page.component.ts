@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackNavigationComponent } from '@app/components/character-form/back-navigation/back-navigation.component';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
@@ -8,13 +8,14 @@ import { CharacterFormService } from '@app/services/character-form.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { ToastService } from '@app/services/toast.service';
 import { CharacterFormData } from '@common/character';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-form-page',
     imports: [FormPageHeaderComponent, BackNavigationComponent, CharacterFormComponent, ToastComponent],
     templateUrl: './form-page.component.html',
 })
-export class FormPageComponent implements OnInit {
+export class FormPageComponent implements OnInit, OnDestroy {
     characterFormService = inject(CharacterFormService);
     toastService = inject(ToastService);
     localPlayerService = inject(LocalPlayerService);
@@ -22,11 +23,16 @@ export class FormPageComponent implements OnInit {
     router = inject(ActivatedRoute);
     navigator = inject(Router);
     gameId: string | null = null;
+    private routeSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.router.params.subscribe((params) => {
+        this.routeSubscription = this.router.params.subscribe((params) => {
             this.gameId = params.gameId || null;
         });
+    }
+
+    ngOnDestroy(): void {
+        this.routeSubscription?.unsubscribe();
     }
 
     submitCharacterForm(formData: CharacterFormData): void {

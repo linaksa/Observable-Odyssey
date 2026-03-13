@@ -19,6 +19,8 @@ import { Subscription } from 'rxjs';
 })
 export class GameTableComponent implements OnInit, OnDestroy {
     private socketSubscription?: Subscription;
+    private deleteGameSubscription?: Subscription;
+
     private readonly adminService: AdministrationService = inject(AdministrationService);
     private readonly gameService: GameService = inject(GameService);
     private readonly toastService = inject(ToastService);
@@ -82,9 +84,9 @@ export class GameTableComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.socketSubscription) {
-            this.socketSubscription.unsubscribe();
-        }
+        this.socketSubscription?.unsubscribe();
+        this.deleteGameSubscription?.unsubscribe();
+
         this.adminSocketService.disconnect();
         if (this.toastService.toastTimeoutId) {
             clearTimeout(this.toastService.toastTimeoutId);

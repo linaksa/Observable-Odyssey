@@ -21,6 +21,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
     private readonly timeout = 0;
 
     private routeSubscription?: Subscription;
+    private gameServiceSubscription?: Subscription;
 
     editedGame: IExistingGame;
     showButton: boolean = false;
@@ -28,7 +29,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.initializeButtonTimeout();
 
-        this.route.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.subscribe((params) => {
             if (params.gameId === 'creation') {
                 if (this.gameService.gameUnderCreation) {
                     this.editedGame = this.gameService.gameUnderCreation;
@@ -50,7 +51,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
                     };
                 }
             } else {
-                this.gameService.getGameById(params.gameId).subscribe((game) => {
+                this.gameServiceSubscription = this.gameService.getGameById(params.gameId).subscribe((game) => {
                     this.editedGame = game;
                 });
             }
@@ -65,5 +66,6 @@ export class EditionPageComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
+        this.gameServiceSubscription?.unsubscribe();
     }
 }
