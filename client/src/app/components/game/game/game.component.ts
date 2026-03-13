@@ -21,7 +21,7 @@ export class GameComponent implements OnInit {
     protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
 
-    private get isLocalPlayerTurn(): boolean {
+    protected get isLocalPlayerTurn(): boolean {
         const localPlayer = this.localPlayerService.getLocalPlayer();
         if (!localPlayer) return false;
         const currentPlayer = this.activeGameService.getCurrentPlayer();

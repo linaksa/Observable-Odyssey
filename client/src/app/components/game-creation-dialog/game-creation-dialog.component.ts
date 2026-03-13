@@ -6,7 +6,7 @@ import { GridSize } from '@app/constants/grid-edition';
 import { GameService } from '@app/services/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 
 enum DimensionSize {
     Small = 'small',
@@ -37,8 +37,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
     private readonly destroy$ = new Subject<void>();
     private readonly router = inject(Router);
     private readonly gameService = inject(GameService);
-
-    private formSubscription: Subscription;
 
     private readonly dimensionConfigs: Record<DimensionSize, DimensionConfig> = {
         [DimensionSize.Small]: { label: 'Petite', displaySize: '10x10', numberOfPlayers: '2', size: GridSize.SMALL },
@@ -129,7 +127,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.formSubscription.unsubscribe();
         this.destroy$.next();
         this.destroy$.complete();
     }

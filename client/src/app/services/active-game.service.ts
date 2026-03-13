@@ -44,6 +44,7 @@ export class ActiveGameService implements OnDestroy {
 
     private playerKickedSubscription?: Subscription;
     private playerMovedSubscription?: Subscription;
+    private turnPreparingSubscription?: Subscription;
     private turnStartedSubscription?: Subscription;
     private attackResultSubscription?: Subscription;
     private playerAbandonedSubscription?: Subscription;
@@ -64,13 +65,23 @@ export class ActiveGameService implements OnDestroy {
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
 
+        this.turnPreparingSubscription = this.socket.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
+            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
+            if (index !== -1) {
+                this.activeGame.currentPlayerIndex = index;
+                this.currentPlayer.set(index);
+                this.hasChangedLocation.set(!this.hasChangedLocation());
+            }
+        });
+
         this.turnStartedSubscription = this.socket
             .on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted)
             .subscribe((data) => {
-                const index = this.activeGame.players.findIndex((p) => p.name === data.player);
+                const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
+                const currentPlayer = this.getPlayerByName(data.player);
 
-                if (index !== -1) {
-                    this.activeGame.players[index].movementLeft = data.movementLeft;
+                if (index !== -1 && currentPlayer) {
+                    currentPlayer.movementLeft = data.movementLeft;
                     this.activeGame.currentPlayerIndex = index;
                     this.currentPlayer.set(index);
                     this.hasChangedLocation.set(!this.hasChangedLocation());
@@ -128,6 +139,7 @@ export class ActiveGameService implements OnDestroy {
         this.setActiveGameSubscription = this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
             next: (game) => {
                 this.activeGame = game;
+                this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
                 this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
             },
@@ -159,8 +171,9 @@ export class ActiveGameService implements OnDestroy {
         );
     }
 
-    getCurrentPlayer(): ICharacter {
-        return this.activeGame.players[this.currentPlayer()];
+    getCurrentPlayer(): ICharacter | undefined {
+        const currentPlayerName = this.activeGame.turnOrder[this.currentPlayer()];
+        return this.getPlayerByName(currentPlayerName);
     }
 
     getIndex(row: number, column: number, totalColumns: number): number {
@@ -210,6 +223,7 @@ export class ActiveGameService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.playerMovedSubscription?.unsubscribe();
+        this.turnPreparingSubscription?.unsubscribe();
         this.turnStartedSubscription?.unsubscribe();
         this.attackResultSubscription?.unsubscribe();
         this.playerKickedSubscription?.unsubscribe();
@@ -229,8 +243,14 @@ export class ActiveGameService implements OnDestroy {
     }
 
     updateMovementRange(totalColumns: number, graph: [number, number][][]) {
+        if (totalColumns <= 0 || graph.length === 0) {
+            return;
+        }
 
-        const player = this.activeGame.players[this.currentPlayer()];
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return;
+        }
 
         const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
 
@@ -246,9 +266,10 @@ export class ActiveGameService implements OnDestroy {
     }
 
     tryMove(rowOffset: number, colOffset: number, totalColumns: number) {
-
-
-        const player = this.activeGame.players[this.currentPlayer()];
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return;
+        }
 
         const newRow = player.positionGrille.y + rowOffset;
         const newCol = player.positionGrille.x + colOffset;
@@ -284,6 +305,8 @@ export class ActiveGameService implements OnDestroy {
         const attacker = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
+        if (!attacker) return;
+
         if (attacker === target) return;
 
         if (!target) return;
@@ -308,6 +331,9 @@ export class ActiveGameService implements OnDestroy {
 
     debugTeleport(row: number, col: number): void {
         const player = this.getCurrentPlayer();
+        if (!player) {
+            return;
+        }
         this.socket.emit<IDebugTeleportData, void>(Namespaces.Game, SocketEvent.DebugTeleport, {
             gameId: this.activeGame._id,
             playerName: player.name,

@@ -44,8 +44,7 @@ export class GameTurnService {
             return null;
         }
 
-        const player = activeGame.players[activeGame.currentPlayerIndex];
-        return player?.name ?? null;
+        return activeGame.turnOrder[activeGame.currentPlayerIndex] ?? null;
     }
 
     get canEndTurn(): boolean {

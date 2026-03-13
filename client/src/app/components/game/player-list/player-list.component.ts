@@ -12,11 +12,19 @@ import { Avatar } from '@common/constants';
 export class PlayerListComponent {
     protected readonly activeGameService = inject(ActiveGameService);
 
-    buildPlayerAvatarUrl(avatar: Avatar): string {
-        return `./assets/form-page/${avatar}.png`;
+    get orderedPlayers(): ICharacter[] {
+        const { players, turnOrder } = this.activeGameService.activeGame;
+        const playersByName = new Map(players.map((player) => [player.name, player]));
+
+        return turnOrder.map((playerName) => playersByName.get(playerName)).filter((player): player is ICharacter => Boolean(player));
     }
 
-    get currentPlayer(): ICharacter {
-        return this.activeGameService.activeGame.players[this.activeGameService.activeGame.currentPlayerIndex];
+    get currentPlayerName(): string | undefined {
+        const currentPlayerIndex = this.activeGameService.currentPlayer();
+        return this.activeGameService.activeGame.turnOrder[currentPlayerIndex];
+    }
+
+    buildPlayerAvatarUrl(avatar: Avatar): string {
+        return `./assets/form-page/${avatar}.png`;
     }
 }
