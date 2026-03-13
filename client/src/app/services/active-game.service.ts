@@ -135,11 +135,13 @@ export class ActiveGameService implements OnDestroy {
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
-        return this.activeGame.players.find((player) => player.name === playerName);
+        return this.activeGame.players.find(player => player.name === playerName);
     }
 
     getPlayersAtPosition(row: number, col: number): ICharacter[] {
-        return this.activeGame.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col);
+        return this.activeGame.players.filter(player =>
+            !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col,
+        );
     }
 
     getCurrentPlayer(): ICharacter {
@@ -204,6 +206,7 @@ export class ActiveGameService implements OnDestroy {
     }
 
     updateMovementRange(totalColumns: number, graph: [number, number][][]) {
+
         const player = this.activeGame.players[this.currentPlayer()];
 
         const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
@@ -213,13 +216,15 @@ export class ActiveGameService implements OnDestroy {
         this.reachableTiles.clear();
 
         for (let i = 0; i < distances.length; i++) {
-            if (distances[i] <= player.rapidityPoints) {
+            if (distances[i] <= player.movementLeft) {
                 this.reachableTiles.add(i);
             }
         }
     }
 
     tryMove(rowOffset: number, colOffset: number, totalColumns: number) {
+
+
         const player = this.activeGame.players[this.currentPlayer()];
 
         const newRow = player.positionGrille.y + rowOffset;
@@ -231,14 +236,16 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove, {
+        const moveData: IPlayerMoveData = {
             gameId: this.activeGame._id,
             playerId: player.name,
             direction: {
                 x: newCol,
                 y: newRow,
             },
-        });
+        };
+
+        this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove,  moveData );
     }
 
     abandonGame(playerName: string): void {
@@ -248,7 +255,9 @@ export class ActiveGameService implements OnDestroy {
         });
     }
 
+
     attackPlayer(targetPlayerName: string): void {
+
         const attacker = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
@@ -259,13 +268,17 @@ export class ActiveGameService implements OnDestroy {
         const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
         const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
 
+
         if (dx + dy !== 1) return;
 
-        this.socket.emit<IAttackData, void>(Namespaces.Game, SocketEvent.Attack, {
+        const attackData: IAttackData = {
             gameId: this.activeGame._id,
             attackerName: attacker.name,
             defenderName: target.name,
-        });
+        };
+
+        this.socket.emit(Namespaces.Game, SocketEvent.Attack, attackData);
+
 
         this.attackMode.set(false);
     }

@@ -1,27 +1,23 @@
 import { CellType } from '@common/board';
 
 export function buildGraph(board: CellType[][]): [number, number][][] {
+
     const totalRows = board.length;
     const totalColumns = board[0].length;
 
-    const graph: [number, number][][] = Array(totalRows * totalColumns)
-        .fill(null)
-        .map(() => []);
+    const graph: [number, number][][] = Array(totalRows * totalColumns).fill(null).map(() => []);
 
     const getIndex = (row: number, column: number) => row * totalColumns + column;
 
-    const movementDirections = [
-        [1, 0],
-        [-1, 0],
-        [0, 1],
-        [0, -1],
-    ];
+    const movementDirections = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
     for (let currentRow = 0; currentRow < totalRows; currentRow++) {
         for (let currentColumn = 0; currentColumn < totalColumns; currentColumn++) {
+
             const currentNodeIndex = getIndex(currentRow, currentColumn);
 
             for (const [rowOffset, columnOffset] of movementDirections) {
+
                 const neighborRow = currentRow + rowOffset;
                 const neighborColumn = currentColumn + columnOffset;
 
@@ -35,7 +31,10 @@ export function buildGraph(board: CellType[][]): [number, number][][] {
                     continue;
                 }
 
-                graph[currentNodeIndex].push([getIndex(neighborRow, neighborColumn), tileWeight]);
+                graph[currentNodeIndex].push([
+                    getIndex(neighborRow, neighborColumn),
+                    tileWeight,
+                ]);
             }
         }
     }
@@ -44,6 +43,7 @@ export function buildGraph(board: CellType[][]): [number, number][][] {
 }
 
 function getTileCost(tileType: CellType): number {
+
     switch (tileType) {
         case CellType.Empty:
             return 1;
@@ -54,13 +54,13 @@ function getTileCost(tileType: CellType): number {
         case CellType.OpenDoor:
             return 0;
         case CellType.ClosedDoor:
-            return Infinity;
+            return Number.MAX_SAFE_INTEGER;
 
         case CellType.Water:
             return 2;
 
         case CellType.Wall:
-            return Infinity;
+            return Number.MAX_SAFE_INTEGER;
 
         default:
             return 1;

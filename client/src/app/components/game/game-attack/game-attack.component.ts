@@ -8,6 +8,7 @@ import { GameTurnService } from '@app/services/game-turn.service';
     templateUrl: './game-attack.component.html',
 })
 export class GameAttackComponent {
+
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly gameTurnService: GameTurnService = inject(GameTurnService);
 
