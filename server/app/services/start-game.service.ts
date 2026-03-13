@@ -1,5 +1,5 @@
 import { IActiveGame } from '@common/activeGame';
-import { Position } from '@common/character';
+import { ICharacter, Position } from '@common/character';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
@@ -26,7 +26,27 @@ export class StartGameService {
     }
     // Logic to determine the turn order
     private initializeTurnOrder(activeGame: IActiveGame): void {
-        activeGame.turnOrder = [...activeGame.players].sort((a, b) => b.rapidityPoints - a.rapidityPoints).map((player) => player.name);
+        const playersByRapidity = [...activeGame.players].sort((a, b) => b.rapidityPoints - a.rapidityPoints);
+
+        // Shuffle only tie groups so higher rapidity always stays first.
+        for (let i = 0; i < playersByRapidity.length;) {
+            let j = i + 1;
+            while (j < playersByRapidity.length && playersByRapidity[j].rapidityPoints === playersByRapidity[i].rapidityPoints) {
+                j++;
+            }
+
+            this.shuffleInPlace(playersByRapidity, i, j);
+            i = j;
+        }
+
+        activeGame.turnOrder = playersByRapidity.map((player) => player.name);
+    }
+
+    private shuffleInPlace(players: ICharacter[], start: number, end: number): void {
+        for (let i = end - 1; i > start; i--) {
+            const j = start + Math.floor(Math.random() * (i - start + 1));
+            [players[i], players[j]] = [players[j], players[i]];
+        }
     }
     // Retrieves all possible spawn positions on the map
     private getSpawnTiles(activeGame: IActiveGame): Position[] {

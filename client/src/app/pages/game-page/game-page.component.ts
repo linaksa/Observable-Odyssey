@@ -77,7 +77,6 @@ export class GamePageComponent implements OnInit, OnDestroy {
         this.routeSubscription?.unsubscribe();
         this.playersSubscription?.unsubscribe();
         this.gameTurnService.destroy();
-        this.socketService.disconnect(Namespaces.Game);
     }
 
     get currentPlayerName(): string | null {
