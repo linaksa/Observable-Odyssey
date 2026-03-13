@@ -16,11 +16,19 @@ export class EndGameService {
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
+        // If the organizer abandoned before the game started (still on wait page), cancel the game
+        const organizerAbandoned = activeGame.players.find((p) => p.name === activeGame.organizerName && p.hasAbandoned);
+        if (organizerAbandoned && activeGame.turnOrder.length === 0) {
+            activeGame.isFinished = true;
+            activeGame.winner = null;
+            await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+            return true;
+        }
         // If only one active player remains, end the game
         const activePlayers = activeGame.players.filter((p) => !p.hasAbandoned);
         if (activePlayers.length === ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
             activeGame.isFinished = true;
-            activeGame.winner = null;
+            activeGame.winner = null; // No clear winner, all other players have abandoned
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }

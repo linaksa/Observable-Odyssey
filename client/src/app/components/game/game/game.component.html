@@ -6,7 +6,7 @@
     >
         @for (row of activeGameService.activeGame.game.board.cells; track $index; let rowIndex = $index) {
             @for (cell of row; track $index; let colIndex = $index) {
-                <div class="relative w-full h-full">
+                <div class="relative w-full h-full" (contextmenu)="onCellRightClick(rowIndex, colIndex, cell); $event.preventDefault()">
                     @if (this.activeGameService.reachableTiles.has(this.activeGameService.getIndex(rowIndex, colIndex, this.totalColumns))) {
                         <div class="absolute inset-0 bg-blue-400/40 z-10"></div>
                     }

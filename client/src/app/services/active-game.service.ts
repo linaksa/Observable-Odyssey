@@ -9,7 +9,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IPlayerMoveData } from '@common/socket-payloads';
+import { IAttackData, IDebugTeleportData, IPlayerMoveData } from '@common/socket-payloads';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -229,5 +229,14 @@ export class ActiveGameService {
         });
 
         this.attackMode.set(false);
+    }
+
+    debugTeleport(row: number, col: number): void {
+        const player = this.getCurrentPlayer();
+        this.socket.emit<IDebugTeleportData, void>(Namespaces.Game, SocketEvent.DebugTeleport, {
+            gameId: this.activeGame._id,
+            playerName: player.name,
+            target: { x: col, y: row },
+        });
     }
 }

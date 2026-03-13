@@ -112,7 +112,7 @@ export class ActiveGameService {
             content: newMessage.content,
             author: newMessage.author,
         };
-        return await activeGameModel.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { new: true });
+        return await activeGameModel.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { returnDocument: 'after' });
     }
 
     async getMessagesFromGame(id: string): Promise<IMessage[]> {

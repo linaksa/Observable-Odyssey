@@ -87,4 +87,18 @@ export class GameComponent implements OnInit {
 
         this.activeGameService.attackMode.set(false);
     }
+
+    onCellRightClick(rowIndex: number, colIndex: number, cellType: CellType): void {
+        if (!this.activeGameService.isDebugMode()) return;
+        if (!this.isLocalPlayerTurn) return;
+        if (!this.isTeleportableCell(rowIndex, colIndex, cellType)) return;
+        this.activeGameService.debugTeleport(rowIndex, colIndex);
+    }
+
+    private isTeleportableCell(row: number, col: number, cellType: CellType): boolean {
+        if (cellType === CellType.Wall || cellType === CellType.ClosedDoor) return false;
+        if (this.boardSharedService.getObjectAt(row, col, this.activeGameService.activeGame.game.board.items)) return false;
+        if (this.activeGameService.getPlayersAtPosition(row, col).length > 0) return false;
+        return true;
+    }
 }
