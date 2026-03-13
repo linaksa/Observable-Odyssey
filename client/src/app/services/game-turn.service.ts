@@ -49,12 +49,18 @@ export class GameTurnService {
     }
 
     get canEndTurn(): boolean {
-        if (this._isTurnPreparing) {
-            return false;
+        if (this._isTurnPreparing) return false;
+
+        const localPlayer = this.localPlayerService.getLocalPlayer();
+        if (!localPlayer) return false;
+
+        // In debug mode, the organizer can end any active player's turn
+        if (this.activeGameService.isDebugMode()) {
+            const activeGame = this.activeGameService.activeGame;
+            if (activeGame?.organizerName === localPlayer.name) return true;
         }
 
-        const localPlayerName = this.localPlayerService.getLocalPlayer()?.name;
-        return !!localPlayerName && localPlayerName === this.currentPlayerName;
+        return localPlayer.name === this.currentPlayerName;
     }
 
     // Registers socket listeners once for the turn lifecycle

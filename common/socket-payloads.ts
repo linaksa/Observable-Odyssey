@@ -22,6 +22,12 @@ export interface IAbandonData {
     playerId: string;
 }
 
+export interface IDebugTeleportData {
+    gameId: string;
+    playerName: string;
+    target: Position;
+}
+
 export interface ISocketData {
     playerNamesByGameId?: Record<string, string>;
 }
