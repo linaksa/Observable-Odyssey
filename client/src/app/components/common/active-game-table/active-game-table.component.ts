@@ -3,8 +3,6 @@ import { RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { ActiveGameTableService } from '@app/services/active-game-table.service';
 import { SocketService } from '@app/services/socket.service';
-import { IActiveGame } from '@common/activeGame';
-import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subscription } from 'rxjs/internal/Subscription';
@@ -36,9 +34,5 @@ export class ActiveGameTableComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.socketSubscription?.unsubscribe();
-    }
-
-    getMaxPlayerCountForGame(activeGame: IActiveGame): number {
-        return BOARD_SIZE_TO_PLAYER_COUNT[activeGame.game.board.cells.length] || 0;
     }
 }

@@ -14,7 +14,7 @@
                         <span class="text-2xl font-black text-white">{{ element.game.gameTitle }}</span>
                         <span class="">Mode : {{ element.game.gameMode }}</span>
                         <span class="">Taille : {{ element.game.board.cells.length }}×{{ element.game.board.cells[0].length }}</span>
-                        <span class="">Joueurs : {{ element.players.length }} / {{ getMaxPlayerCountForGame(element) }}</span>
+                        <span class="">Joueurs : {{ element.players.length }} / {{ element.maxPlayerCount }}</span>
                     </div>
                 </section>
 

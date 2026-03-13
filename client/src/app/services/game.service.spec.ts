@@ -110,6 +110,44 @@ describe('GameService', () => {
         expect(httpSpy.delete).toHaveBeenCalledWith(`${dummyBaseURL}/games/${gamesMock._id}`, jasmine.any(Object));
     });
 
+    it('should call correct end point with function getActiveGameById', () => {
+        httpSpy.get.and.returnValue(of());
+
+        const activeGameId = '1';
+        service.getActiveGameById(activeGameId);
+
+        expect(httpSpy.get).toHaveBeenCalled();
+        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/${activeGameId}`);
+    });
+
+    it('should call correct end point with function fetchJoinableActiveGames', () => {
+        httpSpy.get.and.returnValue(of());
+
+        service.fetchJoinableActiveGames();
+
+        expect(httpSpy.get).toHaveBeenCalled();
+        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/joinable`);
+    });
+
+    it('should call correct end point with function getActiveGameById', () => {
+        httpSpy.get.and.returnValue(of());
+
+        const activeGameId = '1';
+        service.getActiveGameById(activeGameId);
+
+        expect(httpSpy.get).toHaveBeenCalled();
+        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/${activeGameId}`);
+    });
+
+    it('should call correct end point with function fetchJoinableActiveGames', () => {
+        httpSpy.get.and.returnValue(of());
+
+        service.fetchJoinableActiveGames();
+
+        expect(httpSpy.get).toHaveBeenCalled();
+        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/joinable`);
+    });
+
     // Edge case: the server responds with an error (e.g., 404). Verifies that the service
     // correctly propagates the error observable without throwing a synchronous exception.
     it('should not crash when the request fails', () => {
