@@ -16,6 +16,7 @@ import { IItem } from '@common/items';
     templateUrl: './game.component.html',
 })
 export class GameComponent implements OnInit {
+
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
