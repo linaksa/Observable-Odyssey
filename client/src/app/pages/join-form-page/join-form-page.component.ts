@@ -27,7 +27,8 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly navigator = inject(Router);
 
-    private socketSubscription: Subscription;
+    private routeSubscription?: Subscription;
+    private socketSubscription?: Subscription;
     private readonly socketNamespace = Namespaces.ActiveGameAdmin;
 
     router = inject(ActivatedRoute);
@@ -35,10 +36,13 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
     activeGame: IActiveGame | null = null;
 
     ngOnInit(): void {
-        this.router.params.subscribe((params) => {
+        this.socketService.connect(this.socketNamespace);
+
+        this.routeSubscription = this.router.params.subscribe((params) => {
             this.activeGameId = params.activeGameId || null;
             this.fetchAvailableAvatars();
 
+            this.socketSubscription?.unsubscribe();
             this.socketSubscription = this.socketService.on<IActiveGame>(this.socketNamespace, SocketEvent.JoinableGamesUpdated).subscribe({
                 next: (activeGame) => {
                     if (activeGame._id === this.activeGameId) {
@@ -47,12 +51,10 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
                 },
             });
         });
-
-        this.socketSubscription?.unsubscribe();
-        this.socketService.connect(this.socketNamespace);
     }
 
     ngOnDestroy(): void {
+        this.routeSubscription?.unsubscribe();
         this.socketSubscription?.unsubscribe();
     }
 
