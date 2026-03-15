@@ -1,8 +1,9 @@
+import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAbandonData, IAttackData, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
+import { IAbandonData, IAttackData, IDebugToggleState, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
@@ -140,6 +141,10 @@ export class GameSocketsService {
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
                 await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+
+                const updatedGame = await this.activeGameService.getActiveGameById(gameId);
+                await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
+
                 // pour notifier tous les autres joueurs que ce joueur a abandonné ( peut etre pas necessaire)
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
@@ -163,13 +168,7 @@ export class GameSocketsService {
                     this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
                     this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
 
-                    // If the organizer leaves during an active game, disable debug mode instead of ending the game
-                    const gameHasStarted = updatedGame.turnOrder.length > 0;
-                    if (playerId === updatedGame.organizerName && gameHasStarted && updatedGame.isDebugMode) {
-                        updatedGame.isDebugMode = false;
-                        await this.activeGameService.saveActiveGameById(gameId, updatedGame);
-                        this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, playerId);
-                    }
+                    await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
 
                     const isCurrentPlayer = updatedGame.turnOrder[updatedGame.currentPlayerIndex] === playerId;
 
@@ -211,5 +210,17 @@ export class GameSocketsService {
             data.playerNamesByGameId = {};
         }
         data.playerNamesByGameId[gameId] = playerName;
+    }
+
+    private async disableDebugModeIfOrganizerLeft(gameId: string, playerId: string, activeGame: IActiveGame): Promise<void> {
+        const gameHasStarted = activeGame.turnOrder.length > 0;
+        if (playerId !== activeGame.organizerName || !gameHasStarted || !activeGame.isDebugMode) {
+            return;
+        }
+
+        activeGame.isDebugMode = false;
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
+        const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
+        this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
     }
 }
