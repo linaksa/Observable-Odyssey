@@ -2,7 +2,7 @@ import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { IItem, ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
-import { IDebugTeleportData } from '@common/socket-payloads';
+import { IDebugTeleportData, IDebugToggleState } from '@common/socket-payloads';
 import { Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
@@ -21,8 +21,9 @@ export class DebugSocketService {
 
                 if (activeGame.organizerName === playerName) {
                     activeGame.isDebugMode = !activeGame.isDebugMode;
-                    socket.to(activeGameId).emit(SocketEvent.DebugToggle, playerName);
-                    socket.emit(SocketEvent.DebugToggle, playerName);
+                    const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
+                    socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
+                    socket.emit(SocketEvent.DebugToggle, payload);
                     await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
                 }
             } catch {

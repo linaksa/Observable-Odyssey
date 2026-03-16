@@ -10,7 +10,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IPlayerMoveData } from '@common/socket-payloads';
+import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocalPlayerService } from './local-player.service';
@@ -128,9 +128,10 @@ export class ActiveGameService implements OnDestroy {
             });
     }
 
-    toggleDebugMode(playerName: string) {
-        if (playerName !== this.activeGame.organizerName) return;
-        this._isDebugMode.set(!this._isDebugMode());
+    applyDebugModeState(data: IDebugToggleState) {
+        if (data.playerName !== this.activeGame.organizerName) return;
+        this.activeGame.isDebugMode = data.isDebugMode;
+        this._isDebugMode.set(data.isDebugMode);
     }
 
     setActiveGame(id: string): void {
@@ -139,6 +140,7 @@ export class ActiveGameService implements OnDestroy {
         this.setActiveGameSubscription = this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
             next: (game) => {
                 this.activeGame = game;
+                this._isDebugMode.set(game.isDebugMode);
                 this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
                 this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);

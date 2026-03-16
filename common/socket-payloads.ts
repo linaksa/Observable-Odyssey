@@ -28,6 +28,11 @@ export interface IDebugTeleportData {
     target: Position;
 }
 
+export interface IDebugToggleState {
+    playerName: string;
+    isDebugMode: boolean;
+}
+
 export interface ISocketData {
     playerNamesByGameId?: Record<string, string>;
 }
