@@ -16,14 +16,6 @@ export class EndGameService {
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
-        // If the organizer abandoned before the game started (still on wait page), cancel the game
-        const organizerAbandoned = activeGame.players.find((p) => p.name === activeGame.organizerName && p.hasAbandoned);
-        if (organizerAbandoned && activeGame.turnOrder.length === 0) {
-            activeGame.isFinished = true;
-            activeGame.winner = null;
-            await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-            return true;
-        }
         // If only one active player remains, end the game
         const activePlayers = activeGame.players.filter((p) => !p.hasAbandoned);
         if (activePlayers.length === ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
@@ -33,6 +25,12 @@ export class EndGameService {
             return true;
         }
         return false;
+    }
+
+    async checkIfOrganizer(gameId: string, playerId: string): Promise<boolean> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) return false;
+        return activeGame.organizerName === playerId;
     }
 
     // handles a player's abandonment

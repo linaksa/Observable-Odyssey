@@ -14,13 +14,14 @@ import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } f
 import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocalPlayerService } from './local-player.service';
+import { ToastService } from './toast.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class ActiveGameService implements OnDestroy {
     timeService: TimeService = inject(TimeService);
-
+    toastService: ToastService = inject(ToastService);
     httpService = inject(HTTP_CLIENT);
     socket = inject(SocketService);
     localPlayer = inject(LocalPlayerService);
@@ -43,11 +44,13 @@ export class ActiveGameService implements OnDestroy {
     attackMode = signal(false);
 
     private playerKickedSubscription?: Subscription;
+    private playerLeftSubscription?: Subscription;
     private playerMovedSubscription?: Subscription;
     private turnPreparingSubscription?: Subscription;
     private turnStartedSubscription?: Subscription;
     private attackResultSubscription?: Subscription;
     private playerAbandonedSubscription?: Subscription;
+    private gameCanceledSubscription?: Subscription;
     private gameEndedSubscription?: Subscription;
     private setActiveGameSubscription?: Subscription;
 
@@ -114,17 +117,28 @@ export class ActiveGameService implements OnDestroy {
                 if (!player) return;
                 this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
                 if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
+                    this.toastService.show('Vous avez été expulsés de la partie');
                     this.router.navigate(['/']);
                 }
-
+            });// duplication de code
+        this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom)
+            .subscribe((data) => {
+                const player = this.getPlayerByName(data.playerId);
+                if (!player) return;
+                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
             });
-
         this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
             .subscribe((data) => {
                 this.activeGame.winner = data.winner;
                 this.activeGame.isFinished = true;
 
                 this.gameHasEnded.set(!this.gameHasEnded());
+            });
+        this.gameCanceledSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled)
+            .subscribe(() => {
+                this.localPlayer.clear();
+                this.toastService.show("L'organiseur a annulé la partie.");
+                this.router.navigate(['/home']);
             });
     }
 
@@ -207,6 +221,12 @@ export class ActiveGameService implements OnDestroy {
             playerId: playerName,
         });
     }
+    leaveWaitingRoom(playerName: string) {
+        this.socket.emit(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
+            gameId: this.activeGame._id,
+            playerId: playerName,
+        });
+    }
 
     leaveActiveGameOnUnload(playerName: string, activeGameId: string): void {
         const payload = { activeGameId, playerName };
@@ -232,6 +252,8 @@ export class ActiveGameService implements OnDestroy {
         this.playerAbandonedSubscription?.unsubscribe();
         this.gameEndedSubscription?.unsubscribe();
         this.setActiveGameSubscription?.unsubscribe();
+        this.playerLeftSubscription?.unsubscribe();
+        this.gameCanceledSubscription?.unsubscribe();
     }
 
     updatePlayers(players: ICharacter[]): void {
