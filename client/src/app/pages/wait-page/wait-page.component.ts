@@ -1,4 +1,4 @@
-import { Component, effect, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -46,8 +46,6 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     localPlayer?: ICharacter;
     showButton: boolean = false;
-    private gameStarted: boolean = false;
-    private hasRequestedLeave = false;
 
     constructor() {
         effect(() => {
@@ -80,7 +78,6 @@ export class WaitPageComponent implements OnInit, OnDestroy {
                     if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
                         return;
                     }
-                    this.gameStarted = true;
                     this.router.navigate(['/play', startedGameId]);
                 },
             });
@@ -88,7 +85,6 @@ export class WaitPageComponent implements OnInit, OnDestroy {
             this.gameEndedSubscription?.unsubscribe();
             this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
                 next: () => {
-                    this.hasRequestedLeave = true;
                     this.localPlayerService.clear();
                     this.router.navigate(['/home']);
                 },
@@ -101,14 +97,8 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.playersUpdatedSubscription?.unsubscribe();
         this.startGameSubscription?.unsubscribe();
         this.gameEndedSubscription?.unsubscribe();
-
-        this.leaveActiveGameIfNeeded();
     }
 
-    @HostListener('window:pagehide')
-    onPageHide(): void {
-        this.leaveActiveGameIfNeeded();
-    }
     goBack(): void {
         const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
         const activeGameId = this.activeGameService.activeGame?._id;
@@ -117,39 +107,8 @@ export class WaitPageComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.hasRequestedLeave = true;
         this.leaveWaitingRoomAndCleanup(localPlayerName);
-
         this.router.navigate(['/home']);
-    }
-    private leaveActiveGameIfNeeded(): void {
-        if (this.gameStarted) {
-            return;
-        }
-
-        if (this.hasRequestedLeave) {
-            return;
-        }
-
-        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
-        const activeGameId = this.activeGameService.activeGame?._id;
-
-        if (!localPlayerName || !activeGameId) {
-            return;
-        }
-
-        this.hasRequestedLeave = true;
-        this.leaveWaitingRoomAndCleanup(localPlayerName);
-    }
-    @HostListener('window:popstate')
-    onPopState(): void {
-        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
-        const activeGameId = this.activeGameService.activeGame?._id;
-
-        if (!localPlayerName || !activeGameId) return;
-
-        this.hasRequestedLeave = true;
-        this.leaveWaitingRoomAndCleanup(localPlayerName);
     }
 
     private leaveWaitingRoomAndCleanup(localPlayerName: string): void {

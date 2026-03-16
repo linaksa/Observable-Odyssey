@@ -43,9 +43,9 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
             this.fetchAvailableAvatars();
 
             this.socketSubscription?.unsubscribe();
-            this.socketSubscription = this.socketService.on<IActiveGame>(this.socketNamespace, SocketEvent.JoinableGamesUpdated).subscribe({
-                next: (activeGame) => {
-                    if (activeGame._id === this.activeGameId) {
+            this.socketSubscription = this.socketService.on<string>(this.socketNamespace, SocketEvent.JoinableGamesUpdated).subscribe({
+                next: (activeGameId) => {
+                    if (activeGameId === this.activeGameId) {
                         this.fetchAvailableAvatars();
                     }
                 },
@@ -83,7 +83,6 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
             next: (response) => {
                 this.characterFormService.isLoading.set(false);
 
-                this.toastService.show('Vous avez rejoint la partie avec succès.');
                 this.localPlayerService.setLocalPlayer(response.player);
                 this.navigator.navigate(['/wait', response.activeGame._id]);
             },
