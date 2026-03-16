@@ -66,6 +66,7 @@ export class GameSocketsService {
                     await this.activeGameService.removePlayer(gameId, playerId);
                     this.namespace?.to(gameId).emit(SocketEvent.LeftWaitingRoom, { playerId });
                 }
+                this.unregisterSocketFromGame(socket, gameId);
             });
 
             socket.on(SocketEvent.StartGame, async (activeGameId: string) => {
@@ -236,6 +237,23 @@ export class GameSocketsService {
             data.playerNamesByGameId = {};
         }
         data.playerNamesByGameId[gameId] = playerName;
+    }
+
+    private unregisterSocketFromGame(socket: Socket, gameId: string): void {
+        socket.leave(gameId);
+        this.clearSocketPlayerName(socket, gameId);
+    }
+
+    private clearSocketPlayerName(socket: Socket, gameId: string): void {
+        const data = socket.data as ISocketData;
+        if (!data.playerNamesByGameId) {
+            return;
+        }
+
+        delete data.playerNamesByGameId[gameId];
+        if (Object.keys(data.playerNamesByGameId).length === 0) {
+            delete data.playerNamesByGameId;
+        }
     }
 
     private async disableDebugModeIfOrganizerLeft(gameId: string, playerId: string, activeGame: IActiveGame): Promise<void> {

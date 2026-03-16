@@ -118,9 +118,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         }
 
         this.hasRequestedLeave = true;
-
-        this.activeGameService.leaveWaitingRoom(localPlayerName);
-        this.localPlayerService.clear();
+        this.leaveWaitingRoomAndCleanup(localPlayerName);
 
         this.router.navigate(['/home']);
     }
@@ -141,6 +139,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         }
 
         this.hasRequestedLeave = true;
+        this.leaveWaitingRoomAndCleanup(localPlayerName);
     }
     @HostListener('window:popstate')
     onPopState(): void {
@@ -150,7 +149,12 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         if (!localPlayerName || !activeGameId) return;
 
         this.hasRequestedLeave = true;
+        this.leaveWaitingRoomAndCleanup(localPlayerName);
+    }
+
+    private leaveWaitingRoomAndCleanup(localPlayerName: string): void {
         this.activeGameService.leaveWaitingRoom(localPlayerName);
+        this.socketService.disconnect(Namespaces.Game);
         this.localPlayerService.clear();
     }
 
