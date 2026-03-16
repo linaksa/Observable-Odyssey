@@ -30,5 +30,6 @@ export const enum SocketEvent {
     PlayersUpdated = 'players-updated',
     DebugToggle = 'debug-toggle',
     DebugTeleport = 'debug-teleport',
+    GenericJoinableGamesUpdate = 'generic-joinable-games-update',
     JoinableGamesUpdated = 'joinable-games-updated',
 }

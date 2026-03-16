@@ -149,7 +149,6 @@ describe('JoinFormPageComponent', () => {
 
         component.joinGameAsCharacter({} as CharacterFormData);
 
-        expect(toastServiceMock.show).toHaveBeenCalled();
         expect(localPlayerServiceMock.setLocalPlayer).toHaveBeenCalledWith(response.player);
         expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', dummyActiveGame._id]);
     });

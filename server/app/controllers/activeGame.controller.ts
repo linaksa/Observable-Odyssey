@@ -42,7 +42,7 @@ export class ActiveGameController {
                     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de créer le joueur local' });
                 }
                 this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
-                this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame);
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame._id);
                 const payload: IActiveGameWithPlayer = { activeGame: newActiveGame, player: createdPlayer };
                 return res.status(StatusCodes.CREATED).json(payload);
             } catch (error) {
@@ -75,7 +75,7 @@ export class ActiveGameController {
                 }
 
                 this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
-                this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame);
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame._id);
                 const payload: IActiveGameWithPlayer = { activeGame: updatedActiveGame, player: joinedPlayer };
                 return res.status(StatusCodes.OK).json(payload);
             } catch (error) {

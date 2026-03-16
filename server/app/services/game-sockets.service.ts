@@ -6,6 +6,7 @@ import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IAttackData, IDebugToggleState, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
+import { ActiveGameListSocketsService } from './active-game-list-sockets.service';
 import { ActiveGameService } from './active-game.service';
 import { ChatService } from './chat.service';
 import { DebugSocketService } from './debug-socket.service';
@@ -15,12 +16,17 @@ import { SocketService } from './socket.service';
 @Service()
 export class GameSocketsService {
     private namespace?: Namespace;
+
+    // In our context, GameSocketService centralize the treatment of socket operations
+    // It is a good practice to delegate the treatment of each events to services
+    /* eslint-disable max-params */
     constructor(
         private readonly gameplayService: GameplayServices,
         private readonly socketService: SocketService,
         private readonly debugSocketService: DebugSocketService,
         private readonly activeGameService: ActiveGameService,
         private readonly chatService: ChatService,
+        private readonly activeGameListSocketService: ActiveGameListSocketsService,
     ) {}
 
     initialize(): void {
@@ -54,6 +60,7 @@ export class GameSocketsService {
                 const { gameId, playerId } = data;
                 await this.activeGameService.removePlayer(gameId, playerId);
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerKicked, { playerId });
+                this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
             });
 
             socket.on(SocketEvent.LeaveWaitingRoom, async (data: IAbandonData) => {
@@ -66,6 +73,7 @@ export class GameSocketsService {
                     await this.activeGameService.removePlayer(gameId, playerId);
                     this.namespace?.to(gameId).emit(SocketEvent.LeftWaitingRoom, { playerId });
                 }
+                this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
                 this.unregisterSocketFromGame(socket, gameId);
             });
 
@@ -95,6 +103,7 @@ export class GameSocketsService {
 
                 // Notify all players
                 this.namespace?.to(activeGameId).emit(SocketEvent.GameStarted, activeGameId);
+                this.activeGameListSocketService.emitJoinableGamesUpdated(activeGameId);
 
                 // Start the first player's turn
                 this.gameplayService.turnService.startTurn(activeGameId);
@@ -157,7 +166,7 @@ export class GameSocketsService {
                 const updatedGame = await this.activeGameService.getActiveGameById(gameId);
                 await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
 
-                // pour notifier tous les autres joueurs que ce joueur a abandonné ( peut etre pas necessaire)
+                // notify other players about the quitting player
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
@@ -193,6 +202,7 @@ export class GameSocketsService {
             await this.activeGameService.removePlayer(gameId, playerId);
             this.namespace?.to(gameId).emit(SocketEvent.LeftWaitingRoom, { playerId });
         }
+        this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
     }
 
     private async handleActiveGameDisconnect(gameId: string, playerId: string): Promise<void> {
