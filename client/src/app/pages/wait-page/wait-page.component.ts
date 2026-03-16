@@ -109,7 +109,21 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     onPageHide(): void {
         this.leaveActiveGameIfNeeded();
     }
+    goBack(): void {
+        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
+        const activeGameId = this.activeGameService.activeGame?._id;
 
+        if (!localPlayerName || !activeGameId) {
+            return;
+        }
+
+        this.hasRequestedLeave = true;
+
+        this.activeGameService.leaveWaitingRoom(localPlayerName);
+        this.localPlayerService.clear();
+
+        this.router.navigate(['/home']);
+    }
     private leaveActiveGameIfNeeded(): void {
         if (this.gameStarted) {
             return;
@@ -127,7 +141,16 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         }
 
         this.hasRequestedLeave = true;
-        this.activeGameService.leaveActiveGameOnUnload(localPlayerName, activeGameId);
+    }
+    @HostListener('window:popstate')
+    onPopState(): void {
+        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
+        const activeGameId = this.activeGameService.activeGame?._id;
+
+        if (!localPlayerName || !activeGameId) return;
+
+        this.hasRequestedLeave = true;
+        this.activeGameService.leaveWaitingRoom(localPlayerName);
         this.localPlayerService.clear();
     }
 

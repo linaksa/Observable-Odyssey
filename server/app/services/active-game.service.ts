@@ -113,7 +113,7 @@ export class ActiveGameService {
         };
         return await activeGameModel.findOneAndUpdate({ _id: newMessage.roomId }, { $push: { messages: message } }, { returnDocument: 'after' });
     }
-    async kickPlayer(gameId: string, playerName: string): Promise<void> {
+    async removePlayer(gameId: string, playerName: string): Promise<void> {
         const activeGame = await this.getActiveGameById(gameId);
         if (!activeGame) return null;
         activeGame.players = activeGame.players.filter(

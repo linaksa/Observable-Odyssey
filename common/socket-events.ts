@@ -4,6 +4,9 @@ export const enum SocketEvent {
     JoinChat = 'join-chat',
     NewMessage = 'new-message',
     // ActiveGame events
+    LeaveWaitingRoom = 'leave-waiting-room',
+    LeftWaitingRoom = 'leave-waiting-room',
+    GameCanceled = 'game-canceled',
     PlayerKick = 'player-kick',
     PlayerKicked = 'player-kicked',
     StartGame = 'start-game',
