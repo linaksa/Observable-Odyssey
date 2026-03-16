@@ -3,7 +3,6 @@ import { AVATAR_IMAGE_PATH_MODEL } from '@app/constants/character-form';
 import { Avatar } from '@common/constants';
 import { AvatarPreviewComponent } from './avatar-preview.component';
 
-
 describe('AvatarPreviewComponent', () => {
     let component: AvatarPreviewComponent;
     let fixture: ComponentFixture<AvatarPreviewComponent>;

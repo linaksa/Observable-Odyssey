@@ -27,7 +27,6 @@ class MockDiceSelectorComponent {}
 })
 class MockFormActionsComponent {}
 
-
 describe('CharacterModifierPanelComponent', () => {
     let component: CharacterModifierPanelComponent;
     let fixture: ComponentFixture<CharacterModifierPanelComponent>;

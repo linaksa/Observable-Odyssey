@@ -14,15 +14,20 @@ export class GameTableService {
 
     isLoading = signal(false);
 
-
     fetchGames(onlyVisible = false): void {
         this.isLoading.set(true);
-        this.gameService.getAllGames().subscribe({
+        this.gameServiceSubscription?.unsubscribe();
+        this.gameServiceSubscription = this.gameService.getAllGames().subscribe({
             next: (fetchedGames) => {
                 this.tableData = onlyVisible ? (fetchedGames?.filter((game) => game.visibility !== Visibility.Hidden) ?? []) : (fetchedGames ?? []);
             },
+            error: () => {
+                this.isLoading.set(false);
+                this.gameServiceSubscription = undefined;
+            },
             complete: () => {
                 this.isLoading.set(false);
+                this.gameServiceSubscription = undefined;
             },
         });
     }

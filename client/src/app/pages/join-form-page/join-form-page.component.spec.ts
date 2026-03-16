@@ -17,211 +17,199 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 
 @Component({
-  selector: 'app-character-form',
-  standalone: true,
-  template: '',
+    selector: 'app-character-form',
+    standalone: true,
+    template: '',
 })
 class MockCharacterFormComponent {
-  @Output() submitForm = new EventEmitter<CharacterFormData>();
+    @Output() submitForm = new EventEmitter<CharacterFormData>();
 }
 
 @Component({
-  selector: 'app-toast',
-  standalone: true,
-  template: '',
+    selector: 'app-toast',
+    standalone: true,
+    template: '',
 })
 class MockToastComponent {}
 
 const defaultActiveGameID = 'game123';
 
 const dummyActiveGame: IActiveGame = {
-  _id: 'dummyActiveGameId',
-  game: {} as IGame,
-  players: [],
-  itemsState: [],
-  currentPlayerIndex: 0,
-  turnOrder: [],
-  isFinished: false,
-  winner: null,
-  messages: [],
-  isDebugMode: false,
-  organizerName: 'Dummy Organizer',
-  maxPlayerCount: 4,
+    _id: 'dummyActiveGameId',
+    game: {} as IGame,
+    players: [],
+    itemsState: [],
+    currentPlayerIndex: 0,
+    turnOrder: [],
+    isFinished: false,
+    winner: null,
+    messages: [],
+    isDebugMode: false,
+    organizerName: 'Dummy Organizer',
+    maxPlayerCount: 4,
 };
 
 describe('JoinFormPageComponent', () => {
-  let component: JoinFormPageComponent;
-  let fixture: ComponentFixture<JoinFormPageComponent>;
+    let component: JoinFormPageComponent;
+    let fixture: ComponentFixture<JoinFormPageComponent>;
 
-  let characterFormServiceMock: jasmine.SpyObj<CharacterFormService>;
-  let socketServiceMock: jasmine.SpyObj<SocketService>;
-  let gameServiceMock: jasmine.SpyObj<GameService>;
-  let toastServiceMock: jasmine.SpyObj<ToastService>;
-  let localPlayerServiceMock: jasmine.SpyObj<LocalPlayerService>;
-  let routerMock: jasmine.SpyObj<Router>;
+    let characterFormServiceMock: jasmine.SpyObj<CharacterFormService>;
+    let socketServiceMock: jasmine.SpyObj<SocketService>;
+    let gameServiceMock: jasmine.SpyObj<GameService>;
+    let toastServiceMock: jasmine.SpyObj<ToastService>;
+    let localPlayerServiceMock: jasmine.SpyObj<LocalPlayerService>;
+    let routerMock: jasmine.SpyObj<Router>;
 
-  const socketSubject = new Subject<IActiveGame>();
+    const socketSubject = new Subject<IActiveGame>();
 
-  beforeEach(async () => {
+    beforeEach(async () => {
+        characterFormServiceMock = jasmine.createSpyObj('CharacterFormService', ['joinActiveGameWithCharacter'], {
+            unavailableAvatars: signal([]),
+            isLoading: signal(false),
+            errors: signal(null),
+        });
 
-    characterFormServiceMock = jasmine.createSpyObj(
-      'CharacterFormService',
-      ['joinActiveGameWithCharacter'],
-      {
-        unavailableAvatars: signal([]),
-        isLoading: signal(false),
-        errors: signal(null),
-      },
-    );
+        socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect']);
+        gameServiceMock = jasmine.createSpyObj('GameService', ['getActiveGameById']);
+        toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
+        localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
+        routerMock = jasmine.createSpyObj('Router', ['navigate']);
 
-    socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect']);
-    gameServiceMock = jasmine.createSpyObj('GameService', ['getActiveGameById']);
-    toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
-    localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
-    routerMock = jasmine.createSpyObj('Router', ['navigate']);
+        gameServiceMock.getActiveGameById.and.returnValue(of(dummyActiveGame));
 
-    gameServiceMock.getActiveGameById.and.returnValue(of(dummyActiveGame));
+        socketServiceMock.on.and.returnValue(socketSubject.asObservable());
 
-    socketServiceMock.on.and.returnValue(socketSubject.asObservable());
+        const overrideInfo: MetadataOverride<Component> = {
+            set: { imports: [MockCharacterFormComponent, MockToastComponent] },
+        };
 
-    const overrideInfo: MetadataOverride<Component> = {
-      set: { imports: [MockCharacterFormComponent, MockToastComponent] },
-    };
+        TestBed.overrideComponent(JoinFormPageComponent, overrideInfo);
 
-    TestBed.overrideComponent(JoinFormPageComponent, overrideInfo);
+        await TestBed.configureTestingModule({
+            imports: [JoinFormPageComponent],
+            providers: [
+                provideRouter([]),
 
-    await TestBed.configureTestingModule({
-      imports: [JoinFormPageComponent],
-      providers: [
-        provideRouter([]),
+                { provide: CharacterFormService, useValue: characterFormServiceMock },
+                { provide: SocketService, useValue: socketServiceMock },
+                { provide: GameService, useValue: gameServiceMock },
+                { provide: ToastService, useValue: toastServiceMock },
+                { provide: LocalPlayerService, useValue: localPlayerServiceMock },
+                { provide: Router, useValue: routerMock },
 
-        { provide: CharacterFormService, useValue: characterFormServiceMock },
-        { provide: SocketService, useValue: socketServiceMock },
-        { provide: GameService, useValue: gameServiceMock },
-        { provide: ToastService, useValue: toastServiceMock },
-        { provide: LocalPlayerService, useValue: localPlayerServiceMock },
-        { provide: Router, useValue: routerMock },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ activeGameId: defaultActiveGameID }),
+                    },
+                },
+            ],
+        }).compileComponents();
 
-        {
-          provide: ActivatedRoute,
-          useValue: {
-            params: of({ activeGameId: defaultActiveGameID }),
-          },
-        },
-      ],
-    }).compileComponents();
+        fixture = TestBed.createComponent(JoinFormPageComponent);
+        component = fixture.componentInstance;
+    });
 
-    fixture = TestBed.createComponent(JoinFormPageComponent);
-    component = fixture.componentInstance;
-  });
+    it('should fetch available avatars on init', () => {
+        const spy = spyOn(component, 'fetchAvailableAvatars').and.stub();
 
-  it('should fetch available avatars on init', () => {
-    const spy = spyOn(component, 'fetchAvailableAvatars').and.stub();
+        fixture.detectChanges();
 
-    fixture.detectChanges();
+        expect(spy).toHaveBeenCalled();
+    });
 
-    expect(spy).toHaveBeenCalled();
-  });
+    it('should not fetch avatars if activeGameId is missing', () => {
+        gameServiceMock.getActiveGameById.calls.reset();
 
-  it('should not fetch avatars if activeGameId is missing', () => {
-    gameServiceMock.getActiveGameById.calls.reset();
+        component.activeGameId = null;
+        component.fetchAvailableAvatars();
 
-    component.activeGameId = null;
-    component.fetchAvailableAvatars();
+        expect(gameServiceMock.getActiveGameById).not.toHaveBeenCalled();
+    });
 
-    expect(gameServiceMock.getActiveGameById).not.toHaveBeenCalled();
-  });
+    it('should subscribe to socket updates on init', () => {
+        fixture.detectChanges();
 
-  it('should subscribe to socket updates on init', () => {
-    fixture.detectChanges();
+        expect(socketServiceMock.on).toHaveBeenCalledWith(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    });
 
-    expect(socketServiceMock.on).toHaveBeenCalledWith(
-      Namespaces.ActiveGameAdmin,
-      SocketEvent.JoinableGamesUpdated,
-    );
-  });
+    it('should handle joinGameAsCharacter success', () => {
+        // Nominal case
+        // test that when joinGameAsCharacter succeeds, the flow is correctly executed
+        // the flow is: show toast, set local player, navigate to wait page
 
-  it('should handle joinGameAsCharacter success', () => {
-    // Nominal case
-    // test that when joinGameAsCharacter succeeds, the flow is correctly executed
-    // the flow is: show toast, set local player, navigate to wait page
+        const response: IActiveGameWithPlayer = {
+            player: {} as ICharacter,
+            activeGame: dummyActiveGame,
+        };
 
-    const response: IActiveGameWithPlayer = {
-      player: {} as ICharacter,
-      activeGame: dummyActiveGame,
-    };
+        characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(of(response));
 
-    characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(of(response));
+        component.activeGameId = defaultActiveGameID;
 
-    component.activeGameId = defaultActiveGameID;
+        component.joinGameAsCharacter({} as CharacterFormData);
 
-    component.joinGameAsCharacter({} as CharacterFormData);
+        expect(toastServiceMock.show).toHaveBeenCalled();
+        expect(localPlayerServiceMock.setLocalPlayer).toHaveBeenCalledWith(response.player);
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', dummyActiveGame._id]);
+    });
 
-    expect(toastServiceMock.show).toHaveBeenCalled();
-    expect(localPlayerServiceMock.setLocalPlayer).toHaveBeenCalledWith(response.player);
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', dummyActiveGame._id]);
-  });
+    it('should handle joinGameAsCharacter error', () => {
+        // Error case
+        // Validate that the app doesnt crash and shows an error toast when the join game request fails
+        const errorText = 'join failed';
 
-  it('should handle joinGameAsCharacter error', () => {
-    // Error case
-    // Validate that the app doesnt crash and shows an error toast when the join game request fails
-    const errorText = 'join failed';
+        const error = {
+            originalError: {
+                error: { message: errorText },
+            },
+        };
 
-    const error = {
-      originalError: {
-        error: { message: errorText },
-      },
-    };
+        characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
-    characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(
-      throwError(() => error),
-    );
+        component.activeGameId = defaultActiveGameID;
 
-    component.activeGameId = defaultActiveGameID;
+        component.joinGameAsCharacter({} as CharacterFormData);
 
-    component.joinGameAsCharacter({} as CharacterFormData);
+        expect(toastServiceMock.show).toHaveBeenCalled();
+        expect(characterFormServiceMock.errors()).toBe(errorText);
+    });
 
-    expect(toastServiceMock.show).toHaveBeenCalled();
-    expect(characterFormServiceMock.errors()).toBe(errorText);
-  });
+    it('should handle joinGameAsCharacter empty error', () => {
+        const error = {
+            originalError: {
+                error: {},
+            },
+        };
 
-  it('should handle joinGameAsCharacter empty error', () => {
-    const error = {
-      originalError: {
-        error: {},
-      },
-    };
+        characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
-    characterFormServiceMock.joinActiveGameWithCharacter.and.returnValue(
-      throwError(() => error),
-    );
+        component.activeGameId = defaultActiveGameID;
 
-    component.activeGameId = defaultActiveGameID;
+        component.joinGameAsCharacter({} as CharacterFormData);
 
-    component.joinGameAsCharacter({} as CharacterFormData);
+        expect(toastServiceMock.show).toHaveBeenCalled();
+        expect(characterFormServiceMock.errors()).toBeTruthy();
+    });
 
-    expect(toastServiceMock.show).toHaveBeenCalled();
-    expect(characterFormServiceMock.errors()).toBeTruthy();
-  });
+    it('should show error if activeGameId missing when joining', () => {
+        // Edge case
+        // Validate that the app shows an error toast if the activeGameId is missing when trying to join a game
 
-  it('should show error if activeGameId missing when joining', () => {
-    // Edge case
-    // Validate that the app shows an error toast if the activeGameId is missing when trying to join a game
+        component.activeGameId = null;
+        component.joinGameAsCharacter({} as CharacterFormData);
+        expect(toastServiceMock.show).toHaveBeenCalled();
+    });
 
-    component.activeGameId = null;
-    component.joinGameAsCharacter({} as CharacterFormData);
-    expect(toastServiceMock.show).toHaveBeenCalled();
-  });
+    it('should unsubscribe on destroy', () => {
+        // Nominal case
+        // Make sure that no memory leaks happen when the component is destroyed
 
-  it('should unsubscribe on destroy', () => {
-    // Nominal case
-    // Make sure that no memory leaks happen when the component is destroyed 
+        component.ngOnInit();
 
-    component.ngOnInit();
+        const unsubscribeSpy = spyOn(component['socketSubscription'] as Subscription, 'unsubscribe');
 
-    const unsubscribeSpy = spyOn(component['socketSubscription'] as Subscription, 'unsubscribe');
-
-    component.ngOnDestroy();
-    expect(unsubscribeSpy).toHaveBeenCalled();
-  });
+        component.ngOnDestroy();
+        expect(unsubscribeSpy).toHaveBeenCalled();
+    });
 });

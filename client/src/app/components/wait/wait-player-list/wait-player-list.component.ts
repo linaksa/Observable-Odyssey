@@ -28,12 +28,10 @@ export class WaitPlayerListComponent {
         return playerName === this.organizerName();
     }
 
-
     kickPlayer(playerName: string): void {
         const localName = this.localPlayer()?.name;
         if (this.isOrganizer(localName)) {
             this.activeGameService.kickPlayer(playerName);
         }
-
     }
 }

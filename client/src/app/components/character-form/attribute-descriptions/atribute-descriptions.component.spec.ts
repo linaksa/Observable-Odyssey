@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AttributeDescriptionsComponent } from './attribute-descriptions.component';
 
-
 describe('AttributeDescriptionsComponent', () => {
     let component: AttributeDescriptionsComponent;
     let fixture: ComponentFixture<AttributeDescriptionsComponent>;

@@ -48,14 +48,10 @@ describe('FormPageComponent', () => {
     let routerMock: jasmine.SpyObj<Router>;
 
     beforeEach(async () => {
-        characterFormServiceMock = jasmine.createSpyObj(
-            'CharacterFormService',
-            ['createActiveGameWithCharacter'],
-            {
-                isLoading: signal(false),
-                errors: signal(null),
-            },
-        );
+        characterFormServiceMock = jasmine.createSpyObj('CharacterFormService', ['createActiveGameWithCharacter'], {
+            isLoading: signal(false),
+            errors: signal(null),
+        });
 
         toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
         localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
@@ -63,11 +59,7 @@ describe('FormPageComponent', () => {
 
         const overrideInfo: MetadataOverride<Component> = {
             set: {
-                imports: [
-                    MockHeaderComponent,
-                    MockCharacterFormComponent,
-                    MockToastComponent,
-                ],
+                imports: [MockHeaderComponent, MockCharacterFormComponent, MockToastComponent],
             },
         };
 
@@ -159,9 +151,7 @@ describe('FormPageComponent', () => {
             },
         };
 
-        characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(
-            throwError(() => error),
-        );
+        characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
         component.gameId = defaultGameId;
 
@@ -180,9 +170,7 @@ describe('FormPageComponent', () => {
             },
         };
 
-        characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(
-            throwError(() => error),
-        );
+        characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
         component.gameId = defaultGameId;
 

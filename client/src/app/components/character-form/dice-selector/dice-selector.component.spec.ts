@@ -3,7 +3,6 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { DiceSelectionType } from '@app/constants/character-form';
 import { DiceSelectorComponent } from './dice-selector.component';
 
-
 describe('DiceSelectorComponent', () => {
     let component: DiceSelectorComponent;
     let fixture: ComponentFixture<DiceSelectorComponent>;

@@ -4,8 +4,11 @@ import { BONUS_VALUE, BonusType, DiceSelectionType } from '@app/constants/charac
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { CharacterFormData } from '@common/character';
 import {
-    DEFAULT_PLAYER_ATTACK_POINTS, DEFAULT_PLAYER_DEFENSE_POINTS, DEFAULT_PLAYER_LIFE_POINTS,
-    DEFAULT_PLAYER_SPEED_POINTS, DiceType,
+    DEFAULT_PLAYER_ATTACK_POINTS,
+    DEFAULT_PLAYER_DEFENSE_POINTS,
+    DEFAULT_PLAYER_LIFE_POINTS,
+    DEFAULT_PLAYER_SPEED_POINTS,
+    DiceType,
 } from '@common/constants';
 import { of } from 'rxjs';
 import { CharacterFormService } from './character-form.service';

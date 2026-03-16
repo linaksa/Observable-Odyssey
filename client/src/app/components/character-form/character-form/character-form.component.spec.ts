@@ -37,7 +37,6 @@ class MockCharacterModifierPanelComponent {
     @Output() formSubmitted = new EventEmitter<void>();
 }
 
-
 describe('CharacterFormComponent', () => {
     let component: CharacterFormComponent;
     let fixture: ComponentFixture<CharacterFormComponent>;
@@ -61,8 +60,7 @@ describe('CharacterFormComponent', () => {
             defensePoints: dummyPointsValue,
             attackDiceType: dummyDiceType,
             defenseDiceType: dummyDiceType,
-        },
-        );
+        });
 
         characterFormServiceSpy.characterForm = new FormGroup({
             playerName: new FormControl<string>('', { nonNullable: true }),
@@ -73,9 +71,7 @@ describe('CharacterFormComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [CharacterFormComponent, MockAvatarSelectorComponent, MockCharacterInfoPanelComponent, MockCharacterModifierPanelComponent],
-            providers: [
-                { provide: CharacterFormService, useValue: characterFormServiceSpy },
-            ],
+            providers: [{ provide: CharacterFormService, useValue: characterFormServiceSpy }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CharacterFormComponent);
@@ -106,7 +102,7 @@ describe('CharacterFormComponent', () => {
             avatar: testAvatar,
             bonusType: BonusType.Life,
             diceType: DiceSelectionType.D4AttackAndD6Defense,
-        });;
+        });
 
         component.onFormSubmitted();
 

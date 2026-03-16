@@ -116,9 +116,7 @@ export class ActiveGameService {
     async removePlayer(gameId: string, playerName: string): Promise<void> {
         const activeGame = await this.getActiveGameById(gameId);
         if (!activeGame) return null;
-        activeGame.players = activeGame.players.filter(
-            (player) => player.name !== playerName,
-        );
+        activeGame.players = activeGame.players.filter((player) => player.name !== playerName);
         await this.saveActiveGameById(gameId, activeGame);
     }
 

@@ -27,7 +27,6 @@ class MockCharacterAttributesGridComponent {}
 })
 class MockAttributeDescriptionsComponent {}
 
-
 describe('CharacterInfoPanelComponent', () => {
     let component: CharacterInfoPanelComponent;
     let fixture: ComponentFixture<CharacterInfoPanelComponent>;
@@ -39,8 +38,12 @@ describe('CharacterInfoPanelComponent', () => {
         TestBed.overrideComponent(CharacterInfoPanelComponent, overrideInfo);
 
         await TestBed.configureTestingModule({
-            imports: [CharacterInfoPanelComponent, MockPlayerNameInputComponent, MockCharacterAttributesGridComponent,
-                MockAttributeDescriptionsComponent],
+            imports: [
+                CharacterInfoPanelComponent,
+                MockPlayerNameInputComponent,
+                MockCharacterAttributesGridComponent,
+                MockAttributeDescriptionsComponent,
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CharacterInfoPanelComponent);

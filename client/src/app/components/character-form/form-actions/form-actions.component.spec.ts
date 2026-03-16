@@ -6,7 +6,6 @@ import { CharacterFormService } from '@app/services/character-form.service';
 import { Avatar } from '@common/constants';
 import { FormActionsComponent } from './form-actions.component';
 
-
 describe('FormActionsComponent', () => {
     let component: FormActionsComponent;
     let fixture: ComponentFixture<FormActionsComponent>;
@@ -14,12 +13,10 @@ describe('FormActionsComponent', () => {
     let characterFormServiceSpy: jasmine.SpyObj<CharacterFormService>;
 
     beforeEach(async () => {
-        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', ['populateWithRandomData'],
-            {
-                isLoading: signal(false),
-                errors: signal(null),
-            },
-        );
+        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', ['populateWithRandomData'], {
+            isLoading: signal(false),
+            errors: signal(null),
+        });
 
         characterFormServiceSpy.characterForm = new FormGroup({
             playerName: new FormControl<string>('', { nonNullable: true }),
@@ -30,9 +27,7 @@ describe('FormActionsComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormActionsComponent],
-            providers: [
-                { provide: CharacterFormService, useValue: characterFormServiceSpy },
-            ],
+            providers: [{ provide: CharacterFormService, useValue: characterFormServiceSpy }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FormActionsComponent);
@@ -57,5 +52,4 @@ describe('FormActionsComponent', () => {
         component.generateRandom();
         expect(characterFormServiceSpy.populateWithRandomData).toHaveBeenCalled();
     });
-
 });

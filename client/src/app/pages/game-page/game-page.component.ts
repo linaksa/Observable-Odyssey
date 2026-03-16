@@ -21,8 +21,16 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-page',
-    imports: [PlayerInfoComponent, GameComponent, PlayerListComponent, GameInfosComponent, ChatPanelComponent, GameAttackComponent,
-        GameAbandonComponent, GameEndedComponent],
+    imports: [
+        PlayerInfoComponent,
+        GameComponent,
+        PlayerListComponent,
+        GameInfosComponent,
+        ChatPanelComponent,
+        GameAttackComponent,
+        GameAbandonComponent,
+        GameEndedComponent,
+    ],
     providers: [GameTurnService],
     templateUrl: './game-page.component.html',
 })

@@ -23,7 +23,6 @@ class MockAvatarGridComponent {
     @Input() unavailableAvatars: Avatar[];
 }
 
-
 describe('AvatarSelectorComponent', () => {
     let component: AvatarSelectorComponent;
     let fixture: ComponentFixture<AvatarSelectorComponent>;

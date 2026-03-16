@@ -5,7 +5,10 @@ import { TurnService } from './turn-service';
 
 @Service()
 export class EndGameService {
-    constructor(private readonly activeGameService: ActiveGameService, private readonly turnService: TurnService) {}
+    constructor(
+        private readonly activeGameService: ActiveGameService,
+        private readonly turnService: TurnService,
+    ) {}
 
     async checkEndGame(gameId: string): Promise<boolean> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);

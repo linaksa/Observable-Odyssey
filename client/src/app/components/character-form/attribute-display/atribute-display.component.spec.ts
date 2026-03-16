@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AttributeDisplayComponent } from './attribute-display.component';
 
-
 describe('AttributeDisplayComponent', () => {
     let component: AttributeDisplayComponent;
     let fixture: ComponentFixture<AttributeDisplayComponent>;
