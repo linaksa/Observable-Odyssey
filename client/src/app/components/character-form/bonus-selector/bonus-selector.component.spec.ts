@@ -3,7 +3,6 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { BonusType } from '@app/constants/character-form';
 import { BonusSelectorComponent } from './bonus-selector.component';
 
-
 describe('BonusSelectorComponent', () => {
     let component: BonusSelectorComponent;
     let fixture: ComponentFixture<BonusSelectorComponent>;

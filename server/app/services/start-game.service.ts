@@ -29,7 +29,7 @@ export class StartGameService {
         const playersByRapidity = [...activeGame.players].sort((a, b) => b.rapidityPoints - a.rapidityPoints);
 
         // Shuffle only tie groups so higher rapidity always stays first.
-        for (let i = 0; i < playersByRapidity.length;) {
+        for (let i = 0; i < playersByRapidity.length; ) {
             let j = i + 1;
             while (j < playersByRapidity.length && playersByRapidity[j].rapidityPoints === playersByRapidity[i].rapidityPoints) {
                 j++;

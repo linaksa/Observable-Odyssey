@@ -12,7 +12,7 @@ class MockAttributeDisplayComponent {
     @Input() name: string;
     @Input() value: number | string;
     @Input() bgColor: string;
-};
+}
 
 describe('CharacterAttributesGridComponent', () => {
     let component: CharacterAttributesGridComponent;
@@ -28,20 +28,16 @@ describe('CharacterAttributesGridComponent', () => {
         };
         TestBed.overrideComponent(CharacterAttributesGridComponent, overrideInfo);
 
-        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', [],
-            {
-                lifePoint: dummyPointsValue,
-                speedPoints: dummyPointsValue,
-                attackPoints: dummyPointsValue,
-                defensePoints: dummyPointsValue,
-            },
-        );
+        characterFormServiceSpy = jasmine.createSpyObj('CharacterFormService', [], {
+            lifePoint: dummyPointsValue,
+            speedPoints: dummyPointsValue,
+            attackPoints: dummyPointsValue,
+            defensePoints: dummyPointsValue,
+        });
 
         await TestBed.configureTestingModule({
             imports: [CharacterAttributesGridComponent],
-            providers: [
-                { provide: CharacterFormService, useValue: characterFormServiceSpy },
-            ],
+            providers: [{ provide: CharacterFormService, useValue: characterFormServiceSpy }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CharacterAttributesGridComponent);

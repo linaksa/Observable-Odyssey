@@ -1,14 +1,10 @@
-<div class="flex flex-col min-h-screen p-4 gap-4">
-    <nav class="flex flex-col sm:flex-row justify-between gap-4">
-        <button class="btn w-full sm:w-auto" routerLink="/home">Retour vers la vue initiale</button>
-        <button class="btn btn-blue w-full sm:w-auto" (click)="openDialog()">Ajouter un jeu</button>
-    </nav>
+<div class="content">
+    <app-toast />
 
-    <div class="flex justify-center text-center">
-        <h1 class="text-5xl font-black text-white p-4 md:pt-0">Administration</h1>
-    </div>
+    <app-nav-buttons [showAction]="true" textAction="Ajouter un jeu" (action)="openDialog()" />
+    <app-page-title title="Administration" />
 
-    <app-game-table [isAdmin]="true"></app-game-table>
+    <app-game-table [isLoading]="gameTableService.isLoading()" [games]="gameTableService.tableData" [actions]="actions"></app-game-table>
 </div>
 
 @if (isDialogOpen) {
@@ -16,3 +12,27 @@
         <app-game-creation-dialog (click)="$event.stopPropagation()"></app-game-creation-dialog>
     </div>
 }
+
+<ng-template #actions let-game>
+    <label class="btn h-full min-w-36 inline-flex items-center gap-2" [ngClass]="gameIsViewable(game) ? 'btn-green' : 'btn-red'">
+        <input
+            #visibilityCheckbox
+            type="checkbox"
+            hidden="true"
+            [checked]="gameIsViewable(game)"
+            [disabled]="isVisibilityToggleDisabled(game)"
+            (change)="toggleVisibility($event, game)"
+        />
+        @if (isVisibilityToggleLoading(game, visibilityCheckbox.checked)) {
+            <img
+                src="./assets/loading/cogwheel.png"
+                alt="Chargement"
+                class="h-full w-auto object-contain animate-[spin_2s_steps(16)_infinite] select-none [image-rendering:pixelated]"
+                draggable="false"
+            />
+        }
+        <span>Visible</span>
+    </label>
+    <button class="btn h-full min-w-36" [routerLink]="['/edit', game._id]">Modification</button>
+    <button class="btn h-full min-w-36" (click)="deleteGame(game)">Suppression</button>
+</ng-template>

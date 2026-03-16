@@ -1,95 +1,108 @@
-import { DatePipe, NgClass } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Component, ElementRef, InputSignal, OnInit, TemplateRef, ViewChild, input, signal } from '@angular/core';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
-import { ToastComponent } from '@app/components/common/toast/toast.component';
-import { AdminSocketService } from '@app/services/admin.socket.service';
-import { AdministrationService } from '@app/services/administration.service';
-import { GameTableService } from '@app/services/game-table.service';
-import { GameService } from '@app/services/game.service';
-import { ToastService } from '@app/services/toast.service';
-import { IExistingGame, Visibility } from '@common/game';
-import { Subscription } from 'rxjs';
+import { IActiveGame } from '@common/activeGame';
+import { IExistingGame, IGame } from '@common/game';
+
+type GameTableRow = IExistingGame | IActiveGame;
+type TooltipPosition = { x: number; y: number };
+const TOOLTIP_VERTICAL_OFFSET_PX = 8;
+const TOOLTIP_HORIZONTAL_OFFSET_PX = 12;
+const TOOLTIP_FALLBACK_WIDTH_PX = 200;
+const TOOLTIP_FALLBACK_HEIGHT_PX = 80;
 
 @Component({
     selector: 'app-game-table',
-    imports: [DatePipe, RouterLink, NgClass, LoadingOverlayComponent, ToastComponent],
+    imports: [CommonModule, LoadingOverlayComponent],
     templateUrl: './game-table.component.html',
 })
-export class GameTableComponent implements OnInit, OnDestroy {
-    private socketSubscription?: Subscription;
-    private deleteGameSubscription?: Subscription;
+export class GameTableComponent implements OnInit {
+    @ViewChild('tableContainer') private tableContainerRef?: ElementRef<HTMLDivElement>;
+    @ViewChild('descriptionTooltipElement') private descriptionTooltipRef?: ElementRef<HTMLDivElement>;
 
-    private readonly adminService: AdministrationService = inject(AdministrationService);
-    private readonly gameService: GameService = inject(GameService);
-    private readonly toastService = inject(ToastService);
-    private readonly adminSocketService: AdminSocketService = inject(AdminSocketService);
+    readonly games: InputSignal<IExistingGame[] | undefined> = input<IExistingGame[] | undefined>();
+    readonly activeGames: InputSignal<IActiveGame[] | undefined> = input<IActiveGame[] | undefined>();
 
-    protected readonly gameTableService: GameTableService = inject(GameTableService);
+    readonly emptyString: InputSignal<string> = input<string>('Aucun jeu');
+    readonly loadingString: InputSignal<string> = input<string>('Chargement des jeux...');
 
-    @Input() isAdmin = false;
+    readonly isLoading: InputSignal<boolean> = input.required<boolean>();
+    readonly actions: InputSignal<TemplateRef<{ $implicit: GameTableRow }>> = input.required<TemplateRef<{ $implicit: GameTableRow }>>();
 
-    private fetchCorrectGames(): void {
-        this.gameTableService.fetchGames(!this.isAdmin);
-    }
+    protected readonly descriptionTooltip = signal<string | null>(null);
+    protected readonly descriptionTooltipPosition = signal<TooltipPosition>({ x: 0, y: 0 });
 
     ngOnInit(): void {
-        this.gameTableService.tableData = [];
-        this.fetchCorrectGames();
-
-        this.adminSocketService.connect();
-        this.socketSubscription = this.adminSocketService.onGamesModified().subscribe({
-            next: () => {
-                this.fetchCorrectGames();
-            },
-            error: (error: HttpErrorResponse) => {
-                const serverMessage = error?.error?.error || "Il y a eu un problème lors de l'ajout des jeux.";
-                this.toastService.show(serverMessage);
-            },
-        });
-    }
-
-    gameIsViewable(element: IExistingGame): boolean {
-        return element.visibility === Visibility.Viewable;
-    }
-
-    toggleVisibility(event: Event, element: IExistingGame): void {
-        const input = event.target as HTMLInputElement;
-        input.disabled = true;
-
-        this.adminService.changeGameVisibility(element._id, input.checked).subscribe({
-            next: () => {
-                this.gameTableService.fetchGames(false);
-                input.disabled = false;
-            },
-            error: () => {
-                input.disabled = false;
-                input.checked = !input.checked;
-                this.toastService.show('Il y a eu un problème lors du changement de visibilité.');
-            },
-        });
-    }
-
-    deleteGame(element: IExistingGame): void {
-        this.gameService.deleteGame(element).subscribe({
-            next: () => {
-                this.gameTableService.tableData = this.gameTableService.tableData.filter((item) => item._id !== element._id);
-            },
-            error: (error: HttpErrorResponse) => {
-                const serverMessage = error?.error?.error || 'Il y a eu un problème lors de la suppression.';
-                this.toastService.show(serverMessage);
-            },
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.socketSubscription?.unsubscribe();
-        this.deleteGameSubscription?.unsubscribe();
-
-        this.adminSocketService.disconnect();
-        if (this.toastService.toastTimeoutId) {
-            clearTimeout(this.toastService.toastTimeoutId);
+        if (!this.games() && !this.activeGames()) {
+            throw new Error('No lists has been passed to fill the table.');
         }
+
+        if (this.games() && this.activeGames()) {
+            throw new Error('Too many lists has been passed to fill the table.');
+        }
+    }
+
+    get gameList(): GameTableRow[] {
+        return this.activeGames() ?? this.games() ?? [];
+    }
+
+    isActiveGame(): boolean {
+        return this.activeGames() !== undefined;
+    }
+
+    getGame(gameRow: GameTableRow): IGame {
+        return this.isActiveGameRow(gameRow) ? gameRow.game : gameRow;
+    }
+
+    numOfPlayer(gameRow: GameTableRow): number {
+        return this.isActiveGameRow(gameRow) ? gameRow.players.length : 0;
+    }
+
+    maximumNumOfPlayer(gameRow: GameTableRow): number {
+        return this.isActiveGameRow(gameRow) ? gameRow.maxPlayerCount : 0;
+    }
+
+    protected showDescriptionTooltip(event: MouseEvent, description: string): void {
+        this.descriptionTooltip.set(description);
+        this.updateTooltipPosition(event);
+    }
+
+    protected updateDescriptionTooltipPosition(event: MouseEvent): void {
+        this.updateTooltipPosition(event);
+    }
+
+    protected hideDescriptionTooltip(): void {
+        this.descriptionTooltip.set(null);
+    }
+
+    private isActiveGameRow(gameRow: GameTableRow): gameRow is IActiveGame {
+        return 'game' in gameRow;
+    }
+
+    private updateTooltipPosition(event: MouseEvent): void {
+        const containerRect = this.tableContainerRef?.nativeElement.getBoundingClientRect();
+        if (!containerRect || containerRect.width <= 0 || containerRect.height <= 0) {
+            this.descriptionTooltipPosition.set({
+                x: event.clientX,
+                y: event.clientY + TOOLTIP_VERTICAL_OFFSET_PX,
+            });
+            return;
+        }
+
+        const tooltipWidth = this.descriptionTooltipRef?.nativeElement.offsetWidth ?? TOOLTIP_FALLBACK_WIDTH_PX;
+        const tooltipHeight = this.descriptionTooltipRef?.nativeElement.offsetHeight ?? TOOLTIP_FALLBACK_HEIGHT_PX;
+        const relativeCursorX = event.clientX - containerRect.left;
+        const relativeCursorY = event.clientY - containerRect.top;
+        const maxLeft = Math.max(0, containerRect.width - tooltipWidth);
+        const maxTop = Math.max(0, containerRect.height - tooltipHeight);
+
+        this.descriptionTooltipPosition.set({
+            x: this.clamp(relativeCursorX + TOOLTIP_HORIZONTAL_OFFSET_PX, 0, maxLeft),
+            y: this.clamp(relativeCursorY + TOOLTIP_VERTICAL_OFFSET_PX, 0, maxTop),
+        });
+    }
+
+    private clamp(value: number, min: number, max: number): number {
+        return Math.min(Math.max(value, min), max);
     }
 }

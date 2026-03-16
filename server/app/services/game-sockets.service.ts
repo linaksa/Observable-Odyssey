@@ -68,7 +68,6 @@ export class GameSocketsService {
                 }
             });
 
-
             socket.on(SocketEvent.StartGame, async (activeGameId: string) => {
                 const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
                 if (!activeGameId) {

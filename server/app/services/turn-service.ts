@@ -33,7 +33,6 @@ export class TurnService {
         // If the scheduled player has since abandoned, skip their turn immediately
         if (player.hasAbandoned) {
             await this.endTurn(gameId);
-
         }
 
         // Always clear old timers before creating new ones.
@@ -116,9 +115,7 @@ export class TurnService {
 
         activeGame.currentPlayerIndex = nextIndex;
 
-        const nextPlayer = activeGame.players.find(
-            (p) => p.name === activeGame.turnOrder[nextIndex],
-        );
+        const nextPlayer = activeGame.players.find((p) => p.name === activeGame.turnOrder[nextIndex]);
 
         if (nextPlayer) {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;

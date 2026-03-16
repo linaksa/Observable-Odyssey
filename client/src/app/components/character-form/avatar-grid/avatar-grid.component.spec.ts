@@ -3,7 +3,6 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Avatar } from '@common/constants';
 import { AvatarGridComponent } from './avatar-grid.component';
 
-
 describe('AvatarGridComponent', () => {
     let component: AvatarGridComponent;
     let fixture: ComponentFixture<AvatarGridComponent>;

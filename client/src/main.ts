@@ -32,7 +32,6 @@ const routes: Routes = [
     { path: 'wait', component: WaitPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent },
     { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
-    { path: 'play', component: GamePageComponent, canActivate: [activePlayerGuard] },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
     { path: 'error', component: ErrorPageComponent },

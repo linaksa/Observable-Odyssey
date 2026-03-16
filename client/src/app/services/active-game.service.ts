@@ -102,44 +102,39 @@ export class ActiveGameService implements OnDestroy {
 
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
-        this.playerAbandonedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned)
-            .subscribe((data) => {
-                const player = this.getPlayerByName(data.playerId);
-                if (!player) return;
+        this.playerAbandonedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
+            const player = this.getPlayerByName(data.playerId);
+            if (!player) return;
 
-                player.hasAbandoned = true;
+            player.hasAbandoned = true;
 
-                this.hasAbandonned.set(!this.hasAbandonned());
-            });
-        this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked)
-            .subscribe((data) => {
-                const player = this.getPlayerByName(data.playerId);
-                if (!player) return;
-                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
-                if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
-                    this.toastService.show('Vous avez été expulsés de la partie');
-                    this.router.navigate(['/']);
-                }
-            });// duplication de code
-        this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom)
-            .subscribe((data) => {
-                const player = this.getPlayerByName(data.playerId);
-                if (!player) return;
-                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
-            });
-        this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded)
-            .subscribe((data) => {
-                this.activeGame.winner = data.winner;
-                this.activeGame.isFinished = true;
+            this.hasAbandonned.set(!this.hasAbandonned());
+        });
+        this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
+            const player = this.getPlayerByName(data.playerId);
+            if (!player) return;
+            this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+            if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
+                this.toastService.show('Vous avez été expulsés de la partie');
+                this.router.navigate(['/']);
+            }
+        });
+        this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
+            const player = this.getPlayerByName(data.playerId);
+            if (!player) return;
+            this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+        });
+        this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
+            this.activeGame.winner = data.winner;
+            this.activeGame.isFinished = true;
 
-                this.gameHasEnded.set(!this.gameHasEnded());
-            });
-        this.gameCanceledSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled)
-            .subscribe(() => {
-                this.localPlayer.clear();
-                this.toastService.show("L'organiseur a annulé la partie.");
-                this.router.navigate(['/home']);
-            });
+            this.gameHasEnded.set(!this.gameHasEnded());
+        });
+        this.gameCanceledSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
+            this.localPlayer.clear();
+            this.toastService.show("L'organiseur a annulé la partie.");
+            this.router.navigate(['/home']);
+        });
     }
 
     applyDebugModeState(data: IDebugToggleState) {
@@ -178,13 +173,11 @@ export class ActiveGameService implements OnDestroy {
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
-        return this.activeGame.players.find(player => player.name === playerName);
+        return this.activeGame.players.find((player) => player.name === playerName);
     }
 
     getPlayersAtPosition(row: number, col: number): ICharacter[] {
-        return this.activeGame.players.filter(player =>
-            !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col,
-        );
+        return this.activeGame.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col);
     }
 
     getCurrentPlayer(): ICharacter | undefined {
@@ -323,9 +316,7 @@ export class ActiveGameService implements OnDestroy {
         });
     }
 
-
     attackPlayer(targetPlayerName: string): void {
-
         const attacker = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
@@ -338,7 +329,6 @@ export class ActiveGameService implements OnDestroy {
         const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
         const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
 
-
         if (dx + dy !== 1) return;
 
         const attackData: IAttackData = {
@@ -348,7 +338,6 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.socket.emit(Namespaces.Game, SocketEvent.Attack, attackData);
-
 
         this.attackMode.set(false);
     }
