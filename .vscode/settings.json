@@ -6,8 +6,15 @@
         "source.fixAll.eslint": "explicit"
     },
     "html.format.indentInnerHtml": true,
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
     "files.associations": {
         "*.css": "tailwindcss"
     },
-    "eslint.enable": true
+    "eslint.enable": true,
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
 }

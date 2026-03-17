@@ -2,14 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
-import { activePlayerGuard } from '@app/guards/active-player.guard';
 import { AngularHttpClientAdapter } from '@app/http/angular-http-client-adapter';
 import { HTTP_CLIENT } from '@app/http/http-interface';
 import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
 import { AppComponent } from '@app/pages/app/app.component';
 import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
 import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
-import { ErrorPageComponent } from '@app/pages/error-page/error-page.component';
 import { FormPageComponent } from '@app/pages/form-page/form-page.component';
 import { GamePageComponent } from '@app/pages/game-page/game-page.component';
 import { JoinFormPageComponent } from '@app/pages/join-form-page/join-form-page.component';
@@ -29,12 +27,11 @@ const routes: Routes = [
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
-    { path: 'wait', component: WaitPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent },
-    { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
+    { path: 'play/:activeGameId', component: GamePageComponent },
+    { path: 'play', component: GamePageComponent },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
-    { path: 'error', component: ErrorPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

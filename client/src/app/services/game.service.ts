@@ -26,6 +26,10 @@ export class GameService {
         return this.httpClient.get<IExistingGame>(`${this.baseUrl}/games/${gameId}`).pipe(catchError(this.handleError<IExistingGame>('getGameById')));
     }
 
+    getAllActiveGames(): Observable<IActiveGame[]> {
+        return this.httpClient.get<IActiveGame[]>(`${this.baseUrl}/activeGame`).pipe(catchError(this.handleError<IActiveGame[]>('basicGet')));
+    }
+
     getActiveGameById(activeGameId: string): Observable<IActiveGame> {
         return this.httpClient
             .get<IActiveGame>(`${this.baseUrl}/activeGame/${activeGameId}`)

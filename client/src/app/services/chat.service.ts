@@ -46,6 +46,6 @@ export class ChatService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.chatSubscription?.unsubscribe();
+        this.chatSubscription.unsubscribe();
     }
 }

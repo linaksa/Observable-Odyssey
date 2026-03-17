@@ -1,8 +1,8 @@
 <div
-    class="max-w-xs break-all h-fit p-2 rounded-lg"
+    class="w-fit h-fit p-2 rounded-lg"
     [style.background-color]="isSelf ? 'lightblue' : 'lightgray'"
     [ngClass]="{ 'justify-self-end': isSelf, 'justify-self-start': !isSelf }"
 >
-    <div>{{ message.author }} - {{ message.postedAt | date: 'HH:mm:ss' }}</div>
-    <div class="">{{ message.content }}</div>
+    <div>{{ message.author }} - {{ message.postedAt | date: 'MMM d, HH:mm' }}</div>
+    <div>{{ message.content }}</div>
 </div>

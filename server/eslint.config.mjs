@@ -7,7 +7,7 @@ export default [
     {
         files: ['**/*.ts'],
         rules: {
-            // may have stricter rules
+            // Ajoutez ici d'autres règles spécifiques au serveur au besoin
         },
     },
 ];

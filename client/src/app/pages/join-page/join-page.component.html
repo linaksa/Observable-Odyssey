@@ -1,16 +1,11 @@
-<div class="content">
-    <app-toast />
+<div class="flex flex-col p-4">
+    <nav class="flex justify-between flex-col sm:flex-row gap-4">
+        <button class="btn w-full sm:w-auto" routerLink="/home">Retour vers la vue initiale</button>
+    </nav>
 
-    <app-nav-buttons />
-    <app-page-title title="Rejoindre une partie" />
+    <header class="flex justify-center text-center">
+        <h1 class="text-5xl font-black text-white p-4 md:pt-0">Rejoindre une partie</h1>
+    </header>
 
-    <app-game-table
-        [isLoading]="activeGameTableService.isLoading()"
-        [activeGames]="activeGameTableService.tableData"
-        [actions]="actions"
-    ></app-game-table>
+    <app-active-game-table></app-active-game-table>
 </div>
-
-<ng-template #actions let-activeGame>
-    <button class="btn btn-blue h-full min-w-48" [routerLink]="['/join', activeGame._id]">Rejoindre</button>
-</ng-template>

@@ -1,10 +1,11 @@
-<div class="content">
-    <app-nav-buttons />
-    <app-page-title title="Création d'une partie" />
+<div class="flex flex-col min-h-screen p-4 gap-4">
+    <nav class="flex justify-between flex-col sm:flex-row gap-4">
+        <button class="btn w-full sm:w-auto" routerLink="/home">Retour vers la vue initiale</button>
+    </nav>
 
-    <app-game-table [isLoading]="gameTableService.isLoading()" [games]="gameTableService.tableData" [actions]="actions"></app-game-table>
+    <header class="flex justify-center text-center">
+        <h1 class="text-5xl font-black text-white p-4 md:pt-0">Création d'une partie</h1>
+    </header>
+
+    <app-game-table [isAdmin]="false"></app-game-table>
 </div>
-
-<ng-template #actions let-game>
-    <button class="btn btn-blue h-full min-w-48" [routerLink]="['/form', game._id]">Créer une partie</button>
-</ng-template>

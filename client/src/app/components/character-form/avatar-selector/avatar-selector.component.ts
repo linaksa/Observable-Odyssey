@@ -12,7 +12,6 @@ import { Avatar } from '@common/constants';
 })
 export class AvatarSelectorComponent {
     @Input() form: FormGroup;
-    @Input() unavailableAvatars: Avatar[] = [];
 
     get selectedAvatar(): Avatar | null {
         return this.form.controls.avatar.value;

@@ -1,7 +1,6 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IDebugToggleState } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { ActiveGameService } from './active-game.service';
 import { SocketService } from './socket.service';
@@ -21,14 +20,14 @@ export class DebugSocketService implements OnDestroy {
 
         this.debugSubscription?.unsubscribe();
         this.debugSubscription = this.onDebugModeToggle().subscribe({
-            next: (data) => {
-                this.activeGameService.applyDebugModeState(data);
+            next: (playerName) => {
+                this.activeGameService.toggleDebugMode(playerName);
             },
         });
     }
 
-    private onDebugModeToggle(): Observable<IDebugToggleState> {
-        return this.socketService.on<IDebugToggleState>(Namespaces.Game, SocketEvent.DebugToggle);
+    private onDebugModeToggle(): Observable<string> {
+        return this.socketService.on<string>(Namespaces.Game, SocketEvent.DebugToggle);
     }
 
     emitDebugModeToggle(playerName: string, activeGameId: string) {
