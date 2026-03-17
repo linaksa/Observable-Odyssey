@@ -11,16 +11,16 @@
  * - Error handling paths and fallback user-facing messaging.
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
-import { Component, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
-import { AdministrationService } from '@app/services/administration.service';
 import { AdminSocketService } from '@app/services/admin.socket.service';
+import { AdministrationService } from '@app/services/administration.service';
 import { GameTableService } from '@app/services/game-table.service';
 import { GameService } from '@app/services/game.service';
 import { ToastService } from '@app/services/toast.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
+import { of, Subject } from 'rxjs';
 import { AdministrationPageComponent } from './administration-page.component';
 import SpyObj = jasmine.SpyObj;
 

@@ -15,10 +15,10 @@ import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { ICharacter } from '@common/character';
+import { TurnStatusData } from '@common/info';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IJoinGamePayload } from '@common/socket-payloads';
-import { TurnStatusData } from '@common/info';
 import { Subscription } from 'rxjs';
 
 @Component({
