@@ -42,6 +42,7 @@ export class GameSocketsService {
                     return;
                 }
 
+                this.leaveOtherGameRooms(socket, activeGameId);
                 socket.join(activeGameId);
                 if (playerName) {
                     this.setSocketPlayerName(socket, activeGameId, playerName);
@@ -182,6 +183,10 @@ export class GameSocketsService {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
                     await this.activeGameService.deleteGameById(gameId);
                 }
+
+                // Abandoning a game should also remove the socket from that game's room
+                // to avoid receiving room-scoped events from old games.
+                this.unregisterSocketFromGame(socket, gameId);
             });
 
             socket.on('disconnect', async () => {
@@ -264,6 +269,15 @@ export class GameSocketsService {
     private unregisterSocketFromGame(socket: Socket, gameId: string): void {
         socket.leave(gameId);
         this.clearSocketPlayerName(socket, gameId);
+    }
+
+    private leaveOtherGameRooms(socket: Socket, targetGameId: string): void {
+        for (const roomId of socket.rooms) {
+            if (roomId === socket.id || roomId === targetGameId) {
+                continue;
+            }
+            this.unregisterSocketFromGame(socket, roomId);
+        }
     }
 
     private clearSocketPlayerName(socket: Socket, gameId: string): void {

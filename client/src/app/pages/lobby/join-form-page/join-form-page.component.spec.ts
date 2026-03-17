@@ -19,12 +19,13 @@ import { of, Subject, Subscription, throwError } from 'rxjs';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { JoinFormPageComponent } from './join-form-page.component';
 
-import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { GameService } from '@app/services/admin/game.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame, IActiveGameWithPlayer } from '@common/activeGame';
+import { Avatar, DiceType } from '@common/constants';
 import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -145,6 +146,61 @@ describe('JoinFormPageComponent', () => {
         fixture.detectChanges();
 
         expect(socketServiceMock.on).toHaveBeenCalledWith(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    });
+
+    it('should ignore abandoned players when computing unavailable avatars', () => {
+        const unavailableAvatarsSet = jasmine.createSpy('set');
+        Object.defineProperty(characterFormServiceMock, 'unavailableAvatars', {
+            value: { set: unavailableAvatarsSet },
+            configurable: true,
+        });
+
+        const activeGameWithAbandonedPlayers: IActiveGame = {
+            ...dummyActiveGame,
+            players: [
+                {
+                    name: 'active-player',
+                    avatar: Avatar.Avatar1,
+                    initialHealth: 1,
+                    currentHealth: 1,
+                    attackBonusDiceType: DiceType.FourSided,
+                    defenseBonusDiceType: DiceType.SixSided,
+                    rapidityPoints: 1,
+                    attackPoints: 1,
+                    defensePoints: 1,
+                    actionsLeft: 1,
+                    movementLeft: 1,
+                    victories: 0,
+                    hasAbandoned: false,
+                    positionDepart: { x: 0, y: 0 },
+                    positionGrille: { x: 0, y: 0 },
+                },
+                {
+                    name: 'abandoned-player',
+                    avatar: Avatar.Avatar2,
+                    initialHealth: 1,
+                    currentHealth: 1,
+                    attackBonusDiceType: DiceType.FourSided,
+                    defenseBonusDiceType: DiceType.SixSided,
+                    rapidityPoints: 1,
+                    attackPoints: 1,
+                    defensePoints: 1,
+                    actionsLeft: 1,
+                    movementLeft: 1,
+                    victories: 0,
+                    hasAbandoned: true,
+                    positionDepart: { x: 0, y: 0 },
+                    positionGrille: { x: 0, y: 0 },
+                },
+            ],
+        };
+
+        gameServiceMock.getActiveGameById.and.returnValue(of(activeGameWithAbandonedPlayers));
+        component.activeGameId = defaultActiveGameID;
+
+        component.fetchAvailableAvatars();
+
+        expect(unavailableAvatarsSet).toHaveBeenCalledWith([Avatar.Avatar1]);
     });
 
     it('should handle joinGameAsCharacter success', () => {

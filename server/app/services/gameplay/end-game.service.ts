@@ -43,6 +43,12 @@ export class EndGameService {
         if (!player) return;
 
         player.hasAbandoned = true;
+        await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+
+        const remainingActivePlayers = activeGame.players.filter((p) => !p.hasAbandoned).length;
+        if (remainingActivePlayers <= ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
+            return;
+        }
 
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
 
@@ -50,6 +56,5 @@ export class EndGameService {
         if (playerName === currentPlayerName) {
             await this.turnService.endTurn(gameId);
         }
-        await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
     }
 }

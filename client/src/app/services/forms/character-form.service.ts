@@ -64,6 +64,7 @@ export class CharacterFormService {
         this.characterForm.reset();
         this.isLoading.set(false);
         this.errors.set(null);
+        this.unavailableAvatars.set([]);
     }
 
     get lifePoints(): number {
