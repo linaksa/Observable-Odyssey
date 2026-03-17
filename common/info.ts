@@ -27,3 +27,10 @@ export interface TileInfoPopupData {
     playerName: string | null;
     playerAvatarUrl: string | null;
 }
+
+export interface TurnStatusData {
+    currentPlayerName: string | null;
+    turnTimeLeftSeconds: number | null;
+    isTurnPreparing: boolean;
+    canEndTurn: boolean;
+}

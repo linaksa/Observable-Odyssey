@@ -1,13 +1,13 @@
 import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
-import { GameAbandonComponent } from '@app/components/game/game-abandon/game-abandon.component';
 import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
+import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { DebugSocketService } from '@app/services/debug.socket.service';
 import { GameTurnService } from '@app/services/game-turn.service';
@@ -18,6 +18,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IJoinGamePayload } from '@common/socket-payloads';
+import { TurnStatusData } from '@common/info';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -29,8 +30,8 @@ import { Subscription } from 'rxjs';
         GameInfosComponent,
         ChatPanelComponent,
         GameAttackComponent,
-        GameAbandonComponent,
         GameEndedComponent,
+        TurnStatusComponent,
     ],
     providers: [GameTurnService],
     templateUrl: './game-page.component.html',
@@ -107,6 +108,15 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
     get isGameFinished(): boolean {
         return this.activeGameService.activeGame.isFinished;
+    }
+
+    get turnStatusData(): TurnStatusData {
+        return {
+            currentPlayerName: this.currentPlayerName,
+            turnTimeLeftSeconds: this.turnTimeLeftSeconds,
+            isTurnPreparing: this.isTurnPreparing,
+            canEndTurn: this.canEndTurn,
+        };
     }
 
     endTurn(): void {
