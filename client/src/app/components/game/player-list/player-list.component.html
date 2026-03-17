@@ -1,3 +1,9 @@
+<div>
+    <span class=" bg-gray-700 text-white text-xs px-2 py-1 rounded">
+        {{ orderedPlayers.length }}  joueurs
+    </span>
+</div>
+
 <div class="flex flex-col text-white gap-4">
     @for (player of orderedPlayers; track player.name) {
         <div
