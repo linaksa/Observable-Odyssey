@@ -55,9 +55,9 @@ describe('GameTurnService', () => {
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
             currentPlayer: signal(0),
             hasChangedLocation: signal(false),
-            getPlayerByName: jasmine.createSpy('getPlayerByName').and.callFake((playerName: string) =>
-                activeGameServiceStub.activeGame.players.find((player) => player.name === playerName),
-            ),
+            getPlayerByName: jasmine
+                .createSpy('getPlayerByName')
+                .and.callFake((playerName: string) => activeGameServiceStub.activeGame.players.find((player) => player.name === playerName)),
         };
 
         eventStreams.clear();
@@ -237,7 +237,6 @@ function createActiveGame(players: ICharacter[], currentPlayer: string): IActive
         _id: 'active-game-1',
         game,
         players,
-        itemsState: [],
         currentPlayerIndex: players.findIndex((player) => player.name === currentPlayer),
         turnOrder: players.map((player) => player.name),
         isFinished: false,

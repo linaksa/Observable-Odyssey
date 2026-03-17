@@ -472,7 +472,6 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         _id: id,
         game,
         players,
-        itemsState: [],
         currentPlayerIndex,
         turnOrder,
         isFinished: false,

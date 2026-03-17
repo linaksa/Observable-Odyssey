@@ -51,7 +51,6 @@ const dummyActiveGame: IActiveGame = {
     _id: 'dummyActiveGameId',
     game: {} as IGame,
     players: [],
-    itemsState: [],
     currentPlayerIndex: 0,
     turnOrder: [],
     isFinished: false,

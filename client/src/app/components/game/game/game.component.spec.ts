@@ -262,7 +262,6 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         _id: 'active-game-1',
         game,
         players,
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: players.map((player) => player.name),
         isFinished: false,

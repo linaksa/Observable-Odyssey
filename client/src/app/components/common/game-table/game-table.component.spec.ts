@@ -289,7 +289,6 @@ function createActiveGame(id: string, game: IGame, players = 0, maxPlayerCount =
         _id: id,
         game,
         players: Array.from({ length: players }, (_, index) => createCharacter(index)),
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: [],
         isFinished: false,

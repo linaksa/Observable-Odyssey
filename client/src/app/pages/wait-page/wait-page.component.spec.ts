@@ -345,7 +345,6 @@ function createActiveGame(id: string, organizerName: string, players: ICharacter
             },
         },
         players,
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: [],
         isFinished: false,

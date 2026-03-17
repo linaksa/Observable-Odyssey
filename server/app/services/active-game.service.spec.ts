@@ -35,7 +35,6 @@ describe('ActiveGameService', () => {
         _id: 'dummyActiveGameId',
         game: dummyGame,
         players: [],
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: [],
         isFinished: false,
