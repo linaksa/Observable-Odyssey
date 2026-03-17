@@ -1,3 +1,9 @@
+import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
+import { ChatService } from '@app/services/realtime/chat.service';
+import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
@@ -6,12 +12,6 @@ import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IAttackData, IDebugToggleState, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
-import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { ChatService } from '@app/services/realtime/chat.service';
-import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
-import { SocketService } from '@app/services/realtime/socket.service';
 
 @Service()
 export class GameSocketsService {
@@ -156,6 +156,7 @@ export class GameSocketsService {
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+                    await this.activeGameService.deleteGameById(gameId);
                 }
             });
             // =======================
@@ -179,6 +180,7 @@ export class GameSocketsService {
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    await this.activeGameService.deleteGameById(gameId);
                 }
             });
 
@@ -227,6 +229,7 @@ export class GameSocketsService {
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+            await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
             await this.gameplayService.turnService.endTurn(gameId);
