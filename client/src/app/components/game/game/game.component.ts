@@ -4,6 +4,7 @@ import { EditionCellComponent } from '@app/components/edition/edition-cell/editi
 import { ActiveGameService } from '@app/services/active-game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { buildGraph } from '@app/utils/pathfinding';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
@@ -59,6 +60,7 @@ export class GameComponent implements OnInit {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyboard(event: KeyboardEvent) {
+        if (isTypingInChatMessageInput(event)) return;
         if (!this.isLocalPlayerTurn) return;
 
         switch (event.key.toLowerCase()) {
@@ -79,6 +81,7 @@ export class GameComponent implements OnInit {
                 break;
         }
     }
+
     onPlayerClicked(playerName: string) {
         if (!this.activeGameService.attackMode() || !this.isLocalPlayerTurn) {
             return;

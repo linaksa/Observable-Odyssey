@@ -111,12 +111,13 @@ export class ActiveGameService implements OnDestroy {
             this.hasAbandonned.set(!this.hasAbandonned());
         });
         this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
-            const player = this.getPlayerByName(data.playerId);
-            if (!player) return;
             this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+            this.syncTurnOrderWithPlayers();
+
             if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
                 this.toastService.show('Vous avez été expulsés de la partie');
                 this.router.navigate(['/']);
+                return;
             }
         });
         this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
@@ -259,6 +260,26 @@ export class ActiveGameService implements OnDestroy {
             ...this.activeGame,
             players: [...players],
         };
+        this.syncTurnOrderWithPlayers();
+    }
+
+    private syncTurnOrderWithPlayers(): void {
+        if (!this.activeGame) return;
+
+        const currentPlayerName = this.activeGame.turnOrder[this.activeGame.currentPlayerIndex];
+        const activePlayerNames = new Set(this.activeGame.players.map((player) => player.name));
+        this.activeGame.turnOrder = this.activeGame.turnOrder.filter((name) => activePlayerNames.has(name));
+
+        if (this.activeGame.turnOrder.length === 0) {
+            this.activeGame.currentPlayerIndex = 0;
+            this.currentPlayer.set(0);
+            return;
+        }
+
+        const nextIndex = this.activeGame.turnOrder.indexOf(currentPlayerName);
+        this.activeGame.currentPlayerIndex =
+            nextIndex !== -1 ? nextIndex : Math.min(this.activeGame.currentPlayerIndex, this.activeGame.turnOrder.length - 1);
+        this.currentPlayer.set(this.activeGame.currentPlayerIndex);
     }
 
     updateMovementRange(totalColumns: number, graph: [number, number][][]) {
@@ -357,9 +378,8 @@ export class ActiveGameService implements OnDestroy {
     }
 
     removeUnusedSpawnPoints(): void {
-        this.activeGame.game.board.items =
-            this.activeGame.game.board.items.filter(item =>
-                item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
-            );
+        this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
+            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
+        );
     }
 }
