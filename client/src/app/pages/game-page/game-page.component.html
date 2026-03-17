@@ -1,25 +1,25 @@
 <div class="flex flex-col min-h-screen p-4">
     <app-game-infos></app-game-infos>
     <div class="mt-4 mb-2 rounded-lg bg-[#233f74] p-3 text-center text-white">
-        @if (currentPlayerName) {
-            <span>C'est le tour de {{ currentPlayerName }}</span>
-        } @else {
-            <span>Chargement du tour en cours...</span>
-        }
-        @if (gameTurnService.turnTimeLeftSeconds !== null) {
-            <span class="ml-2">({{ gameTurnService.turnTimeLeftSeconds }}s)</span>
-        }
-        @if (gameTurnService.isTurnPreparing) {
-            <span class="ml-2 text-yellow-200">Preparation...</span>
-        }
-        <button
-            class="ml-4 rounded bg-[#182b50] px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
-            [disabled]="!canEndTurn"
-            (click)="endTurn()"
-        >
-            Finir mon tour
-        </button>
-        <app-game-abandon></app-game-abandon>
+        <div>
+            @if (currentPlayerName) {
+                <span>C'est le tour de {{ currentPlayerName }}</span>
+            } @else {
+                <span>Chargement du tour en cours...</span>
+            }
+            @if (turnTimeLeftSeconds !== null) {
+                <span class="ml-2">({{ turnTimeLeftSeconds }}s)</span>
+            }
+            @if (isTurnPreparing) {
+                <span class="ml-2 text-yellow-200">Preparation...</span>
+            }
+        </div>
+        <div class="mt-3 flex justify-center gap-3">
+            <button class="btn min-w-1/10" [disabled]="!canEndTurn" (click)="endTurn()">
+                Finir mon tour
+            </button>
+            <app-game-abandon></app-game-abandon>
+        </div>
     </div>
     <div class="flex grow gap-4">
         <div class="flex flex-col basis-3/4 grow gap-4">
@@ -40,7 +40,7 @@
         </div>
     </div>
 </div>
-@if (activeGameService.activeGame.isFinished) {
+@if (isGameFinished) {
     <app-game-ended></app-game-ended>
 }
 

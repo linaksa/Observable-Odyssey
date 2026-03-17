@@ -7,6 +7,7 @@ import { EditionCellComponent } from '@app/components/edition/edition-cell/editi
 import { EditionFormComponent } from '@app/components/edition/edition-form/edition-form.component';
 import { CELL_TYPE_BACKGROUNDS, OBJECT_IMAGES } from '@app/constants/backgrounds-mapping';
 import { ToolOption } from '@app/constants/grid-edition';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardEditorService } from '@app/services/edition.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
@@ -39,21 +40,8 @@ export class GameEditionComponent implements OnInit {
         [ToolOption.Objects]: "Placement d'un objet",
     };
 
-    itemTypesDescToolTip: { [key in ItemType]: string } = {
-        [ItemType.LifeSanctuary]: 'Soigne le joueur',
-        [ItemType.FightSanctuary]: "Augmente les degats d'attaque",
-        [ItemType.StartingPosition]: "Position d'apparition du joueur",
-        [ItemType.Flag]: 'Objectif pour le mode CTF ',
-    };
-
-    cellTypesDescToolTip: { [key in CellType]: string } = {
-        [CellType.Empty]: 'Tuile de base',
-        [CellType.Ice]: 'Ne consomme aucun mouvement',
-        [CellType.Water]: 'Consomme deux fois plus de mouvement',
-        [CellType.Wall]: "N'est pas traversable",
-        [CellType.OpenDoor]: 'Une porte ouverte',
-        [CellType.ClosedDoor]: 'Une porte fermée',
-    };
+    readonly itemInfoByType = ITEM_INFO_BY_TYPE;
+    readonly tileInfoByType = TILE_INFO_BY_TYPE;
 
     private isDrawing = false;
     private isShiftPressed = false;
@@ -78,6 +66,14 @@ export class GameEditionComponent implements OnInit {
 
     selectObject(object: ItemType): void {
         this.boardEditorService.selectedObject = object;
+    }
+
+    protected getGridCellTooltip(row: number, col: number, cellType: CellType): string {
+        const objectAtCell = this.boardSharedService.getObjectAt(row, col, this.boardEditorService.objects);
+        if (objectAtCell) {
+            return this.itemInfoByType[objectAtCell.itemType].editorTooltip;
+        }
+        return this.tileInfoByType[cellType].editorTooltip;
     }
 
     onMouseDown(row: number, col: number, event: MouseEvent): void {

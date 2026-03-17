@@ -9,7 +9,7 @@
                             <app-action-selection-button
                                 [isSelected]="boardEditorService.selectedMaterial === type"
                                 (click)="selectMaterial(type)"
-                                [tooltip]="cellTypesDescToolTip[type]"
+                                [tooltip]="tileInfoByType[type].editorTooltip"
                             >
                                 <div class="size-16 bg-cover m-auto" [ngClass]="cellTypeBackgrounds[type]"></div>
                             </app-action-selection-button>
@@ -24,7 +24,7 @@
                         @for (type of availableItemsTypes; track $index) {
                             <app-action-selection-button
                                 [isSelected]="boardEditorService.selectedObject === type"
-                                [tooltip]="itemTypesDescToolTip[type]"
+                                [tooltip]="itemInfoByType[type].editorTooltip"
                                 [disabled]="boardEditorService.getRemainingObjectCount(type) === 0"
                                 (click)="selectObject(type)"
                             >
@@ -51,6 +51,7 @@
                                 [cellType]="cell"
                                 [rowIndex]="rowIndex"
                                 [colIndex]="colIndex"
+                                [attr.title]="getGridCellTooltip(rowIndex, colIndex, cell)"
                                 (mousedDownCell)="onMouseDown(rowIndex, colIndex, $event)"
                                 (mouseEnterCell)="onMouseEnter(rowIndex, colIndex, $event)"
                                 [item]="boardSharedService.getObjectAt(rowIndex, colIndex, boardEditorService.objects)"

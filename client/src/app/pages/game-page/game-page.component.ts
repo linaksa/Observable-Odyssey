@@ -39,9 +39,9 @@ export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly debugSocketService = inject(DebugSocketService);
     private readonly socketService = inject(SocketService);
-    readonly activeGameService = inject(ActiveGameService);
+    private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
-    readonly gameTurnService = inject(GameTurnService);
+    private readonly gameTurnService = inject(GameTurnService);
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
@@ -93,8 +93,20 @@ export class GamePageComponent implements OnInit, OnDestroy {
         return this.gameTurnService.currentPlayerName;
     }
 
+    get turnTimeLeftSeconds(): number | null {
+        return this.gameTurnService.turnTimeLeftSeconds;
+    }
+
+    get isTurnPreparing(): boolean {
+        return this.gameTurnService.isTurnPreparing;
+    }
+
     get canEndTurn(): boolean {
         return this.gameTurnService.canEndTurn;
+    }
+
+    get isGameFinished(): boolean {
+        return this.activeGameService.activeGame.isFinished;
     }
 
     endTurn(): void {

@@ -39,6 +39,9 @@ export const DEFAULT_PLAYER_LIFE_POINTS = 6;
 export const DEFAULT_PLAYER_SPEED_POINTS = 6;
 export const DEFAULT_PLAYER_ATTACK_POINTS = 4;
 export const DEFAULT_PLAYER_DEFENSE_POINTS = 4;
+export const TILE_INFO_POPUP_WIDTH_PX = 260;
+export const TILE_INFO_POPUP_HEIGHT_PX = 180;
+export const AVATAR_ASSET_BASE_PATH = 'assets/form-page';
 
 export enum GameSize {
     Small = 100,
