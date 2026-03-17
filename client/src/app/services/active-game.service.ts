@@ -111,14 +111,17 @@ export class ActiveGameService implements OnDestroy {
             this.hasAbandonned.set(!this.hasAbandonned());
         });
         this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
-            this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
-            this.syncTurnOrderWithPlayers();
+            if (this.activeGame?.players) {
+                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+            }
 
-            if (data.playerId === this.localPlayer.getLocalPlayer()?.name) {
-                this.toastService.show('Vous avez été expulsés de la partie');
-                this.router.navigate(['/']);
+            if (data.playerId !== this.localPlayer.getLocalPlayer()?.name) {
                 return;
             }
+
+            this.localPlayer.clear();
+            this.toastService.show('Vous avez été expulsé de la partie');
+            this.router.navigate(['/']);
         });
         this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
             const player = this.getPlayerByName(data.playerId);

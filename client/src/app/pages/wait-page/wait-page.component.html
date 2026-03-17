@@ -7,13 +7,13 @@
             ></app-loading-overlay>
         </div>
 
-        <div class="absolute bottom-4 w-full flex justify-center">
+        <div class="absolute left-0 bottom-4 w-full flex justify-center">
             @if (showButton) {
                 <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
             }
         </div>
     } @else {
-        <app-nav-buttons (back)="goBack()" />
+        <app-nav-buttons />
         <app-page-title title="Vue d'attente" />
 
         <section class="flex flex-col lg:flex-row justify-center gap-4">

@@ -67,7 +67,7 @@ export class GameSocketsService {
                 const { gameId, playerId } = data;
                 const isOrganizer = await this.gameplayService.endGameService.checkIfOrganizer(gameId, playerId);
                 if (isOrganizer) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameCanceled);
+                    socket.to(gameId).emit(SocketEvent.GameCanceled);
                     await this.activeGameService.deleteGameById(gameId);
                 } else {
                     await this.activeGameService.removePlayer(gameId, playerId);
