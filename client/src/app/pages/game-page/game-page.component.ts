@@ -13,6 +13,7 @@ import { DebugSocketService } from '@app/services/debug.socket.service';
 import { GameTurnService } from '@app/services/game-turn.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
+import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -73,6 +74,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
     @HostListener('window:keydown', ['$event'])
     handleKeyDown(event: KeyboardEvent) {
+        if (isTypingInChatMessageInput(event)) return;
         if (event.key.toLowerCase() === 'm') {
             this.debugSocketService.emitDebugModeToggle(
                 this.localPlayerService.getLocalPlayer()?.name ?? '',
