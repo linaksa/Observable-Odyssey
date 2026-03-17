@@ -1,0 +1,19 @@
+<div>
+    @if (data.currentPlayerName) {
+        <span>C'est le tour de {{ data.currentPlayerName }}</span>
+    } @else {
+        <span>Chargement du tour en cours...</span>
+    }
+    @if (data.turnTimeLeftSeconds !== null) {
+        <span class="ml-2">({{ data.turnTimeLeftSeconds }}s)</span>
+    }
+    @if (data.isTurnPreparing) {
+        <span class="ml-2 text-yellow-200">Preparation...</span>
+    }
+</div>
+<div class="mt-3 flex justify-center gap-3">
+    <button class="btn min-w-1/10" [disabled]="!data.canEndTurn" (click)="onEndTurnClick()">
+        Finir mon tour
+    </button>
+    <app-game-abandon></app-game-abandon>
+</div>
