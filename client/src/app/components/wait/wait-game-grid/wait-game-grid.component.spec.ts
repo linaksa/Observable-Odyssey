@@ -17,6 +17,7 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
+import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { WaitGameGridComponent } from './wait-game-grid.component';
@@ -47,6 +48,7 @@ describe('WaitGameGridComponent', () => {
                         items: boardItems,
                     },
                 },
+                players: [],
             } as unknown as IActiveGame,
         };
         boardSharedServiceSpy = jasmine.createSpyObj<BoardSharedService>('BoardSharedService', ['getObjectAt']);
@@ -131,6 +133,17 @@ describe('WaitGameGridComponent', () => {
     // Edge case: should return empty styles for missing object.
     it('should return empty styles for missing object', () => {
         expect(component.objectExtraStyles(null as unknown as IItem, 0, 0)).toEqual({});
+    });
+
+    it('should return lock icon according to player count', () => {
+        activeGameServiceStub.activeGame.players = [];
+        activeGameServiceStub.activeGame.maxPlayerCount = 2;
+
+        expect(component['lockIcon']).toBe('assets/wait-page/unlock.svg');
+
+        activeGameServiceStub.activeGame.players = [{ name: 'Player1' }, { name: 'Player2' }] as unknown as ICharacter[];
+        activeGameServiceStub.activeGame.maxPlayerCount = 2;
+        expect(component['lockIcon']).toBe('assets/wait-page/lock.svg');
     });
 });
 

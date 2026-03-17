@@ -1,4 +1,9 @@
-<div class="text-2xl text-white tracking-wider text-center">Informations</div>
+<div class="flex flex-row justify-center relative">
+    <div class="text-2xl text-white">Informations</div>
+    <div class="absolute right-0">
+        <img [src]="lockIcon" alt="lock icon" class="h-6 w-6 object-contain pointer-events-none select-none" />
+    </div>
+</div>
 
 <div class="flex grow flex-col gap-4 min-h-0 min-w-0">
     @if (activeGameService.activeGame) {

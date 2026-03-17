@@ -40,6 +40,11 @@ export class WaitGameGridComponent {
         return this.activeGameService.activeGame.game.gameMode === 'classic' ? 'Normal' : 'CTF';
     }
 
+    protected get lockIcon(): string {
+        const full = this.activeGameService.activeGame.players.length >= this.activeGameService.activeGame.maxPlayerCount;
+        return full ? 'assets/wait-page/lock.svg' : 'assets/wait-page/unlock.svg';
+    }
+
     cellImagePath(cellType: CellType): string {
         return CELL_TYPE_PATHS[cellType];
     }
