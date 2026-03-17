@@ -15,7 +15,6 @@ export class LocalPlayerService {
         return this.localPlayer;
     }
 
-
     clear(): void {
         this.localPlayer = undefined;
     }

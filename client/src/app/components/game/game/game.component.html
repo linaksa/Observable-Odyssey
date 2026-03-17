@@ -1,4 +1,8 @@
-<div id="grid-container" class="relative flex h-full w-full items-center justify-center gap-4 p-4" [class.cursor-crosshair]="activeGameService.attackMode()">
+<div
+    id="grid-container"
+    class="relative flex h-full w-full items-center justify-center gap-4 p-4"
+    [class.cursor-crosshair]="activeGameService.attackMode()"
+>
     <div
         #grid
         class="grid bg-gray-400 w-[min(100cqw,100cqh)] h-[min(100cqw,100cqh)] select-none"
