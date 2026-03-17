@@ -47,7 +47,8 @@ export class CombatService {
         }
 
         attacker.victories++;
-        defender.positionGrille = this.findNearestAvailableSpawn(defender.positionDepart, currentActiveGame);
+        if (defender.positionGrille.x !== defender.positionDepart.x || defender.positionGrille.y !== defender.positionDepart.y)
+            defender.positionGrille = this.findNearestAvailableSpawn(defender.positionDepart, currentActiveGame);
         const combatResult: CombatResult = {
             attackerVictories: attacker.victories,
             defenderNewPosition: defender.positionGrille,
