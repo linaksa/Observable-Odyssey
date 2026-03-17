@@ -46,4 +46,5 @@ export interface ISocketData {
 export interface ITurnStartedPayload {
     player: string;
     movementLeft: number;
+    actionLeft: number;
 }

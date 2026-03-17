@@ -77,6 +77,7 @@ export class TurnService {
         const turnStartedPayload: ITurnStartedPayload = {
             player: player.name,
             movementLeft: player?.movementLeft ?? 0,
+            actionLeft: player?.actionsLeft ?? 0,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
         const positions = this.movementService.getReachablePositions(player.name, gameId);

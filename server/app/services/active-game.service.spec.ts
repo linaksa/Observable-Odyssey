@@ -132,7 +132,7 @@ describe('ActiveGameService', () => {
                 await activeGameService.addPlayerToActiveGame('nonExistentActiveGameId', {} as CharacterFormData);
                 throw new Error('Expected method to reject.');
             } catch (err) {
-                expect(err.message).to.equal('Active game not found');
+                expect(err.message).to.equal('ACTIVE_GAME_NOT_FOUND');
             }
         });
 

@@ -93,6 +93,7 @@ export class ActiveGameService implements OnDestroy {
 
             if (index !== -1 && currentPlayer) {
                 currentPlayer.movementLeft = data.movementLeft;
+                currentPlayer.actionsLeft = data.actionLeft;
                 this.activeGame.currentPlayerIndex = index;
                 this.currentPlayer.set(index);
                 this.hasChangedLocation.set(!this.hasChangedLocation());
@@ -395,9 +396,8 @@ export class ActiveGameService implements OnDestroy {
 
     removeUnusedSpawnPoints(): void {
         if (this.activeGame.turnOrder.length === 0) return;
-        this.activeGame.game.board.items =
-            this.activeGame.game.board.items.filter(item =>
-                item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
-            );
+        this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
+            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
+        );
     }
 }

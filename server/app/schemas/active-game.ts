@@ -39,6 +39,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Number,
         required: true,
     },
+    turnIsInPreparation: {
+        type: Boolean,
+        required: true,
+    },
 });
 
 export const activeGameModel = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
