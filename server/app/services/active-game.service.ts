@@ -60,7 +60,7 @@ export class ActiveGameService {
     async addPlayerToActiveGame(activeGameId: string, characterForm: CharacterFormData): Promise<IActiveGame | null> {
         const activeGameToUpdate = await activeGameModel.findById(activeGameId);
         if (!activeGameToUpdate) {
-            throw new Error('Active game not found');
+            throw new Error('ACTIVE_GAME_NOT_FOUND');
         }
 
         const maxPlayers = activeGameToUpdate.maxPlayerCount;

@@ -79,9 +79,9 @@ export class GameTurnService {
         });
 
         this.turnStartedSubscription = this.socketService.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
-            next: ({ player, movementLeft }) => {
+            next: ({ player, movementLeft, actionLeft }) => {
                 this.activeTurnPlayerName = player;
-                this.syncActiveGameTurnState(player, movementLeft);
+                this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
                 this.startCountdown(TEMPS_TOUR);
             },
@@ -132,7 +132,7 @@ export class GameTurnService {
         }
     }
 
-    private syncActiveGameTurnState(playerName: string, movementLeft?: number): void {
+    private syncActiveGameTurnState(playerName: string, movementLeft?: number, actionsLeft?: number): void {
         const activeGame = this.activeGameService.activeGame;
         if (!activeGame?.turnOrder?.length) {
             return;
@@ -148,6 +148,13 @@ export class GameTurnService {
             const activePlayer = this.activeGameService.getPlayerByName(playerName);
             if (activePlayer) {
                 activePlayer.movementLeft = movementLeft;
+            }
+        }
+
+        if (actionsLeft !== undefined) {
+            const activePlayer = this.activeGameService.getPlayerByName(playerName);
+            if (activePlayer) {
+                activePlayer.actionsLeft = actionsLeft;
             }
         }
 
