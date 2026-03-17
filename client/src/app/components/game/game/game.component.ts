@@ -1,24 +1,28 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, HostListener, inject, Input, OnInit } from '@angular/core';
+import { Component, effect, HostListener, inject, OnInit } from '@angular/core';
 import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
+import { TileInfoPopupComponent } from '@app/components/game/tile-info-popup/tile-info-popup.component';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { TileInfoService } from '@app/services/tile-info.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { buildGraph } from '@app/utils/pathfinding';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
+import { TileInfoPopupData } from '@common/info';
 import { IItem } from '@common/items';
 
 @Component({
     selector: 'app-game',
-    imports: [CommonModule, EditionCellComponent],
+    imports: [CommonModule, EditionCellComponent, TileInfoPopupComponent],
     styleUrl: '../../../styles/game-cell.scss',
     templateUrl: './game.component.html',
 })
 export class GameComponent implements OnInit {
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
+    private readonly tileInfoService: TileInfoService = inject(TileInfoService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
 
     protected get isLocalPlayerTurn(): boolean {
@@ -33,11 +37,27 @@ export class GameComponent implements OnInit {
     totalRows = 0;
     totalColumns = 0;
 
-    @Input() cellType: CellType;
-    @Input() rowIndex: number;
-    @Input() colIndex: number;
-    @Input() item: IItem | null;
-    @Input() players: ICharacter[] = [];
+    isTileInfoVisible = false;
+    tileInfoTitle = '';
+    tileInfoDescription = '';
+    tileInfoMovementCost = '';
+    tileInfoItemTitle: string | null = null;
+    tileInfoItemDescription: string | null = null;
+    tileInfoPlayerName: string | null = null;
+    tileInfoPlayerAvatarUrl: string | null = null;
+
+    protected get tileInfoPopupData(): TileInfoPopupData {
+        return {
+            visible: this.isTileInfoVisible,
+            title: this.tileInfoTitle,
+            description: this.tileInfoDescription,
+            movementCost: this.tileInfoMovementCost,
+            itemTitle: this.tileInfoItemTitle,
+            itemDescription: this.tileInfoItemDescription,
+            playerName: this.tileInfoPlayerName,
+            playerAvatarUrl: this.tileInfoPlayerAvatarUrl,
+        };
+    }
 
     constructor() {
         effect(() => {
@@ -91,11 +111,25 @@ export class GameComponent implements OnInit {
         this.activeGameService.attackMode.set(false);
     }
 
-    onCellRightClick(rowIndex: number, colIndex: number, cellType: CellType): void {
-        if (!this.activeGameService.isDebugMode()) return;
-        if (!this.isLocalPlayerTurn) return;
-        if (!this.isTeleportableCell(rowIndex, colIndex, cellType)) return;
-        this.activeGameService.debugTeleport(rowIndex, colIndex);
+    @HostListener('document:click')
+    onDocumentClick(): void {
+        this.closeTileInfo();
+    }
+
+    onCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType): void {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn) {
+            if (!this.isTeleportableCell(rowIndex, colIndex, cellType)) return;
+            this.closeTileInfo();
+            this.activeGameService.debugTeleport(rowIndex, colIndex);
+            return;
+        }
+
+        const itemAtPosition = this.boardSharedService.getObjectAt(rowIndex, colIndex, this.activeGameService.activeGame.game.board.items);
+        const playerAtPosition = this.activeGameService.getPlayersAtPosition(rowIndex, colIndex)[0] ?? null;
+        this.openTileInfo(cellType, itemAtPosition, playerAtPosition);
     }
 
     private isTeleportableCell(row: number, col: number, cellType: CellType): boolean {
@@ -103,5 +137,27 @@ export class GameComponent implements OnInit {
         if (this.boardSharedService.getObjectAt(row, col, this.activeGameService.activeGame.game.board.items)) return false;
         if (this.activeGameService.getPlayersAtPosition(row, col).length > 0) return false;
         return true;
+    }
+
+    private openTileInfo(cellType: CellType, item: IItem | null, player: ICharacter | null): void {
+        const tileInfo = this.tileInfoService.getTileInfo(cellType);
+        this.tileInfoTitle = tileInfo.title;
+        this.tileInfoDescription = tileInfo.description;
+        this.tileInfoMovementCost = tileInfo.movementCost;
+        const itemInfo = this.tileInfoService.getItemInfo(item);
+        this.tileInfoItemTitle = itemInfo?.title ?? null;
+        this.tileInfoItemDescription = itemInfo?.description ?? null;
+        const playerInfo = this.tileInfoService.getPlayerInfo(player);
+        this.tileInfoPlayerName = playerInfo?.name ?? null;
+        this.tileInfoPlayerAvatarUrl = playerInfo?.avatarUrl ?? null;
+        this.isTileInfoVisible = true;
+    }
+
+    private closeTileInfo(): void {
+        this.isTileInfoVisible = false;
+        this.tileInfoItemTitle = null;
+        this.tileInfoItemDescription = null;
+        this.tileInfoPlayerName = null;
+        this.tileInfoPlayerAvatarUrl = null;
     }
 }
