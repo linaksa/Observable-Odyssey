@@ -121,6 +121,7 @@ describe('FormPageComponent', () => {
             isDebugMode: false,
             organizerName: '',
             maxPlayerCount: 4,
+            turnIsInPreparation: false,
         };
 
         const response = {

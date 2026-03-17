@@ -262,6 +262,7 @@ function createActiveGame(id: string, game: IGame, players = 0, maxPlayerCount =
         isDebugMode: false,
         organizerName: 'Organizer',
         maxPlayerCount,
+        turnIsInPreparation: false,
     };
 }
 

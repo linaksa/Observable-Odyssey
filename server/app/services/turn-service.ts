@@ -25,6 +25,9 @@ export class TurnService {
         if (!activeGame) return;
         if (activeGame.isFinished) return;
 
+        activeGame.turnIsInPreparation = true;
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
+
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
@@ -61,6 +64,9 @@ export class TurnService {
         if (activeGame.isFinished) {
             return;
         }
+
+        activeGame.turnIsInPreparation = false;
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
