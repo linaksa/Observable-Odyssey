@@ -93,6 +93,7 @@ describe('EditionCellComponent', () => {
         expect(component.objectExtraStyles['background-position']).toBe('100% 100%');
     });
 
+    // Edge case: should not style if indexes are outside sanctuary.
     it('should not style if indexes are outside sanctuary', () => {
         fixture.componentRef.setInput('rowIndex', 0);
         fixture.componentRef.setInput('colIndex', 0);
@@ -102,6 +103,7 @@ describe('EditionCellComponent', () => {
         expect(component.objectExtraStyles['background-position']).toBe('');
     });
 
+    // Edge case: should render empty cell correctly.
     it('should render empty cell correctly', () => {
         fixture.componentRef.setInput('rowIndex', 0);
         fixture.componentRef.setInput('colIndex', 0);
@@ -116,6 +118,7 @@ describe('EditionCellComponent', () => {
         expect(itemDiv).toBeNull();
     });
 
+    // Edge case: should return no object background when item is null.
     it('should return no object background when item is null', () => {
         fixture.componentRef.setInput('item', null);
         fixture.detectChanges();
@@ -123,6 +126,7 @@ describe('EditionCellComponent', () => {
         expect(component.backgroundImageForObject).toBe('');
     });
 
+    // Edge case: should return empty extra object styles when item is null.
     it('should return empty extra object styles when item is null', () => {
         fixture.componentRef.setInput('item', null);
         fixture.detectChanges();

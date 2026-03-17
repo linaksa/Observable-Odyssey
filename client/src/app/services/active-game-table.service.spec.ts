@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Active Game Table Service
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { TestBed } from '@angular/core/testing';
 import { IActiveGame } from '@common/activeGame';
 import { Subject } from 'rxjs/internal/Subject';
@@ -47,6 +60,7 @@ describe('ActiveGameTableService', () => {
         expect(service.tableData).toEqual(games);
     });
 
+    // Edge case: should set tableData to empty array when null is received.
     it('should set tableData to empty array when null is received', () => {
         // Edge case
         // Handle the case where the request fails

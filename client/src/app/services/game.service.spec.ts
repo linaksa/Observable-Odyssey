@@ -150,6 +150,7 @@ describe('GameService', () => {
 
     // Edge case: the server responds with an error (e.g., 404). Verifies that the service
     // correctly propagates the error observable without throwing a synchronous exception.
+    // Edge case: should not crash when the request fails.
     it('should not crash when the request fails', () => {
         httpSpy.get.and.returnValue(throwError(() => new Error('404')));
 

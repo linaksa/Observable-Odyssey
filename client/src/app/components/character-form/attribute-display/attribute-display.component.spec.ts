@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Atribute Display Component
+ * Testing strategy — Attribute Display Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -25,18 +25,26 @@ describe('AttributeDisplayComponent', () => {
 
         fixture = TestBed.createComponent(AttributeDisplayComponent);
         component = fixture.componentInstance;
-
-        component.name = 'Test attr';
-        component.value = 0;
-        component.bgColor = 'lightgray';
-
+        component.name = 'Attaque';
+        component.value = 7;
+        component.bgColor = 'bg-red-500';
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        // Nominal case:
-        // This component contains no logic, so we only validate that it is created without errors.
-
+    it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should render attribute name and value', () => {
+        const host = fixture.nativeElement as HTMLElement;
+
+        expect(host.textContent).toContain('Attaque');
+        expect(host.textContent).toContain('7');
+    });
+
+    it('should apply provided background class', () => {
+        const card = (fixture.nativeElement as HTMLElement).querySelector('div');
+
+        expect(card?.classList.contains('bg-red-500')).toBeTrue();
     });
 });

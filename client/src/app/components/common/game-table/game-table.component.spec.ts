@@ -61,6 +61,7 @@ const SMALL_TOOLTIP_HEIGHT = 50;
 const CLAMPED_TOP = 90;
 const CURSOR_LEFT_EDGE_OFFSET = 8;
 const CURSOR_BOTTOM_EDGE_OFFSET = 160;
+const ZERO_DIMENSION = 0;
 
 @Component({
     standalone: true,
@@ -96,10 +97,12 @@ describe('GameTableComponent', () => {
         hostComponent = fixture.componentInstance;
     });
 
+    // Edge case: should throw when no list is provided.
     it('should throw when no list is provided', () => {
         expect(() => fixture.detectChanges()).toThrowError('No lists has been passed to fill the table.');
     });
 
+    // Edge case: should throw when both lists are provided.
     it('should throw when both lists are provided', () => {
         const game = createExistingGame('game-1', 'Game 1');
         hostComponent.games = [game];
@@ -135,6 +138,23 @@ describe('GameTableComponent', () => {
         expect(tableComponent.isActiveGame()).toBeTrue();
         expect(tableComponent.numOfPlayer(activeGame)).toBe(TWO_PLAYERS);
         expect(tableComponent.maximumNumOfPlayer(activeGame)).toBe(MAX_PLAYER_COUNT_SIX);
+    });
+
+    // Edge case: should return empty gameList when inputs become undefined after initialization.
+    it('should return empty gameList when inputs become undefined after initialization', () => {
+        const game = createExistingGame('game-1', 'Game 1');
+        hostComponent.games = [game];
+        fixture.detectChanges();
+
+        const tableComponent = getGameTableComponent(fixture);
+        const tableInputs = tableComponent as unknown as {
+            activeGames: () => IActiveGame[] | undefined;
+            games: () => IExistingGame[] | undefined;
+        };
+        tableInputs.activeGames = () => undefined;
+        tableInputs.games = () => undefined;
+
+        expect(tableComponent.gameList).toEqual([]);
     });
 
     it('should pass distinct active-game rows to actions when embedded game object is shared', () => {
@@ -187,6 +207,22 @@ describe('GameTableComponent', () => {
         tooltipApi.hideDescriptionTooltip();
 
         expect(tooltipApi.descriptionTooltip()).toBeNull();
+    });
+
+    // Edge case: should use cursor fallback position when container bounds are unavailable.
+    it('should use cursor fallback position when container bounds are unavailable', () => {
+        const game = createExistingGame('game-1', 'Game 1');
+        hostComponent.games = [game];
+        fixture.detectChanges();
+
+        const tooltipApi = getTooltipApi(getGameTableComponent(fixture));
+        tooltipApi.tableContainerRef = createContainerElementRef(ZERO_DIMENSION, ZERO_DIMENSION, ZERO_DIMENSION, ZERO_DIMENSION);
+        tooltipApi.showDescriptionTooltip(createMouseEvent('mouseenter', TOOLTIP_START_X, TOOLTIP_START_Y), game.description);
+
+        expect(tooltipApi.descriptionTooltipPosition()).toEqual({
+            x: TOOLTIP_START_X,
+            y: TOOLTIP_START_Y + TOOLTIP_Y_OFFSET,
+        });
     });
 
     it('should keep tooltip inside container bounds', () => {

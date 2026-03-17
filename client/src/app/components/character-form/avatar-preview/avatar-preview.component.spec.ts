@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Avatar Grid Component
+ * Testing strategy — Avatar Preview Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -27,27 +27,35 @@ describe('AvatarPreviewComponent', () => {
 
         fixture = TestBed.createComponent(AvatarPreviewComponent);
         component = fixture.componentInstance;
-
-        component.avatar = null;
-        fixture.detectChanges();
     });
 
-    // Edge case: should have no image when no avatar is provided.
-    it('should have no image when no avatar is provided', () => {
-        // Edge case
-        // No avatar is selected; the template should render without errors
-
-        component.avatar = null;
-        fixture.detectChanges();
-
+    it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should display correct image when avatar is provided', () => {
-        // Nominal case
-        // The selected avatar image should be displayed
+    it('should build avatar image path from model', () => {
+        const imagePath = component.getImageForAvatar(Avatar.Avatar2);
 
-        const testAvatar = Avatar.Avatar1;
-        expect(component.getImageForAvatar(testAvatar)).toBe(AVATAR_IMAGE_PATH_MODEL.replace('{}', testAvatar));
+        expect(imagePath).toBe(AVATAR_IMAGE_PATH_MODEL.replace('{}', Avatar.Avatar2));
+    });
+
+    // Edge case: should show placeholder when no avatar is selected.
+    it('should show placeholder when no avatar is selected', () => {
+        component.avatar = null;
+        fixture.detectChanges();
+
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.textContent).toContain('Veuillez en choisir un ci-dessous');
+        expect(host.querySelector('img')).toBeNull();
+    });
+
+    it('should render avatar image when avatar is selected', () => {
+        component.avatar = Avatar.Avatar4;
+        fixture.detectChanges();
+
+        const image = (fixture.nativeElement as HTMLElement).querySelector('img');
+
+        expect(image?.getAttribute('src')).toBe('./assets/form-page/avatar4.png');
+        expect(image?.getAttribute('alt')).toBe(Avatar.Avatar4);
     });
 });

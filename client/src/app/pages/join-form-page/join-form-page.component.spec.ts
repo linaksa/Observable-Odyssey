@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Join Form Page Component
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -119,6 +132,7 @@ describe('JoinFormPageComponent', () => {
         expect(spy).toHaveBeenCalled();
     });
 
+    // Edge case: should not fetch avatars if activeGameId is missing.
     it('should not fetch avatars if activeGameId is missing', () => {
         gameServiceMock.getActiveGameById.calls.reset();
 
@@ -154,6 +168,7 @@ describe('JoinFormPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', dummyActiveGame._id]);
     });
 
+    // Edge case: should handle joinGameAsCharacter error.
     it('should handle joinGameAsCharacter error', () => {
         // Error case
         // Validate that the app doesnt crash and shows an error toast when the join game request fails
@@ -175,6 +190,7 @@ describe('JoinFormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBe(errorText);
     });
 
+    // Edge case: should handle joinGameAsCharacter empty error.
     it('should handle joinGameAsCharacter empty error', () => {
         const error = {
             originalError: {
@@ -192,6 +208,7 @@ describe('JoinFormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBeTruthy();
     });
 
+    // Edge case: should show error if activeGameId missing when joining.
     it('should show error if activeGameId missing when joining', () => {
         // Edge case
         // Validate that the app shows an error toast if the activeGameId is missing when trying to join a game
@@ -201,6 +218,7 @@ describe('JoinFormPageComponent', () => {
         expect(toastServiceMock.show).toHaveBeenCalled();
     });
 
+    // Edge case: should unsubscribe on destroy.
     it('should unsubscribe on destroy', () => {
         // Nominal case
         // Make sure that no memory leaks happen when the component is destroyed
