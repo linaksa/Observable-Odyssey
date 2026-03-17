@@ -3,6 +3,7 @@ import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@an
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
 import { activePlayerGuard } from '@app/guards/active-player.guard';
+import { waitPageGuard } from '@app/guards/wait-page.guard';
 import { AngularHttpClientAdapter } from '@app/http/angular-http-client-adapter';
 import { HTTP_CLIENT } from '@app/http/http-interface';
 import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
@@ -29,8 +30,7 @@ const routes: Routes = [
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
-    { path: 'wait', component: WaitPageComponent },
-    { path: 'wait/:activeGameId', component: WaitPageComponent },
+    { path: 'wait/:activeGameId', component: WaitPageComponent, canActivate: [waitPageGuard] },
     { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
