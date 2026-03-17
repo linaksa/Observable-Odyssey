@@ -10,7 +10,7 @@ import {
 } from '@app/constants/character-form';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
 import { ResponseType } from '@app/http/http-model';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGameWithPlayer } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
 import {
     Avatar,
@@ -37,6 +37,7 @@ export class CharacterFormService {
 
     isLoading = signal<boolean>(false);
     errors = signal<string | null>(null);
+    unavailableAvatars = signal<Avatar[]>([]);
 
     characterForm = new FormGroup({
         playerName: new FormControl('', {
@@ -58,6 +59,12 @@ export class CharacterFormService {
             validators: [Validators.required],
         }),
     });
+
+    initializeForm(): void {
+        this.characterForm.reset();
+        this.isLoading.set(false);
+        this.errors.set(null);
+    }
 
     get lifePoints(): number {
         let life = DEFAULT_PLAYER_LIFE_POINTS;
@@ -105,7 +112,7 @@ export class CharacterFormService {
         const random = Math.random;
         const randomName = `${RANDOM_PLAYER_NAME_PREFIX}${Math.floor(random() * RANDOM_NUMBER_SCALE)}`;
 
-        const availableAvatars = Object.values(Avatar);
+        const availableAvatars = Object.values(Avatar).filter((avatar) => !this.unavailableAvatars().includes(avatar));
         const randomAvatar = availableAvatars[Math.floor(random() * availableAvatars.length)];
 
         const randomBonus = AVAILABLE_BONUS_TYPES[Math.floor(random() * AVAILABLE_BONUS_TYPES.length)];
@@ -118,12 +125,12 @@ export class CharacterFormService {
         this.characterForm.controls.diceType.setValue(randomDice as DiceSelectionType);
     }
 
-    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
+    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
         // Logic to create an active game with the provided character data
         return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
     }
 
-    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGame> {
+    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
         return this.httpClient.patch(
             `${this.baseUrl}/activeGame/join`,
             { activeGameId, characterForm: characterData },

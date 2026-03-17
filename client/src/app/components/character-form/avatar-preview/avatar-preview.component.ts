@@ -12,9 +12,6 @@ export class AvatarPreviewComponent {
     @Input() avatar: Avatar | null = null;
 
     getImageForAvatar(avatar: Avatar): string {
-        if (!avatar) {
-            return '';
-        }
         return AVATAR_IMAGE_PATH_MODEL.replace('{}', avatar);
     }
 }

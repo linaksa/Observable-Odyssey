@@ -1,31 +1,29 @@
 /* eslint-disable max-lines */
 /**
- * Stratégie de test – GameService
+ * Testing strategy — GameService
  *
- * Approche : tests unitaires avec stubs Sinon sur les méthodes Mongoose
+ * Approach: unit tests with Sinon stubs on Mongoose methods
  * (create, findById, find, findByIdAndUpdate, findByIdAndDelete, findOne).
- * Aucune base de données réelle n'est utilisée ; les stubs permettent de
- * contrôler exactement les valeurs retournées ou les erreurs levées pour
- * chaque scénario. Le BoardService est remplacé par un stub pour isoler
- * la validation de plateau de la logique métier du GameService.
+ * No real database is used; stubs allow precise control over returned values or thrown errors for
+ * each scenario. BoardService is replaced by a stub to isolate
+ * board validation from the GameService business logic.
  *
- * Cas limites couverts :
- * - Aucun jeu en base (tableau vide) : getAllGames() doit renvoyer [] sans erreur.
- * - Identifiant inexistant : getGame() / deleteGame() / changeVisibility() /
- *   updateGame() doivent gérer null sans lever d'exception non contrôlée.
- * - Champs manquants (titre, description, board, preview) : createGame() doit
- *   rejeter chaque champ absent indépendamment avec un message clair.
- * - Champ ne contenant que des espaces : titre ou description blanc (whitespace)
- *   doit être rejeté comme vide.
- * - Dépassement des longueurs maximales (BAD_TITLE_LENGTH / BAD_DESCRIPTION_LENGTH) :
- *   les bornes exactes définies dans les constantes sont testées.
- * - Mode de jeu invalide : une valeur hors énumération doit être rejetée.
- * - Duplication de titre : la création ou la mise à jour avec un titre existant
- *   doit être rejetée.
- * - Jeu supprimé pendant la mise à jour (race condition) : updateGame() doit
- *   créer un nouveau jeu et signaler la création (created: true).
- * - Paramètre de route tableau ou invalide pour getParamAsString :
- *   vérifie que le helper du contrôleur gère les types inattendus.
+ * Edge cases covered:
+ * - No games in DB (empty array): getAllGames() should return [] without error.
+ * - Nonexistent id: getGame() / deleteGame() / changeVisibility() /
+ *   updateGame() should handle null without throwing an uncontrolled exception.
+ * - Missing fields (title, description, board, preview): createGame() should
+ *   reject each missing field independently with a clear message.
+ * - Field containing only whitespace: title or description with only whitespace
+ *   should be rejected as empty.
+ * - Exceeding maximum lengths (BAD_TITLE_LENGTH / BAD_DESCRIPTION_LENGTH):
+ *   exact bounds defined in constants are tested.
+ * - Invalid game mode: an out-of-enum value should be rejected.
+ * - Duplicate title: creation or update with an existing title should be rejected.
+ * - Game deleted during update (race condition): updateGame() should
+ *   create a new game and signal creation (created: true).
+ * - Route parameter array or invalid type for getParamAsString:
+ *   verifies the controller helper handles unexpected types.
  */
 
 import { GameController } from '@app/controllers/game.controller';
@@ -104,8 +102,8 @@ describe('Game Service', () => {
         expect(result).to.deep.equal(games);
     });
 
-    // Cas limite : aucun document en base – getAllGames() doit renvoyer un tableau
-    // vide sans lever d'exception ni appeler de méthode inattendue.
+    // Edge case: no documents in the database — getAllGames() should return an empty array
+    // without throwing an exception or calling an unexpected method.
     it('should return empty array if no games exist', async () => {
         findStub.resolves([]);
 
@@ -126,8 +124,8 @@ describe('Game Service', () => {
         expect(result).to.deep.equal(existingGame);
     });
 
-    // Cas limite : l'identifiant fourni n'existe pas en base – getGame() doit
-    // retourner null plutôt que de lever une exception non contrôlée.
+    // Edge case: the provided identifier does not exist in the database — getGame() should
+    // return null instead of throwing an uncontrolled exception.
     it('should return null if game does not exist', async () => {
         findByIdStub.resolves(null);
 
@@ -313,7 +311,7 @@ describe('Game Service', () => {
         findOneStub.restore();
     });
 
-    // Cas limite : description absente du payload (champ non présent vs vide).
+    // Edge case: description missing from the payload (field absent vs empty).
     it('should throw an error when description is missing', async () => {
         const mockGameData = {
             gameTitle: 'Test Game',
@@ -330,7 +328,7 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : description présente mais vide (chaîne "").
+    // Edge case: description present but empty string ("").
     it('should throw an error when description is empty', async () => {
         const mockGameData = {
             gameTitle: 'Test Game',
@@ -348,8 +346,7 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : description contenant uniquement des espaces blancs – doit
-    // être traitée comme absente après trim().
+    // Edge case: description containing only whitespace — should be treated as absent after trim().
     it('should throw when description contains only spaces', async () => {
         const mockGameData = {
             gameTitle: 'Valid title',
@@ -367,12 +364,12 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : description dépassant exactement le maximum autorisé (BAD_DESCRIPTION_LENGTH).
-    // Test de la borne supérieure de la contrainte de longueur.
+    // Edge case: description exceeding exactly the maximum allowed (BAD_DESCRIPTION_LENGTH).
+    // Tests the upper bound of the length constraint.
     it('should throw an error when description is longer than 200 characters', async () => {
         const mockGameData = {
             gameTitle: 'Test Game',
-            description: 'a'.repeat(BAD_DESCRIPTION_LENGTH), // 201 caractères
+            description: 'a'.repeat(BAD_DESCRIPTION_LENGTH), // 201 chars
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
             preview: 'image.png',
@@ -385,8 +382,8 @@ describe('Game Service', () => {
             expect(error.message).to.equal('La description ne peut pas dépasser 200 caractères');
         }
     });
-    // Cas limite : le paramètre de route est un tableau (Express peut renvoyer un
-    // tableau lorsque la clé est dupliquée dans la query string).
+    // Edge case: the route parameter is an array (Express can return an array
+    // when the key is duplicated in the query string).
     it('should return first element when param is an array', () => {
         const controller = new GameController({} as GameService, {} as AdminSocketsService);
 
@@ -402,8 +399,8 @@ describe('Game Service', () => {
         expect(result).to.equal('array-id');
     });
 
-    // Cas limite : le paramètre de route est d'un type inattendu (booléen).
-    // La méthode doit retourner null sans planter.
+    // Edge case: the route parameter is of an unexpected type (boolean).
+    // The method should return null without crashing.
     it('should return null when param is invalid', () => {
         const controller = new GameController({} as GameService, {} as AdminSocketsService);
 
@@ -452,8 +449,7 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : titre contenant uniquement des espaces blancs – doit être
-    // considéré comme absent après trim().
+    // Edge case: title containing only whitespace — should be considered absent after trim().
     it('should throw when gameTitle contains only spaces', async () => {
         const mockGameData = {
             gameTitle: '     ',
@@ -471,11 +467,11 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : titre dépassant exactement le maximum autorisé (BAD_TITLE_LENGTH).
-    // Test de la borne supérieure de la contrainte de longueur.
+    // Edge case: title exceeding exactly the maximum allowed (BAD_TITLE_LENGTH).
+    // Tests the upper bound of the length constraint.
     it('should throw an error when gameTitle is longer than 50 characters', async () => {
         const mockGameData = {
-            gameTitle: 'a'.repeat(BAD_TITLE_LENGTH), // 51 caractères
+            gameTitle: 'a'.repeat(BAD_TITLE_LENGTH), // 51 chars
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
@@ -489,7 +485,7 @@ describe('Game Service', () => {
             expect(error.message).to.equal('Le titre ne peut pas dépasser 50 caractères');
         }
     });
-    // Cas limite : mode de jeu hors énumération (valeur arbitraire) – doit être rejeté.
+    // Edge case: game mode outside the enumeration (arbitrary value) — should be rejected.
     it('should throw an error when gameMode is invalid', async () => {
         const mockGameData = {
             gameTitle: 'Test Game',
@@ -604,8 +600,8 @@ describe('Game Service', () => {
         expect(findByIdAndDeleteStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
     });
 
-    // Cas limite : le jeu ciblé par deleteGame() n'existe plus en base.
-    // L'opération doit échouer avec un message explicite plutôt que de réussir silencieusement.
+    // Edge case: the game targeted by deleteGame() no longer exists in the database.
+    // The operation should fail with an explicit message rather than succeed silently.
     it('should throw error if game to delete does not exist', async () => {
         findByIdAndDeleteStub.resolves(null);
 
@@ -638,7 +634,7 @@ describe('Game Service', () => {
             expect((error as Error).message).to.equal('Jeu introuvable');
         }
     });
-    // Cas limite : visibilité invalide (valeur hors enum Visibility).
+    // Edge case: invalid visibility (value outside the Visibility enum).
     it('should throw error if visibility is invalid', async () => {
         findByIdStub.resolves(baseGame);
 
@@ -665,8 +661,8 @@ describe('Game Service', () => {
         expect(findByIdStub.calledOnceWithExactly(fakeGameId)).to.equal(true);
         expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
     });
-    // Cas limite : le jeu à mettre à jour a été supprimé entre la lecture et
-    // l'écriture (race condition). updateGame() doit créer un nouveau jeu.
+    // Edge case: the game to update was deleted between the read and
+    // write (race condition). updateGame() should create a new game.
     it('should create game if game to update does not exist', async () => {
         const findOneStub = sinon.stub(game, 'findOne');
         findOneStub.resolves(null);
@@ -695,7 +691,7 @@ describe('Game Service', () => {
         }
     });
 
-    // Cas limite : renommer un jeu vers un titre déjà utilisé par un autre jeu.
+    // Edge case: renaming a game to a title already used by another game.
     it('should throw error if updating game title to an existing title', async () => {
         const findOneStub = sinon.stub(game, 'findOne');
         findByIdStub.resolves(baseGame);

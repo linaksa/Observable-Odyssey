@@ -1,22 +1,22 @@
 /**
- * Stratégie de test – GameController
+ * Testing strategy — GameController
  *
- * Approche : tests d'intégration HTTP avec supertest + stubs Sinon.
- * Le contrôleur est testé à travers l'interface HTTP réelle de l'application Express,
- * ce qui permet de valider la chaîne complète (routage, middleware, gestion des erreurs).
- * Les dépendances (GameService, AdminSocketsService) sont remplacées par des stubs
- * injectés via le conteneur TypeDI afin d'isoler le contrôleur.
+ * Approach: HTTP integration tests with supertest + Sinon stubs.
+ * The controller is tested through the application's real Express HTTP interface,
+ * allowing validation of the full chain (routing, middleware, error handling).
+ * Dependencies (GameService, AdminSocketsService) are replaced by stubs
+ * injected via the TypeDI container to isolate the controller.
  *
- * Cas limites couverts :
- * - Ressource introuvable (404) : vérifie que le contrôleur retourne la bonne réponse
- *   lorsque la couche service ne trouve pas l'entité demandée.
- * - Erreur interne inattendue (500) : vérifie que toute exception non prévue est correctement
- *   encapsulée et retournée avec le code HTTP approprié.
- * - Données de requête invalides (400 / ValidationError) : vérifie le rejet des payloads
- *   malformés ou incomplets avant toute persistance.
- * - Mise à jour d'un jeu supprimé pendant la requête : vérifie que le contrôleur traite
- *   le cas de recréation automatique renvoyée par le service (201 vs 200).
- * - Visibilité invalide sur PATCH : vérifie que les valeurs hors-enum sont rejetées.
+ * Edge cases covered:
+ * - Resource not found (404): verifies the controller returns the correct response
+ *   when the service layer cannot find the requested entity.
+ * - Unexpected internal error (500): verifies that any unexpected exception is properly
+ *   caught and returned with the appropriate HTTP code.
+ * - Invalid request data (400 / ValidationError): verifies rejection of malformed
+ *   or incomplete payloads before any persistence.
+ * - Updating a game deleted during the request: verifies the controller handles
+ *   the service's automatic recreation case (201 vs 200).
+ * - Invalid visibility on PATCH: verifies out-of-enum values are rejected.
  */
 import { Application } from '@app/app';
 import { ValidationError } from '@app/error-types/validation-error';
@@ -90,7 +90,7 @@ describe('GameController', () => {
             .get('/api/games/')
             .expect(StatusCodes.OK)
             .then((response) => {
-                // On normalise les dates pour éviter les problèmes de comparaison liés aux formats de date
+                // Normalize dates to avoid comparison issues related to date formats
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 expect(normalizeDates(response.body)).to.deep.equal(normalizeDates(gamesList as any));
             });
@@ -119,8 +119,8 @@ describe('GameController', () => {
             });
     });
 
-    // Cas limite : l'identifiant correspond à un format MongoDB valide mais aucun document
-    // ne correspond en base – le contrôleur doit répondre 404 sans lever d'exception.
+    // Edge case: the identifier is a valid MongoDB format but no document
+    // matches in the database — the controller should respond 404 without throwing an exception.
     it('should return 404 if game not found on GET by id', async () => {
         gameService.getGame.resolves(null);
 
@@ -132,8 +132,8 @@ describe('GameController', () => {
             });
     });
 
-    // Cas limite : une erreur inattendue est propagée depuis le service – le contrôleur
-    // doit l'attraper et renvoyer un 500 avec le message d'erreur sérialisé en JSON.
+    // Edge case: an unexpected error is propagated from the service — the controller
+    // should catch it and return a 500 with the serialized error message in JSON.
     it('should return 500 if getGame throws an error', async () => {
         gameService.getGame.rejects(new Error('Erreur interne du serveur'));
 
@@ -158,8 +158,8 @@ describe('GameController', () => {
             });
     });
 
-    // Cas limite : le service rejette la création avec une ValidationError (données métier
-    // invalides). Le contrôleur doit renvoyer 400 plutôt que 500.
+    // Edge case: the service rejects creation with a ValidationError (business data
+    // invalid). The controller should return 400 rather than 500.
     it('should return an error when the game cannot be created', async () => {
         gameService.createGame.rejects(new ValidationError('TEST'));
         return supertest(expressApp)
@@ -187,8 +187,8 @@ describe('GameController', () => {
         return supertest(expressApp).delete(`/api/games/${fakeGameId}`).expect(StatusCodes.NO_CONTENT);
     });
 
-    // Cas limite : tentative de suppression d'un jeu déjà supprimé – le service lève une
-    // erreur et le contrôleur doit renvoyer 404.
+    // Edge case: attempting to delete a game that is already deleted — the service throws
+    // an error and the controller should return 404.
     it('should return 404 if game not found on DELETE', async () => {
         gameService.deleteGame.rejects(new Error('Jeu déjà supprimé'));
         return supertest(expressApp)
@@ -232,8 +232,8 @@ describe('GameController', () => {
             });
     });
 
-    // Cas limite : la valeur de visibilité envoyée n'appartient pas à l'énumération – le
-    // service lève une ValidationError et le contrôleur doit renvoyer 400.
+    // Edge case: the visibility value sent does not belong to the enumeration — the
+    // service throws a ValidationError and the controller should return 400.
     it('should return 400 if invalid visibility on PATCH', async () => {
         gameService.changeVisibility.rejects(new ValidationError('Visibilité invalide'));
         return supertest(expressApp)
@@ -268,9 +268,9 @@ describe('GameController', () => {
             });
     });
 
-    // Cas limite : le jeu ciblé par la mise à jour a été supprimé entre la lecture et
-    // l'écriture (race condition). Le service signale la recréation et le contrôleur doit
-    // retourner 201 au lieu de 200.
+    // Edge case: the game targeted by the update was deleted between read and
+    // write (race condition). The service signals recreation and the controller should
+    // return 201 instead of 200.
     it('should create a new game if the game to update has been deleted during update', async () => {
         const createdGame = { ...baseGame, gameTitle: 'Created Title' };
         gameService.updateGame.resolves({ game: createdGame, created: true });

@@ -1,17 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
+import { ActiveGameService } from '@app/services/active-game.service';
 import { WaitGridService } from '@app/services/wait-grid.service';
 import { CellType } from '@common/board';
 import { IItem, ItemType } from '@common/items';
 
 @Component({
     selector: 'app-wait-game-grid',
-    imports: [CommonModule],
+    imports: [CommonModule, EditionCellComponent],
     templateUrl: './wait-game-grid.component.html',
+    styleUrl: '../../../styles/game-cell.scss',
 })
 export class WaitGameGridComponent {
     protected readonly waitGridService: WaitGridService = inject(WaitGridService);
+    protected readonly activeGameService = inject(ActiveGameService);
 
     cellImagePath(cellType: CellType): string {
         return CELL_TYPE_PATHS[cellType];

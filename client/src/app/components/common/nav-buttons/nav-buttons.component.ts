@@ -15,4 +15,6 @@ export class NavButtonsComponent {
     readonly textAction: InputSignal<string> = input<string>('');
 
     readonly action: OutputEmitterRef<void> = output<void>();
+
+    readonly back: OutputEmitterRef<void> = output<void>();
 }

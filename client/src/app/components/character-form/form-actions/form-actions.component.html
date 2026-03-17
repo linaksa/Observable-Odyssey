@@ -3,7 +3,7 @@
     <button
         class="btn btn-green h-12 inline-flex items-center gap-2"
         type="submit"
-        [disabled]="characterFormService.characterForm.invalid"
+        [disabled]="characterFormService.characterForm.invalid || characterFormService.isLoading()"
         (click)="submit()"
     >
         @if (characterFormService.isLoading()) {

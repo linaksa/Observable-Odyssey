@@ -8,5 +8,5 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
     templateUrl: './player-name-input.component.html',
 })
 export class PlayerNameInputComponent {
-    @Input() form!: FormGroup;
+    @Input() form: FormGroup;
 }

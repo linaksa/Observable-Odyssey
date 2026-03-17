@@ -11,7 +11,7 @@ export class ActiveGameListSocketsService {
         this.socketService.createNamespace(Namespaces.ActiveGameAdmin);
     }
 
-    emitJoinableGamesUpdated() {
-        this.socketService.emit(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    emitJoinableGamesUpdated(activeGameId: string): void {
+        this.socketService.emit(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated, activeGameId);
     }
 }

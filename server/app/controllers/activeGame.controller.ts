@@ -1,6 +1,7 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game.service';
 import { GameSocketsService } from '@app/services/game-sockets.service';
+import { IActiveGameWithPlayer } from '@common/activeGame';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -36,17 +37,22 @@ export class ActiveGameController {
                     });
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
+                const createdPlayer = newActiveGame.players[0];
+                if (!createdPlayer) {
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de créer le joueur local' });
+                }
                 this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
-                this.activeGameListSocketsService.emitJoinableGamesUpdated();
-                return res.status(StatusCodes.CREATED).json(newActiveGame);
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame._id);
+                const payload: IActiveGameWithPlayer = { activeGame: newActiveGame, player: createdPlayer };
+                return res.status(StatusCodes.CREATED).json(payload);
             } catch (error) {
-                if (error.message === 'Game introuvable') {
+                if (error.message === 'GAME_NOT_FOUND') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Jeu introuvable' });
                 }
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur', error });
             }
         });
-        // route pour qu'un joueur puisse rejoindre une partie active existante
+        // Route for a player to join an existing active game
         this.router.patch('/join', async (req: Request, res: Response) => {
             try {
                 const { activeGameId, characterForm } = req.body;
@@ -56,29 +62,28 @@ export class ActiveGameController {
                     });
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
+                // Emit a socket to clients when a player joins the active game.
                 if (updatedActiveGame) {
                     this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
+                } else {
+                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
-                this.activeGameListSocketsService.emitJoinableGamesUpdated();
-                return res.status(StatusCodes.OK).json(updatedActiveGame);
+
+                const joinedPlayer = updatedActiveGame.players.find((player) => player.avatar === characterForm.avatar);
+                if (!joinedPlayer) {
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de trouver le joueur ajouté' });
+                }
+
+                this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
+                this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame._id);
+                const payload: IActiveGameWithPlayer = { activeGame: updatedActiveGame, player: joinedPlayer };
+                return res.status(StatusCodes.OK).json(payload);
             } catch (error) {
                 if (error.message === 'Active game not found') {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
 
                 return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: error.message || 'Erreur interne du serveur' });
-            }
-        });
-
-        this.router.get('/', async (_req: Request, res: Response) => {
-            try {
-                const allActiveGames = await this.activeGameService.getAllActiveGames();
-                res.status(StatusCodes.OK).json(allActiveGames);
-            } catch (error) {
-                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                    message: 'Erreur interne du serveur',
-                    error,
-                });
             }
         });
 

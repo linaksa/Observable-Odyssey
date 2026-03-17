@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, InputSignal, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -11,9 +11,9 @@ import { LocalPlayerService } from '@app/services/local-player.service';
 import { SocketService } from '@app/services/socket.service';
 import { WaitGridService } from '@app/services/wait-grid.service';
 import { ICharacter } from '@common/character';
-import { IExistingGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -38,15 +38,14 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     private playersUpdatedSubscription?: Subscription;
     private startGameSubscription?: Subscription;
+    private gameEndedSubscription?: Subscription;
     private routeSubscription?: Subscription;
 
-    readonly gameToEdit: InputSignal<IExistingGame> = input.required<IExistingGame>();
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly waitGridService: WaitGridService = inject(WaitGridService);
 
     localPlayer?: ICharacter;
     showButton: boolean = false;
-    private gameStarted: boolean = false;
 
     constructor() {
         effect(() => {
@@ -61,7 +60,10 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
         this.routeSubscription = this.route.params.subscribe((params) => {
             this.socketService.connect(Namespaces.Game);
-            this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.JoinGame, params.activeGameId);
+            this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
+                activeGameId: params.activeGameId,
+                playerName: this.localPlayerService.getLocalPlayer()?.name,
+            });
             this.activeGameService.setActiveGame(params.activeGameId);
             this.playersUpdatedSubscription?.unsubscribe();
             this.playersUpdatedSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({
@@ -71,13 +73,20 @@ export class WaitPageComponent implements OnInit, OnDestroy {
                 },
             });
             this.startGameSubscription?.unsubscribe();
-            this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.StartGame).subscribe({
+            this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted).subscribe({
                 next: (startedGameId) => {
                     if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
                         return;
                     }
-                    this.gameStarted = true;
                     this.router.navigate(['/play', startedGameId]);
+                },
+            });
+
+            this.gameEndedSubscription?.unsubscribe();
+            this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
+                next: () => {
+                    this.localPlayerService.clear();
+                    this.router.navigate(['/home']);
                 },
             });
         });
@@ -87,21 +96,25 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.routeSubscription?.unsubscribe();
         this.playersUpdatedSubscription?.unsubscribe();
         this.startGameSubscription?.unsubscribe();
+        this.gameEndedSubscription?.unsubscribe();
+    }
 
-        if (this.gameStarted) {
-            return;
-        }
-
-        const localPlayerName = this.localPlayer?.name;
+    goBack(): void {
+        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
         const activeGameId = this.activeGameService.activeGame?._id;
 
         if (!localPlayerName || !activeGameId) {
             return;
         }
 
-        this.activeGameService.leaveActiveGame(localPlayerName).subscribe({
-            complete: () => this.localPlayerService.clear(),
-        });
+        this.leaveWaitingRoomAndCleanup(localPlayerName);
+        this.router.navigate(['/home']);
+    }
+
+    private leaveWaitingRoomAndCleanup(localPlayerName: string): void {
+        this.activeGameService.leaveWaitingRoom(localPlayerName);
+        this.socketService.disconnect(Namespaces.Game);
+        this.localPlayerService.clear();
     }
 
     private initializeActiveGameData(): void {
@@ -112,8 +125,12 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.waitGridService.buildGrid(this.activeGameService.activeGame.game.board.cells.length);
         this.waitGridService.initFromExistingBoard(structuredClone(this.activeGameService.activeGame));
 
-        this.localPlayerService.restoreFromActiveGame(this.activeGameService.activeGame);
         this.localPlayer = this.localPlayerService.getLocalPlayer();
+
+        if (!this.localPlayer) {
+            this.router.navigate(['/error']);
+            return;
+        }
     }
 
     private initializeButtonTimeout(): void {

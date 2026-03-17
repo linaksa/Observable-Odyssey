@@ -33,6 +33,7 @@ export class WaitChatSidebarComponent {
         if (!this.activeGameService.activeGame._id) {
             return;
         }
+
         this.socketService.emit<string, void>(Namespaces.Game, SocketEvent.StartGame, this.activeGameService.activeGame._id);
     }
 }
