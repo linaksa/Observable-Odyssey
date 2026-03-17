@@ -1,68 +1,58 @@
-<div class="overflow-hidden bg-[#233f74] rounded-lg relative">
-    <app-toast />
+<div #tableContainer class="bg-[#233f74] rounded-lg relative">
+    <div class="divide-y-4 divide-[#0f1528]">
+        @for (gameRow of gameList; track gameRow._id) {
+            @let game = getGame(gameRow);
+            <article class="flex flex-col sm:flex-row items-start justify-between gap-4 p-4">
+                <section class="flex flex-row min-w-1/2 items-start gap-4">
+                    <img
+                        class="rounded-lg object-cover w-32 h-32"
+                        [src]="game.preview"
+                        [alt]="game.gameTitle"
+                        (mouseenter)="showDescriptionTooltip($event, game.description)"
+                        (mousemove)="updateDescriptionTooltipPosition($event)"
+                        (mouseleave)="hideDescriptionTooltip()"
+                    />
 
-    @if (gameTableService.isLoading() && !gameTableService.tableData.length) {
-        <app-loading-overlay
-            loadingText="Chargement des jeux..."
-            class="flex flex-row justify-center self-center items-center gap-4 p-4"
-        ></app-loading-overlay>
-    } @else if (!gameTableService.tableData.length) {
-        <div class="text-2xl text-white/80 tracking-wider text-center p-4">Aucun jeu</div>
-    } @else {
-        <div class="divide-y-4 divide-[#0f1528]">
-            @for (element of gameTableService.tableData; track element._id) {
-                <article class="flex flex-col sm:flex-row justify-between gap-4 p-4">
-                    <section class="flex flex-row gap-4">
-                        <img
-                            class="rounded-lg object-cover w-32 h-32"
-                            [src]="element.preview"
-                            [alt]="element.gameTitle"
-                            [attr.title]="element.description"
-                        />
+                    <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider min-h-32">
+                        <span class="text-2xl font-black text-white wrap-anywhere">{{ game.gameTitle }}</span>
+                        <span>Mode : {{ game.gameMode }}</span>
+                        <span>Taille : {{ game.board.cells.length }}×{{ game.board.cells.length }}</span>
 
-                        <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider">
-                            <span class="text-2xl font-black text-white">{{ element.gameTitle }}</span>
-                            <span class="">Mode : {{ element.gameMode }}</span>
-                            <span class="">Taille : {{ element.board.cells.length }}×{{ element.board.cells.length }}</span>
-                            <span class="">Dernière modification : {{ element.lastModifiedDate | date: 'dd/MM/yyyy' }}</span>
-                        </div>
-                    </section>
-
-                    <section class="flex shrink flex-wrap self-start align-middle gap-4 w-full sm:w-min md:w-auto h-12 justify-center sm:justify-end">
-                        @if (isAdmin) {
-                            <label class="btn h-full inline-flex items-center gap-2" [ngClass]="gameIsViewable(element) ? 'btn-green' : 'btn-red'">
-                                <input
-                                    #visibilityCheckbox
-                                    hidden="true"
-                                    type="checkbox"
-                                    [checked]="gameIsViewable(element)"
-                                    (change)="toggleVisibility($event, element)"
-                                />
-                                @if (visibilityCheckbox.checked !== gameIsViewable(element)) {
-                                    <img
-                                        src="./assets/loading/cogwheel.png"
-                                        alt="Chargement"
-                                        class="h-full w-auto object-contain animate-[spin_2s_steps(16)_infinite] select-none [image-rendering:pixelated]"
-                                        draggable="false"
-                                    />
-                                }
-                                <span>Visible</span>
-                            </label>
-                            <button class="btn h-full" [routerLink]="['/edit', element._id]">Modification</button>
-                            <button class="btn h-full" (click)="deleteGame(element)">Suppression</button>
+                        @if (isActiveGame()) {
+                            <span>Joueurs : {{ numOfPlayer(gameRow) }} / {{ maximumNumOfPlayer(gameRow) }}</span>
                         } @else {
-                            <button class="btn btn-blue h-full" [routerLink]="['/form', element._id]">Créer une partie</button>
+                            <span>Dernière modification : {{ game.lastModifiedDate | date: 'dd/MM/yyyy' }}</span>
                         }
-                    </section>
+                    </div>
+                </section>
+
+                <section class="flex flex-wrap self-start align-middle gap-4 w-full sm:w-fit justify-center sm:justify-end">
+                    <ng-container *ngTemplateOutlet="actions(); context: { $implicit: gameRow }"></ng-container>
+                </section>
+            </article>
+        } @empty {
+            @if (!isLoading()) {
+                <article class="flex flex-col sm:flex-row items-center justify-center gap-4 p-4">
+                    <span class="text-2xl font-black text-white/80 tracking-wider">{{ emptyString() }}</span>
                 </article>
             }
+        }
 
-            @if (gameTableService.isLoading()) {
-                <app-loading-overlay
-                    loadingText="Chargement des jeux..."
-                    class="flex flex-row justify-center self-center items-center gap-4 p-4"
-                ></app-loading-overlay>
-            }
+        @if (isLoading()) {
+            <app-loading-overlay
+                [loadingText]="loadingString()"
+                class="flex flex-col sm:flex-row items-center justify-center gap-4 p-4"
+            ></app-loading-overlay>
+        }
+    </div>
+    @if (descriptionTooltip(); as tooltipText) {
+        <div
+            #descriptionTooltipElement
+            class="absolute z-1000 max-w-100 px-4 py-2 rounded-lg bg-[#0f1528] border border-white/30 shadow-xl text-white/80 text-sm tracking-widest wrap-break-word pointer-events-none"
+            [style.left.px]="descriptionTooltipPosition().x"
+            [style.top.px]="descriptionTooltipPosition().y"
+        >
+            {{ tooltipText }}
         </div>
     }
 </div>

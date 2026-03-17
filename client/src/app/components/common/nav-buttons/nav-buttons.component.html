@@ -1,12 +1,12 @@
 <nav class="flex justify-between flex-col sm:flex-row gap-4">
     @if (showBack()) {
-        <button class="btn w-full sm:w-auto" [routerLink]="linkBack()">
+        <button class="btn w-full sm:w-auto" [routerLink]="linkBack()" (click)="back.emit()">
             <span>{{ textBack() }}</span>
         </button>
     }
 
     @if (showAction()) {
-        <button class="btn w-full sm:w-auto" (click)="action.emit()">
+        <button class="btn btn-blue w-full sm:w-auto" (click)="action.emit()">
             <span>{{ textAction() }}</span>
         </button>
     }

@@ -1,9 +1,9 @@
 /**
- * Stratégie de test – BoardSharedService (client)
+ * Testing strategy — BoardSharedService (client)
  *
- * Approche : test de création minimal avec Angular TestBed.
- * Vérifie que le service partagé de plateau est instancié correctement par
- * l'injecteur Angular sans dépendances supplémentaires.
+ * Approach: minimal instantiation test using Angular TestBed.
+ * Verifies the shared board service is correctly instantiated by
+ * the Angular injector without additional dependencies.
  */
 import { TestBed } from '@angular/core/testing';
 

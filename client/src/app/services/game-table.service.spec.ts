@@ -1,26 +1,25 @@
 /**
- * Stratégie de test – GameTableService
+ * Testing strategy — GameTableService
  *
- * Approche : tests unitaires Angular avec GameService substitué par un spy Jasmine.
- * Les données de test contiennent intentionnellement un jeu visible et un jeu
- * caché pour permettre de tester le filtrage par visibilité.
+ * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
+ * The test data intentionally contains a visible game and a hidden game
+ * to allow testing of visibility filtering.
  *
- * Cas limites couverts :
- * - Réponse vide (tableau vide) : fetchGames() avec ou sans filtre de visibilité
- *   doit renvoyer un tableData vide sans erreur.
- * - Réponse null : le serveur peut théoriquement renvoyer null en cas d'anomalie ;
- *   fetchGames() doit normaliser cette valeur en tableau vide pour protéger les
- *   consommateurs du tableData.
- * - Filtre visibilité désactivé (false) : tous les jeux, y compris les cachés,
- *   doivent apparaître dans tableData.
- * - Filtre visibilité activé (true) : seuls les jeux avec Visibility.Viewable
- *   doivent être conservés.
+ * Edge cases covered:
+ * - Empty response (empty array): fetchGames() with or without visibility filter
+ *   should return an empty tableData without error.
+ * - Null response: the server may theoretically return null in case of anomaly;
+ *   fetchGames() should normalize this value to an empty array to protect
+ *   tableData consumers.
+ * - Visibility filter disabled (false): all games, including hidden ones,
+ *   should appear in tableData.
+ * - Visibility filter enabled (true): only games with Visibility.Viewable
+ *   should be retained.
  */
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
 
-import { HTTP_CLIENT } from '@app/http/http-interface';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { GameTableService } from './game-table.service';
 import { GameService } from './game.service';
@@ -55,19 +54,13 @@ describe('GameTableService', () => {
     ];
 
     beforeEach(() => {
-        const httpSpy = jasmine.createSpyObj('HttpClientPort', ['get', 'post', 'put', 'patch', 'delete']);
-        httpSpy.get.and.returnValue(of([]));
-        httpSpy.post.and.returnValue(of({}));
-        httpSpy.put.and.returnValue(of({}));
-        httpSpy.patch.and.returnValue(of({}));
-        httpSpy.delete.and.returnValue(of({}));
-        TestBed.configureTestingModule({
-            providers: [{ provide: HTTP_CLIENT, useValue: httpSpy }],
-        });
-        service = TestBed.inject(GameTableService);
-
         gameServiceSpy = jasmine.createSpyObj('GameService', ['getAllGames']);
-        service.gameService = gameServiceSpy;
+
+        TestBed.configureTestingModule({
+            providers: [GameTableService, { provide: GameService, useValue: gameServiceSpy }],
+        });
+
+        service = TestBed.inject(GameTableService);
     });
 
     it('should be created', () => {
@@ -96,8 +89,8 @@ describe('GameTableService', () => {
         expect(service.tableData).toEqual([gamesMock[0]]);
     });
 
-    // Cas limite : le serveur renvoie un tableau vide, avec et sans filtre de visibilité.
-    // tableData doit rester [] dans les deux cas sans erreur.
+    // Edge case: the server returns an empty array, with or without a visibility filter.
+    // tableData should remain [] in both cases without error.
     it('should handle empty response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of([]));
 
@@ -108,9 +101,9 @@ describe('GameTableService', () => {
         expect(service.tableData).toEqual([]);
     });
 
-    // Cas limite : le serveur renvoie null au lieu d'un tableau (anomalie serveur ou
-    // réseau). fetchGames() doit normaliser cette valeur en tableau vide pour éviter
-    // que les consommateurs de tableData reçoivent null et plantent.
+    // Edge case: the server returns null instead of an array (server or
+    // network anomaly). fetchGames() should normalize this value to an empty array to prevent
+    // tableData consumers from receiving null and crashing.
     it('should handle null response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of(null as unknown as IExistingGame[]));
 

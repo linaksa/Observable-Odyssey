@@ -7,10 +7,18 @@ export interface IActiveGame {
     _id: string;
     game: IGame;
     players: ICharacter[];
-    itemsState: IItem[];
+    itemsState: IItem[]; // really necessary ?
     currentPlayerIndex: number;
+    turnOrder: string[]; // List of player names in turn order
+    isFinished: boolean;
+    winner: string | null;
     messages: IMessage[];
     isDebugMode: boolean;
     organizerName: string;
     maxPlayerCount: number;
+}
+
+export interface IActiveGameWithPlayer {
+    activeGame: IActiveGame;
+    player: ICharacter;
 }

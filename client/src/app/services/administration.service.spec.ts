@@ -1,15 +1,15 @@
 /**
- * Stratégie de test – AdministrationService
+ * Testing strategy — AdministrationService
  *
- * Approche : tests unitaires Angular avec GameService substitué par un spy Jasmine.
- * Les deux valeurs booléennes possibles (true/false) sont testées séparément pour
- * vérifier la conversion booléen → énumération Visibility.
+ * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
+ * Both boolean values (true/false) are tested separately to
+ * verify boolean → Visibility enum conversion.
  *
- * Cas limites couverts :
- * - Passage de true : doit correspondre à Visibility.Viewable (statut public).
- * - Passage de false : doit correspondre à Visibility.Hidden (statut privé).
- *   Ces deux cas sont les seuls états possibles ; les tester tous les deux garantit
- *   l'absence d'inversion accidentelle de la logique de conversion.
+ * Edge cases covered:
+ * - Passing true: should map to Visibility.Viewable (public status).
+ * - Passing false: should map to Visibility.Hidden (private status).
+ *   These are the only possible states; testing both prevents accidental
+ *   inversion of the conversion logic.
  */
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
@@ -43,8 +43,8 @@ describe('AdministrationService', () => {
         });
     });
 
-    // Cas limite : passage de false, la valeur la moins intuitive, pour vérifier
-    // qu'il n'y a pas d'inversion accidentelle (true → Hidden, false → Viewable).
+    // Edge case: passing false, the less intuitive value, to ensure
+    // there is no accidental inversion (true → Hidden, false → Viewable).
     it('changeGameVisibility should convert false to Visibility.Hidden', () => {
         service.changeGameVisibility(gameId, false).subscribe(() => {
             expect(gameServiceSpy.changeGameVisibility).toHaveBeenCalledWith(gameId, Visibility.Hidden);

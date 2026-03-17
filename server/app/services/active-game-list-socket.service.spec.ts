@@ -27,14 +27,16 @@ describe('ActiveGameListSocketsService', () => {
         it('should create admin namespace with correct path', () => {
             socketService.initialize(httpServer);
             service.initialize();
-            expect(() => service.emitJoinableGamesUpdated()).to.not.throw();
+            expect(() => service.emitJoinableGamesUpdated('test-id')).to.not.throw();
         });
     });
 
     describe('emitJoinableGamesUpdated', () => {
         it('should throw error if not initialized', () => {
             socketService.initialize(httpServer);
-            expect(() => service.emitJoinableGamesUpdated()).to.throw("Namespace 'active-game-admin' not found. Call createNamespace() first.");
+            expect(() => service.emitJoinableGamesUpdated('test-id')).to.throw(
+                "Namespace 'active-game-admin' not found. Call createNamespace() first.",
+            );
         });
 
         it('should emit joinable-games-updated event when initialized', () => {
@@ -42,7 +44,7 @@ describe('ActiveGameListSocketsService', () => {
             service.initialize();
             sinon.stub(socketService, 'emit').callsFake(mockEmit);
 
-            service.emitJoinableGamesUpdated();
+            service.emitJoinableGamesUpdated('test-id');
 
             expect(mockEmit.calledOnce).to.equal(true);
             expect(mockEmit.calledWith('active-game-admin', 'joinable-games-updated')).to.equal(true);

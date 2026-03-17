@@ -10,9 +10,21 @@ const activeGameSchema = new Schema<IActiveGame>({
     game: gameSchema,
     players: [characterSchema],
     itemsState: [itemSchema],
+    turnOrder: {
+        type: [String],
+        required: true,
+    },
     currentPlayerIndex: {
         type: Number,
         required: true,
+    },
+    isFinished: {
+        type: Boolean,
+        required: true,
+    },
+    winner: {
+        type: String,
+        default: null,
     },
     messages: [messageSchema],
     isDebugMode: {
@@ -29,4 +41,4 @@ const activeGameSchema = new Schema<IActiveGame>({
     },
 });
 
-export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
+export const activeGameModel = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
