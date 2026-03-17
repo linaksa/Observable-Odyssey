@@ -3,10 +3,22 @@
         <div
             class="flex justify-around justify-items-center rounded-lg p-2"
             [ngClass]="{ 'border-2 border-red-500': player.name === currentPlayerName, 'opacity-50 line-through': player.hasAbandoned }"
+
         >
             <img [src]="buildPlayerAvatarUrl(player.avatar)" alt="Player Avatar" class="w-8 h-8 rounded-full" />
-            <span class="p-0">{{ player.name }}</span>
+
+            <div class="flex items-center gap-2">
+                <span class="p-0"> {{ player.name }}</span>
+
+                @if (isOrganizer(player.name)) {
+                    <span class="bg-yellow-500 text-black text-xs px-2 py-1 rounded">
+                        Organisateur
+                    </span>
+                }
+            </div>
+
             <span>-</span>
+
             <span class="p-0">{{ player.victories }} victoires</span>
         </div>
     }
