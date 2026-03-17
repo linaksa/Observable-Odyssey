@@ -1,6 +1,6 @@
-<div class="flex flex-row justify-between items-center rounded-lg p-4" [ngClass]="bgColor">
-    <span class="text-black tracking-wider">{{ name }}</span>
+<div class="flex flex-row justify-between items-center rounded-lg p-4" [ngClass]="bgColor()">
+    <span class="text-black tracking-wider">{{ name() }}</span>
     <span class="text-3xl">
-        {{ value }}
+        {{ value() }}
     </span>
 </div>

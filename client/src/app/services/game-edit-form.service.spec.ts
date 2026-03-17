@@ -1,19 +1,21 @@
 /**
- * Testing strategy — GameEditFormService
+ * Stratégie de test – GameEditFormService
  *
- * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
- * The reactive form object is inspected directly to validate initial values
- * and transformations. Async methods (submitForm, getPreviewImage)
- * are tested with spies on the image capture functions.
+ * Approche : tests unitaires Angular avec GameService substitué par un spy Jasmine.
+ * L'objet formulaire réactif est inspecté directement pour valider les valeurs
+ * initiales et les transformations. Les méthodes async (submitForm, getPreviewImage)
+ * sont testées avec des spies sur les fonctions de capture d'image.
  *
- * Edge cases covered:
- * - Preview image generation failure (null): submitForm() should be aborted,
- *   formValid set to false and formErrors non-empty, without calling saveGame or createGame.
- * - HTTP 500 on save: submitForm() should throw, set formValid to false, and reset isSubmitting to false.
- * - HTTP 500 on create: same behavior as save.
- * - Empty ID (new game): submitForm() should call createGame instead of saveGame.
- * - Null DOM element for getPreviewImage: should return null without throwing.
- * - Canvas error (toDataURL): getPreviewImage should catch the error and return null.
+ * Cas limites couverts :
+ * - Échec de la génération de l'image de prévisualisation (null) : submitForm()
+ *   doit être interrompu, formValid mis à false et formErrors non vide, sans
+ *   appeler saveGame ni createGame.
+ * - Erreur HTTP 500 lors de la sauvegarde : submitForm() doit lever une exception,
+ *   formValid mis à false et isSubmitting remis à false.
+ * - Erreur HTTP 500 lors de la création : même comportement que la sauvegarde.
+ * - ID vide (nouveau jeu) : submitForm() doit appeler createGame au lieu de saveGame.
+ * - Élément DOM null pour getPreviewImage : doit retourner null sans lever d'exception.
+ * - Erreur canvas (toDataURL) : getPreviewImage doit absorber l'erreur et retourner null.
  */
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -63,8 +65,8 @@ describe('GameEditFormService', () => {
         expect(service.form.get('description')?.value).toBe(randomGame.description);
     });
 
-    // Edge case: image capture returns null (canvas inaccessible or DOM not ready).
-    // submitForm() must be aborted before any HTTP call and report the error via formErrors.
+    // Cas limite : la capture d'image retourne null (canvas inaccessible ou DOM non prêt).
+    // submitForm() doit être stoppé avant tout appel HTTP et signaler l'erreur via formErrors.
     it('should not submit if preview image fails', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         spyOn(service as any, 'getPreviewImage').and.returnValue(Promise.resolve(null));
@@ -173,8 +175,8 @@ describe('GameEditFormService', () => {
         }
     });
 
-    // Edge case: the grid DOM element is null (component not rendered yet or destroyed).
-    // getPreviewImage() should return null without throwing an exception.
+    // Cas limite : l'élément DOM de la grille est null (composant non encore rendu ou
+    // détruit). getPreviewImage() doit retourner null sans lever d'exception.
     it('should return null if grid element does not exists', async () => {
         const grid = null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

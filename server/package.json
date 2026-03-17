@@ -10,8 +10,7 @@
         "lint": "eslint --config eslint.config.mjs \"./app/**/*.ts\"",
         "lint:fix": "eslint --config eslint.config.mjs \"./app/**/*.ts\" --fix",
         "test": "cross-env TS_NODE_PROJECT='./tsconfig.spec.json' mocha --config=.mocharc.json --node-env=test",
-        "coverage": "cross-env TS_NODE_PROJECT='./tsconfig.spec.json' nyc mocha --config=.mocharc.json --node-env=test --exit",
-        "clean": "rm -rf .out coverage node_modules package-lock.json"
+        "coverage": "cross-env TS_NODE_PROJECT='./tsconfig.spec.json' nyc mocha --config=.mocharc.json --node-env=test --exit"
     },
     "nyc": {
         "per-file": true,

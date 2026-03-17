@@ -63,7 +63,7 @@ export class Server {
     }
 
     /**
-     * Occurs when the server starts listening on the port.
+     * Se produit lorsque le serveur se met à écouter sur le port.
      */
     private onListening(): void {
         const addr = this.server.address() as AddressInfo;

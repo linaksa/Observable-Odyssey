@@ -1,17 +1,17 @@
 /**
- * Testing strategy — EditionPageComponent
+ * Stratégie de test – EditionPageComponent
  *
- * Approach: Angular integration tests with RouterTestingHarness.
- * The harness allows navigation to the edited route and obtaining the component
- * instance after route activation. The child component (GameEdition)
- * is replaced by a mock to avoid transitive dependencies.
- * GameService is provided as a Jasmine spy injected via overrideProvider.
+ * Approche : tests d'intégration Angular avec RouterTestingHarness.
+ * L'harness permet de naviguer vers la route éditée et d'obtenir l'instance
+ * du composant après l'activation de la route. Le composant enfant (GameEdition)
+ * est remplacé par un composant mock pour éviter les dépendances transitives.
+ * GameService est fourni en tant que spy Jasmine injecté via overrideProvider.
  *
- * Edge cases covered:
- * - Route id "creation" with gameUnderCreation already set in the service:
- *   the component should reuse the existing object without calling getGameById.
- * - Route id "creation" without gameUnderCreation: the component should create
- *   a new empty game instead of calling getGameById.
+ * Cas limites couverts :
+ * - ID de route "creation" avec gameUnderCreation déjà défini dans le service :
+ *   le composant doit réutiliser l'objet présent sans appeler getGameById.
+ * - ID de route "creation" sans gameUnderCreation : le composant doit créer
+ *   un nouveau jeu vide au lieu d'appeler getGameById.
  */
 import { Component, Input } from '@angular/core';
 import { MetadataOverride, TestBed } from '@angular/core/testing';
@@ -76,8 +76,8 @@ describe('EditionPageComponent', () => {
         expect(gameServiceSpy.getGameById).toHaveBeenCalledWith('123');
     });
 
-    // Edge case: the route id is "creation" and gameUnderCreation is set in the
-    // service. The component must use that object directly without calling getGameById.
+    // Cas limite : l'id de route est "creation" et gameUnderCreation est défini dans le
+    // service. Le composant doit utiliser cet objet directement sans appeler getGameById.
     it('should choose the game saved in gameService if the id in the url is "creation"', async () => {
         gameServiceSpy.gameUnderCreation = randomGame;
         const instance = await harness.navigateByUrl('/edit/creation', EditionPageComponent);
@@ -86,8 +86,8 @@ describe('EditionPageComponent', () => {
         expect(instance.editedGame).toBe(gameServiceSpy.gameUnderCreation);
     });
 
-    // Edge case: the route id is "creation" but no game is stored in the
-    // service (e.g., page reload). The component must create a default empty game.
+    // Cas limite : l'id de route est "creation" mais aucun jeu n'est mémorisé dans le
+    // service (ex: rechargement de page). Le composant doit créer un jeu vide par défaut.
     it('should create a new game if the id in the url is "creation" and there is no game saved in gameService', async () => {
         const instance = await harness.navigateByUrl('/edit/creation', EditionPageComponent);
 

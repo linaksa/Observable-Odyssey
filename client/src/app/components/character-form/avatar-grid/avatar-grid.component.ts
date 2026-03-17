@@ -11,7 +11,6 @@ import { Avatar } from '@common/constants';
 })
 export class AvatarGridComponent {
     @Input() form: FormGroup;
-    @Input() unavailableAvatars: Avatar[] = [];
 
     availableAvatars: Avatar[] = [
         Avatar.Avatar1,
@@ -29,8 +28,6 @@ export class AvatarGridComponent {
     ];
 
     selectAvatar(avatar: Avatar): void {
-        if (this.unavailableAvatars.includes(avatar)) return;
-
         this.form.patchValue({ avatar });
     }
 

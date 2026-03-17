@@ -1,24 +1,26 @@
 /**
- * Testing strategy — BoardService
+ * Stratégie de test – BoardService
  *
- * Approach: unit tests parameterized by board constants defined
- * in board.service.spec.constants.ts. Each constant represents a different board case,
- * allowing exhaustive coverage of validation rules without duplicating board construction
- * code in tests. The service is obtained via the TypeDI container to respect
- * dependency injection used in production.
+ * Approche : tests unitaires paramétrés par des constantes de plateau définies
+ * dans board.service.spec.constants.ts. Chaque constante représente un cas de
+ * plateau différent, ce qui permet de couvrir exhaustivement les règles de
+ * validation sans dupliquer le code de construction de plateau dans les tests.
+ * Le service est obtenu via le conteneur TypeDI pour respecter l'injection de
+ * dépendances utilisée en production.
  *
- * Edge cases covered:
- * - Fully walled board (allWallsBoard): extreme case where no cell is accessible,
- *   which should trigger an accessibility error.
- * - Less than 50% terrain (halfTerrainBoard): verifies the exact bound of the 50% terrain rule.
- * - Door on the edge of the map (edgeDoorBoard / topEdgeDoorBoard): a door placed
- *   on the border lacks sufficient neighbors to be valid.
- * - Door with only one wall neighbor (verticalDoorTopWallOnlyBoard): verifies that
- *   validation requires both opposite walls, not just one.
- * - CTF mode without a flag (ctfNoFlagSmallBoard / ctfNoFlagMediumBoard): verifies
- *   that validation depends on the provided game mode.
- * - Insufficient starting points according to size (small / large):
- *   verifies that the required threshold varies with board dimensions.
+ * Cas limites couverts :
+ * - Plateau entièrement muré (allWallsBoard) : cas extrême où aucune cellule
+ *   n'est accessible, ce qui doit déclencher l'erreur d'accessibilité.
+ * - Moins de 50 % de terrain (halfTerrainBoard) : vérifie la borne exacte de
+ *   la règle des 50 % de surface de terrain.
+ * - Porte en bord de carte (edgeDoorBoard / topEdgeDoorBoard) : une porte placée
+ *   sur le rebord n'a pas de voisins suffisants pour être valide.
+ * - Porte avec un seul mur voisin (verticalDoorTopWallOnlyBoard) : vérifie que
+ *   la validation exige les deux murs opposés, pas seulement l'un d'eux.
+ * - Mode CTF sans drapeau (ctfNoFlagSmallBoard / ctfNoFlagMediumBoard) : vérifie
+ *   que la validation dépend bien du mode de jeu passé en paramètre.
+ * - Nombre de points de départ insuffisant selon la taille (small / large) :
+ *   vérifie que le seuil requis varie selon la dimension du plateau.
  */
 import { GameType } from '@common/game';
 import { expect } from 'chai';

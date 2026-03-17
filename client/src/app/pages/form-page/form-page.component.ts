@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BackNavigationComponent } from '@app/components/character-form/back-navigation/back-navigation.component';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
@@ -8,14 +8,13 @@ import { CharacterFormService } from '@app/services/character-form.service';
 import { LocalPlayerService } from '@app/services/local-player.service';
 import { ToastService } from '@app/services/toast.service';
 import { CharacterFormData } from '@common/character';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-form-page',
     imports: [FormPageHeaderComponent, BackNavigationComponent, CharacterFormComponent, ToastComponent],
     templateUrl: './form-page.component.html',
 })
-export class FormPageComponent implements OnInit, OnDestroy {
+export class FormPageComponent implements OnInit {
     characterFormService = inject(CharacterFormService);
     toastService = inject(ToastService);
     localPlayerService = inject(LocalPlayerService);
@@ -23,16 +22,11 @@ export class FormPageComponent implements OnInit, OnDestroy {
     router = inject(ActivatedRoute);
     navigator = inject(Router);
     gameId: string | null = null;
-    private routeSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.routeSubscription = this.router.params.subscribe((params) => {
+        this.router.params.subscribe((params) => {
             this.gameId = params.gameId || null;
         });
-    }
-
-    ngOnDestroy(): void {
-        this.routeSubscription?.unsubscribe();
     }
 
     submitCharacterForm(formData: CharacterFormData): void {
@@ -46,8 +40,16 @@ export class FormPageComponent implements OnInit, OnDestroy {
         this.characterFormService.createActiveGameWithCharacter(this.gameId, formData).subscribe({
             next: (response) => {
                 this.characterFormService.isLoading.set(false);
-                this.localPlayerService.setLocalPlayer(response.player);
-                this.navigator.navigate(['/wait', response.activeGame._id]);
+                const serverPlayer = response?.players?.find((p) => p.name === formData.name) ?? response?.players?.[0];
+
+                if (serverPlayer) {
+                    this.localPlayerService.setLocalPlayer(serverPlayer);
+                } else {
+                    this.toastService.show('Impossible de créer le personnage.');
+                    return;
+                }
+
+                this.navigator.navigate(['/wait', response._id]);
             },
             error: (response) => {
                 this.characterFormService.isLoading.set(false);

@@ -1,6 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActiveGameService } from '@app/services/active-game.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
 import { ICharacter } from '@common/character';
 import { DiceType } from '@common/constants';
 
@@ -14,14 +13,12 @@ const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     imports: [],
     templateUrl: './player-info.component.html',
 })
-export class PlayerInfoComponent {
+export class PlayerInfoComponent implements OnInit {
     protected readonly activeGameService = inject(ActiveGameService);
-    localPlayerService = inject(LocalPlayerService);
+    player: ICharacter | undefined;
 
-    get player(): ICharacter | undefined {
-        const localPlayer = this.localPlayerService.getLocalPlayer();
-        if (!localPlayer) return undefined;
-        return this.activeGameService.activeGame?.players.find((p) => p.name === localPlayer.name);
+    ngOnInit() {
+        this.player = this.activeGameService.getPlayerByName(this.activeGameService.playerName);
     }
 
     get avatarUrl(): string {
