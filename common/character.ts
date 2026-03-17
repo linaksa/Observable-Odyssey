@@ -14,7 +14,7 @@ export interface ICharacter {
     rapidityPoints: number;
     attackPoints: number;
     defensePoints: number;
-    actionsLeft: number; // to review, may not be necessary
+    actionsLeft: number;
     movementLeft: number;
     victories: number;
     hasAbandoned: boolean;
