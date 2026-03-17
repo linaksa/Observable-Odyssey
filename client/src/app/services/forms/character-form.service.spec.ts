@@ -17,6 +17,7 @@ import { BONUS_VALUE, BonusType, DiceSelectionType } from '@app/constants/charac
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { CharacterFormData } from '@common/character';
 import {
+    Avatar,
     DEFAULT_PLAYER_ATTACK_POINTS,
     DEFAULT_PLAYER_DEFENSE_POINTS,
     DEFAULT_PLAYER_LIFE_POINTS,
@@ -150,11 +151,13 @@ describe('CharacterFormService', () => {
         service.characterForm.controls.playerName.setValue('Test');
         service.isLoading.set(true);
         service.errors.set('Error');
+        service.unavailableAvatars.set([Avatar.Avatar1]);
 
         service.initializeForm();
 
         expect(service.characterForm.controls.playerName.value).toBe('');
         expect(service.isLoading()).toBeFalse();
         expect(service.errors()).toBeNull();
+        expect(service.unavailableAvatars()).toEqual([]);
     });
 });

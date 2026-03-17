@@ -2,8 +2,8 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
-import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { GameService } from '@app/services/admin/game.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
@@ -65,7 +65,9 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
 
         this.gameService.getActiveGameById(this.activeGameId).subscribe({
             next: (activeGame) => {
-                this.characterFormService.unavailableAvatars.set(activeGame.players.map((player) => player.avatar));
+                this.characterFormService.unavailableAvatars.set(
+                    activeGame.players.filter((player) => !player.hasAbandoned).map((player) => player.avatar),
+                );
             },
         });
     }
