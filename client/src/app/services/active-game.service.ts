@@ -385,8 +385,10 @@ export class ActiveGameService implements OnDestroy {
     }
 
     removeUnusedSpawnPoints(): void {
-        this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
-            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
-        );
+        if (this.activeGame.turnOrder.length === 0) return;
+        this.activeGame.game.board.items =
+            this.activeGame.game.board.items.filter(item =>
+                item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
+            );
     }
 }
