@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 
 export const waitPageGuard: CanActivateFn = (route) => {
     const localPlayerService = inject(LocalPlayerService);

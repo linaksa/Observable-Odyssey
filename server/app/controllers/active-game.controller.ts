@@ -1,6 +1,6 @@
-import { ActiveGameListSocketsService } from '@app/services/active-game-list-sockets.service';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { GameSocketsService } from '@app/services/game-sockets.service';
+import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
 import { IActiveGameWithPlayer } from '@common/activeGame';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';

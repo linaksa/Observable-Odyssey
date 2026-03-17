@@ -12,7 +12,7 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

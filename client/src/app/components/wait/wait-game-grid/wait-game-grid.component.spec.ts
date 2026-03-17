@@ -13,7 +13,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';

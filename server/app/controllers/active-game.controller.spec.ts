@@ -19,9 +19,9 @@
  * - Invalid visibility on PATCH: verifies out-of-enum values are rejected.
  */
 import { Application } from '@app/app';
-import { ActiveGameListSocketsService } from '@app/services/active-game-list-sockets.service';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { GameSocketsService } from '@app/services/game-sockets.service';
+import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
 import { IActiveGame } from '@common/activeGame';
 import { IBoard } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';

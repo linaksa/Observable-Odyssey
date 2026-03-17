@@ -13,8 +13,8 @@
  */
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';

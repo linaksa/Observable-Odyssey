@@ -15,7 +15,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GameEditFormService } from '@app/services/game-edit-form.service';
+import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { GameTurnService } from '@app/services/game-turn.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 
 @Component({
     selector: 'app-game-attack',

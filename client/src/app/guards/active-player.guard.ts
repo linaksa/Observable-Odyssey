@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { LocalPlayerService } from '@app/services/local-player.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 
 export const activePlayerGuard: CanActivateFn = () => {
     const localPlayerService = inject(LocalPlayerService);

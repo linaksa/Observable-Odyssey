@@ -14,8 +14,8 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { SocketService } from '@app/services/socket.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
