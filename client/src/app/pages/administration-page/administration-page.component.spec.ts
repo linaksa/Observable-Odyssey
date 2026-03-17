@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Administration Page Component
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { Component, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
@@ -86,6 +99,7 @@ describe('AdministrationPageComponent', () => {
         changeVisibility$.complete();
     });
 
+    // Edge case: should block repeated toggles while visibility update is in progress.
     it('should block repeated toggles while visibility update is in progress', () => {
         const changeVisibility$ = new Subject<HttpResponse<string>>();
         const input = createCheckboxEventTarget(true);
@@ -111,6 +125,7 @@ describe('AdministrationPageComponent', () => {
         expect(component.isVisibilityToggleLoading(gameMock, true)).toBeFalse();
     });
 
+    // Edge case: should revert checkbox and show toast when visibility update fails.
     it('should revert checkbox and show toast when visibility update fails', () => {
         const changeVisibility$ = new Subject<HttpResponse<string>>();
         const input = createCheckboxEventTarget(true);

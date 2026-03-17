@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Form Page Component
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -96,6 +109,7 @@ describe('FormPageComponent', () => {
         expect(component.gameId).toBe(defaultGameId);
     });
 
+    // Edge case: should show error if gameId is missing on submit.
     it('should show error if gameId is missing on submit', () => {
         // Edge case
         // Validate that the app shows an error toast if the gameId is missing when trying to submit the character form
@@ -140,6 +154,7 @@ describe('FormPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', mockActiveGame._id]);
     });
 
+    // Edge case: should handle error when creating character.
     it('should handle error when creating character', () => {
         // Error case
         // Validate that the app correctly handles errors when the character creation fails, and shows an error message to the user
@@ -162,6 +177,7 @@ describe('FormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBe('creation failed');
     });
 
+    // Edge case: should handle error with empty message.
     it('should handle error with empty message', () => {
         // Edge case
         // Validate that the app doesnt crashes and shows a generic error when the server give an empty error

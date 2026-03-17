@@ -67,6 +67,7 @@ describe('GameTableService', () => {
         expect(service).toBeTruthy();
     });
 
+    // Edge case: should have tableData initialized as empty.
     it('should have tableData initialized as empty', () => {
         expect(service.tableData).toEqual([]);
     });
@@ -91,6 +92,7 @@ describe('GameTableService', () => {
 
     // Edge case: the server returns an empty array, with or without a visibility filter.
     // tableData should remain [] in both cases without error.
+    // Edge case: should handle empty response.
     it('should handle empty response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of([]));
 
@@ -104,6 +106,7 @@ describe('GameTableService', () => {
     // Edge case: the server returns null instead of an array (server or
     // network anomaly). fetchGames() should normalize this value to an empty array to prevent
     // tableData consumers from receiving null and crashing.
+    // Edge case: should handle null response.
     it('should handle null response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of(null as unknown as IExistingGame[]));
 

@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Form Actions Component
+ * Testing strategy — Player Name Input Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -18,25 +18,41 @@ import { PlayerNameInputComponent } from './player-name-input.component';
 describe('PlayerNameInputComponent', () => {
     let component: PlayerNameInputComponent;
     let fixture: ComponentFixture<PlayerNameInputComponent>;
+    let form: FormGroup;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PlayerNameInputComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(PlayerNameInputComponent);
-        component = fixture.componentInstance;
-
-        component.form = new FormGroup({
-            playerName: new FormControl<string>('', { nonNullable: true }),
+        form = new FormGroup({
+            playerName: new FormControl('Alice', { nonNullable: true }),
         });
 
+        fixture = TestBed.createComponent(PlayerNameInputComponent);
+        component = fixture.componentInstance;
+        component.form = form;
         fixture.detectChanges();
     });
 
     it('should create', () => {
-        // Nominal case
-        // The component has no logic. We simply verify that it is created without errors
         expect(component).toBeTruthy();
+    });
+
+    it('should render the current player name value from the form', () => {
+        const input = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
+
+        expect(input.value).toBe('Alice');
+        expect(input.getAttribute('maxlength')).toBe('9');
+    });
+
+    it('should update form control when typing in the input', () => {
+        const input = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
+
+        input.value = 'Bob';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(form.controls.playerName.value).toBe('Bob');
     });
 });

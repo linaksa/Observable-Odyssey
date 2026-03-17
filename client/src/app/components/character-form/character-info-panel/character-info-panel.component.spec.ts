@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Character Info Panel Component
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';

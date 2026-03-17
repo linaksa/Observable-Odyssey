@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — Character Form Component
+ *
+ * Approach:
+ * - Keep each test focused on one behavior with deterministic mocks/spies.
+ * - Validate both nominal flows and failure paths that could break UX/state.
+ * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ *
+ * Edge cases covered:
+ * - Missing or invalid input guards and safe early returns.
+ * - Error handling paths and fallback user-facing messaging.
+ * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ */
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -84,6 +97,7 @@ describe('CharacterFormComponent', () => {
         expect(characterFormServiceSpy.initializeForm).toHaveBeenCalled();
     });
 
+    // Edge case: should not emit submitForm if the form is invalid.
     it('should not emit submitForm if the form is invalid', () => {
         spyOn(component.submitForm, 'emit');
         characterFormServiceSpy.characterForm.setErrors({ invalid: true });

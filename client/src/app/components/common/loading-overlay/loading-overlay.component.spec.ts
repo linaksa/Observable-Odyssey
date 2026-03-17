@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Form Actions Component
+ * Testing strategy — Loading Overlay Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -12,31 +12,33 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, FormGroup } from '@angular/forms';
-import { PlayerNameInputComponent } from './player-name-input.component';
+import { LoadingOverlayComponent } from './loading-overlay.component';
 
-describe('PlayerNameInputComponent', () => {
-    let component: PlayerNameInputComponent;
-    let fixture: ComponentFixture<PlayerNameInputComponent>;
+describe('LoadingOverlayComponent', () => {
+    let component: LoadingOverlayComponent;
+    let fixture: ComponentFixture<LoadingOverlayComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PlayerNameInputComponent],
+            imports: [LoadingOverlayComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(PlayerNameInputComponent);
+        fixture = TestBed.createComponent(LoadingOverlayComponent);
         component = fixture.componentInstance;
-
-        component.form = new FormGroup({
-            playerName: new FormControl<string>('', { nonNullable: true }),
-        });
-
+        component.loadingText = 'Chargement en cours...';
         fixture.detectChanges();
     });
 
     it('should create', () => {
-        // Nominal case
-        // The component has no logic. We simply verify that it is created without errors
         expect(component).toBeTruthy();
+    });
+
+    it('should render loading image and configured text', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        const image = host.querySelector('img');
+
+        expect(image?.getAttribute('alt')).toBe('Chargement');
+        expect(image?.getAttribute('src')).toBe('./assets/loading/cogwheel.png');
+        expect(host.textContent).toContain('Chargement en cours...');
     });
 });

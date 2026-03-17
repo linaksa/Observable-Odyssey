@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Atribute Display Component
+ * Testing strategy — Page Title Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -12,31 +12,30 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AttributeDisplayComponent } from './attribute-display.component';
+import { PageTitleComponent } from './page-title.component';
 
-describe('AttributeDisplayComponent', () => {
-    let component: AttributeDisplayComponent;
-    let fixture: ComponentFixture<AttributeDisplayComponent>;
+describe('PageTitleComponent', () => {
+    let component: PageTitleComponent;
+    let fixture: ComponentFixture<PageTitleComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [AttributeDisplayComponent],
+            imports: [PageTitleComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(AttributeDisplayComponent);
+        fixture = TestBed.createComponent(PageTitleComponent);
         component = fixture.componentInstance;
-
-        component.name = 'Test attr';
-        component.value = 0;
-        component.bgColor = 'lightgray';
-
+        fixture.componentRef.setInput('title', 'Salle d’attente');
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        // Nominal case:
-        // This component contains no logic, so we only validate that it is created without errors.
-
+    it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should render provided title input', () => {
+        const heading = (fixture.nativeElement as HTMLElement).querySelector('h1');
+
+        expect(heading?.textContent).toContain('Salle d’attente');
     });
 });

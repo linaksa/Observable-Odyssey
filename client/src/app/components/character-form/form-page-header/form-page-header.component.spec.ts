@@ -1,5 +1,5 @@
 /**
- * Testing strategy — Atribute Display Component
+ * Testing strategy — Form Page Header Component
  *
  * Approach:
  * - Keep each test focused on one behavior with deterministic mocks/spies.
@@ -12,31 +12,29 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AttributeDisplayComponent } from './attribute-display.component';
+import { FormPageHeaderComponent } from './form-page-header.component';
 
-describe('AttributeDisplayComponent', () => {
-    let component: AttributeDisplayComponent;
-    let fixture: ComponentFixture<AttributeDisplayComponent>;
+describe('FormPageHeaderComponent', () => {
+    let component: FormPageHeaderComponent;
+    let fixture: ComponentFixture<FormPageHeaderComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [AttributeDisplayComponent],
+            imports: [FormPageHeaderComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(AttributeDisplayComponent);
+        fixture = TestBed.createComponent(FormPageHeaderComponent);
         component = fixture.componentInstance;
-
-        component.name = 'Test attr';
-        component.value = 0;
-        component.bgColor = 'lightgray';
-
         fixture.detectChanges();
     });
 
-    it('should create the component', () => {
-        // Nominal case:
-        // This component contains no logic, so we only validate that it is created without errors.
-
+    it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should render character editor title', () => {
+        const heading = (fixture.nativeElement as HTMLElement).querySelector('h1');
+
+        expect(heading?.textContent).toContain('Éditeur de personnage');
     });
 });
