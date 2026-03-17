@@ -12,8 +12,8 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { GameTurnService } from '@app/services/game-turn.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { GameAttackComponent } from './game-attack.component';
 
 describe('GameAttackComponent', () => {

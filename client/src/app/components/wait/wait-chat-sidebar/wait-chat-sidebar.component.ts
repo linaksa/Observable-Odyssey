@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal } from '@angular/core';
-import { ChatPanelComponent } from '@app/components/chat-pannel/chat-pannel.component';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { SocketService } from '@app/services/socket.service';
+import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';

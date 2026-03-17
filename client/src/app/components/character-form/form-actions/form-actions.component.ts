@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
-import { CharacterFormService } from '@app/services/character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 
 @Component({
     selector: 'app-form-actions',

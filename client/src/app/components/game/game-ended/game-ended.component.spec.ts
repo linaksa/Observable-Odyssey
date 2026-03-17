@@ -13,7 +13,7 @@
  */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { TEMPS_ECRAN_FIN_PARTIE } from '@common/constants';
 import { GameEndedComponent } from './game-ended.component';

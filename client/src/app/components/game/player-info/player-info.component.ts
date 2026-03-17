@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { ActiveGameService } from '@app/services/active-game.service';
-import { LocalPlayerService } from '@app/services/local-player.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ICharacter } from '@common/character';
 import { DiceType } from '@common/constants';
 

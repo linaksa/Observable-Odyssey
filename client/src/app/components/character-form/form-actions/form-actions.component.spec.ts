@@ -15,7 +15,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { BonusType, DiceSelectionType } from '@app/constants/character-form';
-import { CharacterFormService } from '@app/services/character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { Avatar } from '@common/constants';
 import { FormActionsComponent } from './form-actions.component';
 

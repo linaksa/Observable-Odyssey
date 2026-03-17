@@ -15,7 +15,7 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { BonusType, DiceSelectionType } from '@app/constants/character-form';
-import { CharacterFormService } from '@app/services/character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { CharacterFormData } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { CharacterFormComponent } from './character-form.component';

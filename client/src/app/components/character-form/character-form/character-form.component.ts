@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { AvatarSelectorComponent } from '@app/components/character-form/avatar-selector/avatar-selector.component';
 import { CharacterInfoPanelComponent } from '@app/components/character-form/character-info-panel/character-info-panel.component';
 import { CharacterModifierPanelComponent } from '@app/components/character-form/character-modifier-panel/character-modifier-panel.component';
-import { CharacterFormService } from '@app/services/character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { CharacterFormData } from '@common/character';
 import { Avatar } from '@common/constants';
 

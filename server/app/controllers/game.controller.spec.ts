@@ -20,8 +20,8 @@
  */
 import { Application } from '@app/app';
 import { ValidationError } from '@app/error-types/validation-error';
-import { AdminSocketsService } from '@app/services/admin-sockets.service';
-import { GameService } from '@app/services/game.service';
+import { AdminSocketsService } from '@app/services/admin/admin-sockets.service';
+import { GameService } from '@app/services/game/game.service';
 import { IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';

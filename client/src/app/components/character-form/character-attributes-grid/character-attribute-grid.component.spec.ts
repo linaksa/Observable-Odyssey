@@ -13,7 +13,7 @@
  */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
-import { CharacterFormService } from '@app/services/character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { CharacterAttributesGridComponent } from './character-attributes-grid.component';
 
 @Component({

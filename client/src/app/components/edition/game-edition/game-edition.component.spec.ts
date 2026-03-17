@@ -13,7 +13,7 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ToolOption } from '@app/constants/grid-edition';
-import { BoardEditorService } from '@app/services/edition.service';
+import { BoardEditorService } from '@app/services/editor/edition.service';
 import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';

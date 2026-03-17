@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { TEMPS_ECRAN_FIN_PARTIE } from '@common/constants';
 
 @Component({
