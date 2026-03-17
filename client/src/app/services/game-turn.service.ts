@@ -5,6 +5,7 @@ import { SocketService } from '@app/services/socket.service';
 import { COUNTDOWN_MIN_REMAINING_MS, COUNTDOWN_TICK_INTERVAL_MS, MILLISECONDS_PER_SECOND, TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Injectable()
@@ -71,14 +72,16 @@ export class GameTurnService {
         this.turnPreparingSubscription = this.socketService.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe({
             next: ({ player }) => {
                 this.activeTurnPlayerName = player;
+                this.syncActiveGameTurnState(player);
                 this._isTurnPreparing = true;
                 this.startCountdown(TEMPS_PREPA_TOUR);
             },
         });
 
-        this.turnStartedSubscription = this.socketService.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
-            next: ({ player }) => {
+        this.turnStartedSubscription = this.socketService.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
+            next: ({ player, movementLeft }) => {
                 this.activeTurnPlayerName = player;
+                this.syncActiveGameTurnState(player, movementLeft);
                 this._isTurnPreparing = false;
                 this.startCountdown(TEMPS_TOUR);
             },
@@ -127,5 +130,28 @@ export class GameTurnService {
             clearInterval(this.countdownInterval);
             this.countdownInterval = undefined;
         }
+    }
+
+    private syncActiveGameTurnState(playerName: string, movementLeft?: number): void {
+        const activeGame = this.activeGameService.activeGame;
+        if (!activeGame?.turnOrder?.length) {
+            return;
+        }
+
+        const nextIndex = activeGame.turnOrder.findIndex((name) => name === playerName);
+        if (nextIndex === -1) {
+            return;
+        }
+
+        activeGame.currentPlayerIndex = nextIndex;
+        if (movementLeft !== undefined) {
+            const activePlayer = this.activeGameService.getPlayerByName(playerName);
+            if (activePlayer) {
+                activePlayer.movementLeft = movementLeft;
+            }
+        }
+
+        this.activeGameService.currentPlayer.set(nextIndex);
+        this.activeGameService.hasChangedLocation.set(!this.activeGameService.hasChangedLocation());
     }
 }
