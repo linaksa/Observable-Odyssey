@@ -27,4 +27,12 @@ export class PlayerListComponent {
     buildPlayerAvatarUrl(avatar: Avatar): string {
         return `./assets/form-page/${avatar}.png`;
     }
+
+    get organizerName(): string {
+        return this.activeGameService.activeGame.organizerName;
+    }
+
+    isOrganizer(playerName: string): boolean {
+        return playerName === this.organizerName;
+    }
 }

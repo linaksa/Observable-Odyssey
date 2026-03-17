@@ -152,6 +152,8 @@ export class ActiveGameService implements OnDestroy {
                 this._isDebugMode.set(game.isDebugMode);
                 this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
+                this.removeUnusedSpawnPoints();
+
                 this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
             },
             error: () => {
@@ -352,5 +354,12 @@ export class ActiveGameService implements OnDestroy {
             playerName: player.name,
             target: { x: col, y: row },
         });
+    }
+
+    removeUnusedSpawnPoints(): void {
+        this.activeGame.game.board.items =
+            this.activeGame.game.board.items.filter(item =>
+                item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
+            );
     }
 }
