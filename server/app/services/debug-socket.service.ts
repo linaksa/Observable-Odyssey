@@ -1,4 +1,3 @@
-import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { IItem, ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
@@ -6,10 +5,14 @@ import { IDebugTeleportData, IDebugToggleState } from '@common/socket-payloads';
 import { Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
+import { PositionValidatorService } from './position-validator.service';
 
 @Service()
 export class DebugSocketService {
-    constructor(private readonly activeGameService: ActiveGameService) {}
+    constructor(
+        private readonly activeGameService: ActiveGameService,
+        private readonly positionValidatorService: PositionValidatorService,
+    ) {}
 
     register(socket: Socket): void {
         socket.on(SocketEvent.DebugToggle, async (playerName: string, activeGameId: string) => {
@@ -50,7 +53,7 @@ export class DebugSocketService {
 
                 // Target must be a walkable terrain tile
                 const cellType = activeGame.game.board.cells[targetRow]?.[targetCol];
-                if (!this.isWalkable(cellType)) return;
+                if (!this.positionValidatorService.isWalkableCell(cellType)) return;
 
                 // Target must have no items and no other players
                 if (this.cellHasItem(activeGame.game.board.items, targetRow, targetCol)) return;
@@ -67,10 +70,6 @@ export class DebugSocketService {
                 return;
             }
         });
-    }
-
-    private isWalkable(cellType: CellType): boolean {
-        return cellType !== CellType.Wall && cellType !== CellType.ClosedDoor && cellType !== undefined;
     }
 
     private cellHasItem(items: IItem[], row: number, col: number): boolean {

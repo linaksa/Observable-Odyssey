@@ -103,7 +103,6 @@ function createActiveGame(id: string): IActiveGame {
         _id: id,
         game: {} as IGame,
         players: [],
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: [],
         isFinished: false,

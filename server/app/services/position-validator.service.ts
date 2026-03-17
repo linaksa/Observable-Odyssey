@@ -22,7 +22,11 @@ export class PositionValidatorService {
         }
         const tile = currentActiveGame.game.board.cells[position.y][position.x];
         if (!tile) return false;
-        return tile !== CellType.Wall && tile !== CellType.OpenDoor && tile !== CellType.ClosedDoor;
+        return this.isWalkableCell(tile);
+    }
+
+    isWalkableCell(cellType: CellType): boolean {
+        return cellType !== CellType.Wall && cellType !== CellType.ClosedDoor && cellType !== undefined;
     }
 
     isOccupiedByPlayer(position: Position, currentActiveGame: IActiveGame): boolean {

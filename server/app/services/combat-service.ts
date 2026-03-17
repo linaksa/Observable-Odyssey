@@ -40,7 +40,7 @@ export class CombatService {
         if (!this.positionValidatorService.isAdjacent(attacker.positionGrille, defender.positionGrille)) return false;
         return true;
     }
-
+    // calls canAttack for each opponent to check if the attacker can attack at least one of them
     async canAttackAnyPlayer(activeGameId: string, attackerName: string): Promise<boolean> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {

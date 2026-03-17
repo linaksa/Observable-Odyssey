@@ -31,19 +31,10 @@ export class ActiveGameService {
             wonCombatCount: 0,
             hasAbandoned: false,
         };
-        const exampleItem = {
-            x: 1,
-            y: 1,
-            size: 3,
-            itemType: 'lifeSanctuary',
-            active: true,
-            isCarried: false,
-        };
 
         const newActiveGame = {
             game: gameChosen,
             players: [playerCharacter],
-            itemsState: [exampleItem],
             turnOrder: [] as string[],
             currentPlayerIndex: 0,
             isFinished: false,
@@ -140,7 +131,7 @@ export class ActiveGameService {
     private generateUniquePlayerName(newPlayerName: string, existingPlayers: ICharacter[]): string {
         // remove any existing -{number} suffix from malicious players
         newPlayerName = newPlayerName.trim().replace(/-\d+$/, '');
-
+        const basis = 10;
         const regex = /^(.*)-(\d+)$/; // match "PlayerName - 1234" et capture "PlayerName" et "1234"
         let uniquePlayerIdToAppend = 1;
 
@@ -151,7 +142,7 @@ export class ActiveGameService {
             const match = name.match(regex);
             if (match) {
                 name = match[1].trim();
-                uniqueAddedId = parseInt(match[2], 10);
+                uniqueAddedId = parseInt(match[2], basis);
             }
 
             if (name === newPlayerName) {

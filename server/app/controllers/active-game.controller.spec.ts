@@ -49,7 +49,6 @@ describe('ActiveGameController', () => {
         _id: 'dummyActiveGameId',
         game: baseGame,
         players: [] as ICharacter[],
-        itemsState: [],
         currentPlayerIndex: 0,
         turnOrder: [],
         isFinished: false,
