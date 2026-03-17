@@ -42,3 +42,8 @@ export interface IDebugToggleState {
 export interface ISocketData {
     playerNamesByGameId?: Record<string, string>;
 }
+
+export interface ITurnStartedPayload {
+    player: string;
+    movementLeft: number;
+}

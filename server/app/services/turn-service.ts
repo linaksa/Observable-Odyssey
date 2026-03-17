@@ -2,7 +2,7 @@ import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IStartTurnData } from '@common/socket-payloads';
+import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 import { ActiveGameService } from './active-game.service';
 import { MovementService } from './movement-service';
@@ -68,12 +68,11 @@ export class TurnService {
         this.clearTurnTimer(gameId);
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-        const startTurnData: IStartTurnData = {
-            playerName: player.name,
-            movementLeft: player.movementLeft,
-            actionsLeft: player.actionsLeft,
+        const turnStartedPayload: ITurnStartedPayload = {
+            player: player.name,
+            movementLeft: player?.movementLeft ?? 0,
         };
-        namespace.to(gameId).emit(SocketEvent.TurnStarted, startTurnData);
+        namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
         const positions = this.movementService.getReachablePositions(player.name, gameId);
 
         namespace.to(gameId).emit(SocketEvent.ReachablePositions, {

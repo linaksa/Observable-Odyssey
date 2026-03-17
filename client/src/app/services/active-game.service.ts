@@ -10,7 +10,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, IStartTurnData } from '@common/socket-payloads';
+import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, ITurnStartedPayload } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocalPlayerService } from './local-player.service';
@@ -58,6 +58,10 @@ export class ActiveGameService implements OnDestroy {
         this.socket.connect(Namespaces.Game);
 
         this.playerMovedSubscription = this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             const player = this.getPlayerByName(playerMove.playerId);
             if (!player) return;
 
@@ -69,6 +73,10 @@ export class ActiveGameService implements OnDestroy {
         });
 
         this.turnPreparingSubscription = this.socket.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             if (index !== -1) {
                 this.activeGame.currentPlayerIndex = index;
@@ -77,17 +85,16 @@ export class ActiveGameService implements OnDestroy {
             }
         });
 
-        this.turnStartedSubscription = this.socket.on<IStartTurnData>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
-            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.playerName);
+        this.turnStartedSubscription = this.socket.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
 
-            if (index !== -1) {
-                this.activeGame.players = this.activeGame.players.map((p) => {
-                    if (p.name === data.playerName) {
-                        return { ...p, movementLeft: data.movementLeft, actionsLeft: data.actionsLeft };
-                    }
-                    return { ...p, actionsLeft: 1 };
-                });
+            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
+            const currentPlayer = this.getPlayerByName(data.player);
 
+            if (index !== -1 && currentPlayer) {
+                currentPlayer.movementLeft = data.movementLeft;
                 this.activeGame.currentPlayerIndex = index;
                 this.currentPlayer.set(index);
                 this.hasChangedLocation.set(!this.hasChangedLocation());
@@ -95,6 +102,10 @@ export class ActiveGameService implements OnDestroy {
         });
 
         this.attackResultSubscription = this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             const attacker = this.getPlayerByName(data.attackerName);
             const defender = this.getPlayerByName(data.defenderName);
             if (!defender || !attacker) return;
@@ -107,6 +118,10 @@ export class ActiveGameService implements OnDestroy {
             this.hasChangedLocation.set(!this.hasChangedLocation());
         });
         this.playerAbandonedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             const player = this.getPlayerByName(data.playerId);
             if (!player) return;
 
@@ -115,6 +130,10 @@ export class ActiveGameService implements OnDestroy {
             this.hasAbandonned.set(!this.hasAbandonned());
         });
         this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             if (this.activeGame?.players) {
                 this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
             }
@@ -128,11 +147,19 @@ export class ActiveGameService implements OnDestroy {
             this.router.navigate(['/']);
         });
         this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             const player = this.getPlayerByName(data.playerId);
             if (!player) return;
             this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
         });
         this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
             this.activeGame.winner = data.winner;
             this.activeGame.isFinished = true;
 
@@ -146,6 +173,9 @@ export class ActiveGameService implements OnDestroy {
     }
 
     applyDebugModeState(data: IDebugToggleState) {
+        if (!this.activeGame) {
+            return;
+        }
         if (data.playerName !== this.activeGame.organizerName) return;
         this.activeGame.isDebugMode = data.isDebugMode;
         this._isDebugMode.set(data.isDebugMode);
