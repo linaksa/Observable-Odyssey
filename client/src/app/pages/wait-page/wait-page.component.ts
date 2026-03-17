@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -40,6 +40,9 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     private startGameSubscription?: Subscription;
     private gameEndedSubscription?: Subscription;
     private routeSubscription?: Subscription;
+    private buttonTimeoutId?: ReturnType<typeof setTimeout>;
+    private gameStarted: boolean = false;
+    private hasLeftWaitingRoom: boolean = false;
 
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly waitGridService: WaitGridService = inject(WaitGridService);
@@ -59,61 +62,111 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.initializeButtonTimeout();
 
         this.routeSubscription = this.route.params.subscribe((params) => {
-            this.socketService.connect(Namespaces.Game);
-            this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
-                activeGameId: params.activeGameId,
-                playerName: this.localPlayerService.getLocalPlayer()?.name,
-            });
-            this.activeGameService.setActiveGame(params.activeGameId);
-            this.playersUpdatedSubscription?.unsubscribe();
-            this.playersUpdatedSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({
-                next: (players) => {
-                    this.activeGameService.updatePlayers(players);
-                    this.initializeActiveGameData();
-                },
-            });
-            this.startGameSubscription?.unsubscribe();
-            this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted).subscribe({
-                next: (startedGameId) => {
-                    if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
-                        return;
-                    }
-                    this.router.navigate(['/play', startedGameId]);
-                },
-            });
-
-            this.gameEndedSubscription?.unsubscribe();
-            this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
-                next: () => {
-                    this.localPlayerService.clear();
-                    this.router.navigate(['/home']);
-                },
-            });
+            this.initializeWaitingRoom(params.activeGameId);
         });
     }
 
     ngOnDestroy(): void {
-        this.routeSubscription?.unsubscribe();
-        this.playersUpdatedSubscription?.unsubscribe();
-        this.startGameSubscription?.unsubscribe();
-        this.gameEndedSubscription?.unsubscribe();
+        this.handlePageExit();
+        this.clearButtonTimeout();
+        this.unsubscribeAll();
+    }
+
+    @HostListener('window:beforeunload')
+    onBeforeUnload(): void {
+        this.handlePageExit();
     }
 
     goBack(): void {
-        const localPlayerName = this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
+        this.handlePageExit();
+    }
+
+    private initializeWaitingRoom(activeGameId: string): void {
+        this.socketService.connect(Namespaces.Game);
+        this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId,
+            playerName: this.localPlayerService.getLocalPlayer()?.name,
+        });
+        this.activeGameService.setActiveGame(activeGameId);
+        this.subscribeToPlayersUpdated();
+        this.subscribeToGameStarted();
+        this.subscribeToGameEnded();
+    }
+
+    private subscribeToPlayersUpdated(): void {
+        this.playersUpdatedSubscription?.unsubscribe();
+        this.playersUpdatedSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({
+            next: (players) => {
+                this.activeGameService.updatePlayers(players);
+                this.initializeActiveGameData();
+            },
+        });
+    }
+
+    private subscribeToGameStarted(): void {
+        this.startGameSubscription?.unsubscribe();
+        this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted).subscribe({
+            next: (startedGameId) => {
+                if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
+                    return;
+                }
+                this.gameStarted = true;
+                this.router.navigate(['/play', startedGameId]);
+            },
+        });
+    }
+
+    private subscribeToGameEnded(): void {
+        this.gameEndedSubscription?.unsubscribe();
+        this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
+            next: () => {
+                this.localPlayerService.clear();
+                this.router.navigate(['/home']);
+            },
+        });
+    }
+
+    private handlePageExit(): void {
+        if (this.gameStarted) {
+            return;
+        }
+
+        if (this.hasLeftWaitingRoom) {
+            return;
+        }
+
+        const localPlayerName = this.getLocalPlayerName();
         const activeGameId = this.activeGameService.activeGame?._id;
 
         if (!localPlayerName || !activeGameId) {
             return;
         }
 
+        this.kickOtherPlayersIfOrganizer(localPlayerName);
+
         this.leaveWaitingRoomAndCleanup(localPlayerName);
-        this.router.navigate(['/home']);
+    }
+
+    private kickOtherPlayersIfOrganizer(localPlayerName: string): void {
+        const activeGame = this.activeGameService.activeGame;
+        if (!activeGame || activeGame.organizerName !== localPlayerName) {
+            return;
+        }
+
+        for (const player of activeGame.players) {
+            if (player.name !== localPlayerName) {
+                this.activeGameService.kickPlayer(player.name);
+            }
+        }
+    }
+
+    private getLocalPlayerName(): string | undefined {
+        return this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
     }
 
     private leaveWaitingRoomAndCleanup(localPlayerName: string): void {
+        this.hasLeftWaitingRoom = true;
         this.activeGameService.leaveWaitingRoom(localPlayerName);
-        this.socketService.disconnect(Namespaces.Game);
         this.localPlayerService.clear();
     }
 
@@ -134,8 +187,24 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     }
 
     private initializeButtonTimeout(): void {
-        setTimeout(() => {
+        this.buttonTimeoutId = setTimeout(() => {
             this.showButton = true;
         }, this.timeout);
+    }
+
+    private clearButtonTimeout(): void {
+        if (!this.buttonTimeoutId) {
+            return;
+        }
+
+        clearTimeout(this.buttonTimeoutId);
+        this.buttonTimeoutId = undefined;
+    }
+
+    private unsubscribeAll(): void {
+        this.routeSubscription?.unsubscribe();
+        this.playersUpdatedSubscription?.unsubscribe();
+        this.startGameSubscription?.unsubscribe();
+        this.gameEndedSubscription?.unsubscribe();
     }
 }
