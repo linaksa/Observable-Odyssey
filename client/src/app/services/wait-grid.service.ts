@@ -1,5 +1,4 @@
-import { inject, Injectable } from '@angular/core';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { Injectable } from '@angular/core';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { IItem } from '@common/items';
@@ -8,7 +7,6 @@ import { IItem } from '@common/items';
     providedIn: 'root',
 })
 export class WaitGridService {
-    private boardSharedService: BoardSharedService = inject(BoardSharedService);
 
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
@@ -32,9 +30,5 @@ export class WaitGridService {
 
         this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Empty));
         this.objects = [];
-    }
-
-    getObjectAt(row: number, col: number): IItem | null {
-        return this.boardSharedService.getObjectAt(row, col, this.objects);
     }
 }

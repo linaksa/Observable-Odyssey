@@ -2,7 +2,6 @@ import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { SocketService } from '@app/services/socket.service';
-import { TimeService } from '@app/services/time-service.service';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { AttackResult } from '@common/attackResult';
@@ -11,7 +10,7 @@ import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, ITurnStartedPayload } from '@common/socket-payloads';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocalPlayerService } from './local-player.service';
 import { ToastService } from './toast.service';
@@ -20,16 +19,15 @@ import { ToastService } from './toast.service';
     providedIn: 'root',
 })
 export class ActiveGameService implements OnDestroy {
-    timeService: TimeService = inject(TimeService);
-    toastService: ToastService = inject(ToastService);
-    httpService = inject(HTTP_CLIENT);
-    socket = inject(SocketService);
-    localPlayer = inject(LocalPlayerService);
+    private readonly toastService: ToastService = inject(ToastService);
+    private readonly httpService = inject(HTTP_CLIENT);
+    private readonly socket = inject(SocketService);
+    private readonly localPlayer = inject(LocalPlayerService);
     activeGame: IActiveGame;
 
     isLoading = signal(false);
 
-    router = inject(Router);
+    private readonly router = inject(Router);
 
     private _isDebugMode = signal(false);
 
@@ -227,25 +225,6 @@ export class ActiveGameService implements OnDestroy {
 
     getIndex(row: number, column: number, totalColumns: number): number {
         return row * totalColumns + column;
-    }
-
-    leaveActiveGame(playerName: string): Observable<IActiveGame | null> {
-        // TODO: remove the player or the game via API or socket
-
-        /* Simple example:
-
-        if (activeGameToUpdate.organizerName === playerName) {
-            await activeGame.findByIdAndDelete(activeGameId);
-        } else {
-            const playerIndex = activeGameToUpdate.players.findIndex((player) => player.name === playerName);
-            activeGameToUpdate.players.splice(playerIndex, 1);
-        }
-
-        */
-        return this.httpService.patch<IActiveGame | null, { activeGameId: string; playerName: string }>(`${environment.apiUrl}/activeGame/leave`, {
-            activeGameId: this.activeGame._id,
-            playerName,
-        });
     }
 
     kickPlayer(playerName: string) {
