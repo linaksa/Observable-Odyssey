@@ -12,7 +12,13 @@ export class GameAttackComponent {
     protected readonly gameTurnService: GameTurnService = inject(GameTurnService);
 
     toggle() {
-        if (!this.gameTurnService.canEndTurn) return;
+        if (!this.gameTurnService.canEndTurn || this.hasAttackedThisTurn()) return;
         this.activeGameService.toggleAttackMode();
+    }
+    hasAttackedThisTurn(): boolean {
+        const localPlayer = this.activeGameService.localPlayer.getLocalPlayer();
+        if (!localPlayer) return false;
+        const player = this.activeGameService.getPlayerByName(localPlayer.name);
+        return (player?.actionsLeft ?? 0) === 0;
     }
 }

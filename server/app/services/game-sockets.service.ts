@@ -118,7 +118,8 @@ export class GameSocketsService {
                     this.namespace?.to(gameId).emit(SocketEvent.PlayerMoved, { playerId, newPosition, movementLeft } as PlayerMovedResult);
 
                     const reachable = await this.gameplayService.movementService.getReachablePositions(playerId, gameId);
-                    if (reachable.length === 0) {
+                    const canAttackAnyPlayer = await this.gameplayService.combatService.canAttackAnyPlayer(gameId, playerId);
+                    if (reachable.length === 0 && !canAttackAnyPlayer) {
                         await this.gameplayService.turnService.endTurn(gameId);
                     }
                 } catch (error) {
@@ -131,19 +132,26 @@ export class GameSocketsService {
             socket.on(SocketEvent.Attack, async (data: IAttackData) => {
                 const { gameId, attackerName, defenderName } = data;
 
-                const allowed = this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
+                const allowed = await this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
                 if (!allowed) {
                     socket.emit(SocketEvent.AttackError, { message: 'Attaque non autorisée' });
                     return;
                 }
 
-                const result = this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
+                const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
                     attackerName,
                     defenderName,
-                    attackerVictories: (await result).attackerVictories,
-                    defenderNewPosition: (await result).defenderNewPosition,
+                    attackerActionsLeft: result.attackerActionsLeft,
+                    attackerVictories: result.attackerVictories,
+                    defenderNewPosition: result.defenderNewPosition,
                 });
+
+                // End the game if the defender cannot move anymore
+                const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
+                if (reachable.length === 0) {
+                    await this.gameplayService.turnService.endTurn(gameId);
+                }
 
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
@@ -193,6 +201,7 @@ export class GameSocketsService {
             });
         });
     }
+
     private async handleWaitingRoomDisconnect(gameId: string, playerId: string): Promise<void> {
         const isOrganizer = await this.gameplayService.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {

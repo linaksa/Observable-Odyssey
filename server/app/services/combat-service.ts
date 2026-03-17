@@ -32,11 +32,30 @@ export class CombatService {
         }
         if (attacker.name === defender.name) return false;
         if (attacker.hasAbandoned || defender.hasAbandoned) return false;
-        const activePlayer = currentActiveGame.players[currentActiveGame.currentPlayerIndex];
-        if (activePlayer.name !== attacker.name) return false;
+
+        const activePlayerName = currentActiveGame.turnOrder[currentActiveGame.currentPlayerIndex];
+        if (activePlayerName !== attacker.name) return false;
+        if (attacker.actionsLeft === 0) return false;
+
         if (!this.positionValidatorService.isAdjacent(attacker.positionGrille, defender.positionGrille)) return false;
         return true;
     }
+
+    async canAttackAnyPlayer(activeGameId: string, attackerName: string): Promise<boolean> {
+        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
+        if (!currentActiveGame) {
+            return false;
+        }
+
+        for (const defender of currentActiveGame.players) {
+            if (await this.canAttack(activeGameId, attackerName, defender.name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
     async resolveCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
@@ -45,13 +64,14 @@ export class CombatService {
         if (!currentActiveGame || !attacker || !defender) {
             throw new Error(`resolveCombat called with invalid state: ${activeGameId}`);
         }
-
+        attacker.actionsLeft--;
         attacker.victories++;
         if (defender.positionGrille.x !== defender.positionDepart.x || defender.positionGrille.y !== defender.positionDepart.y)
             defender.positionGrille = this.findNearestAvailableSpawn(defender.positionDepart, currentActiveGame);
         const combatResult: CombatResult = {
             attackerVictories: attacker.victories,
             defenderNewPosition: defender.positionGrille,
+            attackerActionsLeft: attacker.actionsLeft,
         };
         await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         return combatResult;

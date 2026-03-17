@@ -10,7 +10,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
+import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, IStartTurnData } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { LocalPlayerService } from './local-player.service';
@@ -77,19 +77,22 @@ export class ActiveGameService implements OnDestroy {
             }
         });
 
-        this.turnStartedSubscription = this.socket
-            .on<{ player: string; movementLeft: number }>(Namespaces.Game, SocketEvent.TurnStarted)
-            .subscribe((data) => {
-                const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
-                const currentPlayer = this.getPlayerByName(data.player);
+        this.turnStartedSubscription = this.socket.on<IStartTurnData>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
+            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.playerName);
 
-                if (index !== -1 && currentPlayer) {
-                    currentPlayer.movementLeft = data.movementLeft;
-                    this.activeGame.currentPlayerIndex = index;
-                    this.currentPlayer.set(index);
-                    this.hasChangedLocation.set(!this.hasChangedLocation());
-                }
-            });
+            if (index !== -1) {
+                this.activeGame.players = this.activeGame.players.map((p) => {
+                    if (p.name === data.playerName) {
+                        return { ...p, movementLeft: data.movementLeft, actionsLeft: data.actionsLeft };
+                    }
+                    return { ...p, actionsLeft: 1 };
+                });
+
+                this.activeGame.currentPlayerIndex = index;
+                this.currentPlayer.set(index);
+                this.hasChangedLocation.set(!this.hasChangedLocation());
+            }
+        });
 
         this.attackResultSubscription = this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
             const attacker = this.getPlayerByName(data.attackerName);
@@ -97,6 +100,7 @@ export class ActiveGameService implements OnDestroy {
             if (!defender || !attacker) return;
 
             attacker.victories = data.attackerVictories;
+            attacker.actionsLeft = data.attackerActionsLeft;
             defender.positionGrille.x = data.defenderNewPosition.x;
             defender.positionGrille.y = data.defenderNewPosition.y;
 

@@ -17,6 +17,12 @@ export interface IAttackData {
     defenderName: string;
 }
 
+export interface IStartTurnData {
+    playerName: string;
+    movementLeft: number;
+    actionsLeft: number;
+}
+
 export interface IAbandonData {
     gameId: string;
     playerId: string;
