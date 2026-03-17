@@ -16,6 +16,7 @@ export interface IActiveGame {
     isDebugMode: boolean;
     organizerName: string;
     maxPlayerCount: number;
+    turnIsInPreparation: boolean;
 }
 
 export interface IActiveGameWithPlayer {

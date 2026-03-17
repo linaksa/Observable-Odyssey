@@ -24,7 +24,9 @@ export class MovementService {
         if (playerName !== currentPlayerName) {
             throw new Error(`Ce n'est pas le tour de '${playerName}'`);
         }
-
+        if (activeGame.turnIsInPreparation) {
+            throw new Error(`Le tour de '${playerName}' n'a pas encore commencé`);
+        }
         if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) {
             throw new Error('Position non marchable');
         }

@@ -111,6 +111,7 @@ function createActiveGame(id: string): IActiveGame {
         isDebugMode: false,
         organizerName: 'Organizer',
         maxPlayerCount: 4,
+        turnIsInPreparation: false,
     };
 }
 
