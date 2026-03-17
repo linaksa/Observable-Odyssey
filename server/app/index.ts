@@ -9,10 +9,24 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { dbServer, inMemoryDb } from './database';
 
 async function startServer() {
-    const mongoMemoryServerInstance = await MongoMemoryServer.create();
-    const mongoUri = mongoMemoryServerInstance.getUri();
-    await inMemoryDb.openUri(mongoUri);
-    await dbServer.asPromise();
+    const atlasConnectionString = process.env.DATABASE_CONNECTION_STRING;
+    if (!atlasConnectionString) {
+        throw new Error('DATABASE_CONNECTION_STRING is required');
+    }
+
+    const localInMemoryConnectionString = process.env.IN_MEMORY_DATABASE_CONNECTION_STRING;
+    const useMongoMemoryServer = process.env.USE_MONGO_MEMORY_SERVER === 'true';
+
+    await dbServer.openUri(atlasConnectionString);
+
+    if (localInMemoryConnectionString && !useMongoMemoryServer) {
+        await inMemoryDb.openUri(localInMemoryConnectionString);
+    } else if (useMongoMemoryServer) {
+        const mongoMemoryServerInstance = await MongoMemoryServer.create();
+        await inMemoryDb.openUri(mongoMemoryServerInstance.getUri());
+    } else {
+        throw new Error('IN_MEMORY_DATABASE_CONNECTION_STRING is required when USE_MONGO_MEMORY_SERVER is not true');
+    }
 
     const server: Server = Container.get(Server);
     server.init();
