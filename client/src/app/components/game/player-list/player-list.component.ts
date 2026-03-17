@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
 import { Avatar } from '@common/constants';
 
@@ -12,11 +12,27 @@ import { Avatar } from '@common/constants';
 export class PlayerListComponent {
     protected readonly activeGameService = inject(ActiveGameService);
 
+    get orderedPlayers(): ICharacter[] {
+        const { players, turnOrder } = this.activeGameService.activeGame;
+        const playersByName = new Map(players.map((player) => [player.name, player]));
+
+        return turnOrder.map((playerName) => playersByName.get(playerName)).filter((player): player is ICharacter => Boolean(player));
+    }
+
+    get currentPlayerName(): string | undefined {
+        const currentPlayerIndex = this.activeGameService.currentPlayer();
+        return this.activeGameService.activeGame.turnOrder[currentPlayerIndex];
+    }
+
     buildPlayerAvatarUrl(avatar: Avatar): string {
         return `./assets/form-page/${avatar}.png`;
     }
 
-    get currentPlayer(): ICharacter {
-        return this.activeGameService.activeGame.players[this.activeGameService.activeGame.currentPlayerIndex];
+    get organizerName(): string {
+        return this.activeGameService.activeGame.organizerName;
+    }
+
+    isOrganizer(playerName: string): boolean {
+        return playerName === this.organizerName;
     }
 }

@@ -3,16 +3,26 @@ import { IActiveGame } from '@common/activeGame';
 import { Schema } from 'mongoose';
 import { characterSchema } from './character';
 import { gameSchema } from './game';
-import { itemSchema } from './items';
 import { messageSchema } from './message';
 
 const activeGameSchema = new Schema<IActiveGame>({
     game: gameSchema,
     players: [characterSchema],
-    itemsState: [itemSchema],
+    turnOrder: {
+        type: [String],
+        required: true,
+    },
     currentPlayerIndex: {
         type: Number,
         required: true,
+    },
+    isFinished: {
+        type: Boolean,
+        required: true,
+    },
+    winner: {
+        type: String,
+        default: null,
     },
     messages: [messageSchema],
     isDebugMode: {
@@ -27,6 +37,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Number,
         required: true,
     },
+    turnIsInPreparation: {
+        type: Boolean,
+        required: true,
+    },
 });
 
-export const activeGame = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
+export const activeGameModel = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);

@@ -1,42 +1,56 @@
-<div class="text-2xl text-white tracking-wider text-center">Liste des joueurs</div>
+<div class="text-2xl text-white tracking-wider text-center">Joueurs</div>
 
-<div class="flex grow flex-col">
-    @if (localPlayer(); as currentPlayer) {
-        <div class="flex items-center gap-3">
-            <img [src]="'./assets/form-page/' + currentPlayer.avatar + '.png'" [alt]="currentPlayer.name" class="w-16 h-16 rounded-full" />
+<div class="flex grow flex-col gap-4">
+    @if (localPlayer(); as player) {
+        <div class="flex items-center gap-2">
+            <img
+                [src]="'./assets/form-page/' + player.avatar + '.png'"
+                [alt]="player.name"
+                class="w-16 h-auto aspect-square rounded-full overflow-hidden object-cover"
+            />
             <div class="flex flex-col">
-                <div class="text-white flex items-center gap-2">
-                    {{ currentPlayer.name }} (Vous)
-                    @if (isOrganizer(currentPlayer.name)) {
-                        <span class="bg-yellow-500 text-black text-xs px-2 py-1 rounded">Organisateur</span>
+                <div class="flex flex-row items-center gap-2">
+                    <span class="text-xl text-white tracking-wider">{{ player.name }}</span>
+                    @if (isOrganizer(player.name)) {
+                        <div class="flex flex-col rounded-md px-2 bg-[#ffcdd2] items-center justify-center">
+                            <span class="text-base text-black tracking-wider">Organisateur</span>
+                        </div>
                     }
                 </div>
+                <div class="text-base text-white/80 tracking-wider">{{ player.initialHealth }} HP / {{ player.movementLeft }} SPD</div>
             </div>
         </div>
     }
 
-    <div class="border-t border-white mt-4 mb-2"></div>
+    <div class="border-t border-white"></div>
 
     <div class="flex flex-col gap-2">
         @for (player of otherPlayers; track $index) {
-            <div class="flex items-center gap-3 justify-between">
-                <div class="flex items-center gap-3 flex-1">
-                    <img [src]="'./assets/form-page/' + player.avatar + '.png'" [alt]="player.name" class="w-12 h-12 rounded-full" />
-                    <div class="flex items-center gap-2">
-                        <div class="text-white">{{ player.name }}</div>
-                        @if (isOrganizer(player.name)) {
-                            <span class="bg-yellow-500 text-black text-xs px-2 py-1 rounded">Organisateur</span>
-                        }
+            <div class="flex flex-row items-center justify-between">
+                <div class="flex flex-row items-center justify-start gap-4">
+                    <img
+                        [src]="'./assets/form-page/' + player.avatar + '.png'"
+                        [alt]="player.name"
+                        class="w-12 h-auto aspect-square rounded-full overflow-hidden object-cover"
+                    />
+                    <div class="flex flex-col">
+                        <div class="flex flex-row items-center gap-2">
+                            <span class="text-lg text-white tracking-wider">{{ player.name }}</span>
+                            @if (isOrganizer(player.name)) {
+                                <div class="flex flex-col rounded-md px-2 bg-[#ffcdd2] items-center justify-center">
+                                    <span class="text-sm text-black tracking-wider">Organisateur</span>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-sm text-white/80 tracking-wider">{{ player.initialHealth }} HP / {{ player.movementLeft }} SPD</div>
                     </div>
                 </div>
                 @if (canManagePlayers) {
-                    <button (click)="kickPlayer(player.name)" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">
-                        Expulser
-                    </button>
+                    <button (click)="kickPlayer(player.name)" class="btn btn-red h-full">Expulser</button>
                 }
             </div>
         } @empty {
-            <div class="text-white mt-2">Aucun autre joueur connecté</div>
+            <div class="text-base text-white tracking-wider text-center">Aucun autre joueur connecté</div>
         }
     </div>
 </div>

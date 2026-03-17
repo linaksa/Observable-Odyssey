@@ -1,0 +1,16 @@
+<div class="content">
+    <app-toast />
+
+    <app-nav-buttons />
+    <app-page-title title="Rejoindre une partie" />
+
+    <app-game-table
+        [isLoading]="activeGameTableService.isLoading()"
+        [activeGames]="activeGameTableService.tableData"
+        [actions]="actions"
+    ></app-game-table>
+</div>
+
+<ng-template #actions let-activeGame>
+    <button class="btn btn-blue h-full min-w-48" [routerLink]="['/join', activeGame._id]">Rejoindre</button>
+</ng-template>

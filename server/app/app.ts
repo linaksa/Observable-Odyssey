@@ -6,7 +6,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Service } from 'typedi';
 import { HttpException } from './classes/http.exception';
-import { ActiveGameController } from './controllers/activeGame.controller';
+import { ActiveGameController } from './controllers/active-game.controller';
 import { GameController } from './controllers/game.controller';
 
 @Service()

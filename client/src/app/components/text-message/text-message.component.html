@@ -1,8 +1,0 @@
-<div
-    class="w-fit h-fit p-2 rounded-lg"
-    [style.background-color]="isSelf ? 'lightblue' : 'lightgray'"
-    [ngClass]="{ 'justify-self-end': isSelf, 'justify-self-start': !isSelf }"
->
-    <div>{{ message.author }} - {{ message.postedAt | date: 'MMM d, HH:mm' }}</div>
-    <div>{{ message.content }}</div>
-</div>

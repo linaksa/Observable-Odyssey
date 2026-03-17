@@ -2,10 +2,10 @@ import { Application } from '@app/app';
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
-import { ActiveGameListSocketsService } from './services/active-game-list-sockets.service';
-import { AdminSocketsService } from './services/admin-sockets.service';
-import { GameSocketsService } from './services/game-sockets.service';
-import { SocketService } from './services/socket.service';
+import { ActiveGameListSocketsService } from './services/active-game/active-game-list-sockets.service';
+import { AdminSocketsService } from './services/admin/admin-sockets.service';
+import { GameSocketsService } from './services/realtime/game-sockets.service';
+import { SocketService } from './services/realtime/socket.service';
 
 @Service()
 export class Server {
@@ -63,7 +63,7 @@ export class Server {
     }
 
     /**
-     * Se produit lorsque le serveur se met à écouter sur le port.
+     * Occurs when the server starts listening on the port.
      */
     private onListening(): void {
         const addr = this.server.address() as AddressInfo;

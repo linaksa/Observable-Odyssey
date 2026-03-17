@@ -1,31 +1,59 @@
-<div class="text-2xl text-white tracking-wider text-center">Carte du jeu</div>
+<div class="flex flex-row justify-center relative">
+    <div class="text-2xl text-white">Informations</div>
+    <div class="absolute right-0">
+        <img [src]="lockIcon" alt="lock icon" class="h-6 w-6 object-contain pointer-events-none select-none" />
+    </div>
+</div>
 
-<div class="flex grow flex-col items-center gap-2 min-h-0 min-w-0">
-    <div
-        class="grid aspect-square max-h-full max-w-full w-full auto-rows-fr select-none bg-[#0f1528] outline-none"
-        [style.gridTemplateColumns]="'repeat(' + waitGridService.gameCells.length + ', 1fr)'"
-        tabindex="-1"
-    >
-        @for (row of waitGridService.gameCells; track $index; let rowIndex = $index) {
-            @for (cell of row; track $index; let colIndex = $index) {
-                <div class="relative select-none size-full outline-none overflow-hidden" tabindex="-1">
-                    <img
-                        [src]="cellImagePath(cell)"
-                        [alt]="cell"
-                        class="h-full w-full object-fill pointer-events-none select-none"
-                        draggable="false"
-                    />
-                    @if (waitGridService.getObjectAt(rowIndex, colIndex); as item) {
+<div class="flex grow flex-col gap-4 min-h-0 min-w-0">
+    @if (activeGameService.activeGame) {
+        <div class="grid grid-cols-2 gap-2">
+            <div class="flex flex-col rounded-lg px-4 py-2 bg-[#a39fff]">
+                <span class="text-black tracking-wider">Titre</span>
+                <span class="text-3xl wrap-anywhere ml-auto text-right">{{ gameTitle }}</span>
+            </div>
+            <div class="flex flex-col rounded-lg px-4 py-2 bg-[#f1969a]">
+                <span class="text-black tracking-wider">Description</span>
+                <span class="text-3xl wrap-anywhere ml-auto text-right">{{ gameDescription }}</span>
+            </div>
+            <div class="flex flex-col rounded-lg px-4 py-2 bg-[#fdb7c5]">
+                <span class="text-black tracking-wider">Taille</span>
+                <span class="text-3xl wrap-anywhere ml-auto text-right">{{ tableSize }}×{{ tableSize }}</span>
+            </div>
+            <div class="flex flex-col rounded-lg px-4 py-2 bg-[#cea0d9]">
+                <span class="text-black tracking-wider">Mode de jeu</span>
+                <span class="text-3xl wrap-anywhere ml-auto text-right">{{ gameMode }}</span>
+            </div>
+        </div>
+
+        <div class="border-t border-white"></div>
+
+        <div
+            class="grid aspect-square rounded-lg max-h-full max-w-full w-full sm:w-1/2 mx-auto auto-rows-fr select-none bg-[#0f1528] outline-none overflow-hidden"
+            [style.gridTemplateColumns]="'repeat(' + tableSize + ', 1fr)'"
+            tabindex="-1"
+        >
+            @for (row of table; track $index; let rowIndex = $index) {
+                @for (cell of row; track $index; let colIndex = $index) {
+                    <div class="relative select-none size-full outline-none overflow-hidden" tabindex="-1">
                         <img
-                            [src]="objectImagePath(item)"
-                            [alt]="item.itemType"
-                            class="absolute pointer-events-none select-none max-w-none max-h-none"
-                            [ngStyle]="objectExtraStyles(item, rowIndex, colIndex)"
+                            [src]="cellImagePath(cell)"
+                            [alt]="cell"
+                            class="h-full w-full object-fill pointer-events-none select-none"
                             draggable="false"
                         />
-                    }
-                </div>
+                        @if (getObjectAt(rowIndex, colIndex); as item) {
+                            <img
+                                [src]="objectImagePath(item)"
+                                [alt]="item.itemType"
+                                class="absolute pointer-events-none select-none max-w-none max-h-none"
+                                [ngStyle]="objectExtraStyles(item, rowIndex, colIndex)"
+                                draggable="false"
+                            />
+                        }
+                    </div>
+                }
             }
-        }
-    </div>
+        </div>
+    }
 </div>

@@ -1,9 +1,9 @@
 import { Avatar, DiceType } from './constants';
 
-export enum CharacterStatus{
-    IN_GAME = 'in_game',
+export interface Position {
+    x: number;
+    y: number;
 }
-
 export interface ICharacter {
     name: string;
     avatar: Avatar;
@@ -16,10 +16,10 @@ export interface ICharacter {
     defensePoints: number;
     actionsLeft: number;
     movementLeft: number;
-    wonCombatCount: number;
+    victories: number;
     hasAbandoned: boolean;
-    x: number;
-    y: number;
+    positionDepart: Position;
+    positionGrille: Position;
 }
 
 export interface CharacterFormData {

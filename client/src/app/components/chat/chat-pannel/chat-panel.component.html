@@ -1,0 +1,16 @@
+<div
+    class="bg-gray-100 flex flex-col justify-between min-w-75 h-100 rounded-sm p-2 gap-7"
+    [class.border-2]="invalidSubmission()"
+    [class.border-red-500]="invalidSubmission()"
+>
+    <div #scrollContainer class="flex flex-col w-full overflow-y-auto gap-2">
+        @for (message of activeGameService.activeGame.messages; track $index) {
+            <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
+        }
+    </div>
+    <form [formGroup]="messageForm" (ngSubmit)="onNewMessage()" class="w-full flex">
+        <input class="input w-full" type="text" formControlName="message" maxlength="200" data-chat-message-input />
+
+        <button class="btn min-w-1/10" type="submit">Envoyer</button>
+    </form>
+</div>

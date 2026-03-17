@@ -1,22 +1,21 @@
 /**
- * Stratégie de test – EditionFormComponent
+ * Testing strategy — EditionFormComponent
  *
- * Approche : tests unitaires de composant Angular avec spy Jasmine sur
- * GameEditFormService. Le formulaire réactif est fourni directement via
- * un FormBuilder réel afin de tester les liaisons entre le composant et
- * le service sans dépendre de l'implémentation interne du service.
+ * Approach: Angular component unit tests with Jasmine spies on
+ * GameEditFormService. The reactive form is provided directly via
+ * a real FormBuilder to test bindings between the component and
+ * the service without depending on the service internals.
  *
- * Cas limites couverts :
- * - Promesse rejetée par submitForm : le composant doit capturer l'erreur sans
- *   propager d'exception non gérée, garantissant que l'UI ne se bloque pas en
- *   cas d'échec de soumission.
+ * Edge cases covered:
+ * - Rejected promise from submitForm: the component should catch the error without
+ *   propagating an unhandled exception, ensuring the UI does not freeze on submission failure.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { signal } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { provideRouter, RouterLink } from '@angular/router';
-import { GameEditFormService } from '@app/services/game-edit-form.service';
+import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { IBoard } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { EditionFormComponent } from './edition-form.component';
@@ -89,9 +88,10 @@ describe('EditionFormComponent', () => {
         expect(editFormServiceSpy.resetForm).toHaveBeenCalledWith(randomGame);
     });
 
-    // Cas limite : submitForm() retourne une promesse rejetée (ex: erreur de validation
-    // ou perte de connexion). Le composant doit attraper le rejet sans propager
-    // l'exception et laisser le service gérer l'affichage de l'erreur.
+    // Edge case: submitForm() returns a rejected promise (e.g., validation error
+    // or lost connection). The component should catch the rejection without propagating
+    // the exception and let the service handle displaying the error.
+    // Edge case: should catch the error is submitForm rejects the promise.
     it('should catch the error is submitForm rejects the promise', () => {
         editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
 

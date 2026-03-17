@@ -1,0 +1,15 @@
+<button
+    (click)="toggle()"
+    class="w-30 h-30 flex items-center justify-center rounded-full border font-semibold"
+    [disabled]="!gameTurnService.canEndTurn || hasAttackedThisTurn()"
+    [class.bg-red-600]="this.activeGameService.attackMode() && !hasAttackedThisTurn() && gameTurnService.canEndTurn"
+    [class.text-white]="this.activeGameService.attackMode() && !hasAttackedThisTurn() && gameTurnService.canEndTurn"
+    [class.border-red-700]="this.activeGameService.attackMode() && !hasAttackedThisTurn() && gameTurnService.canEndTurn"
+    [class.bg-gray-200]="!this.activeGameService.attackMode() || !gameTurnService.canEndTurn || hasAttackedThisTurn()"
+    [class.text-gray-800]="!this.activeGameService.attackMode() || !gameTurnService.canEndTurn || hasAttackedThisTurn()"
+    [class.border-gray-400]="!this.activeGameService.attackMode() || !gameTurnService.canEndTurn || hasAttackedThisTurn()"
+    [class.opacity-50]="!gameTurnService.canEndTurn || hasAttackedThisTurn()"
+    [class.cursor-not-allowed]="!gameTurnService.canEndTurn || hasAttackedThisTurn()"
+>
+    Attack
+</button>

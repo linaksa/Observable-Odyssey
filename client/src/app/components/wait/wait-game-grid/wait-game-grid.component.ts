@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
-import { WaitGridService } from '@app/services/wait-grid.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { BoardSharedService } from '@app/services/shared/boardShared.service';
 import { CellType } from '@common/board';
 import { IItem, ItemType } from '@common/items';
 
@@ -11,7 +12,38 @@ import { IItem, ItemType } from '@common/items';
     templateUrl: './wait-game-grid.component.html',
 })
 export class WaitGameGridComponent {
-    protected readonly waitGridService: WaitGridService = inject(WaitGridService);
+    private readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
+
+    protected readonly activeGameService = inject(ActiveGameService);
+
+    protected get table(): CellType[][] {
+        return this.activeGameService.activeGame.game.board.cells;
+    }
+
+    protected get items(): IItem[] {
+        return this.activeGameService.activeGame.game.board.items;
+    }
+
+    protected get gameTitle(): string {
+        return this.activeGameService.activeGame.game.gameTitle;
+    }
+
+    protected get gameDescription(): string {
+        return this.activeGameService.activeGame.game.description;
+    }
+
+    protected get tableSize(): number {
+        return this.activeGameService.activeGame.game.board.cells.length;
+    }
+
+    protected get gameMode(): string {
+        return this.activeGameService.activeGame.game.gameMode === 'classic' ? 'Normal' : 'CTF';
+    }
+
+    protected get lockIcon(): string {
+        const full = this.activeGameService.activeGame.players.length >= this.activeGameService.activeGame.maxPlayerCount;
+        return full ? 'assets/wait-page/lock.svg' : 'assets/wait-page/unlock.svg';
+    }
 
     cellImagePath(cellType: CellType): string {
         return CELL_TYPE_PATHS[cellType];
@@ -20,6 +52,10 @@ export class WaitGameGridComponent {
     objectImagePath(item: IItem | null): string {
         if (!item) return '';
         return ITEM_TYPE_PATHS[item.itemType];
+    }
+
+    getObjectAt(row: number, col: number): IItem | null {
+        return this.boardSharedService.getObjectAt(row, col, this.items);
     }
 
     objectExtraStyles(item: IItem, row: number, col: number): Record<string, string> {

@@ -1,5 +1,6 @@
 import { ICharacter } from '@common/character';
 import { Schema } from 'mongoose';
+import { positionSchema } from './position';
 
 export const characterSchema = new Schema<ICharacter>(
     {
@@ -32,6 +33,10 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
+        attackPoints: {
+            type: Number,
+            required: true,
+        },
         defensePoints: {
             type: Number,
             required: true,
@@ -44,13 +49,21 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
-        x: {
+        positionGrille: {
+            type: positionSchema,
+            required: true,
+        },
+        positionDepart: {
+            type: positionSchema,
+            default: { x: 0, y: 0 },
+        },
+        victories: {
             type: Number,
             required: true,
         },
-        y: {
-            type: Number,
-            required: true,
+        hasAbandoned: {
+            type: Boolean,
+            default: false,
         },
     },
     { _id: false },

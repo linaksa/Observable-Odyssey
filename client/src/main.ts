@@ -2,18 +2,21 @@ import { provideHttpClient } from '@angular/common/http';
 import { enableProdMode, enableProfiling, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, withComponentInputBinding, withHashLocation } from '@angular/router';
+import { activePlayerGuard } from '@app/guards/active-player.guard';
+import { waitPageGuard } from '@app/guards/wait-page.guard';
 import { AngularHttpClientAdapter } from '@app/http/angular-http-client-adapter';
 import { HTTP_CLIENT } from '@app/http/http-interface';
-import { AdministrationPageComponent } from '@app/pages/administration-page/administration-page.component';
-import { AppComponent } from '@app/pages/app/app.component';
-import { CreatePageComponent } from '@app/pages/create-page/create-page.component';
-import { EditionPageComponent } from '@app/pages/edition-page/edition-page.component';
-import { FormPageComponent } from '@app/pages/form-page/form-page.component';
-import { GamePageComponent } from '@app/pages/game-page/game-page.component';
-import { JoinFormPageComponent } from '@app/pages/join-form-page/join-form-page.component';
-import { JoinPageComponent } from '@app/pages/join-page/join-page.component';
-import { MainPageComponent } from '@app/pages/main-page/main-page.component';
-import { WaitPageComponent } from '@app/pages/wait-page/wait-page.component';
+import { AdministrationPageComponent } from '@app/pages/admin/administration-page/administration-page.component';
+import { EditionPageComponent } from '@app/pages/admin/edition-page/edition-page.component';
+import { AppComponent } from '@app/pages/core/app/app.component';
+import { ErrorPageComponent } from '@app/pages/core/error-page/error-page.component';
+import { MainPageComponent } from '@app/pages/core/main-page/main-page.component';
+import { FormPageComponent } from '@app/pages/gameplay/form-page/form-page.component';
+import { GamePageComponent } from '@app/pages/gameplay/game-page/game-page.component';
+import { CreatePageComponent } from '@app/pages/lobby/create-page/create-page.component';
+import { JoinFormPageComponent } from '@app/pages/lobby/join-form-page/join-form-page.component';
+import { JoinPageComponent } from '@app/pages/lobby/join-page/join-page.component';
+import { WaitPageComponent } from '@app/pages/lobby/wait-page/wait-page.component';
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -27,11 +30,11 @@ const routes: Routes = [
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'form/:gameId', component: FormPageComponent },
     { path: 'edit/:gameId', component: EditionPageComponent },
-    { path: 'wait/:activeGameId', component: WaitPageComponent },
-    { path: 'play/:activeGameId', component: GamePageComponent },
-    { path: 'play', component: GamePageComponent },
+    { path: 'wait/:activeGameId', component: WaitPageComponent, canActivate: [waitPageGuard] },
+    { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
+    { path: 'error', component: ErrorPageComponent },
     { path: '**', redirectTo: '/home' },
 ];
 

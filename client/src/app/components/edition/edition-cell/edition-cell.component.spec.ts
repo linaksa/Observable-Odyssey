@@ -1,22 +1,19 @@
 /**
- * Stratégie de test – EditionCellComponent
+ * Testing strategy — EditionCellComponent
  *
- * Approche : tests de composant Angular avec ComponentFixture.
- * Les inputs sont définis via fixture.componentRef.setInput() pour déclencher
- * la détection de changements et vérifier les styles calculés et le rendu DOM.
- * Des objets dummy représentant différents types d'items permettent de couvrir
- * les cas de rendu avec et sans objet positionné.
+ * Approach: Angular component tests with ComponentFixture.
+ * Inputs are set via fixture.componentRef.setInput() to trigger
+ * change detection and verify computed styles and DOM rendering.
+ * Dummy objects representing different item types cover rendering cases
+ * with and without a positioned object.
  *
- * Cas limites couverts :
- * - Item null : aucun style d'objet ni élément #item ne doit apparaître dans le DOM ;
- *   backgroundImageForObject et objectExtraStyles doivent retourner des valeurs vides.
- * - Cellule hors des limites du sanctuary (rowIndex/colIndex à 0,0) : les styles de
- *   positionnement de l'image ne doivent pas être appliqués.
- * - Chaque coin d'un sanctuary de taille 2×2 (top-left, top-right, bottom-left,
- *   bottom-right) : vérifie que background-position est calculé correctement pour
- *   chaque quadrant, couvrant toutes les combinaisons de bords.
- * - Événements souris (mousedown, mouseenter) : vérifie que les EventEmitter de
- *   sortie sont bien déclenchés par les événements DOM natifs.
+ * Edge cases covered:
+ * - Null item: no object style or #item element should appear in the DOM;
+ *   backgroundImageForObject and objectExtraStyles should return empty values.
+ * - Cell outside the sanctuary bounds (rowIndex/colIndex at 0,0): image positioning styles should not be applied.
+ * - Each corner of a 2×2 sanctuary (top-left, top-right, bottom-left, bottom-right):
+ *   verifies background-position is calculated correctly for each quadrant, covering all edge combinations.
+ * - Mouse events (mousedown, mouseenter): verifies output EventEmitters are triggered by native DOM events.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
@@ -96,6 +93,7 @@ describe('EditionCellComponent', () => {
         expect(component.objectExtraStyles['background-position']).toBe('100% 100%');
     });
 
+    // Edge case: should not style if indexes are outside sanctuary.
     it('should not style if indexes are outside sanctuary', () => {
         fixture.componentRef.setInput('rowIndex', 0);
         fixture.componentRef.setInput('colIndex', 0);
@@ -105,6 +103,7 @@ describe('EditionCellComponent', () => {
         expect(component.objectExtraStyles['background-position']).toBe('');
     });
 
+    // Edge case: should render empty cell correctly.
     it('should render empty cell correctly', () => {
         fixture.componentRef.setInput('rowIndex', 0);
         fixture.componentRef.setInput('colIndex', 0);
@@ -119,6 +118,7 @@ describe('EditionCellComponent', () => {
         expect(itemDiv).toBeNull();
     });
 
+    // Edge case: should return no object background when item is null.
     it('should return no object background when item is null', () => {
         fixture.componentRef.setInput('item', null);
         fixture.detectChanges();
@@ -126,6 +126,7 @@ describe('EditionCellComponent', () => {
         expect(component.backgroundImageForObject).toBe('');
     });
 
+    // Edge case: should return empty extra object styles when item is null.
     it('should return empty extra object styles when item is null', () => {
         fixture.componentRef.setInput('item', null);
         fixture.detectChanges();
