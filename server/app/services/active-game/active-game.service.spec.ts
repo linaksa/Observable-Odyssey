@@ -1,3 +1,18 @@
+/**
+ * Testing strategy — ActiveGameService
+ *
+ * Approach: unit-test business rules with Sinon stubs over Mongoose model methods
+ * (create/findById/findOneAndUpdate/findByIdAndUpdate/findByIdAndDelete).
+ * Tests isolate service behavior from persistence by fully controlling DB responses,
+ * then asserting returned values and thrown domain errors.
+ *
+ * Edge cases covered:
+ * - Missing game/active game records when creating, joining, or removing players.
+ * - Full lobbies and avatar collisions when joining an active game.
+ * - Duplicate player names (with and without numeric suffixes) and automatic renaming.
+ * - Message retrieval for non-existent games and fallback empty-array behavior.
+ * - Database write methods called with expected payloads during save/delete/remove flows.
+ */
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
