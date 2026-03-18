@@ -76,14 +76,14 @@ describe('GameTurnService', () => {
         service = TestBed.inject(GameTurnService);
     });
 
-    // Edge case: should resolve current player name from active game when no turn event happened.
+    // Edge case: When no turn event happened, resolve current player name from active game.
     it('should resolve current player name from active game when no turn event happened', () => {
         activeGameServiceStub.activeGame.currentPlayerIndex = 1;
 
         expect(service.currentPlayerName).toBe('Bob');
     });
 
-    // Edge case: should return null current player when active game has no players.
+    // Edge case: When active game has no players, return null current player.
     it('should return null current player when active game has no players', () => {
         activeGameServiceStub.activeGame = {
             ...activeGameServiceStub.activeGame,
@@ -95,7 +95,7 @@ describe('GameTurnService', () => {
         expect(service.currentPlayerName).toBeNull();
     });
 
-    // Edge case: should return null current player when turn order index is out of range.
+    // Edge case: When turn order index is out of range, return null current player.
     it('should return null current player when turn order index is out of range', () => {
         activeGameServiceStub.activeGame = {
             ...activeGameServiceStub.activeGame,
@@ -134,6 +134,40 @@ describe('GameTurnService', () => {
         expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TEMPS_TOUR / MILLISECONDS_PER_SECOND));
     });
 
+    it('should ignore turn sync when active game has no turn order', () => {
+        activeGameServiceStub.activeGame = {
+            ...activeGameServiceStub.activeGame,
+            turnOrder: [],
+            players: [],
+            currentPlayerIndex: 0,
+        };
+        activeGameServiceStub.currentPlayer.set(0);
+        activeGameServiceStub.hasChangedLocation.set(false);
+
+        service.initializeTurnListeners();
+        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Alice' });
+
+        expect(activeGameServiceStub.currentPlayer()).toBe(0);
+        expect(activeGameServiceStub.hasChangedLocation()).toBeFalse();
+    });
+
+    it('should ignore turn sync when incoming player is not in turn order', () => {
+        activeGameServiceStub.activeGame.turnOrder = ['Alice'];
+        activeGameServiceStub.activeGame.currentPlayerIndex = 0;
+        activeGameServiceStub.currentPlayer.set(0);
+        activeGameServiceStub.hasChangedLocation.set(false);
+
+        service.initializeTurnListeners();
+        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
+            player: 'Ghost',
+            movementLeft: 3,
+            actionLeft: 1,
+        });
+
+        expect(activeGameServiceStub.currentPlayer()).toBe(0);
+        expect(activeGameServiceStub.hasChangedLocation()).toBeFalse();
+    });
+
     it('should deny ending turn while preparing', () => {
         service.initializeTurnListeners();
         getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Alice' });
@@ -164,7 +198,7 @@ describe('GameTurnService', () => {
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.EndTurn, activeGameServiceStub.activeGame._id);
     });
 
-    // Edge case: should not emit end-turn event when local player cannot end turn.
+    // Edge case: When local player cannot end turn, it should not emit end-turn event.
     it('should not emit end-turn event when local player cannot end turn', () => {
         socketServiceSpy.emit.calls.reset();
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
@@ -174,7 +208,7 @@ describe('GameTurnService', () => {
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
     });
 
-    // Edge case: should not emit end-turn event when active game id is missing.
+    // Edge case: When active game id is missing, it should not emit end-turn event.
     it('should not emit end-turn event when active game id is missing', () => {
         socketServiceSpy.emit.calls.reset();
         activeGameServiceStub.activeGame = {
@@ -198,7 +232,7 @@ describe('GameTurnService', () => {
         expect(service.turnTimeLeftSeconds).toBe(0);
     }));
 
-    // Edge case: should ignore socket events after destroy.
+    // Edge case: When listeners are destroyed, subsequent socket events should no longer mutate turn state.
     it('should ignore socket events after destroy', () => {
         service.initializeTurnListeners();
         getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({

@@ -109,7 +109,15 @@ describe('FormPageComponent', () => {
         expect(component.gameId).toBe(defaultGameId);
     });
 
-    // Edge case: should show error if gameId is missing on submit.
+    it('should set gameId to null when route params do not include it', () => {
+        component.router = { params: of({}) } as ActivatedRoute;
+
+        component.ngOnInit();
+
+        expect(component.gameId).toBeNull();
+    });
+
+    // Edge case: When gameId is missing on submit, show error.
     it('should show error if gameId is missing on submit', () => {
         // Edge case
         // Validate that the app shows an error toast if the gameId is missing when trying to submit the character form
@@ -153,7 +161,7 @@ describe('FormPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', mockActiveGame._id]);
     });
 
-    // Edge case: should handle error when creating character.
+    // Edge case: When creating character, handle error.
     it('should handle error when creating character', () => {
         // Error case
         // Validate that the app correctly handles errors when the character creation fails, and shows an error message to the user
@@ -176,7 +184,7 @@ describe('FormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBe('creation failed');
     });
 
-    // Edge case: should handle error with empty message.
+    // Edge case: When required input data is missing, handle error with empty message.
     it('should handle error with empty message', () => {
         // Edge case
         // Validate that the app doesnt crashes and shows a generic error when the server give an empty error

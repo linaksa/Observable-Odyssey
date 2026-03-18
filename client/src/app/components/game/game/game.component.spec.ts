@@ -15,7 +15,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
@@ -119,7 +119,7 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.tryMove).not.toHaveBeenCalled();
     });
 
-    // Edge case: should ignore keyboard movement when no local player is available.
+    // Edge case: When no local player is available, ignore keyboard movement.
     it('should ignore keyboard movement when no local player is available', () => {
         component.totalColumns = MOVEMENT_COLUMNS;
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
@@ -129,7 +129,7 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.tryMove).not.toHaveBeenCalled();
     });
 
-    // Edge case: should ignore keyboard movement when local player is not current player.
+    // Edge case: When local player is not current player, ignore keyboard movement.
     it('should ignore keyboard movement when local player is not current player', () => {
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
         activeGameServiceStub.getCurrentPlayer.and.returnValue(createCharacter('Alice'));
@@ -175,6 +175,46 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.attackMode()).toBeFalse();
     });
 
+    it('should expose tile info popup data from current component state', () => {
+        component.isTileInfoVisible = true;
+        component.tileInfoTitle = 'Tile';
+        component.tileInfoDescription = 'Desc';
+        component.tileInfoMovementCost = '1';
+        component.tileInfoItemTitle = 'Item';
+        component.tileInfoItemDescription = 'Item desc';
+        component.tileInfoPlayerName = 'Alice';
+        component.tileInfoPlayerAvatarUrl = '/avatar.png';
+
+        const popupData = (component as unknown as { tileInfoPopupData: unknown }).tileInfoPopupData as Record<string, unknown>;
+
+        expect(popupData).toEqual({
+            visible: true,
+            title: 'Tile',
+            description: 'Desc',
+            movementCost: '1',
+            itemTitle: 'Item',
+            itemDescription: 'Item desc',
+            playerName: 'Alice',
+            playerAvatarUrl: '/avatar.png',
+        });
+    });
+
+    it('should close tile info on document click', () => {
+        component.isTileInfoVisible = true;
+        component.tileInfoItemTitle = 'Item';
+        component.tileInfoItemDescription = 'Desc';
+        component.tileInfoPlayerName = 'Alice';
+        component.tileInfoPlayerAvatarUrl = '/avatar.png';
+
+        component.onDocumentClick();
+
+        expect(component.isTileInfoVisible).toBeFalse();
+        expect(component.tileInfoItemTitle).toBeNull();
+        expect(component.tileInfoItemDescription).toBeNull();
+        expect(component.tileInfoPlayerName).toBeNull();
+        expect(component.tileInfoPlayerAvatarUrl).toBeNull();
+    });
+
     it('should run movement-range effect when tracked signals change', () => {
         component.totalColumns = BOARD_SIDE_SIZE;
         component.graph = Array.from({ length: BOARD_NODE_COUNT }, () => []);
@@ -189,7 +229,7 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.updateMovementRange.calls.count()).toBeGreaterThan(callsAfterInit);
     });
 
-    // Edge case: should not teleport when debug mode is disabled.
+    // Edge case: When debug mode is disabled, it should not teleport.
     it('should not teleport when debug mode is disabled', () => {
         activeGameServiceStub.isDebugMode.and.returnValue(false);
 
@@ -198,7 +238,7 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.debugTeleport).not.toHaveBeenCalled();
     });
 
-    // Edge case: should not teleport when cell is blocked by wall, object, or player.
+    // Edge case: When cell is blocked by wall, object, or player, it should not teleport.
     it('should not teleport when cell is blocked by wall, object, or player', () => {
         activeGameServiceStub.isDebugMode.and.returnValue(true);
 
@@ -218,7 +258,7 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.debugTeleport).not.toHaveBeenCalled();
     });
 
-    // Edge case: should not teleport when it is not local player turn.
+    // Edge case: When the active turn belongs to another player, debug teleport must be blocked.
     it('should not teleport when it is not local player turn', () => {
         activeGameServiceStub.isDebugMode.and.returnValue(true);
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));

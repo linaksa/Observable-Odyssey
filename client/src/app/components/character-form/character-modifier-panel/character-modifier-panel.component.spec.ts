@@ -61,6 +61,7 @@ describe('CharacterModifierPanelComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: When the form is submitted, emit formSubmitted output.
     it('should emit formSubmitted output when the form is submitted', () => {
         // Nominal case
         // The component calls the Output passed to it when its submitForm method is called.

@@ -74,7 +74,7 @@ describe('JoinFormPageComponent', () => {
     let localPlayerServiceMock: jasmine.SpyObj<LocalPlayerService>;
     let routerMock: jasmine.SpyObj<Router>;
 
-    const socketSubject = new Subject<IActiveGame>();
+    const socketSubject = new Subject<string>();
 
     beforeEach(async () => {
         characterFormServiceMock = jasmine.createSpyObj('CharacterFormService', ['joinActiveGameWithCharacter'], {
@@ -132,7 +132,7 @@ describe('JoinFormPageComponent', () => {
         expect(spy).toHaveBeenCalled();
     });
 
-    // Edge case: should not fetch avatars if activeGameId is missing.
+    // Edge case: When activeGameId is missing, it should not fetch avatars.
     it('should not fetch avatars if activeGameId is missing', () => {
         gameServiceMock.getActiveGameById.calls.reset();
 
@@ -146,6 +146,28 @@ describe('JoinFormPageComponent', () => {
         fixture.detectChanges();
 
         expect(socketServiceMock.on).toHaveBeenCalledWith(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    });
+
+    it('should refresh avatars only when socket update matches current game id', () => {
+        const fetchSpy = spyOn(component, 'fetchAvailableAvatars').and.callThrough();
+
+        component.ngOnInit();
+        fetchSpy.calls.reset();
+
+        socketSubject.next(defaultActiveGameID);
+        socketSubject.next('another-game');
+
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should set activeGameId to null when route params are missing activeGameId', () => {
+        const fetchSpy = spyOn(component, 'fetchAvailableAvatars').and.stub();
+        component.router = { params: of({}) } as ActivatedRoute;
+
+        component.ngOnInit();
+
+        expect(component.activeGameId).toBeNull();
+        expect(fetchSpy).toHaveBeenCalled();
     });
 
     it('should ignore abandoned players when computing unavailable avatars', () => {
@@ -223,7 +245,7 @@ describe('JoinFormPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/wait', dummyActiveGame._id]);
     });
 
-    // Edge case: should handle joinGameAsCharacter error.
+    // Edge case: When joinGameAsCharacter fails, the page should surface an error toast and keep form error state consistent.
     it('should handle joinGameAsCharacter error', () => {
         // Error case
         // Validate that the app doesnt crash and shows an error toast when the join game request fails
@@ -245,7 +267,7 @@ describe('JoinFormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBe(errorText);
     });
 
-    // Edge case: should handle joinGameAsCharacter empty error.
+    // Edge case: When required input data is missing, handle joinGameAsCharacter empty error.
     it('should handle joinGameAsCharacter empty error', () => {
         const error = {
             originalError: {
@@ -263,7 +285,7 @@ describe('JoinFormPageComponent', () => {
         expect(characterFormServiceMock.errors()).toBeTruthy();
     });
 
-    // Edge case: should show error if activeGameId missing when joining.
+    // Edge case: When joining, show error if activeGameId missing.
     it('should show error if activeGameId missing when joining', () => {
         // Edge case
         // Validate that the app shows an error toast if the activeGameId is missing when trying to join a game
@@ -273,7 +295,7 @@ describe('JoinFormPageComponent', () => {
         expect(toastServiceMock.show).toHaveBeenCalled();
     });
 
-    // Edge case: should unsubscribe on destroy.
+    // Edge case: When the component is destroyed, active subscriptions should be unsubscribed to prevent leaks.
     it('should unsubscribe on destroy', () => {
         // Nominal case
         // Make sure that no memory leaks happen when the component is destroyed

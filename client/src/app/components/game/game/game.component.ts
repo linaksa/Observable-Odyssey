@@ -4,7 +4,7 @@ import { EditionCellComponent } from '@app/components/edition/edition-cell/editi
 import { TileInfoPopupComponent } from '@app/components/game/tile-info-popup/tile-info-popup.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { TileInfoService } from '@app/services/ui/tile-info.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { buildGraph } from '@app/utils/pathfinding';

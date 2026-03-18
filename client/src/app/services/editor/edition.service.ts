@@ -10,7 +10,7 @@ import {
     MAX_SPAWNPOINT_AMOUNT_SMALL,
     ToolOption,
 } from '@app/constants/grid-edition';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items';

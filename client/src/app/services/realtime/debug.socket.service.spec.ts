@@ -53,7 +53,7 @@ describe('DebugSocketService', () => {
         expect(activeGameServiceSpy.applyDebugModeState).toHaveBeenCalledWith(toggleState);
     });
 
-    // Edge case: should unsubscribe old debug stream when connect is called again.
+    // Edge case: When connect is called again, unsubscribe old debug stream.
     it('should unsubscribe old debug stream when connect is called again', () => {
         const firstToggle$ = new Subject<IDebugToggleState>();
         const secondToggle$ = new Subject<IDebugToggleState>();
@@ -78,7 +78,7 @@ describe('DebugSocketService', () => {
         expect(socketServiceSpy.emitMany).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.DebugToggle, 'Alice', 'active-game-1');
     });
 
-    // Edge case: should unsubscribe and disconnect on destroy.
+    // Edge case: When the debug socket service is destroyed, it should unsubscribe and disconnect cleanly.
     it('should unsubscribe and disconnect on destroy', () => {
         const debugToggle$ = new Subject<IDebugToggleState>();
         const toggleState = { playerName: 'Organizer', isDebugMode: true };

@@ -59,7 +59,7 @@ describe('GameAbandonComponent', () => {
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
     });
 
-    // Edge case: should not abandon game when local player is missing.
+    // Edge case: When local player is missing, it should not abandon game.
     it('should not abandon game when local player is missing', () => {
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
 

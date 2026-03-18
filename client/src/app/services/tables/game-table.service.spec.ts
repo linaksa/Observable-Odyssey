@@ -17,7 +17,7 @@
  *   should be retained.
  */
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
 
 import { GameType, IExistingGame, Visibility } from '@common/game';
@@ -67,7 +67,7 @@ describe('GameTableService', () => {
         expect(service).toBeTruthy();
     });
 
-    // Edge case: should have tableData initialized as empty.
+    // Edge case: When required input data is missing, have tableData initialized as empty.
     it('should have tableData initialized as empty', () => {
         expect(service.tableData).toEqual([]);
     });
@@ -90,9 +90,20 @@ describe('GameTableService', () => {
         expect(service.tableData).toEqual([gamesMock[0]]);
     });
 
+    it('should clear loading state when fetch errors', () => {
+        const subject = new Subject<IExistingGame[]>();
+        gameServiceSpy.getAllGames.and.returnValue(subject.asObservable());
+
+        service.fetchGames();
+        subject.error(new Error('network error'));
+
+        expect(service.isLoading()).toBeFalse();
+        expect((service as unknown as { gameServiceSubscription?: unknown }).gameServiceSubscription).toBeUndefined();
+    });
+
     // Edge case: the server returns an empty array, with or without a visibility filter.
     // tableData should remain [] in both cases without error.
-    // Edge case: should handle empty response.
+    // Edge case: When required input data is missing, handle empty response.
     it('should handle empty response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of([]));
 
@@ -106,7 +117,7 @@ describe('GameTableService', () => {
     // Edge case: the server returns null instead of an array (server or
     // network anomaly). fetchGames() should normalize this value to an empty array to prevent
     // tableData consumers from receiving null and crashing.
-    // Edge case: should handle null response.
+    // Edge case: When required input data is missing, handle null response.
     it('should handle null response', () => {
         gameServiceSpy.getAllGames.and.returnValue(of(null as unknown as IExistingGame[]));
 
@@ -115,5 +126,16 @@ describe('GameTableService', () => {
 
         service.fetchGames(true);
         expect(service.tableData).toEqual([]);
+    });
+
+    it('should unsubscribe on destroy', () => {
+        const unsubscribeSpy = jasmine.createSpy('unsubscribe');
+        Object.assign(service as unknown as Record<string, unknown>, {
+            gameServiceSubscription: { unsubscribe: unsubscribeSpy },
+        });
+
+        service.onDestroy();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
     });
 });

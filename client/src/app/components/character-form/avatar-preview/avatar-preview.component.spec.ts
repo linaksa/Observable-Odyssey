@@ -39,7 +39,7 @@ describe('AvatarPreviewComponent', () => {
         expect(imagePath).toBe(AVATAR_IMAGE_PATH_MODEL.replace('{}', Avatar.Avatar2));
     });
 
-    // Edge case: should show placeholder when no avatar is selected.
+    // Edge case: When no avatar is selected, show placeholder.
     it('should show placeholder when no avatar is selected', () => {
         component.avatar = null;
         fixture.detectChanges();

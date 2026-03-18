@@ -28,6 +28,7 @@ describe('FormPageHeaderComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: Minimal setup path with isolated TestBed configuration. Verifies instantiation succeeds without missing dependencies.
     it('should create', () => {
         expect(component).toBeTruthy();
     });

@@ -34,7 +34,7 @@ describe('SocketService', () => {
         expect(getNamespaces(service).get(GAME_NAMESPACE)).toBe(socket);
     });
 
-    // Edge case: should reuse existing socket when namespace is already registered.
+    // Edge case: When namespace is already registered, reuse existing socket.
     it('should reuse existing socket when namespace is already registered', () => {
         const cachedSocket = createSocketMock(true);
         setNamespaceSocket(service, GAME_NAMESPACE, cachedSocket);
@@ -44,7 +44,7 @@ describe('SocketService', () => {
         expect(result).toBe(cachedSocket as unknown as Socket);
     });
 
-    // Edge case: should report false for missing namespace.
+    // Edge case: When required input data is missing, report false for missing namespace.
     it('should report false for missing namespace', () => {
         expect(service.isConnected('missing')).toBeFalse();
     });
@@ -88,7 +88,7 @@ describe('SocketService', () => {
         expect(getNamespaces(service).has(GAME_NAMESPACE)).toBeFalse();
     });
 
-    // Edge case: should skip disconnect when namespace is not connected.
+    // Edge case: When namespace is not connected, skip disconnect.
     it('should skip disconnect when namespace is not connected', () => {
         const socket = createSocketMock(false);
         setNamespaceSocket(service, GAME_NAMESPACE, socket);
@@ -99,7 +99,7 @@ describe('SocketService', () => {
         expect(getNamespaces(service).has(GAME_NAMESPACE)).toBeTrue();
     });
 
-    // Edge case: should error on on() when namespace socket does not exist.
+    // Edge case: When namespace socket does not exist, error on on().
     it('should error on on() when namespace socket does not exist', () => {
         let receivedError: Error | undefined;
 

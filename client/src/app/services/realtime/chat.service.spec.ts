@@ -73,7 +73,7 @@ describe('ChatService', () => {
         expect(activeGameServiceStub.activeGame.messages).toEqual(expectedMessages);
     });
 
-    // Edge case: should unsubscribe previous chat stream when reconnecting.
+    // Edge case: When reconnecting, unsubscribe previous chat stream.
     it('should unsubscribe previous chat stream when reconnecting', () => {
         const firstStream$ = new Subject<IMessage>();
         const secondStream$ = new Subject<IMessage>();
@@ -104,7 +104,7 @@ describe('ChatService', () => {
         expect(appendedMessage.postedAt instanceof Date).toBeTrue();
     });
 
-    // Edge case: should fallback to ERROR author when no local player is available.
+    // Edge case: When no local player is available, fall back to ERROR author.
     it('should fallback to ERROR author when no local player is available', () => {
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
         activeGameServiceStub.activeGame.messages = [];
@@ -116,7 +116,7 @@ describe('ChatService', () => {
         expect(activeGameServiceStub.activeGame.messages[0].author).toBe('ERROR');
     });
 
-    // Edge case: should unsubscribe from chat stream on destroy.
+    // Edge case: When the chat service is destroyed, its chat stream subscription should be unsubscribed.
     it('should unsubscribe from chat stream on destroy', () => {
         const stream$ = new Subject<IMessage>();
         socketServiceSpy.on.and.returnValue(stream$.asObservable());

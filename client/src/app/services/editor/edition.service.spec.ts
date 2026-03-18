@@ -13,7 +13,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { GridSize, ToolOption } from '@app/constants/grid-edition';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE } from '@common/items';
@@ -30,7 +30,7 @@ describe('BoardEditorService', () => {
         service = TestBed.inject(BoardEditorService);
     });
 
-    // Edge case: should build an empty grid and clear placed objects.
+    // Edge case: When required input data is missing, build an empty grid and clear placed objects.
     it('should build an empty grid and clear placed objects', () => {
         service.objects = [createItem(ItemType.Flag, 0, 0, 1)];
 
@@ -57,7 +57,7 @@ describe('BoardEditorService', () => {
         expect(eraseSpy).toHaveBeenCalledWith(0, 0);
     });
 
-    // Edge case: should not apply tile when placement tool is inactive.
+    // Edge case: When placement tool is inactive, it should not apply tile.
     it('should not apply tile when placement tool is inactive', () => {
         service.buildGrid(2);
         service.activeTool = ToolOption.Objects;
@@ -68,7 +68,7 @@ describe('BoardEditorService', () => {
         expect(service.gameCells[0][1]).toBe(CellType.Empty);
     });
 
-    // Edge case: should erase occupying object when applying a blocking tile.
+    // Edge case: When applying a blocking tile, erase occupying object.
     it('should erase occupying object when applying a blocking tile', () => {
         service.buildGrid(GridSize.SMALL);
         service.activeTool = ToolOption.Placement;
@@ -81,7 +81,7 @@ describe('BoardEditorService', () => {
         expect(service.gameCells[0][0]).toBe(CellType.Wall);
     });
 
-    // Edge case: should ignore object placement when tool is invalid, object missing, or cell is occupied.
+    // Edge case: When tool is invalid, object missing, or cell is occupied, ignore object placement.
     it('should ignore object placement when tool is invalid, object missing, or cell is occupied', () => {
         service.buildGrid(GridSize.SMALL);
         service.activeTool = ToolOption.Placement;
@@ -174,7 +174,7 @@ describe('BoardEditorService', () => {
         ]);
     });
 
-    // Edge case: should not place sanctuary when no sanctuary object is selected.
+    // Edge case: When no sanctuary object is selected, it should not place sanctuary.
     it('should not place sanctuary when no sanctuary object is selected', () => {
         service.buildGrid(GridSize.SMALL);
         service.selectedObject = null;
@@ -184,7 +184,7 @@ describe('BoardEditorService', () => {
         expect(service.objects).toEqual([]);
     });
 
-    // Edge case: should not place sanctuary when max amount is reached for life and fight sanctuaries.
+    // Edge case: When max amount is reached for life and fight sanctuaries, it should not place sanctuary.
     it('should not place sanctuary when max amount is reached for life and fight sanctuaries', () => {
         service.buildGrid(GridSize.MEDIUM);
         service.selectedObject = ItemType.LifeSanctuary;
@@ -200,7 +200,7 @@ describe('BoardEditorService', () => {
         expect(service.getObjectCount(ItemType.FightSanctuary)).toBe(maxSanctuaries);
     });
 
-    // Edge case: should not place sanctuary on already occupied cells.
+    // Edge case: When sanctuary placement preconditions are not met (occupied cells), placement should be rejected.
     it('should not place sanctuary on already occupied cells', () => {
         service.buildGrid(GridSize.SMALL);
         service.selectedObject = ItemType.FightSanctuary;

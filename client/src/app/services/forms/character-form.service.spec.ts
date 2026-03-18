@@ -44,7 +44,7 @@ describe('CharacterFormService', () => {
         service = TestBed.inject(CharacterFormService);
     });
 
-    // Edge case: should have default values for life and speed when no bonus is selected.
+    // Edge case: When no bonus is selected, have default values for life and speed.
     it('should have default values for life and speed when no bonus is selected', () => {
         // Nominal case
         // Validate that life and speed points are equal to default values when no bonus is selected
