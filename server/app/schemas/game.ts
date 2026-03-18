@@ -34,7 +34,7 @@ export const gameSchema = new Schema<IGame>({
     },
     preview: {
         type: String,
-        enum: [Visibility.Hidden, Visibility.Viewable],
+        required: true,
     },
     board: gameBoard,
 });
