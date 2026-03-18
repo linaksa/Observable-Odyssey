@@ -59,6 +59,7 @@ describe('CharacterAttributesGridComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: Minimal setup path with isolated TestBed configuration. Verifies instantiation succeeds without missing dependencies.
     it('should create component successfully', () => {
         // Nominal case
         // The component contains no logic, so we only need to verify that it is created correctly

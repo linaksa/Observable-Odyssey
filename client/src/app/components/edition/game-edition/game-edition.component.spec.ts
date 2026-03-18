@@ -13,8 +13,9 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ToolOption } from '@app/constants/grid-edition';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardEditorService } from '@app/services/editor/edition.service';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
@@ -27,6 +28,7 @@ describe('GameEditionComponent', () => {
     let component: GameEditionComponent;
     let fixture: ComponentFixture<GameEditionComponent>;
     let boardEditorServiceStub: BoardEditorService;
+    let boardSharedServiceSpy: jasmine.SpyObj<BoardSharedService>;
 
     beforeEach(async () => {
         boardEditorServiceStub = {
@@ -51,6 +53,8 @@ describe('GameEditionComponent', () => {
             applyObject: jasmine.createSpy('applyObject'),
             applyTile: jasmine.createSpy('applyTile'),
         } as unknown as BoardEditorService;
+        boardSharedServiceSpy = jasmine.createSpyObj<BoardSharedService>('BoardSharedService', ['getObjectAt']);
+        boardSharedServiceSpy.getObjectAt.and.returnValue(null);
 
         TestBed.overrideComponent(GameEditionComponent, {
             set: {
@@ -63,7 +67,7 @@ describe('GameEditionComponent', () => {
             imports: [GameEditionComponent],
             providers: [
                 { provide: BoardEditorService, useValue: boardEditorServiceStub },
-                { provide: BoardSharedService, useValue: {} },
+                { provide: BoardSharedService, useValue: boardSharedServiceSpy },
             ],
         }).compileComponents();
 
@@ -93,6 +97,30 @@ describe('GameEditionComponent', () => {
         expect(boardEditorServiceStub.selectedObject).toBe(ItemType.Flag);
     });
 
+    it('should return object tooltip when hovering a cell containing an object', () => {
+        boardSharedServiceSpy.getObjectAt.and.returnValue({ itemType: ItemType.Flag } as never);
+
+        const tooltip = (component as unknown as { getGridCellTooltip: (row: number, col: number, cellType: CellType) => string }).getGridCellTooltip(
+            0,
+            0,
+            CellType.Empty,
+        );
+
+        expect(tooltip).toBe(ITEM_INFO_BY_TYPE[ItemType.Flag].editorTooltip);
+    });
+
+    it('should return tile tooltip when hovering a cell without object', () => {
+        boardSharedServiceSpy.getObjectAt.and.returnValue(null);
+
+        const tooltip = (component as unknown as { getGridCellTooltip: (row: number, col: number, cellType: CellType) => string }).getGridCellTooltip(
+            1,
+            1,
+            CellType.Water,
+        );
+
+        expect(tooltip).toBe(TILE_INFO_BY_TYPE[CellType.Water].editorTooltip);
+    });
+
     it('should erase object on right click when shift is pressed', () => {
         setPrivateState(component, { isShiftPressed: true });
 
@@ -102,7 +130,7 @@ describe('GameEditionComponent', () => {
         expect(boardEditorServiceStub.eraseTile).not.toHaveBeenCalled();
     });
 
-    // Edge case: should erase tile on right click when shift is not pressed.
+    // Edge case: When shift is not pressed, erase tile on right click.
     it('should erase tile on right click when shift is not pressed', () => {
         setPrivateState(component, { isShiftPressed: false });
 
@@ -139,7 +167,7 @@ describe('GameEditionComponent', () => {
         expect(boardEditorServiceStub.applyTile).toHaveBeenCalledWith(0, 1);
     });
 
-    // Edge case: should skip drawing when mouse re-enters the same cell.
+    // Edge case: When mouse re-enters the same cell, skip drawing.
     it('should skip drawing when mouse re-enters the same cell', () => {
         setPrivateState(component, {
             isDrawing: true,
@@ -165,7 +193,7 @@ describe('GameEditionComponent', () => {
         expect(boardEditorServiceStub.eraseObject).toHaveBeenCalledWith(1, 2);
     });
 
-    // Edge case: should erase tile on right-drag when shift is not pressed.
+    // Edge case: When shift is not pressed, erase tile on right-drag.
     it('should erase tile on right-drag when shift is not pressed', () => {
         setPrivateState(component, {
             isDrawing: true,

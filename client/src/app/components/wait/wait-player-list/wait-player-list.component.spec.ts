@@ -45,7 +45,7 @@ describe('WaitPlayerListComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    // Edge case: should compute otherPlayers without local player.
+    // Edge case: When computing otherPlayers, the local player should be excluded from the list.
     it('should compute otherPlayers without local player', () => {
         expect(component.otherPlayers).toEqual([player2]);
     });

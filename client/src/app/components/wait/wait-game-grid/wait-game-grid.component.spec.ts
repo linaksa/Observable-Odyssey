@@ -14,7 +14,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
@@ -130,7 +130,7 @@ describe('WaitGameGridComponent', () => {
         });
     });
 
-    // Edge case: should return empty styles for missing object.
+    // Edge case: When required input data is missing, return empty styles for missing object.
     it('should return empty styles for missing object', () => {
         expect(component.objectExtraStyles(null as unknown as IItem, 0, 0)).toEqual({});
     });

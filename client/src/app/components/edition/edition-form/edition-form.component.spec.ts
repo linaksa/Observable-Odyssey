@@ -84,7 +84,7 @@ describe('EditionFormComponent', () => {
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin']);
     });
 
-    // Edge case: should keep user on page when submit fails.
+    // Edge case: When submit fails, keep user on page.
     it('should keep user on page when submit fails', async () => {
         gameEditFormServiceStub.submitForm.and.returnValue(Promise.reject(new Error('save failed')));
 

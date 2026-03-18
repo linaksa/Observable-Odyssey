@@ -32,7 +32,10 @@ export const gameSchema = new Schema<IGame>({
         type: String,
         enum: [Visibility.Hidden, Visibility.Viewable],
     },
-    preview: String,
+    preview: {
+        type: String,
+        required: true,
+    },
     board: gameBoard,
 });
 

@@ -49,7 +49,7 @@ describe('AvatarGridComponent', () => {
         expect(component.form.controls.avatar.value).toBe(avatar);
     });
 
-    // Edge case: should not select avatar when it is unavailable.
+    // Edge case: When the chosen avatar is already unavailable, the current selection must remain unchanged.
     it('should not select avatar when it is unavailable', () => {
         // Edge case
         // The user selects an avatar that is in the list of unavailable avatars

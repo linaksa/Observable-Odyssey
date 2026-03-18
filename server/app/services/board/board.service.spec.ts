@@ -54,6 +54,7 @@ describe('Board Service', () => {
         expect(errors).to.have.lengthOf(0);
     });
 
+    // Edge case: board dimensions outside supported formats should be rejected immediately.
     it('should return error for invalid board size', () => {
         const board = invalidSizeBoard;
 
@@ -82,6 +83,7 @@ describe('Board Service', () => {
         expect(errors).to.include('Le nombre de positions de départ est invalide.');
     });
 
+    // Edge case: disconnected traversable zones must be reported as inaccessible cells.
     it('should return error when board has unreachable cells ', () => {
         const board = unreachableBoard;
 
@@ -126,6 +128,7 @@ describe('Board Service', () => {
         expect(errors).to.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
     });
 
+    // Edge case: a vertical door with only one wall neighbor is still invalid.
     it('should return an error when only the top neighbor is a wall in vertical check', () => {
         const board = verticalDoorTopWallOnlyBoard;
         const errors = boardService.validateBoard(board, GameType.Classic);

@@ -65,6 +65,7 @@ describe('CharacterInfoPanelComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: Minimal setup path with isolated TestBed configuration. Verifies instantiation succeeds without missing dependencies.
     it('should create', () => {
         // Nominal case
         // The component implements no logic. We only validate that it can be created without errors.

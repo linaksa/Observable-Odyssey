@@ -59,7 +59,7 @@ describe('GameEndedComponent', () => {
         expect(component.winner).toBe('Alice');
     });
 
-    // Edge case: should default winner to null when active game is unavailable.
+    // Edge case: When active game is unavailable, default winner to null.
     it('should default winner to null when active game is unavailable', () => {
         activeGameServiceStub.activeGame = undefined as unknown as IActiveGame;
         spyOn(window, 'setTimeout').and.returnValue(0);

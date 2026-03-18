@@ -28,7 +28,10 @@ describe('GameInfosComponent', () => {
 
     beforeEach(async () => {
         activeGameServiceStub = {
-            activeGame: createActiveGame('Arena', [[CellType.Empty, CellType.Empty], [CellType.Empty, CellType.Empty]]),
+            activeGame: createActiveGame('Arena', [
+                [CellType.Empty, CellType.Empty],
+                [CellType.Empty, CellType.Empty],
+            ]),
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
         };
 
@@ -41,6 +44,7 @@ describe('GameInfosComponent', () => {
         component = fixture.componentInstance;
     });
 
+    // Edge case: Minimal setup path with isolated TestBed configuration. Verifies instantiation succeeds without missing dependencies.
     it('should create', () => {
         expect(component).toBeTruthy();
     });

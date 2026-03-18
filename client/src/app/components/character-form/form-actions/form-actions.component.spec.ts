@@ -49,6 +49,7 @@ describe('FormActionsComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: When submit is called, emit the output event.
     it('should emit the output event when submit is called', () => {
         // Nominal case
         // The component should emit the submitRequested event when the submit method is called
