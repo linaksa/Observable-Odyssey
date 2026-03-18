@@ -13,6 +13,10 @@ export class ActiveGameService {
         if (!gameChosen) {
             throw new Error('GAME_NOT_FOUND');
         }
+
+        const gameWithoutPreview = typeof gameChosen.toObject === 'function' ? gameChosen.toObject() : { ...gameChosen };
+        delete gameWithoutPreview.preview;
+
         const playerCharacter = {
             name: characterForm.name,
             avatar: characterForm.avatar,
@@ -33,7 +37,7 @@ export class ActiveGameService {
         };
 
         const newActiveGame = {
-            game: gameChosen,
+            game: gameWithoutPreview,
             players: [playerCharacter],
             turnOrder: [] as string[],
             currentPlayerIndex: 0,
@@ -42,7 +46,7 @@ export class ActiveGameService {
             messages: [] as IMessage[],
             isDebugMode: false,
             organizerName: characterForm.name,
-            maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
+            maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameWithoutPreview.board.cells.length],
             turnIsInPreparation: false,
         };
         return await activeGameModel.create(newActiveGame);
@@ -107,7 +111,7 @@ export class ActiveGameService {
     }
     async removePlayer(gameId: string, playerName: string): Promise<void> {
         const activeGame = await this.getActiveGameById(gameId);
-        if (!activeGame) return null;
+        if (!activeGame) return;
         activeGame.players = activeGame.players.filter((player) => player.name !== playerName);
         await this.saveActiveGameById(gameId, activeGame);
     }
