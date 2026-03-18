@@ -28,7 +28,10 @@ describe('GameInfosComponent', () => {
 
     beforeEach(async () => {
         activeGameServiceStub = {
-            activeGame: createActiveGame('Arena', [[CellType.Empty, CellType.Empty], [CellType.Empty, CellType.Empty]]),
+            activeGame: createActiveGame('Arena', [
+                [CellType.Empty, CellType.Empty],
+                [CellType.Empty, CellType.Empty],
+            ]),
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
         };
 

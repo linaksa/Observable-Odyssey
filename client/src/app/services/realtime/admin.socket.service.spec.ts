@@ -27,10 +27,7 @@ describe('AdminSocketService', () => {
         socketServiceSpy.on.and.returnValue(new Subject<void>().asObservable());
 
         TestBed.configureTestingModule({
-            providers: [
-                AdminSocketService,
-                { provide: SocketService, useValue: socketServiceSpy },
-            ],
+            providers: [AdminSocketService, { provide: SocketService, useValue: socketServiceSpy }],
         });
         service = TestBed.inject(AdminSocketService);
     });
