@@ -60,7 +60,17 @@ describe('ActiveGameTableService', () => {
         expect(service.tableData).toEqual(games);
     });
 
-    // Edge case: should set tableData to empty array when null is received.
+    it('should clear loading flag when fetch errors', () => {
+        const subject = new Subject<IActiveGame[]>();
+        gameServiceSpy.fetchJoinableActiveGames.and.returnValue(subject.asObservable());
+
+        service.fetchJoinableActiveGames();
+        subject.error(new Error('network error'));
+
+        expect(service.isLoading()).toBeFalse();
+    });
+
+    // Edge case: When null is received, set tableData to empty array.
     it('should set tableData to empty array when null is received', () => {
         // Edge case
         // Handle the case where the request fails
@@ -71,5 +81,16 @@ describe('ActiveGameTableService', () => {
         subject.next(null);
 
         expect(service.tableData).toEqual([]);
+    });
+
+    it('should unsubscribe from current fetch on destroy', () => {
+        const unsubscribeSpy = jasmine.createSpy('unsubscribe');
+        Object.assign(service as unknown as Record<string, unknown>, {
+            gameServiceSubscription: { unsubscribe: unsubscribeSpy },
+        });
+
+        service.ngOnDestroy();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
     });
 });

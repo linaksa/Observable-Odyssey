@@ -98,7 +98,7 @@ describe('WaitChatSidebarComponent', () => {
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.StartGame, 'active-game-1');
     });
 
-    // Edge case: should not emit start-game event when game id is missing.
+    // Edge case: When game id is missing, it should not emit start-game event.
     it('should not emit start-game event when game id is missing', () => {
         activeGameServiceStub.activeGame._id = '';
 

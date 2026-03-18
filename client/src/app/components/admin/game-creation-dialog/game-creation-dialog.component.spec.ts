@@ -59,7 +59,7 @@ describe('GameCreationDialogComponent', () => {
         expect(component.displaySize).toBe('15x15');
     });
 
-    // Edge case: should fallback to default game info for unknown dimension key.
+    // Edge case: When an unknown dimension key is provided, the component should fall back to default game info.
     it('should fallback to default game info for unknown dimension key', () => {
         const privateApi = component as unknown as { updateGameInfo: (dimension: string) => void };
 
@@ -69,7 +69,7 @@ describe('GameCreationDialogComponent', () => {
         expect(component.displaySize).toBe('10x10');
     });
 
-    // Edge case: should not create game when form is invalid.
+    // Edge case: When form is invalid, it should not create game.
     it('should not create game when form is invalid', () => {
         component.form.reset();
 
@@ -106,7 +106,7 @@ describe('GameCreationDialogComponent', () => {
         expect(createdGame.gameMode).toBe(GameType.Ctf);
     });
 
-    // Edge case: should fallback to default CTF value when control is missing.
+    // Edge case: When control is missing, fall back to default CTF value.
     it('should fallback to default CTF value when control is missing', () => {
         component.form.removeControl('isCTF');
 
@@ -117,7 +117,7 @@ describe('GameCreationDialogComponent', () => {
         expect(component.isCTFMode).toBeFalse();
     });
 
-    // Edge case: should unsubscribe from dimension changes on destroy.
+    // Edge case: When the component is destroyed after subscription setup, it should unsubscribe from dimension changes.
     it('should unsubscribe from dimension changes on destroy', () => {
         const privateApi = component as unknown as { updateGameInfo: (dimension: string) => void };
         const updateSpy = spyOn(privateApi, 'updateGameInfo').and.callThrough();

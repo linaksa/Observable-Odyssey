@@ -49,6 +49,7 @@ describe('TextMessageComponent', () => {
         expect(bubble.classList.contains('justify-self-end')).toBeTrue();
     });
 
+    // Edge case: When message belongs to another player, use remote styles.
     it('should use remote styles when message belongs to another player', () => {
         fixture = TestBed.createComponent(TextMessageComponent);
         component = fixture.componentInstance;

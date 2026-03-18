@@ -128,7 +128,7 @@ describe('WaitPageComponent', () => {
         expect(socketServiceMock.on).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.GameEnded);
     });
 
-    // Edge case: should unsubscribe previous socket subscriptions when route emits again.
+    // Edge case: When route emits again, unsubscribe previous socket subscriptions.
     it('should unsubscribe previous socket subscriptions when route emits again', () => {
         component.ngOnInit();
         routeParams$.next({ activeGameId: 'active-game-id' });
@@ -165,7 +165,7 @@ describe('WaitPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/play', 'active-game-id']);
     });
 
-    // Edge case: should ignore GameStarted event when id does not match.
+    // Edge case: When id does not match, ignore GameStarted event.
     it('should ignore GameStarted event when id does not match', () => {
         component.ngOnInit();
         routeParams$.next({ activeGameId: 'active-game-id' });
@@ -197,7 +197,7 @@ describe('WaitPageComponent', () => {
         expect(localPlayerServiceMock.clear).toHaveBeenCalled();
     });
 
-    // Edge case: should not kick players when non-organizer leaves.
+    // Edge case: When non-organizer leaves, it should not kick players.
     it('should not kick players when non-organizer leaves', () => {
         const nonOrganizer = createCharacter('Guest');
         component.localPlayer = nonOrganizer;
@@ -209,7 +209,7 @@ describe('WaitPageComponent', () => {
         expect(activeGameServiceMock.leaveWaitingRoom).toHaveBeenCalledWith(nonOrganizer.name);
     });
 
-    // Edge case: should not leave waiting room when local player or active game id is missing.
+    // Edge case: When local player or active game id is missing, it should not leave waiting room.
     it('should not leave waiting room when local player or active game id is missing', () => {
         component.localPlayer = undefined;
         localPlayerServiceMock.getLocalPlayer.and.returnValue(undefined);
@@ -234,7 +234,7 @@ describe('WaitPageComponent', () => {
         expect(activeGameServiceMock.leaveWaitingRoom).toHaveBeenCalledTimes(1);
     });
 
-    // Edge case: should not leave again on destroy if game has started.
+    // Edge case: When game has started, it should not leave again on destroy.
     it('should not leave again on destroy if game has started', () => {
         component['gameStarted'] = true;
         component.localPlayer = organizer;
@@ -252,7 +252,7 @@ describe('WaitPageComponent', () => {
         expect(activeGameServiceMock.leaveWaitingRoom).toHaveBeenCalledWith(organizer.name);
     });
 
-    // Edge case: should navigate to error when active game data initializes without local player.
+    // Edge case: When active game data initializes without local player, navigate to error.
     it('should navigate to error when active game data initializes without local player', () => {
         localPlayerServiceMock.getLocalPlayer.and.returnValue(undefined);
         activeGameServiceMock.activeGame = createActiveGame('active-game-id', organizer.name, [organizer, player2]);
@@ -262,7 +262,7 @@ describe('WaitPageComponent', () => {
         expect(routerMock.navigate).toHaveBeenCalledWith(['/error']);
     });
 
-    // Edge case: should skip active game initialization when game payload is missing.
+    // Edge case: When game payload is missing, skip active game initialization.
     it('should skip active game initialization when game payload is missing', () => {
         activeGameServiceMock.activeGame = undefined as unknown as IActiveGame;
 
@@ -282,7 +282,7 @@ describe('WaitPageComponent', () => {
         expect(waitGridServiceMock.initFromExistingBoard).toHaveBeenCalled();
     });
 
-    // Edge case: should show fallback button after timeout.
+    // Edge case: When the waiting state exceeds the timeout, the fallback button should become visible.
     it('should show fallback button after timeout', fakeAsync(() => {
         component['initializeButtonTimeout']();
         expect(component.showButton).toBeFalse();
@@ -292,7 +292,7 @@ describe('WaitPageComponent', () => {
         expect(component.showButton).toBeTrue();
     }));
 
-    // Edge case: should clear button timeout on destroy.
+    // Edge case: When destroy runs with an active timeout, it should clear the timeout handle.
     it('should clear button timeout on destroy', () => {
         const clearTimeoutSpy = spyOn(window, 'clearTimeout').and.callThrough();
         component['initializeButtonTimeout']();

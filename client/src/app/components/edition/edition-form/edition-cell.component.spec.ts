@@ -91,7 +91,7 @@ describe('EditionFormComponent', () => {
     // Edge case: submitForm() returns a rejected promise (e.g., validation error
     // or lost connection). The component should catch the rejection without propagating
     // the exception and let the service handle displaying the error.
-    // Edge case: should catch the error is submitForm rejects the promise.
+    // Edge case: When submitForm rejects, the component should catch the error and keep a safe failure state.
     it('should catch the error is submitForm rejects the promise', () => {
         editFormServiceSpy.submitForm.and.returnValue(Promise.reject());
 

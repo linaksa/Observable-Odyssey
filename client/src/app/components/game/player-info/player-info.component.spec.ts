@@ -65,7 +65,7 @@ describe('PlayerInfoComponent', () => {
         expect(component.defenseDiceIconUrl).toBe('./assets/form-page/6_sided_dice.svg');
     });
 
-    // Edge case: should return empty urls when local player is undefined.
+    // Edge case: When local player is undefined, return empty urls.
     it('should return empty urls when local player is undefined', () => {
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
 

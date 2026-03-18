@@ -35,7 +35,7 @@ describe('AdminSocketService', () => {
         service = TestBed.inject(AdminSocketService);
     });
 
-    // Edge case: should connect admin namespace when not connected.
+    // Edge case: When not connected, connect admin namespace.
     it('should connect admin namespace when not connected', () => {
         socketServiceSpy.isConnected.and.returnValue(false);
 
@@ -44,7 +44,7 @@ describe('AdminSocketService', () => {
         expect(socketServiceSpy.connect).toHaveBeenCalledWith(Namespaces.Admin);
     });
 
-    // Edge case: should not reconnect namespace when already connected.
+    // Edge case: When already connected, it should not reconnect namespace.
     it('should not reconnect namespace when already connected', () => {
         socketServiceSpy.isConnected.and.returnValue(true);
 
@@ -67,7 +67,7 @@ describe('AdminSocketService', () => {
         expect(socketServiceSpy.disconnect).toHaveBeenCalledOnceWith(Namespaces.Admin);
     });
 
-    // Edge case: should keep disconnect idempotent when no connection exists.
+    // Edge case: When no connection exists, keep disconnect idempotent.
     it('should keep disconnect idempotent when no connection exists', () => {
         socketServiceSpy.isConnected.and.returnValue(false);
 
@@ -94,7 +94,7 @@ describe('AdminSocketService', () => {
         subscription.unsubscribe();
     });
 
-    // Edge case: should disconnect admin namespace on destroy.
+    // Edge case: When the admin socket service is destroyed, the admin namespace should be disconnected.
     it('should disconnect admin namespace on destroy', () => {
         service.ngOnDestroy();
 

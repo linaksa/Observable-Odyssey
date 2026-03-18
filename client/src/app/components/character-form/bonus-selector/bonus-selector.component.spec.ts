@@ -38,6 +38,7 @@ describe('BonusSelectorComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: When reading selectedBonusType, the component should expose the value from CharacterFormService.
     it('should return selected bonus type', () => {
         // Nominal case
         // The function should return the bonus type selected in the form

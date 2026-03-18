@@ -52,7 +52,7 @@ describe('PlayerListComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    // Edge case: should order players by turn order and ignore unknown names.
+    // Edge case: When turnOrder contains unknown names, only known players should be ordered and displayed.
     it('should order players by turn order and ignore unknown names', () => {
         expect(component.orderedPlayers.map((player) => player.name)).toEqual(['Bob', 'Alice']);
     });

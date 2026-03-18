@@ -65,7 +65,7 @@ describe('GameEditFormService', () => {
 
     // Edge case: image capture returns null (canvas inaccessible or DOM not ready).
     // submitForm() must be aborted before any HTTP call and report the error via formErrors.
-    // Edge case: should not submit if preview image fails.
+    // Edge case: When preview image fails, it should not submit.
     it('should not submit if preview image fails', async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         spyOn(service as any, 'getPreviewImage').and.returnValue(Promise.resolve(null));
@@ -176,7 +176,7 @@ describe('GameEditFormService', () => {
 
     // Edge case: the grid DOM element is null (component not rendered yet or destroyed).
     // getPreviewImage() should return null without throwing an exception.
-    // Edge case: should return null if grid element does not exists.
+    // Edge case: When grid element does not exists, return null.
     it('should return null if grid element does not exists', async () => {
         const grid = null;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,7 +184,7 @@ describe('GameEditFormService', () => {
         expect(result).toBeNull();
     });
 
-    // Edge case: should return null if html2canvas fails.
+    // Edge case: When html2canvas fails, return null.
     it('should return null if html2canvas fails', async () => {
         const fakeElement = document.createElement('div');
         spyOn(HTMLCanvasElement.prototype, 'toDataURL').and.throwError('Canvas error');

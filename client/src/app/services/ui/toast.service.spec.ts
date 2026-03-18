@@ -18,7 +18,7 @@ describe('ToastService', () => {
         service = TestBed.inject(ToastService);
     });
 
-    // Edge case: should use default duration when show is called without duration.
+    // Edge case: When show is called without duration, use default duration.
     it('should use default duration when show is called without duration', () => {
         // Nominal case
         // Validate that the method without parameters uses the default parameters

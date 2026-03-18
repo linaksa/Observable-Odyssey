@@ -11,7 +11,7 @@
  * - Error handling paths and fallback user-facing messaging.
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { AdministrationService } from '@app/services/admin/administration.service';
@@ -20,7 +20,7 @@ import { AdminSocketService } from '@app/services/realtime/admin.socket.service'
 import { GameTableService } from '@app/services/tables/game-table.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { AdministrationPageComponent } from './administration-page.component';
 import SpyObj = jasmine.SpyObj;
 
@@ -58,9 +58,15 @@ describe('AdministrationPageComponent', () => {
         adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['connect', 'onGamesModified']);
         adminSocketServiceSpy.onGamesModified.and.returnValue(of(void 0));
 
-        gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames'], {
-            tableData: [gameMock],
-            isLoading: gameTableLoadingSignal,
+        gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames']);
+        Object.defineProperty(gameTableServiceSpy, 'tableData', {
+            value: [gameMock],
+            writable: true,
+            configurable: true,
+        });
+        Object.defineProperty(gameTableServiceSpy, 'isLoading', {
+            value: gameTableLoadingSignal,
+            configurable: true,
         });
 
         const overrideInfo: MetadataOverride<Component> = {
@@ -99,7 +105,7 @@ describe('AdministrationPageComponent', () => {
         changeVisibility$.complete();
     });
 
-    // Edge case: should block repeated toggles while visibility update is in progress.
+    // Edge case: When a visibility update is already pending, repeated toggle attempts should be ignored.
     it('should block repeated toggles while visibility update is in progress', () => {
         const changeVisibility$ = new Subject<HttpResponse<string>>();
         const input = createCheckboxEventTarget(true);
@@ -125,7 +131,61 @@ describe('AdministrationPageComponent', () => {
         expect(component.isVisibilityToggleLoading(gameMock, true)).toBeFalse();
     });
 
-    // Edge case: should revert checkbox and show toast when visibility update fails.
+    it('should open and close the creation dialog', () => {
+        expect(component.isDialogOpen).toBeFalse();
+
+        component.openDialog();
+        expect(component.isDialogOpen).toBeTrue();
+
+        component.closeDialog();
+        expect(component.isDialogOpen).toBeFalse();
+    });
+
+    it('should initialize page data and react to game-modified socket events', () => {
+        const gamesModified$ = new Subject<void>();
+        adminSocketServiceSpy.onGamesModified.and.returnValue(gamesModified$.asObservable());
+        gameTableServiceSpy.tableData = [gameMock];
+
+        component.ngOnInit();
+
+        expect(gameTableServiceSpy.tableData).toEqual([]);
+        expect(adminSocketServiceSpy.connect).toHaveBeenCalled();
+        expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledWith(FETCH_ALL_GAMES);
+
+        gamesModified$.next();
+        expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledTimes(2);
+
+        gamesModified$.error(new HttpErrorResponse({ error: { error: 'serveur indisponible' } }));
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('serveur indisponible');
+    });
+
+    it('should remove deleted game from table data on successful deletion', () => {
+        const secondGame = { ...gameMock, _id: 'game-2' };
+        gameTableServiceSpy.tableData = [gameMock, secondGame];
+        gameServiceSpy.deleteGame.and.returnValue(of(new HttpResponse<string>({ status: 200 })));
+
+        component.deleteGame(gameMock);
+
+        expect(gameTableServiceSpy.tableData).toEqual([secondGame]);
+    });
+
+    it('should show server delete error message when provided', () => {
+        gameServiceSpy.deleteGame.and.returnValue(throwError(() => new HttpErrorResponse({ error: { error: 'suppression impossible' } })));
+
+        component.deleteGame(gameMock);
+
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('suppression impossible');
+    });
+
+    it('should show fallback delete error message when server message is missing', () => {
+        gameServiceSpy.deleteGame.and.returnValue(throwError(() => new HttpErrorResponse({ error: {} })));
+
+        component.deleteGame(gameMock);
+
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('Il y a eu un problème lors de la suppression.');
+    });
+
+    // Edge case: When visibility update fails, revert checkbox and show toast.
     it('should revert checkbox and show toast when visibility update fails', () => {
         const changeVisibility$ = new Subject<HttpResponse<string>>();
         const input = createCheckboxEventTarget(true);

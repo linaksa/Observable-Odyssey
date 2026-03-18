@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { BoardSharedService } from '@app/services/shared/boardShared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { IItem, ItemType } from '@common/items';
 
