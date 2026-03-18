@@ -97,7 +97,7 @@ describe('CharacterFormComponent', () => {
         expect(characterFormServiceSpy.initializeForm).toHaveBeenCalled();
     });
 
-    // Edge case: should not emit submitForm if the form is invalid.
+    // Edge case: When the form is invalid, it should not emit submitForm.
     it('should not emit submitForm if the form is invalid', () => {
         spyOn(component.submitForm, 'emit');
         characterFormServiceSpy.characterForm.setErrors({ invalid: true });

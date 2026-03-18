@@ -1,22 +1,18 @@
 /**
- * Testing strategy — GameController
+ * Testing strategy — ActiveGameController
  *
  * Approach: HTTP integration tests with supertest + Sinon stubs.
  * The controller is tested through the application's real Express HTTP interface,
  * allowing validation of the full chain (routing, middleware, error handling).
- * Dependencies (GameService, AdminSocketsService) are replaced by stubs
+ * Dependencies (ActiveGameService, GameSocketsService, ActiveGameListSocketsService) are replaced by stubs
  * injected via the TypeDI container to isolate the controller.
  *
  * Edge cases covered:
- * - Resource not found (404): verifies the controller returns the correct response
- *   when the service layer cannot find the requested entity.
- * - Unexpected internal error (500): verifies that any unexpected exception is properly
- *   caught and returned with the appropriate HTTP code.
- * - Invalid request data (400 / ValidationError): verifies rejection of malformed
- *   or incomplete payloads before any persistence.
- * - Updating a game deleted during the request: verifies the controller handles
- *   the service's automatic recreation case (201 vs 200).
- * - Invalid visibility on PATCH: verifies out-of-enum values are rejected.
+ * - Invalid POST/PATCH payloads (missing body fields): verifies 400 responses before service use.
+ * - Missing referenced games/active games during create and join operations: verifies 404 responses.
+ * - Unexpected service errors with/without message: verifies stable 500 responses.
+ * - Join response assembly failures (joined player not found in updated game): verifies defensive 500 handling.
+ * - Fetch route failures for joinable list and active-game-by-id endpoints: verifies error mapping.
  */
 import { Application } from '@app/app';
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
@@ -102,8 +98,7 @@ describe('ActiveGameController', () => {
         expressApp = app.app;
     });
 
-    // Edge case for POST route
-    // Make sure that the controller handles incorrect body
+    // Edge case: POST /api/activeGame receives an empty payload and should fail with 400.
     it('post route should return BAD REQUEST if empty body', async () => {
         return supertest(expressApp)
             .post('/api/activeGame/')
@@ -114,8 +109,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for POST route
-    // Make sure that the controller handles the case where the gameId provided does not exist
+    // Edge case: createActiveGame() reports GAME_NOT_FOUND, which should map to HTTP 404.
     it('post route should return 404 if game does not exists', async () => {
         activeGameService.createActiveGame.rejects(new Error('GAME_NOT_FOUND'));
 
@@ -128,8 +122,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for POST route
-    // Make sure that the controller handles unexpected error from the service
+    // Edge case: an unexpected service error during POST should map to HTTP 500.
     it('post route should return 500 if service throws unexpected error', async () => {
         activeGameService.createActiveGame.rejects(new Error('UNEXPECTED_ERROR'));
 
@@ -163,8 +156,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // Make sure that the controller handles incorrect body
+    // Edge case: PATCH /join receives an empty body and should return 400.
     it('join route should return BAD REQUEST if empty body', async () => {
         return supertest(expressApp)
             .patch('/api/activeGame/join')
@@ -175,8 +167,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // Make sure that the controller handles the case where the activeGameId provided does not exist
+    // Edge case: addPlayerToActiveGame() reports ACTIVE_GAME_NOT_FOUND, so route returns 404.
     it('join route should return 404 if game does not exists', async () => {
         activeGameService.addPlayerToActiveGame.rejects(new Error('ACTIVE_GAME_NOT_FOUND'));
 
@@ -189,8 +180,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // Make sure that the controller handles unexisting activeGame
+    // Edge case: service returns null for join, meaning the target active game no longer exists.
     it('join route should return 404 if activeGameId reference an unexisting game', async () => {
         activeGameService.addPlayerToActiveGame.resolves(null);
 
@@ -203,8 +193,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // The controller should return 500 if the service throws an unexpected error
+    // Edge case: unexpected join error should propagate as HTTP 500.
     it('join route should return 500 if service throws unexpected error', async () => {
         activeGameService.addPlayerToActiveGame.rejects(new Error('UNEXPECTED_ERROR'));
 
@@ -217,8 +206,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // The controller should return 500 whith the default error message if the service throws an unexpected error without message
+    // Edge case: unexpected join error without message should still return a stable 500 response.
     it('join route should return 500 if service throws unexpected error', async () => {
         activeGameService.addPlayerToActiveGame.rejects(new Error());
 
@@ -231,8 +219,8 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for join route
-    // The controler should return 500 if the player added cannot be found in the updated active game
+    // Edge case: service returns an updated game but the joined player is missing from players[].
+    // The controller should fail safely with HTTP 500.
     it('join route should return 500 if player added cannot be found in the updated active game', async () => {
         const updatedActiveGame = { ...dummyActiveGame, players: [] as ICharacter[] };
         activeGameService.addPlayerToActiveGame.resolves(updatedActiveGame);
@@ -280,8 +268,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for get joinable active games route
-    // Make sure that the controller handles unexpected error from the service
+    // Edge case: joinable list retrieval fails in the service and should map to HTTP 500.
     it('get joinable route should return 500 if the db call fails', async () => {
         activeGameService.fetchJoinableActiveGames.rejects(new Error('DB_ERROR'));
 
@@ -293,8 +280,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for get joinable active games route
-    // Make sure that the controler returns the result of the db call
+    // Nominal case: joinable route returns the service list with HTTP 200.
     it('get joinable route should return 200 and the list of joinable active games', async () => {
         const activeGame1 = { ...dummyActiveGame, _id: 'activeGame1' };
         const activeGame2 = { ...dummyActiveGame, _id: 'activeGame2' };
@@ -310,8 +296,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for get active game by id route
-    // Make sure that the controller handles incorrect ids
+    // Edge case: requested active game id is unknown and should return HTTP 404.
     it('get active game by id route should return 404 if active game does not exist', async () => {
         activeGameService.getActiveGameById.resolves(null);
 
@@ -323,8 +308,7 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case for get active game by id route
-    // Make sure that the controller handles unexpected error from the service
+    // Edge case: getActiveGameById throws and the controller should return HTTP 500.
     it('get active game by id route should return 500 if the db call fails', async () => {
         activeGameService.getActiveGameById.rejects(new Error('DB_ERROR'));
 

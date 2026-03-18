@@ -107,7 +107,7 @@ describe('ChatPanelComponent', () => {
         expect(component.messageForm.get('message')?.value).toBeNull();
     });
 
-    // Edge case: should flag invalid submission for whitespace-only messages.
+    // Edge case: When a message contains only whitespace, submission should be rejected as invalid.
     it('should flag invalid submission for whitespace-only messages', fakeAsync(() => {
         createComponent();
 

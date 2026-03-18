@@ -24,7 +24,7 @@ describe('LocalPlayerService', () => {
         service = TestBed.inject(LocalPlayerService);
     });
 
-    // Edge case: should return undefined before a local player is set.
+    // Edge case: When required input data is missing, return undefined before a local player is set.
     it('should return undefined before a local player is set', () => {
         expect(service.getLocalPlayer()).toBeUndefined();
     });
@@ -37,7 +37,7 @@ describe('LocalPlayerService', () => {
         expect(service.getLocalPlayer()).toEqual(player);
     });
 
-    // Edge case: should overwrite previous local player when setting a new one.
+    // Edge case: When setting a new one, overwrite previous local player.
     it('should overwrite previous local player when setting a new one', () => {
         service.setLocalPlayer(createCharacter('Alice'));
         service.setLocalPlayer(createCharacter('Bob'));

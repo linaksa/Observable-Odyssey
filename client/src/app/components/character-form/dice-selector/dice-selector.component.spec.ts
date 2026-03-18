@@ -54,7 +54,7 @@ describe('DiceSelectorComponent', () => {
         expect(component.selectedDiceType).toBe(DiceSelectionType.D6AttackAndD4Defense);
     });
 
-    // Edge case: should return null when no dice type selected.
+    // Edge case: When no dice type selected, return null.
     it('should return null when no dice type selected', () => {
         // Nominal case:
         // The form has no selected dice type. The selectedDiceType property returns null.

@@ -7,7 +7,6 @@ import { IItem } from '@common/items';
     providedIn: 'root',
 })
 export class WaitGridService {
-
     gameCells: CellType[][] = [];
     objects: IItem[] = [];
 

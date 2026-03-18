@@ -112,6 +112,14 @@ describe('ActiveGameService', () => {
         expect(service.isDebugMode()).toBeTrue();
     });
 
+    it('should ignore debug mode updates when no active game is loaded', () => {
+        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+        service.applyDebugModeState({ playerName: 'Organizer', isDebugMode: true });
+
+        expect(service.isDebugMode()).toBeFalse();
+    });
+
     it('should set active game state and join game room when fetch succeeds', () => {
         const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
         fetchedGame.isDebugMode = true;
@@ -127,7 +135,17 @@ describe('ActiveGameService', () => {
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, 'remote-game-id');
     });
 
-    // Edge case: should clear loading flag when setActiveGame request fails.
+    it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {
+        const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+        const fetchedGameWithoutIndex = { ...fetchedGame, currentPlayerIndex: undefined } as unknown as IActiveGame;
+        httpClientSpy.get.and.returnValue(of(fetchedGameWithoutIndex));
+
+        service.setActiveGame('remote-game-id');
+
+        expect(service.currentPlayer()).toBe(0);
+    });
+
+    // Edge case: When setActiveGame request fails, clear loading flag.
     it('should clear loading flag when setActiveGame request fails', () => {
         const previousGame = service.activeGame;
         httpClientSpy.get.and.returnValue(throwError(() => new Error('network error')));
@@ -138,7 +156,37 @@ describe('ActiveGameService', () => {
         expect(service.isLoading()).toBeFalse();
     });
 
-    // Edge case: should process socket events and ignore invalid players.
+    it('should ignore game socket events that require an active game when game is missing', () => {
+        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+        const hasChangedBefore = service.hasChangedLocation();
+
+        getEventStream<PlayerMovedResult>(SocketEvent.PlayerMoved).next({
+            playerId: 'Alice',
+            newPosition: { x: 1, y: 1 },
+            movementLeft: 1,
+        });
+        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Alice' });
+        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
+            player: 'Alice',
+            movementLeft: 1,
+            actionLeft: 1,
+        });
+        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
+            attackerName: 'Alice',
+            defenderName: 'Bob',
+            attackerVictories: 1,
+            attackerActionsLeft: 1,
+            defenderNewPosition: { x: 0, y: 0 },
+        });
+        getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Alice' });
+        getEventStream<{ playerId: string }>(SocketEvent.PlayerKicked).next({ playerId: 'Alice' });
+        getEventStream<{ playerId: string }>(SocketEvent.LeftWaitingRoom).next({ playerId: 'Alice' });
+        getEventStream<{ winner: string }>(SocketEvent.GameEnded).next({ winner: 'Alice' });
+
+        expect(service.hasChangedLocation()).toBe(hasChangedBefore);
+    });
+
+    // Edge case: When socket events reference unknown players, state updates should safely ignore them.
     it('should process socket events and ignore invalid players', () => {
         const alice = createCharacter('Alice', 0, 0);
         const bob = createCharacter('Bob', PLAYER_INDEX_BOB, 0);
@@ -306,6 +354,50 @@ describe('ActiveGameService', () => {
         expect(service.currentPlayer()).toBe(0);
     });
 
+    it('should keep current turn index when current player remains in updated turn order', () => {
+        const alice = createCharacter('Alice');
+        const bob = createCharacter('Bob');
+        const carol = createCharacter('Carol');
+        service.activeGame = createActiveGame([alice, bob, carol], 'Bob');
+        service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
+        service.activeGame.currentPlayerIndex = 1;
+        service.currentPlayer.set(1);
+
+        service.updatePlayers([alice, bob]);
+
+        expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
+        expect(service.activeGame.currentPlayerIndex).toBe(1);
+        expect(service.currentPlayer()).toBe(1);
+    });
+
+    it('should do nothing when updating players without an active game', () => {
+        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+        expect(() => service.updatePlayers([createCharacter('Alice')])).not.toThrow();
+    });
+
+    it('should fallback to bounded index when current turn player leaves turn order', () => {
+        const alice = createCharacter('Alice');
+        const bob = createCharacter('Bob');
+        const carol = createCharacter('Carol');
+        service.activeGame = createActiveGame([alice, bob, carol], 'Carol');
+        service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
+        service.activeGame.currentPlayerIndex = 2;
+        service.currentPlayer.set(2);
+
+        service.updatePlayers([alice, bob]);
+
+        expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
+        expect(service.activeGame.currentPlayerIndex).toBe(1);
+        expect(service.currentPlayer()).toBe(1);
+    });
+
+    it('should guard private turn-order sync when activeGame is missing', () => {
+        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+        expect(() => (service as unknown as { syncTurnOrderWithPlayers: () => void }).syncTurnOrderWithPlayers()).not.toThrow();
+    });
+
     it('should compute reachable tiles based on movement range', () => {
         service.activeGame = createActiveGame([createCharacter('Alice', 0, 0, PLAYER_INDEX_BOB)], 'Alice');
         service.currentPlayer.set(0);
@@ -334,7 +426,7 @@ describe('ActiveGameService', () => {
         expect([...service.reachableTiles].sort((a, b) => a - b)).toEqual([0, PLAYER_INDEX_BOB, 2]);
     });
 
-    // Edge case: should guard movement, movement range, attack and teleport edge cases.
+    // Edge case: When movement or attack preconditions fail, the service should guard and avoid emitting invalid actions.
     it('should guard movement, movement range, attack and teleport edge cases', () => {
         service.reachableTiles = new Set([UNKNOWN_TILE_INDEX]);
         service.updateMovementRange(0, []);
@@ -443,6 +535,17 @@ describe('ActiveGameService', () => {
             createItem(ItemType.StartingPosition, 0, 0),
             createItem(ItemType.Flag, 0, PLAYER_INDEX_BOB),
         ]);
+    });
+
+    it('should keep board items unchanged when turn order is empty', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice')], 'Alice');
+        service.activeGame.turnOrder = [];
+        const itemsBefore = [createItem(ItemType.StartingPosition, 0, 0), createItem(ItemType.Flag, 0, 1)];
+        service.activeGame.game.board.items = itemsBefore;
+
+        service.removeUnusedSpawnPoints();
+
+        expect(service.activeGame.game.board.items).toEqual(itemsBefore);
     });
 });
 

@@ -40,7 +40,7 @@ describe('WaitGridService', () => {
         expect(service.objects).not.toBe(game.game.board.items);
     });
 
-    // Edge case: should keep current state when initFromExistingBoard receives no game.
+    // Edge case: When initFromExistingBoard receives no game, keep current state.
     it('should keep current state when initFromExistingBoard receives no game', () => {
         const existingItem = createItem(ItemType.Flag, 1, 1);
         service.gameCells = [[CellType.Ice]];
@@ -52,7 +52,7 @@ describe('WaitGridService', () => {
         expect(service.objects).toEqual([existingItem]);
     });
 
-    // Edge case: should fallback to empty arrays when board cells or items are undefined.
+    // Edge case: When board cells or items are undefined, fall back to empty arrays.
     it('should fallback to empty arrays when board cells or items are undefined', () => {
         const game = {
             game: {
@@ -69,7 +69,7 @@ describe('WaitGridService', () => {
         expect(service.objects).toEqual([]);
     });
 
-    // Edge case: should keep current state when game board is missing.
+    // Edge case: When game board is missing, keep current state.
     it('should keep current state when game board is missing', () => {
         service.gameCells = [[CellType.Water]];
         service.objects = [createItem(ItemType.Flag, 0, 0)];
@@ -80,7 +80,7 @@ describe('WaitGridService', () => {
         expect(service.objects.length).toBe(1);
     });
 
-    // Edge case: should clear grid when size is not positive.
+    // Edge case: When size is not positive, clear grid.
     it('should clear grid when size is not positive', () => {
         service.gameCells = [[CellType.Ice]];
         service.objects = [createItem(ItemType.Flag, 0, 0)];

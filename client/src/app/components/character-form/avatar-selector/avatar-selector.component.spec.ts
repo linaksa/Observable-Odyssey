@@ -64,6 +64,7 @@ describe('AvatarSelectorComponent', () => {
         fixture.detectChanges();
     });
 
+    // Edge case: When reading selectedAvatar, the component should expose the value from CharacterFormService.
     it('should return selected avatar', () => {
         // Nominal case
         // The function should return the avatar selected in the form

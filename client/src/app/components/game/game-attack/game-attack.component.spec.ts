@@ -14,6 +14,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { ICharacter } from '@common/character';
+import { Avatar, DiceType } from '@common/constants';
 import { GameAttackComponent } from './game-attack.component';
 
 describe('GameAttackComponent', () => {
@@ -22,21 +25,28 @@ describe('GameAttackComponent', () => {
     let activeGameServiceStub: {
         toggleAttackMode: jasmine.Spy;
         attackMode: jasmine.Spy<() => boolean>;
+        getPlayerByName: jasmine.Spy<(playerName: string) => ICharacter | undefined>;
     };
     let gameTurnServiceStub: { canEndTurn: boolean };
+    let localPlayerServiceStub: { getLocalPlayer: jasmine.Spy<() => ICharacter | undefined> };
 
     beforeEach(async () => {
         activeGameServiceStub = {
             toggleAttackMode: jasmine.createSpy('toggleAttackMode'),
             attackMode: jasmine.createSpy('attackMode').and.returnValue(false),
+            getPlayerByName: jasmine.createSpy('getPlayerByName').and.returnValue(undefined),
         };
         gameTurnServiceStub = { canEndTurn: true };
+        localPlayerServiceStub = {
+            getLocalPlayer: jasmine.createSpy('getLocalPlayer').and.returnValue(undefined),
+        };
 
         await TestBed.configureTestingModule({
             imports: [GameAttackComponent],
             providers: [
                 { provide: ActiveGameService, useValue: activeGameServiceStub },
                 { provide: GameTurnService, useValue: gameTurnServiceStub },
+                { provide: LocalPlayerService, useValue: localPlayerServiceStub },
             ],
         }).compileComponents();
 
@@ -56,7 +66,7 @@ describe('GameAttackComponent', () => {
         expect(activeGameServiceStub.toggleAttackMode).toHaveBeenCalled();
     });
 
-    // Edge case: should not toggle attack mode when turn cannot end.
+    // Edge case: When turn cannot end, it should not toggle attack mode.
     it('should not toggle attack mode when turn cannot end', () => {
         gameTurnServiceStub.canEndTurn = false;
 
@@ -65,7 +75,7 @@ describe('GameAttackComponent', () => {
         expect(activeGameServiceStub.toggleAttackMode).not.toHaveBeenCalled();
     });
 
-    // Edge case: should disable attack button when turn cannot end.
+    // Edge case: When turn cannot end, disable attack button.
     it('should disable attack button when turn cannot end', () => {
         gameTurnServiceStub.canEndTurn = false;
         fixture.detectChanges();
@@ -83,4 +93,57 @@ describe('GameAttackComponent', () => {
         expect(button?.classList.contains('bg-red-600')).toBeTrue();
         expect(button?.classList.contains('text-white')).toBeTrue();
     });
+
+    it('should return false from hasAttackedThisTurn when local player is missing', () => {
+        localPlayerServiceStub.getLocalPlayer.and.returnValue(undefined);
+
+        expect(component.hasAttackedThisTurn()).toBeFalse();
+    });
+
+    it('should return true from hasAttackedThisTurn when local player has no actions left', () => {
+        localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        activeGameServiceStub.getPlayerByName.and.returnValue({
+            ...createCharacter('Alice'),
+            actionsLeft: 0,
+        });
+
+        expect(component.hasAttackedThisTurn()).toBeTrue();
+    });
+
+    it('should treat missing active-game player as already attacked for this turn', () => {
+        localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        activeGameServiceStub.getPlayerByName.and.returnValue(undefined);
+
+        expect(component.hasAttackedThisTurn()).toBeTrue();
+    });
+
+    it('should return false from hasAttackedThisTurn when player still has actions left', () => {
+        localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        activeGameServiceStub.getPlayerByName.and.returnValue({
+            ...createCharacter('Alice'),
+            actionsLeft: 1,
+        });
+
+        expect(component.hasAttackedThisTurn()).toBeFalse();
+    });
 });
+
+function createCharacter(name: string): ICharacter {
+    return {
+        name,
+        avatar: Avatar.Avatar1,
+        initialHealth: 10,
+        currentHealth: 10,
+        attackBonusDiceType: DiceType.FourSided,
+        defenseBonusDiceType: DiceType.SixSided,
+        rapidityPoints: 4,
+        attackPoints: 4,
+        defensePoints: 4,
+        actionsLeft: 1,
+        movementLeft: 4,
+        victories: 0,
+        hasAbandoned: false,
+        positionDepart: { x: 0, y: 0 },
+        positionGrille: { x: 0, y: 0 },
+    };
+}

@@ -88,7 +88,7 @@ describe('JoinPageComponent', () => {
         expect(activeGameTableServiceSpy.fetchJoinableActiveGames).toHaveBeenCalledTimes(2);
     });
 
-    // Edge case: should disconnect the active-game namespace on destroy.
+    // Edge case: When the join page is destroyed, it should disconnect from the ActiveGameAdmin namespace.
     it('should disconnect the active-game namespace on destroy', () => {
         fixture.detectChanges();
 

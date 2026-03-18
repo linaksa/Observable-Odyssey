@@ -149,11 +149,13 @@ describe('GameService', () => {
     });
 
     // Edge case: the server responds with an error (e.g., 404). Verifies that the service
-    // correctly propagates the error observable without throwing a synchronous exception.
-    // Edge case: should not crash when the request fails.
-    it('should not crash when the request fails', () => {
+    // returns the configured fallback value without throwing a synchronous exception.
+    it('should return fallback value when the request fails', async () => {
         httpSpy.get.and.returnValue(throwError(() => new Error('404')));
 
-        lastValueFrom(service.getAllGames());
+        const result = await lastValueFrom(service.getAllGames());
+
+        expect(result).toBeUndefined();
+        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/games`);
     });
 });

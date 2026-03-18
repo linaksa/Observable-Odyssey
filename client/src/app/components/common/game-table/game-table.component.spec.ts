@@ -97,12 +97,12 @@ describe('GameTableComponent', () => {
         hostComponent = fixture.componentInstance;
     });
 
-    // Edge case: should throw when no list is provided.
+    // Edge case: When no list is provided, throw.
     it('should throw when no list is provided', () => {
         expect(() => fixture.detectChanges()).toThrowError('No lists has been passed to fill the table.');
     });
 
-    // Edge case: should throw when both lists are provided.
+    // Edge case: When both lists are provided, throw.
     it('should throw when both lists are provided', () => {
         const game = createExistingGame('game-1', 'Game 1');
         hostComponent.games = [game];
@@ -140,7 +140,7 @@ describe('GameTableComponent', () => {
         expect(tableComponent.maximumNumOfPlayer(activeGame)).toBe(MAX_PLAYER_COUNT_SIX);
     });
 
-    // Edge case: should return empty gameList when inputs become undefined after initialization.
+    // Edge case: When inputs become undefined after initialization, return empty gameList.
     it('should return empty gameList when inputs become undefined after initialization', () => {
         const game = createExistingGame('game-1', 'Game 1');
         hostComponent.games = [game];
@@ -209,7 +209,7 @@ describe('GameTableComponent', () => {
         expect(tooltipApi.descriptionTooltip()).toBeNull();
     });
 
-    // Edge case: should use cursor fallback position when container bounds are unavailable.
+    // Edge case: When container bounds are unavailable, use cursor fall back position.
     it('should use cursor fallback position when container bounds are unavailable', () => {
         const game = createExistingGame('game-1', 'Game 1');
         hostComponent.games = [game];

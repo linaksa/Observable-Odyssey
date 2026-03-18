@@ -13,7 +13,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
-import { BoardSharedService } from './boardShared.service';
+import { BoardSharedService } from './board-shared.service';
 
 const SANCTUARY_X = 3;
 const SANCTUARY_Y = 5;
@@ -60,7 +60,7 @@ describe('BoardSharedService', () => {
         expect(found).toBe(sanctuary);
     });
 
-    // Edge case: should return null when no object occupies the coordinates.
+    // Edge case: When no object occupies the coordinates, return null.
     it('should return null when no object occupies the coordinates', () => {
         const flag = createItem(ItemType.Flag, 0, 0);
 
