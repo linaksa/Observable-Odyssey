@@ -1,5 +1,6 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -7,7 +8,6 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { INewMessage } from '@common/message';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
 
 describe('ActiveGameService', () => {
     let activeGameService: ActiveGameService;
@@ -16,6 +16,8 @@ describe('ActiveGameService', () => {
     let findActiveGameByIdStub: sinon.SinonStub;
     let findGameByIdStub: sinon.SinonStub;
     let findOneAndUpdateStub: sinon.SinonStub;
+    let findByIdAndUpdateStub: sinon.SinonStub;
+    let findByIdAndDeleteStub: sinon.SinonStub;
 
     const dummyGame: IGame = {
         gameTitle: 'Dummy Game',
@@ -88,6 +90,8 @@ describe('ActiveGameService', () => {
         findGameByIdStub = sinon.stub(game, 'findById');
         findActiveGameByIdStub = sinon.stub(activeGameModel, 'findById');
         findOneAndUpdateStub = sinon.stub(activeGameModel, 'findOneAndUpdate');
+        findByIdAndUpdateStub = sinon.stub(activeGameModel, 'findByIdAndUpdate');
+        findByIdAndDeleteStub = sinon.stub(activeGameModel, 'findByIdAndDelete');
     });
 
     afterEach(() => {
@@ -327,6 +331,66 @@ describe('ActiveGameService', () => {
 
             const result = await activeGameService.getMessagesFromGame('dummyActiveGameId');
             expect(result).to.equal(messages);
+        });
+
+        it('should update the active game in the db when saveActiveGameById is called', () => {
+            // Nominal case:
+            // we test that the correct db query is done
+
+            findByIdAndUpdateStub.returnsThis();
+            activeGameService.saveActiveGameById('dummyActiveGameId', { isFinished: true });
+
+            expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
+            expect(findByIdAndUpdateStub.firstCall.args[0]).to.equal('dummyActiveGameId');
+            expect(findByIdAndUpdateStub.firstCall.args[1]).to.deep.equal({ isFinished: true });
+            expect(findByIdAndUpdateStub.firstCall.args[2]).to.deep.equal({ new: true });
+        });
+
+        it('should delete the active game in the db when deleteActiveGameById is called', () => {
+            // Nominal case:
+            // we test that the correct db query is done
+
+            findByIdAndDeleteStub.returnsThis();
+            activeGameService.deleteGameById('dummyActiveGameId');
+
+            expect(findByIdAndDeleteStub.calledOnce).to.equal(true);
+            expect(findByIdAndDeleteStub.firstCall.args[0]).to.equal('dummyActiveGameId');
+        });
+
+        it('should return null if removePlayer is called with a non-existent active game', async () => {
+            // Edge case:
+            // The ActiveGame id passed to the function does not exist in the database
+            const getActiveGameByIdStub = sinon.stub(activeGameService, 'getActiveGameById');
+            getActiveGameByIdStub.resolves(null);
+
+            activeGameService.removePlayer('nonExistentId', 'PlayerName').then((result) => {
+                expect(result).to.equal(null);
+            });
+        });
+
+        it('should remove the player from the active game and save the result in db when removePlayer is called', async () => {
+            // Nominal case:
+            // The service should remove the player from the active game and update the database accordingly
+
+            const activeGameWithoutPlayer = { ...dummyActiveGame, players: [] as ICharacter[] };
+            const playerToRemove = 'PlayerToRemove';
+
+            const activeGameWithPlayer = {
+                ...dummyActiveGame,
+                players: [{ ...dummyPlayerCharacter, name: playerToRemove }] as ICharacter[],
+            };
+
+            const getActiveGameByIdStub = sinon.stub(activeGameService, 'getActiveGameById');
+            getActiveGameByIdStub.resolves(activeGameWithPlayer);
+
+            const saveActiveGameByIdStub = sinon.stub(activeGameService, 'saveActiveGameById');
+            saveActiveGameByIdStub.resolves(undefined);
+
+            await activeGameService.removePlayer('dummyActiveGameId', playerToRemove);
+
+            expect(saveActiveGameByIdStub.calledOnce).to.equal(true);
+            expect(saveActiveGameByIdStub.firstCall.args[0]).to.equal('dummyActiveGameId');
+            expect(saveActiveGameByIdStub.firstCall.args[1]).to.deep.equal(activeGameWithoutPlayer);
         });
     });
 });

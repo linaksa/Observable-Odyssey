@@ -41,6 +41,8 @@ export class DebugSocketService {
 
                 if (!activeGame.isDebugMode) return;
 
+                if (activeGame.turnIsInPreparation) return;
+
                 // Only the current player can teleport
                 const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
                 if (currentPlayerName !== playerName) return;
