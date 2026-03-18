@@ -1,12 +1,11 @@
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { MovementService } from '@app/services/gameplay/movement-service';
-import { SocketService } from '@app/services/realtime/socket.service';
 
 @Service()
 export class TurnService {
@@ -15,7 +14,6 @@ export class TurnService {
 
     constructor(
         private readonly socketService: SocketService,
-        private readonly movementService: MovementService,
         private readonly activeGameService: ActiveGameService,
     ) {}
 
@@ -80,12 +78,6 @@ export class TurnService {
             actionLeft: player?.actionsLeft ?? 0,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
-        const positions = this.movementService.getReachablePositions(player.name, gameId);
-
-        namespace.to(gameId).emit(SocketEvent.ReachablePositions, {
-            player: player.name,
-            positions,
-        });
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);

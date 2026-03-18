@@ -25,7 +25,6 @@ export const enum SocketEvent {
     EndTurn = 'end-turn',
     TurnPreparing = 'TurnPreparing',
     TurnStarted = 'TurnStarted',
-    ReachablePositions = 'ReachablePositions',
     JoinGame = 'join-game',
     PlayersUpdated = 'players-updated',
     DebugToggle = 'debug-toggle',
