@@ -1,181 +1,80 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { GameService } from '@app/services/admin/game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { ToastService } from '@app/services/ui/toast.service';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
-import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, ITurnStartedPayload } from '@common/socket-payloads';
+import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { ToastService } from '@app/services/ui/toast.service';
+
+import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 @Injectable({
     providedIn: 'root',
 })
 export class ActiveGameService implements OnDestroy {
-    private readonly toastService: ToastService = inject(ToastService);
-    private readonly httpService = inject(HTTP_CLIENT);
+    private readonly toastService = inject(ToastService);
+    private readonly gameService = inject(GameService);
     private readonly socket = inject(SocketService);
     private readonly localPlayer = inject(LocalPlayerService);
+    private readonly router = inject(Router);
+
+    private readonly socketSubscriptions: Subscription[] = [];
+    private setActiveGameSubscription?: Subscription;
+
+    private _isDebugMode = signal(false);
+    isDebugMode = this._isDebugMode.asReadonly();
+
     activeGame: IActiveGame;
 
     isLoading = signal(false);
-
-    private readonly router = inject(Router);
-
-    private _isDebugMode = signal(false);
-
-    isDebugMode = this._isDebugMode.asReadonly();
-
     hasChangedLocation = signal(false);
-
     hasAbandonned = signal(false);
-
     gameHasEnded = signal(false);
-
     attackMode = signal(false);
 
-    private playerKickedSubscription?: Subscription;
-    private playerLeftSubscription?: Subscription;
-    private playerMovedSubscription?: Subscription;
-    private turnPreparingSubscription?: Subscription;
-    private turnStartedSubscription?: Subscription;
-    private attackResultSubscription?: Subscription;
-    private playerAbandonedSubscription?: Subscription;
-    private gameCanceledSubscription?: Subscription;
-    private gameEndedSubscription?: Subscription;
-    private setActiveGameSubscription?: Subscription;
+    reachableTiles = new Set<number>();
+    currentPlayer = signal<number>(0);
 
     constructor() {
         this.socket.connect(Namespaces.Game);
 
-        this.playerMovedSubscription = this.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {
-            if (!this.activeGame) {
-                return;
-            }
+        this.socketSubscriptions.push(
+            ...registerActiveGameSocketListeners({
+                socket: this.socket,
+                localPlayer: this.localPlayer,
+                toastService: this.toastService,
+                router: this.router,
+                getActiveGame: () => this.activeGame,
+                getPlayerByName: (playerName) => this.getPlayerByName(playerName),
+                currentPlayer: this.currentPlayer,
+                hasChangedLocation: this.hasChangedLocation,
+                hasAbandonned: this.hasAbandonned,
+                gameHasEnded: this.gameHasEnded,
+            }),
+        );
+    }
 
-            const player = this.getPlayerByName(playerMove.playerId);
-            if (!player) return;
-
-            player.positionGrille.x = playerMove.newPosition.x;
-            player.positionGrille.y = playerMove.newPosition.y;
-            player.movementLeft = playerMove.movementLeft;
-
-            this.hasChangedLocation.set(!this.hasChangedLocation());
-        });
-
-        this.turnPreparingSubscription = this.socket.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
-            if (index !== -1) {
-                this.activeGame.currentPlayerIndex = index;
-                this.currentPlayer.set(index);
-                this.hasChangedLocation.set(!this.hasChangedLocation());
-            }
-        });
-
-        this.turnStartedSubscription = this.socket.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            const index = this.activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
-            const currentPlayer = this.getPlayerByName(data.player);
-
-            if (index !== -1 && currentPlayer) {
-                currentPlayer.movementLeft = data.movementLeft;
-                currentPlayer.actionsLeft = data.actionLeft;
-                this.activeGame.currentPlayerIndex = index;
-                this.currentPlayer.set(index);
-                this.hasChangedLocation.set(!this.hasChangedLocation());
-            }
-        });
-
-        this.attackResultSubscription = this.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            const attacker = this.getPlayerByName(data.attackerName);
-            const defender = this.getPlayerByName(data.defenderName);
-            if (!defender || !attacker) return;
-
-            attacker.victories = data.attackerVictories;
-            attacker.actionsLeft = data.attackerActionsLeft;
-            defender.positionGrille.x = data.defenderNewPosition.x;
-            defender.positionGrille.y = data.defenderNewPosition.y;
-
-            this.hasChangedLocation.set(!this.hasChangedLocation());
-        });
-        this.playerAbandonedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            const player = this.getPlayerByName(data.playerId);
-            if (!player) return;
-
-            player.hasAbandoned = true;
-
-            this.hasAbandonned.set(!this.hasAbandonned());
-        });
-        this.playerKickedSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            if (this.activeGame?.players) {
-                this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
-            }
-
-            if (data.playerId !== this.localPlayer.getLocalPlayer()?.name) {
-                return;
-            }
-
-            this.localPlayer.clear();
-            this.toastService.show('Vous avez été expulsé de la partie');
-            this.router.navigate(['/']);
-        });
-        this.playerLeftSubscription = this.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            const player = this.getPlayerByName(data.playerId);
-            if (!player) return;
-            this.activeGame.players = this.activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
-        });
-        this.gameEndedSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
-            if (!this.activeGame) {
-                return;
-            }
-
-            this.activeGame.winner = data.winner;
-            this.activeGame.isFinished = true;
-
-            this.gameHasEnded.set(!this.gameHasEnded());
-        });
-        this.gameCanceledSubscription = this.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
-            this.localPlayer.clear();
-            this.toastService.show("L'organiseur a annulé la partie.");
-            this.router.navigate(['/home']);
-        });
+    private toggle(signalRef: { update: (updater: (current: boolean) => boolean) => void }): void {
+        signalRef.update((current) => !current);
     }
 
     applyDebugModeState(data: IDebugToggleState) {
         if (!this.activeGame) {
             return;
         }
-        if (data.playerName !== this.activeGame.organizerName) return;
+
+        if (data.playerName !== this.activeGame.organizerName) {
+            return;
+        }
+
         this.activeGame.isDebugMode = data.isDebugMode;
         this._isDebugMode.set(data.isDebugMode);
     }
@@ -183,44 +82,59 @@ export class ActiveGameService implements OnDestroy {
     setActiveGame(id: string): void {
         this.isLoading.set(true);
         this.setActiveGameSubscription?.unsubscribe();
-        this.setActiveGameSubscription = this.httpService.get<IActiveGame>(environment.apiUrl + '/activeGame/' + id).subscribe({
-            next: (game) => {
-                this.activeGame = game;
-                this._isDebugMode.set(game.isDebugMode);
-                this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
-                this.removeUnusedSpawnPoints();
+        const subscription = this.gameService
+            .getActiveGameById(id)
+            .pipe(
+                finalize(() => {
+                    this.isLoading.set(false);
+                    this.setActiveGameSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (game) => {
+                    if (!game) {
+                        return;
+                    }
 
-                this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
-            },
-            error: () => {
-                this.isLoading.set(false);
-                this.setActiveGameSubscription = undefined;
-            },
-            complete: () => {
-                this.isLoading.set(false);
-                this.setActiveGameSubscription = undefined;
-            },
-        });
+                    this.activeGame = game;
+                    this._isDebugMode.set(game.isDebugMode);
+                    this.currentPlayer.set(game.currentPlayerIndex ?? 0);
+
+                    this.removeUnusedSpawnPoints();
+
+                    this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
+                },
+            });
+
+        this.setActiveGameSubscription = subscription;
+        if (subscription.closed) {
+            this.setActiveGameSubscription = undefined;
+        }
     }
-    reachableTiles = new Set<number>();
-
-    currentPlayer = signal<number>(0);
 
     toggleAttackMode(): void {
-        this.attackMode.update((v) => !v);
+        this.toggle(this.attackMode);
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
-        return this.activeGame.players.find((player) => player.name === playerName);
+        return this.activeGame?.players.find((player) => player.name === playerName);
     }
 
     getPlayersAtPosition(row: number, col: number): ICharacter[] {
-        return this.activeGame.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col);
+        return (
+            this.activeGame?.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col) ??
+            []
+        );
     }
 
     getCurrentPlayer(): ICharacter | undefined {
-        const currentPlayerName = this.activeGame.turnOrder[this.currentPlayer()];
+        const currentPlayerName = this.activeGame?.turnOrder[this.currentPlayer()];
+
+        if (!currentPlayerName) {
+            return undefined;
+        }
+
         return this.getPlayerByName(currentPlayerName);
     }
 
@@ -229,12 +143,21 @@ export class ActiveGameService implements OnDestroy {
     }
 
     kickPlayer(playerName: string) {
+        if (!this.activeGame) {
+            return;
+        }
+
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerKick, {
             gameId: this.activeGame._id,
             playerId: playerName,
         });
     }
+
     leaveWaitingRoom(playerName: string) {
+        if (!this.activeGame) {
+            return;
+        }
+
         this.socket.emit(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -245,43 +168,39 @@ export class ActiveGameService implements OnDestroy {
         const payload = { activeGameId, playerName };
         const url = `${environment.apiUrl}/activeGame/leave`;
         const headers = new Headers();
+
         headers.set('Content-Type', 'application/json');
 
-        // keepalive allows the browser to continue sending during unload/refresh.
         void fetch(url, {
             method: 'PATCH',
             headers,
             body: JSON.stringify(payload),
-            keepalive: true,
+            keepalive: true, // keepalive allows the browser to continue sending during unload/refresh.
         });
     }
 
     ngOnDestroy(): void {
-        this.playerMovedSubscription?.unsubscribe();
-        this.turnPreparingSubscription?.unsubscribe();
-        this.turnStartedSubscription?.unsubscribe();
-        this.attackResultSubscription?.unsubscribe();
-        this.playerKickedSubscription?.unsubscribe();
-        this.playerAbandonedSubscription?.unsubscribe();
-        this.gameEndedSubscription?.unsubscribe();
+        this.socketSubscriptions.forEach((subscription) => subscription.unsubscribe());
         this.setActiveGameSubscription?.unsubscribe();
-        this.playerLeftSubscription?.unsubscribe();
-        this.gameCanceledSubscription?.unsubscribe();
     }
 
     updatePlayers(players: ICharacter[]): void {
         if (!this.activeGame) {
             return;
         }
+
         this.activeGame = {
             ...this.activeGame,
             players: [...players],
         };
+
         this.syncTurnOrderWithPlayers();
     }
 
     private syncTurnOrderWithPlayers(): void {
-        if (!this.activeGame) return;
+        if (!this.activeGame) {
+            return;
+        }
 
         const currentPlayerName = this.activeGame.turnOrder[this.activeGame.currentPlayerIndex];
         const activePlayerNames = new Set(this.activeGame.players.map((player) => player.name));
@@ -310,16 +229,16 @@ export class ActiveGameService implements OnDestroy {
         }
 
         const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
-
         const distances = dijkstra(graph, startIndex);
-
-        this.reachableTiles.clear();
+        const reachableTiles = new Set<number>();
 
         for (let i = 0; i < distances.length; i++) {
             if (distances[i] <= player.movementLeft) {
-                this.reachableTiles.add(i);
+                reachableTiles.add(i);
             }
         }
+
+        this.reachableTiles = reachableTiles;
     }
 
     tryMove(rowOffset: number, colOffset: number, totalColumns: number) {
@@ -330,7 +249,6 @@ export class ActiveGameService implements OnDestroy {
 
         const newRow = player.positionGrille.y + rowOffset;
         const newCol = player.positionGrille.x + colOffset;
-
         const index = this.getIndex(newRow, newCol, totalColumns);
 
         if (!this.reachableTiles.has(index)) {
@@ -350,6 +268,10 @@ export class ActiveGameService implements OnDestroy {
     }
 
     abandonGame(playerName: string): void {
+        if (!this.activeGame) {
+            return;
+        }
+
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerAbandon, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -360,16 +282,16 @@ export class ActiveGameService implements OnDestroy {
         const attacker = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
-        if (!attacker) return;
-
-        if (attacker === target) return;
-
-        if (!target) return;
+        if (!attacker || !target || attacker === target) {
+            return;
+        }
 
         const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
         const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
 
-        if (dx + dy !== 1) return;
+        if (dx + dy !== 1) {
+            return;
+        }
 
         const attackData: IAttackData = {
             gameId: this.activeGame._id,
@@ -378,7 +300,6 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.socket.emit(Namespaces.Game, SocketEvent.Attack, attackData);
-
         this.attackMode.set(false);
     }
 
@@ -387,6 +308,7 @@ export class ActiveGameService implements OnDestroy {
         if (!player) {
             return;
         }
+
         this.socket.emit<IDebugTeleportData, void>(Namespaces.Game, SocketEvent.DebugTeleport, {
             gameId: this.activeGame._id,
             playerName: player.name,
@@ -395,7 +317,10 @@ export class ActiveGameService implements OnDestroy {
     }
 
     removeUnusedSpawnPoints(): void {
-        if (this.activeGame.turnOrder.length === 0) return;
+        if (!this.activeGame || this.activeGame.turnOrder.length === 0) {
+            return;
+        }
+
         this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
             (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
         );

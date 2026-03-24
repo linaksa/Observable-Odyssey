@@ -1,14 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
+import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
-import { IItem, ItemType } from '@common/items';
+import { IItem } from '@common/items';
 
 @Component({
     selector: 'app-wait-game-grid',
-    imports: [CommonModule],
+    imports: [CommonModule, GameGridComponent],
     templateUrl: './wait-game-grid.component.html',
 })
 export class WaitGameGridComponent {
@@ -20,9 +20,17 @@ export class WaitGameGridComponent {
         return this.activeGameService.activeGame.game.board.cells;
     }
 
+    protected get tableSize(): number {
+        return this.table.length;
+    }
+
     protected get items(): IItem[] {
         return this.activeGameService.activeGame.game.board.items;
     }
+
+    readonly getObjectAt = (row: number, col: number): IItem | null => {
+        return this.boardSharedService.getObjectAt(row, col, this.items);
+    };
 
     protected get gameTitle(): string {
         return this.activeGameService.activeGame.game.gameTitle;
@@ -32,10 +40,6 @@ export class WaitGameGridComponent {
         return this.activeGameService.activeGame.game.description;
     }
 
-    protected get tableSize(): number {
-        return this.activeGameService.activeGame.game.board.cells.length;
-    }
-
     protected get gameMode(): string {
         return this.activeGameService.activeGame.game.gameMode === 'classic' ? 'Normal' : 'CTF';
     }
@@ -43,42 +47,5 @@ export class WaitGameGridComponent {
     protected get lockIcon(): string {
         const full = this.activeGameService.activeGame.players.length >= this.activeGameService.activeGame.maxPlayerCount;
         return full ? 'assets/wait-page/lock.svg' : 'assets/wait-page/unlock.svg';
-    }
-
-    cellImagePath(cellType: CellType): string {
-        return CELL_TYPE_PATHS[cellType];
-    }
-
-    objectImagePath(item: IItem | null): string {
-        if (!item) return '';
-        return ITEM_TYPE_PATHS[item.itemType];
-    }
-
-    getObjectAt(row: number, col: number): IItem | null {
-        return this.boardSharedService.getObjectAt(row, col, this.items);
-    }
-
-    objectExtraStyles(item: IItem, row: number, col: number): Record<string, string> {
-        if (!item) return {};
-
-        if (item.itemType === ItemType.LifeSanctuary || item.itemType === ItemType.FightSanctuary) {
-            const relativeRow = row - item.x;
-            const relativeCol = col - item.y;
-            const left = relativeCol === 0 ? '0' : '-100%';
-            const top = relativeRow === 0 ? '0' : '-100%';
-
-            return {
-                top,
-                left,
-                width: '200%',
-                height: '200%',
-            };
-        }
-
-        return {
-            inset: '0',
-            width: '100%',
-            height: '100%',
-        };
     }
 }
