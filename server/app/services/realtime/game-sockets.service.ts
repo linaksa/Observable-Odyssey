@@ -147,8 +147,8 @@ export class GameSocketsService {
                     return;
                 }
 
-                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
                 this.gameplayService.turnService.suspendTurn(gameId);
+                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
 
                 this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
 

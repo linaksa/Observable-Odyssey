@@ -135,9 +135,6 @@ export class TurnService {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame || !activeGame.currentAttack) return;
 
-        const namespace = this.socketService.getNamespace(Namespaces.Game);
-        namespace.to(gameId).emit(SocketEvent.SuspendTurn);
-
         const secondsRemaining = this.clearTimerFromMap(gameId, this.turnTimers);
         activeGame.currentAttack.suspendedTurnTimer = secondsRemaining;
 

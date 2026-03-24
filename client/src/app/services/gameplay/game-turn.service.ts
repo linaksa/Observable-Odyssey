@@ -112,12 +112,6 @@ export class GameTurnService {
                 }
             },
         });
-
-        this.turnStopSubscription = this.socketService.on<void>(Namespaces.Game, SocketEvent.SuspendTurn).subscribe({
-            next: () => {
-                this.stopCountdown();
-            },
-        });
     }
 
     // Requests the server to end the current turn (server is authoritative)
@@ -149,12 +143,15 @@ export class GameTurnService {
         const deadline = Date.now() + durationMs;
         this._turnTimeLeftSeconds = Math.ceil(durationMs / MILLISECONDS_PER_SECOND);
 
+        console.log(`Starting turn countdown: ${this._turnTimeLeftSeconds} seconds`);
         this.countdownInterval = setInterval(() => {
             const remainingMs = deadline - Date.now();
             const nextSeconds = Math.ceil(Math.max(remainingMs, COUNTDOWN_MIN_REMAINING_MS) / MILLISECONDS_PER_SECOND);
             this._turnTimeLeftSeconds = nextSeconds;
+            console.log(`Turn countdown: ${nextSeconds} seconds left`);
 
             if (remainingMs <= COUNTDOWN_MIN_REMAINING_MS) {
+                console.log('Turn countdown ended');
                 this.stopCountdown();
             }
         }, COUNTDOWN_TICK_INTERVAL_MS);

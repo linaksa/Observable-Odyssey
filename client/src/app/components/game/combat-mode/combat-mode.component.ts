@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { ICharacter } from '@common/character';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { AttackPosture } from '@common/attackResult';
+import { ICharacter } from '@common/character';
 
 @Component({
     selector: 'app-combat-mode',
@@ -10,6 +11,7 @@ import { AttackPosture } from '@common/attackResult';
 })
 export class CombatModeComponent {
     activeGameService: ActiveGameService = inject(ActiveGameService);
+    turnService = inject(GameTurnService);
 
     get attackerCharacter(): ICharacter | undefined {
         const attackerName = this.activeGameService.activeGame.currentAttack?.attacker;
