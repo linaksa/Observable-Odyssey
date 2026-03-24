@@ -128,6 +128,11 @@ export class GameSocketsService {
                     if (reachable.length === 0 && !canAttackAnyPlayer) {
                         await this.gameplayService.turnService.endTurn(gameId);
                     }
+                    const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+                    if (gameEnded) {
+                        this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: playerId });
+                        await this.activeGameService.deleteGameById(gameId);
+                    }
                 } catch (error) {
                     socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
                 }
