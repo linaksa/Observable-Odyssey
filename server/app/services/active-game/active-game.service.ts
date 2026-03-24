@@ -1,6 +1,6 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IMessage, INewMessage } from '@common/message';
@@ -155,5 +155,23 @@ export class ActiveGameService {
             return `${newPlayerName}-${uniquePlayerIdToAppend}`;
         }
         return newPlayerName;
+    }
+
+    async startCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<IActiveGame> {
+        const activeGame = await activeGameModel.findById(activeGameId);
+        if (!activeGame) {
+            throw new Error(`Active game with id ${activeGameId} not found`);
+        }
+
+        let currentAttack: ICurrentAttack = {
+            attacker: attackerName,
+            defender: defenderName,
+        };
+
+        return await activeGameModel.findOneAndUpdate(
+            { _id: activeGameId },
+            { $push: { currentAttack: currentAttack } },
+            { returnDocument: 'after' },
+        );
     }
 }

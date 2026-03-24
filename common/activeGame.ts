@@ -15,6 +15,13 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
     turnIsInPreparation: boolean;
+
+    currentAttack: ICurrentAttack | null;
+}
+
+export interface ICurrentAttack {
+    attacker: string;
+    defender: string;
 }
 
 export interface IActiveGameWithPlayer {

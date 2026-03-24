@@ -139,14 +139,16 @@ export class GameSocketsService {
                     return;
                 }
 
-                const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
-                this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
-                    attackerName,
-                    defenderName,
-                    attackerActionsLeft: result.attackerActionsLeft,
-                    attackerVictories: result.attackerVictories,
-                    defenderNewPosition: result.defenderNewPosition,
-                });
+                await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+
+                // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
+                // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
+                //     attackerName,
+                //     defenderName,
+                //     attackerActionsLeft: result.attackerActionsLeft,
+                //     attackerVictories: result.attackerVictories,
+                //     defenderNewPosition: result.defenderNewPosition,
+                // });
 
                 // End the game if the defender cannot move anymore
                 const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
