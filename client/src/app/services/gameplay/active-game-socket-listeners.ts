@@ -26,6 +26,7 @@ export interface ActiveGameSocketContext {
     currentPlayer: {
         set(value: number): void;
     };
+    setActiveGame: (activeGame: IActiveGame) => void;
     hasChangedLocation: BooleanSignal;
     hasAbandonned: BooleanSignal;
     gameHasEnded: BooleanSignal;
@@ -160,6 +161,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.localPlayer.clear();
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
+        }),
+        context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((newActiveGame) => {
+            context.setActiveGame(newActiveGame);
         }),
     ];
 }

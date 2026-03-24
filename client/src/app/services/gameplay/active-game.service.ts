@@ -62,6 +62,7 @@ export class ActiveGameService implements OnDestroy {
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
+                setActiveGame: (activeGame: IActiveGame) => {this.activeGame = activeGame},
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandonned: this.hasAbandonned,
