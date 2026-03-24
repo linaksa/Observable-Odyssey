@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
+import { AttackPosture } from '@common/attackResult';
 
 @Component({
     selector: 'app-combat-mode',
@@ -33,4 +34,6 @@ export class CombatModeComponent {
     getAvatarUrl(character: ICharacter | undefined): string {
         return `assets/form-page/${character?.avatar || ''}.png`;
     }
+
+    protected readonly AttackPosture = AttackPosture;
 }

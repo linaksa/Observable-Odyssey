@@ -6,7 +6,7 @@
 
         <div class="flex items-center justify-between mb-6">
             <div class="flex-1">
-                <p class="font-bold text-left">{{ defenderCharacter?.name }}</p>
+                <p class="font-bold text-left">Defenseur : {{ defenderCharacter?.name }}</p>
 
                 <div class="flex gap-[2px] mt-1">
                     @for (health of getHealthRange(defenderCharacter); track $index) {
@@ -28,7 +28,7 @@
             <img [src]="getAvatarUrl(attackerCharacter)" class="w-16 h-16 mr-4 border-2 border-black rounded bg-white object-contain" />
 
             <div class="flex-1 text-right">
-                <p class="font-bold">{{ attackerCharacter?.name }}</p>
+                <p class="font-bold">Attaquant : {{ attackerCharacter?.name }}</p>
 
                 <div class="flex gap-[2px] mt-1 justify-end">
                     @for (health of getHealthRange(attackerCharacter); track $index) {
@@ -49,8 +49,14 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-            <button class="bg-red-500 hover:bg-red-600 text-white border-2 border-black py-2 shadow">Defensive move</button>
-            <button class="bg-blue-500 hover:bg-blue-600 text-white border-2 border-black py-2 shadow">Offensive move</button>
+            <button
+                (click)="this.activeGameService.chooseAttackMode(AttackPosture.Defensive)"
+                    class="bg-red-500 hover:bg-red-600 text-white border-2 border-black py-2 shadow">
+                 Defensive move
+            </button>
+            <button
+                (click)="this.activeGameService.chooseAttackMode(AttackPosture.Offensive)"
+                class="bg-blue-500 hover:bg-blue-600 text-white border-2 border-black py-2 shadow">Offensive move</button>
         </div>
     </div>
 </div>
