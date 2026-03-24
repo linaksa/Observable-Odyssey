@@ -9,7 +9,15 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAbandonData, IAttackData, IDebugToggleState, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
+import {
+    IAbandonData,
+    IAttackData,
+    IAttackPostureData,
+    IDebugToggleState,
+    IJoinGamePayload,
+    IPlayerMoveData,
+    ISocketData,
+} from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -164,6 +172,18 @@ export class GameSocketsService {
                 //     await this.activeGameService.deleteGameById(gameId);
                 // }
             });
+
+            socket.on(SocketEvent.ChooseAttackPosture, async (data: IAttackPostureData) => {
+                const { gameId, playerName, posture } = data;
+                const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+
+                const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack.defenderPosture;
+                if (combatReady) {
+                    await this.gameplayService.combatService.applyCombat(gameId);
+                }
+                this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+            });
+
             // =======================
             // End turn
             // =======================

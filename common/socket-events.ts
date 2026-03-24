@@ -22,6 +22,8 @@ export const enum SocketEvent {
     Attack = 'attack',
     AttackError = 'attack-error',
     AttackResult = 'attack-result',
+    ChooseAttackPosture = 'choose-attack-posture',
+    AttackPostureChosen = 'attack-posture-chosen',
     CombatStarted = 'combat-started',
     EndTurn = 'end-turn',
     TurnPreparing = 'TurnPreparing',

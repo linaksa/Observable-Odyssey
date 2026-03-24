@@ -1,6 +1,7 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
+import { AttackPosture } from '@common/attackResult';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IMessage, INewMessage } from '@common/message';
@@ -157,15 +158,18 @@ export class ActiveGameService {
         return newPlayerName;
     }
 
-    async startCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<IActiveGame> {
+    async startCombat(activeGameId: string, attacker: string, defender: string): Promise<IActiveGame> {
         const activeGame = await activeGameModel.findById(activeGameId);
         if (!activeGame) {
             throw new Error(`Active game with id ${activeGameId} not found`);
         }
 
         let currentAttack: ICurrentAttack = {
-            attacker: attackerName,
-            defender: defenderName,
+            attacker,
+            defender,
+            turnCount: 1,
+            attackerPosture: null,
+            defenderPosture: null,
         };
 
         return await activeGameModel.findOneAndUpdate(
@@ -173,5 +177,25 @@ export class ActiveGameService {
             { $push: { currentAttack: currentAttack } },
             { returnDocument: 'after' },
         );
+    }
+
+    async choosePosture(activeGameId: string, playerName: string, posture: AttackPosture): Promise<IActiveGame> {
+        const activeGame = await activeGameModel.findById(activeGameId);
+        if (!activeGame) {
+            throw new Error(`Active game with id ${activeGameId} not found`);
+        }
+
+        const currentAttack = activeGame.currentAttack;
+        if (!currentAttack) {
+            throw new Error(`No ongoing attack in active game with id ${activeGameId}`);
+        }
+
+        if (currentAttack.attacker === playerName) {
+            currentAttack.attackerPosture = posture;
+        } else if (currentAttack.defender === playerName) {
+            currentAttack.defenderPosture = posture;
+        }
+
+        return await activeGameModel.findOneAndUpdate({ _id: activeGameId }, { currentAttack: currentAttack }, { returnDocument: 'after' });
     }
 }

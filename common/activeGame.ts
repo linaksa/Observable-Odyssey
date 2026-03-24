@@ -1,3 +1,4 @@
+import { AttackPosture } from './attackResult';
 import { ICharacter } from './character';
 import { IGame } from './game';
 import { IMessage } from './message';
@@ -22,6 +23,10 @@ export interface IActiveGame {
 export interface ICurrentAttack {
     attacker: string;
     defender: string;
+    turnCount: number;
+
+    attackerPosture: AttackPosture | null;
+    defenderPosture: AttackPosture | null;
 }
 
 export interface IActiveGameWithPlayer {

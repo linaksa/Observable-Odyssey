@@ -5,3 +5,8 @@ export interface AttackResult {
     attackerActionsLeft: number;
     defenderNewPosition: { x: number; y: number };
 }
+
+export enum AttackPosture {
+    Offensive = 'Offensive',
+    Defensive = 'Defensive',
+}

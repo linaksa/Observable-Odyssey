@@ -1,6 +1,7 @@
 import { inMemoryDb } from '@app/database';
 import { IActiveGame } from '@common/activeGame';
 import { Schema } from 'mongoose';
+import { currentAttackSchema } from './attack';
 import { characterSchema } from './character';
 import { gameSchema } from './game';
 import { messageSchema } from './message';
@@ -42,14 +43,7 @@ const activeGameSchema = new Schema<IActiveGame>({
         required: true,
     },
 
-    currentAttack: {
-        attacker: {
-            type: String,
-        },
-        defender: {
-            type: String,
-        },
-    },
+    currentAttack: currentAttackSchema,
 });
 
 export const activeGameModel = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);
