@@ -16,7 +16,6 @@ import { environment } from 'src/environments/environment';
 
 import { AttackPosture } from '@common/attackResult';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
-import { GameTurnService } from './game-turn.service';
 
 @Injectable({
     providedIn: 'root',
@@ -26,7 +25,6 @@ export class ActiveGameService implements OnDestroy {
     private readonly gameService = inject(GameService);
     private readonly socket = inject(SocketService);
     private readonly localPlayer = inject(LocalPlayerService);
-    private readonly gameTurnService = inject(GameTurnService);
     private readonly router = inject(Router);
 
     private readonly socketSubscriptions: Subscription[] = [];
@@ -54,7 +52,6 @@ export class ActiveGameService implements OnDestroy {
                 socket: this.socket,
                 localPlayer: this.localPlayer,
                 toastService: this.toastService,
-                turnService: this.gameTurnService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
