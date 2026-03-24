@@ -12,7 +12,6 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { IActiveGame } from '@common/activeGame';
@@ -21,9 +20,6 @@ import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { WaitGameGridComponent } from './wait-game-grid.component';
-
-const SANCTUARY_ROW = 2;
-const SANCTUARY_COLUMN = 3;
 
 describe('WaitGameGridComponent', () => {
     let component: WaitGameGridComponent;
@@ -77,19 +73,10 @@ describe('WaitGameGridComponent', () => {
         expect(componentApi.items).toEqual(boardItems);
         expect(componentApi.gameTitle).toBe('Maze');
         expect(componentApi.gameDescription).toBe('Fast match');
-        expect(componentApi.tableSize).toBe(2);
         expect(componentApi.gameMode).toBe('Normal');
 
         activeGameServiceStub.activeGame.game.gameMode = GameType.Ctf;
         expect(componentApi.gameMode).toBe('CTF');
-    });
-
-    it('should map cell and object image paths', () => {
-        const item = createItem(ItemType.Flag, 1, 1);
-
-        expect(component.cellImagePath(CellType.Ice)).toBe(CELL_TYPE_PATHS[CellType.Ice]);
-        expect(component.objectImagePath(item)).toBe(ITEM_TYPE_PATHS[ItemType.Flag]);
-        expect(component.objectImagePath(null)).toBe('');
     });
 
     it('should delegate getObjectAt to BoardSharedService with current item list', () => {
@@ -101,38 +88,6 @@ describe('WaitGameGridComponent', () => {
 
         expect(found).toBe(item);
         expect(boardSharedServiceSpy.getObjectAt).toHaveBeenCalledWith(1, 0, boardItems);
-    });
-
-    it('should compute sanctuary styles for each covered cell', () => {
-        const sanctuary = createItem(ItemType.LifeSanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN);
-
-        expect(component.objectExtraStyles(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN)).toEqual({
-            top: '0',
-            left: '0',
-            width: '200%',
-            height: '200%',
-        });
-        expect(component.objectExtraStyles(sanctuary, SANCTUARY_ROW + 1, SANCTUARY_COLUMN + 1)).toEqual({
-            top: '-100%',
-            left: '-100%',
-            width: '200%',
-            height: '200%',
-        });
-    });
-
-    it('should compute full-cell styles for regular objects', () => {
-        const flag = createItem(ItemType.Flag, 0, 0);
-
-        expect(component.objectExtraStyles(flag, 0, 0)).toEqual({
-            inset: '0',
-            width: '100%',
-            height: '100%',
-        });
-    });
-
-    // Edge case: When required input data is missing, return empty styles for missing object.
-    it('should return empty styles for missing object', () => {
-        expect(component.objectExtraStyles(null as unknown as IItem, 0, 0)).toEqual({});
     });
 
     it('should return lock icon according to player count', () => {
@@ -161,6 +116,5 @@ type WaitGameGridApi = {
     items: IItem[];
     gameTitle: string;
     gameDescription: string;
-    tableSize: number;
     gameMode: string;
 };

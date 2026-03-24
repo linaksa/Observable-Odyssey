@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import {
     GridSize,
     MAX_FLAG_AMOUNT,
@@ -10,6 +10,7 @@ import {
     MAX_SPAWNPOINT_AMOUNT_SMALL,
     ToolOption,
 } from '@app/constants/grid-edition';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame } from '@common/game';
@@ -19,7 +20,26 @@ import { IItem, ItemType, SANCTUARY_SIZE, SMALL_ITEM_SIZE } from '@common/items'
     providedIn: 'root',
 })
 export class BoardEditorService {
+    private readonly gameCellsState = signal<CellType[][]>([]);
+    private readonly objectsState = signal<IItem[]>([]);
+    private readonly gameModeState = signal<GameType>(GameType.Classic);
+    private readonly activeToolState = signal<ToolOption>(ToolOption.Placement);
+    private readonly selectedMaterialState = signal<CellType>(CellType.Empty);
+    private readonly selectedObjectState = signal<ItemType | null>(null);
+
     availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
+    readonly cellTypesInfo = TILE_INFO_BY_TYPE;
+    readonly itemTypesInfo = ITEM_INFO_BY_TYPE;
+
+    readonly availableObjectTypes = computed<ItemType[]>(() => {
+        const baseObjectTypes = [ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition];
+
+        if (this.gameMode === GameType.Ctf) {
+            return [...baseObjectTypes, ItemType.Flag];
+        }
+
+        return baseObjectTypes;
+    });
 
     availableTools = Object.values(ToolOption);
     availableToolsIcons: { [key in ToolOption]: string } = {
@@ -28,14 +48,6 @@ export class BoardEditorService {
     };
 
     boardSharedService: BoardSharedService = inject(BoardSharedService);
-
-    gameCells: CellType[][] = [];
-    objects: IItem[] = [];
-    gameMode: GameType;
-
-    activeTool: ToolOption = ToolOption.Placement;
-    selectedMaterial: CellType = CellType.Empty;
-    selectedObject: ItemType | null;
 
     objectSizesMap = {
         [ItemType.LifeSanctuary]: SANCTUARY_SIZE,
@@ -62,15 +74,66 @@ export class BoardEditorService {
 
     private blockingCells = new Set<CellType>([CellType.Wall, CellType.OpenDoor, CellType.ClosedDoor]);
 
+    get gameCells(): CellType[][] {
+        return this.gameCellsState();
+    }
+
+    set gameCells(value: CellType[][]) {
+        this.gameCellsState.set(value);
+    }
+
+    get objects(): IItem[] {
+        return this.objectsState();
+    }
+
+    set objects(value: IItem[]) {
+        this.objectsState.set(value);
+    }
+
+    get gameMode(): GameType {
+        return this.gameModeState();
+    }
+
+    set gameMode(value: GameType) {
+        this.gameModeState.set(value);
+    }
+
+    get activeTool(): ToolOption {
+        return this.activeToolState();
+    }
+
+    set activeTool(value: ToolOption) {
+        this.activeToolState.set(value);
+    }
+
+    get selectedMaterial(): CellType {
+        return this.selectedMaterialState();
+    }
+
+    set selectedMaterial(value: CellType) {
+        this.selectedMaterialState.set(value);
+    }
+
+    get selectedObject(): ItemType | null {
+        return this.selectedObjectState();
+    }
+
+    set selectedObject(value: ItemType | null) {
+        this.selectedObjectState.set(value);
+    }
+
     initFromExistingBoard(game: IExistingGame): void {
         this.gameCells = structuredClone(game.board.cells);
         this.objects = structuredClone(game.board.items);
         this.gameMode = game.gameMode;
     }
 
+    readonly getObjectAt = (row: number, col: number): IItem | null => {
+        return this.boardSharedService.getObjectAt(row, col, this.objects);
+    };
+
     buildGrid(size: number): void {
         this.gameCells = Array.from({ length: size }, () => Array.from({ length: size }, () => CellType.Empty));
-
         this.objects = [];
     }
 
@@ -85,46 +148,51 @@ export class BoardEditorService {
     applyTile(rowIndex: number, colIndex: number): void {
         if (this.activeTool !== ToolOption.Placement) return;
 
-        if (this.selectedMaterial === CellType.OpenDoor) {
+        const selectedMaterial = this.selectedMaterial;
+        const nextGameCells = this.cloneGameCells();
+
+        if (selectedMaterial === CellType.OpenDoor) {
             this.eraseObject(rowIndex, colIndex);
-            this.gameCells[rowIndex][colIndex] = this.gameCells[rowIndex][colIndex] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+            nextGameCells[rowIndex][colIndex] = this.gameCells[rowIndex][colIndex] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+            this.gameCells = nextGameCells;
             return;
         }
 
-        if (this.blockingCells.has(this.selectedMaterial) && this.isCellOccupied(rowIndex, colIndex)) {
+        if (this.blockingCells.has(selectedMaterial) && this.isCellOccupied(rowIndex, colIndex)) {
             this.eraseObject(rowIndex, colIndex);
-            this.gameCells[rowIndex][colIndex] = this.selectedMaterial;
         }
 
-        this.gameCells[rowIndex][colIndex] = this.selectedMaterial;
+        nextGameCells[rowIndex][colIndex] = selectedMaterial;
+        this.gameCells = nextGameCells;
     }
 
     applyObject(rowIndex: number, colIndex: number): void {
         if (this.activeTool !== ToolOption.Objects || !this.selectedObject) return;
 
+        const selectedObject = this.selectedObject;
+
         if (this.blockingCells.has(this.gameCells[rowIndex][colIndex])) return;
 
-        if (this.selectedObject === ItemType.LifeSanctuary || this.selectedObject === ItemType.FightSanctuary) {
+        if (selectedObject === ItemType.LifeSanctuary || selectedObject === ItemType.FightSanctuary) {
             this.placeSanctuary(rowIndex, colIndex);
             return;
         }
 
         if (this.isCellOccupied(rowIndex, colIndex)) return;
 
-        if (this.selectedObject === ItemType.Flag) {
-            if (this.getObjectCount(ItemType.Flag) >= this.flagMaxAmount) return;
-        }
+        if (selectedObject === ItemType.Flag && this.getObjectCount(ItemType.Flag) >= this.flagMaxAmount) return;
 
-        if (this.selectedObject === ItemType.StartingPosition) {
-            if (this.getObjectCount(ItemType.StartingPosition) >= this.spawnpointMaxAmount) return;
-        }
+        if (selectedObject === ItemType.StartingPosition && this.getObjectCount(ItemType.StartingPosition) >= this.spawnpointMaxAmount) return;
 
-        this.objects.push({
-            itemType: this.selectedObject,
-            x: rowIndex,
-            y: colIndex,
-            size: this.objectSizesMap[this.selectedObject],
-        });
+        this.objects = [
+            ...this.objects,
+            {
+                itemType: selectedObject,
+                x: rowIndex,
+                y: colIndex,
+                size: this.objectSizesMap[selectedObject],
+            },
+        ];
     }
 
     placeSanctuary(rowIndex: number, colIndex: number): void {
@@ -146,13 +214,17 @@ export class BoardEditorService {
         if (cells.some(([row, col]) => this.isCellOccupied(row, col))) return;
 
         if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
-        this.objects.push({ itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE });
 
-        return;
+        this.objects = [
+            ...this.objects,
+            { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE },
+        ];
     }
 
     eraseTile(row: number, col: number): void {
-        this.gameCells[row][col] = CellType.Empty;
+        const nextGameCells = this.cloneGameCells();
+        nextGameCells[row][col] = CellType.Empty;
+        this.gameCells = nextGameCells;
     }
 
     eraseObject(row: number, col: number): void {
@@ -180,5 +252,9 @@ export class BoardEditorService {
             default:
                 return 0;
         }
+    }
+
+    private cloneGameCells(): CellType[][] {
+        return this.gameCells.map((row) => [...row]);
     }
 }

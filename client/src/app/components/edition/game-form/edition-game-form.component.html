@@ -1,0 +1,46 @@
+<form [formGroup]="gameEditFormService.form" (ngSubmit)="submitRequested.emit()" class="flex grow flex-col gap-4 mb-2">
+    <div class="w-full">
+        <label for="gameTitle" class="text-white tracking-wider">Titre</label>
+        <input id="gameTitle" type="text" maxlength="100" placeholder="Entrez un titre" formControlName="gameTitle" class="input w-full" />
+    </div>
+
+    <div class="w-full">
+        <label for="description" class="text-white tracking-wider">Description</label>
+        <textarea
+            id="description"
+            maxlength="512"
+            placeholder="Entrez une description"
+            formControlName="description"
+            class="input w-full h-64 min-h-12"
+        ></textarea>
+    </div>
+</form>
+
+<div class="border-t border-white"></div>
+
+<div class="flex shrink flex-col gap-2 mt-4">
+    @if (!gameEditFormService.formValid) {
+        @for (log of gameEditFormService.formErrors; track $index) {
+            <div class="text-xs text-red-600">{{ log }}</div>
+        }
+    }
+
+    <button type="button" class="btn btn-red" (click)="revertRequested.emit()">Rétablir</button>
+
+    <button
+        type="button"
+        class="btn btn-green h-12 inline-flex items-center justify-center gap-2"
+        [disabled]="gameEditFormService.isSubmitting()"
+        (click)="submitRequested.emit()"
+    >
+        @if (gameEditFormService.isSubmitting()) {
+            <img
+                src="assets/loading/cogwheel.png"
+                alt="Chargement"
+                class="h-full w-auto object-contain animate-[spin_2s_steps(16)_infinite] select-none [image-rendering:pixelated]"
+                draggable="false"
+            />
+        }
+        <span>Confirmer</span>
+    </button>
+</div>
