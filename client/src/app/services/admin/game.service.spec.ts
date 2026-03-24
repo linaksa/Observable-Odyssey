@@ -8,9 +8,8 @@
  * endpoint is constructed with the right parameters.
  *
  * Edge cases covered:
- * - Network error (throwError): verifies getAllGames() does not crash
- *   the application when the server is unreachable; the error stream should
- *   be propagated to the subscriber without an unhandled exception.
+ * - Network error (throwError): verifies getAllGames() falls back to an
+ *   empty list instead of bubbling an unusable value to the caller.
  */
 import { TestBed } from '@angular/core/testing';
 
@@ -129,25 +128,6 @@ describe('GameService', () => {
         expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/joinable`);
     });
 
-    it('should call correct end point with function getActiveGameById', () => {
-        httpSpy.get.and.returnValue(of());
-
-        const activeGameId = '1';
-        service.getActiveGameById(activeGameId);
-
-        expect(httpSpy.get).toHaveBeenCalled();
-        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/${activeGameId}`);
-    });
-
-    it('should call correct end point with function fetchJoinableActiveGames', () => {
-        httpSpy.get.and.returnValue(of());
-
-        service.fetchJoinableActiveGames();
-
-        expect(httpSpy.get).toHaveBeenCalled();
-        expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/activeGame/joinable`);
-    });
-
     // Edge case: the server responds with an error (e.g., 404). Verifies that the service
     // returns the configured fallback value without throwing a synchronous exception.
     it('should return fallback value when the request fails', async () => {
@@ -155,7 +135,7 @@ describe('GameService', () => {
 
         const result = await lastValueFrom(service.getAllGames());
 
-        expect(result).toBeUndefined();
+        expect(result).toEqual([]);
         expect(httpSpy.get).toHaveBeenCalledWith(`${dummyBaseURL}/games`);
     });
 });

@@ -1,0 +1,15 @@
+<app-edition-item-selector
+    class="flex grow flex-col"
+    (materialSelected)="materialSelected.emit($event)"
+    (objectSelected)="objectSelected.emit($event)"
+/>
+
+<div class="border-t border-white"></div>
+
+<div class="flex shrink flex-col justify-center gap-2">
+    @for (tool of boardEditorService.availableTools; track tool) {
+        <button type="button" class="btn flex-1" [class.btn-blue]="boardEditorService.activeTool === tool" (click)="toolSelected.emit(tool)">
+            {{ toolDescriptions()[tool] }}
+        </button>
+    }
+</div>

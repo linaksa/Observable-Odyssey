@@ -13,6 +13,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { GridSize, ToolOption } from '@app/constants/grid-edition';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
@@ -248,6 +249,28 @@ describe('BoardEditorService', () => {
         service.buildGrid(GridSize.LARGE);
         expect(service.getRemainingObjectCount(ItemType.FightSanctuary)).toBeGreaterThan(0);
         expect(service.getRemainingObjectCount(ItemType.StartingPosition)).toBeGreaterThan(0);
+    });
+
+    it('should expose the base object types in classic mode', () => {
+        service.gameMode = GameType.Classic;
+
+        expect(service.availableObjectTypes()).toEqual([ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition]);
+    });
+
+    it('should expose the flag in capture-the-flag mode', () => {
+        service.gameMode = GameType.Ctf;
+
+        expect(service.availableObjectTypes()).toEqual([
+            ItemType.LifeSanctuary,
+            ItemType.FightSanctuary,
+            ItemType.StartingPosition,
+            ItemType.Flag,
+        ]);
+    });
+
+    it('should expose shared tile and item info records', () => {
+        expect(service.cellTypesInfo).toBe(TILE_INFO_BY_TYPE);
+        expect(service.itemTypesInfo).toBe(ITEM_INFO_BY_TYPE);
     });
 
     it('should return zero remaining amount for unsupported object type', () => {

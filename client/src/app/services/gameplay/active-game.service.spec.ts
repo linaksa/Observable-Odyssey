@@ -14,7 +14,7 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { GameService } from '@app/services/admin/game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
@@ -28,7 +28,7 @@ import { IItem, ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { of, Subject, throwError } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ActiveGameService } from './active-game.service';
 
@@ -49,13 +49,7 @@ describe('ActiveGameService', () => {
     let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
     let toastServiceSpy: jasmine.SpyObj<ToastService>;
     let routerSpy: jasmine.SpyObj<Router>;
-    let httpClientSpy: jasmine.SpyObj<{
-        get: (...args: unknown[]) => unknown;
-        post: (...args: unknown[]) => unknown;
-        put: (...args: unknown[]) => unknown;
-        patch: (...args: unknown[]) => unknown;
-        delete: (...args: unknown[]) => unknown;
-    }>;
+    let gameServiceSpy: jasmine.SpyObj<GameService>;
 
     const eventStreams = new Map<string, Subject<unknown>>();
 
@@ -73,12 +67,12 @@ describe('ActiveGameService', () => {
         toastServiceSpy = jasmine.createSpyObj<ToastService>('ToastService', ['show']);
         routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
         routerSpy.navigate.and.resolveTo(true);
-        httpClientSpy = jasmine.createSpyObj('HttpClientPort', ['get', 'post', 'put', 'patch', 'delete']);
+        gameServiceSpy = jasmine.createSpyObj<GameService>('GameService', ['getActiveGameById']);
 
         eventStreams.clear();
         socketServiceSpy.on.and.callFake(<T>(_namespace: string, event: string) => getEventStream<T>(event).asObservable());
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
-        httpClientSpy.get.and.returnValue(of(createActiveGame([createCharacter('Alice')])));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(createActiveGame([createCharacter('Alice')])));
 
         TestBed.configureTestingModule({
             providers: [
@@ -87,7 +81,7 @@ describe('ActiveGameService', () => {
                 { provide: LocalPlayerService, useValue: localPlayerServiceSpy },
                 { provide: ToastService, useValue: toastServiceSpy },
                 { provide: Router, useValue: routerSpy },
-                { provide: HTTP_CLIENT, useValue: httpClientSpy },
+                { provide: GameService, useValue: gameServiceSpy },
             ],
         });
 
@@ -124,10 +118,11 @@ describe('ActiveGameService', () => {
         const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
         fetchedGame.isDebugMode = true;
         fetchedGame.currentPlayerIndex = PLAYER_INDEX_BOB;
-        httpClientSpy.get.and.returnValue(of(fetchedGame));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGame));
 
         service.setActiveGame('remote-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('remote-game-id');
         expect(service.activeGame).toBe(fetchedGame);
         expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
         expect(service.isDebugMode()).toBeTrue();
@@ -138,20 +133,22 @@ describe('ActiveGameService', () => {
     it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {
         const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
         const fetchedGameWithoutIndex = { ...fetchedGame, currentPlayerIndex: undefined } as unknown as IActiveGame;
-        httpClientSpy.get.and.returnValue(of(fetchedGameWithoutIndex));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGameWithoutIndex));
 
         service.setActiveGame('remote-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('remote-game-id');
         expect(service.currentPlayer()).toBe(0);
     });
 
-    // Edge case: When setActiveGame request fails, clear loading flag.
-    it('should clear loading flag when setActiveGame request fails', () => {
+    // Edge case: When GameService returns no active game, keep the previous state and clear loading.
+    it('should clear loading flag when setActiveGame returns no game', () => {
         const previousGame = service.activeGame;
-        httpClientSpy.get.and.returnValue(throwError(() => new Error('network error')));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(undefined as unknown as IActiveGame));
 
         service.setActiveGame('broken-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('broken-game-id');
         expect(service.activeGame).toBe(previousGame);
         expect(service.isLoading()).toBeFalse();
     });
@@ -421,8 +418,10 @@ describe('ActiveGameService', () => {
             ],
         ];
 
+        const previousReachableTiles = service.reachableTiles;
         service.updateMovementRange(2, graph);
 
+        expect(service.reachableTiles).not.toBe(previousReachableTiles);
         expect([...service.reachableTiles].sort((a, b) => a - b)).toEqual([0, PLAYER_INDEX_BOB, 2]);
     });
 
@@ -493,31 +492,26 @@ describe('ActiveGameService', () => {
         );
 
         Object.assign(service as unknown as Record<string, unknown>, {
-            playerMovedSubscription: createUnsubscribeSpy(),
-            turnPreparingSubscription: createUnsubscribeSpy(),
-            turnStartedSubscription: createUnsubscribeSpy(),
-            attackResultSubscription: createUnsubscribeSpy(),
-            playerKickedSubscription: createUnsubscribeSpy(),
-            playerAbandonedSubscription: createUnsubscribeSpy(),
-            gameEndedSubscription: createUnsubscribeSpy(),
+            socketSubscriptions: [
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+            ],
             setActiveGameSubscription: createUnsubscribeSpy(),
-            playerLeftSubscription: createUnsubscribeSpy(),
-            gameCanceledSubscription: createUnsubscribeSpy(),
         });
 
         service.ngOnDestroy();
 
-        const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy }>;
-        expect(subscriptions.playerMovedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.turnPreparingSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.turnStartedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.attackResultSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerKickedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerAbandonedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.gameEndedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.setActiveGameSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerLeftSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.gameCanceledSubscription.unsubscribe).toHaveBeenCalled();
+        const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy } | { unsubscribe?: jasmine.Spy }[]>;
+        for (const subscription of subscriptions.socketSubscriptions as { unsubscribe?: jasmine.Spy }[]) {
+            expect(subscription.unsubscribe).toHaveBeenCalled();
+        }
+        expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
     });
 
     it('should keep non-starting items and only remove unused spawn points', () => {
