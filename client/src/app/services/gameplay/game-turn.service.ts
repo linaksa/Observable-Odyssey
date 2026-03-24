@@ -98,7 +98,7 @@ export class GameTurnService {
             },
         });
 
-        this.combatTurnStartedSubscription = this.socketService.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatStarted).subscribe({
+        this.combatTurnStartedSubscription = this.socketService.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe({
             next: (activeGame) => {
                 const currentAttack = activeGame.currentAttack;
                 if (!currentAttack) return;

@@ -6,7 +6,6 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
-import { CombatService } from './combat-service';
 
 @Service()
 export class TurnService {
@@ -17,7 +16,6 @@ export class TurnService {
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
-        private readonly combatService: CombatService,
     ) {}
 
     // logic for the 3-second delay before the start of a turn
@@ -162,13 +160,13 @@ export class TurnService {
         return activeGame.players.find((player) => player.name === playerName);
     }
 
-    startCombatTimer(durationS: number, gameId: string): void {
+    startCombatTimer(durationMs: number, gameId: string, callback: () => void): void {
         this.clearTimerFromMap(gameId, this.combatTimers);
 
         const timer = setTimeout(() => {
             this.combatTimers.delete(gameId);
-            this.combatService.applyCombatTurn(gameId);
-        }, durationS * 1000);
+            callback();
+        }, durationMs);
 
         this.combatTimers.set(gameId, timer);
     }

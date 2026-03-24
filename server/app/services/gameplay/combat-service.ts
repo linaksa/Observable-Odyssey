@@ -1,15 +1,15 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { CombatOutcome } from '@app/services/interfaces/combat-result';
 import { IActiveGame } from '@common/activeGame';
-import { AttackPosture } from '@common/attackResult';
+import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
-import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX } from '@common/constants';
+import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX, TEMPS_COMBAT } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
 import { SocketService } from '../realtime/socket.service';
+import { TurnService } from './turn-service';
 
 @Service()
 export class CombatService {
@@ -23,6 +23,7 @@ export class CombatService {
     constructor(
         private activeGameService: ActiveGameService,
         private positionValidatorService: PositionValidatorService,
+        private turnService: TurnService,
         private readonly socketService: SocketService,
     ) {}
 
@@ -97,8 +98,8 @@ export class CombatService {
             namespace.to(currentActiveGame._id).emit(SocketEvent.CombatResolved, combatOutcome);
         }
 
-        namespace.to(currentActiveGame._id).emit(SocketEvent.CombatTurnApplied, updatedGame);
-
+        namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
+        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGameId, () => this.applyCombatTurn(activeGameId));
         return currentActiveGame;
     }
 
@@ -184,7 +185,7 @@ export class CombatService {
         const postureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
         const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
-        return character.attackPoints + diceBonus + postureBonus - iceMalus;
+        return Math.max(character.attackPoints + diceBonus + postureBonus - iceMalus, 0);
     }
 
     private computeDefensePoints(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture, attackPoints: number): number {
@@ -194,7 +195,7 @@ export class CombatService {
         const postureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
         const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
-        return diceBonus + postureBonus - iceMalus;
+        return Math.max(diceBonus + postureBonus - iceMalus, 0);
     }
 
     private rollDice(diceType: DiceType): number {

@@ -6,6 +6,7 @@ import { DebugSocketService } from '@app/services/realtime/debug-socket.service'
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
+import { TEMPS_COMBAT } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
@@ -148,9 +149,14 @@ export class GameSocketsService {
                 }
 
                 this.gameplayService.turnService.suspendTurn(gameId);
+                this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, gameId, () =>
+                    this.gameplayService.combatService.applyCombatTurn(gameId),
+                );
+
                 const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
 
                 this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
+                this.namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);
 
                 // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {

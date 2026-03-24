@@ -26,6 +26,7 @@ export const enum SocketEvent {
     AttackPostureChosen = 'attack-posture-chosen',
     CombatStarted = 'combat-started',
     CombatTurnApplied = 'combat-turn-applied',
+    CombatTurnStart = 'combat-turn-start',
     CombatResolved = 'combat-resolved',
     SuspendTurn = 'suspend-turn',
     EndTurn = 'end-turn',

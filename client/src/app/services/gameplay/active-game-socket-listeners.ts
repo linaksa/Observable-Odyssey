@@ -3,7 +3,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
+import { AttackResult, CombatOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -86,6 +86,28 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             }
 
             context.setActiveGame(data);
+        }),
+
+        context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {
+            console.log('Received CombatTurnStart event with data:', data);
+            let activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            console.log('Combat turn started:', activeGame.currentAttack, 'data', data);
+
+            context.setActiveGame(data);
+        }),
+
+        context.socket.on<CombatOutcome>(Namespaces.Game, SocketEvent.CombatResolved).subscribe((combatOutcome) => {
+            let activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            context.setActiveGame(combatOutcome.updatedActiveGame);
+            toggle(context.hasChangedLocation);
         }),
 
         context.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
