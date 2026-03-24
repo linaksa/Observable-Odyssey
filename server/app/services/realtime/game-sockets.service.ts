@@ -149,7 +149,7 @@ export class GameSocketsService {
 
                 const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
 
-                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, { activeGame: result });
+                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
 
                 // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {

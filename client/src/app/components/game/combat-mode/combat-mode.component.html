@@ -8,14 +8,14 @@
         <div class="flex items-center justify-between mb-6">
 
             <div class="flex-1">
-                <p class="font-bold text-left">{{ activeGameService.activeDefender.name }}</p>
+                <p class="font-bold text-left">{{ activeGameService.activeGame.currentAttack?.defender }}</p>
 
                 <div class="flex gap-[2px] mt-1">
-                    @for (health of getHealthRange(activeGameService.activeDefender); track $index) {
+                    @for (health of getHealthRange(activeGameService.activeGame.currentAttack?.defender); track $index) {
                         <div
                             class="h-3 flex-1 border border-black"
-                            [class.bg-green-500]="$index < getFilledBlocks(activeGameService.activeDefender)"
-                            [class.bg-red-700]="$index >= getFilledBlocks(activeGameService.activeDefender)">
+                            [class.bg-green-500]="$index < getFilledBlocks(activeGameService.activeGame.currentAttack?.defender)"
+                            [class.bg-red-700]="$index >= getFilledBlocks(activeGameService.activeGame.currentAttack?.defender)">
                         </div>
                     }
                 </div>
@@ -24,7 +24,7 @@
             </div>
 
             <img
-                [src]="getAvatarUrl(activeGameService.activeDefender.avatar)"
+                [src]="getAvatarUrl(activeGameService.activeGame.currentAttack?.defender.avatar)"
                 class="w-16 h-16 ml-4 border-2 border-black rounded bg-white object-contain"
             />
         </div>
