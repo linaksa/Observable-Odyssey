@@ -170,6 +170,8 @@ export class ActiveGameService {
             turnCount: 1,
             attackerPosture: null,
             defenderPosture: null,
+
+            suspendedTurnTimer: 0,
         };
         activeGame.currentAttack = currentAttack;
         return await activeGame.save();

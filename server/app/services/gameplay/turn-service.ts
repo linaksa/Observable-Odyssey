@@ -128,12 +128,13 @@ export class TurnService {
         this.startTurn(gameId);
     }
 
-    async suspendTurn(gameId: string): Promise<void> {
+    async suspendTurn(gameId: string): Promise<number> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) return;
+        if (!activeGame) return 0;
 
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         namespace.to(gameId).emit(SocketEvent.SuspendTurn);
+        return 0;
     }
 
     async continueTurn(gameId: string): Promise<void> {
