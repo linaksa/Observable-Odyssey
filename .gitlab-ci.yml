@@ -215,6 +215,8 @@ deploy:server:
                 git fetch --all
                 git checkout ${CI_COMMIT_SHA}
 
+                sed -i 's/^USE_MONGO_MEMORY_SERVER=true$/USE_MONGO_MEMORY_SERVER=false/' server/.env
+
                 # Build the project
                 cd server
                 npm ci
