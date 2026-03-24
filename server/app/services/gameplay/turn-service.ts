@@ -6,15 +6,18 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
+import { CombatService } from './combat-service';
 
 @Service()
 export class TurnService {
     private preparationTimers: Map<string, NodeJS.Timeout> = new Map();
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
+    private combatTimers: Map<string, NodeJS.Timeout> = new Map();
 
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
+        private readonly combatService: CombatService,
     ) {}
 
     // logic for the 3-second delay before the start of a turn
@@ -38,8 +41,8 @@ export class TurnService {
         }
 
         // Always clear old timers before creating new ones.
-        this.clearPreparationTimer(gameId);
-        this.clearTurnTimer(gameId);
+        this.clearTimerFromMap(gameId, this.preparationTimers);
+        this.clearTimerFromMap(gameId, this.turnTimers);
 
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
@@ -69,7 +72,7 @@ export class TurnService {
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
-        this.clearTurnTimer(gameId);
+        this.clearTimerFromMap(gameId, this.turnTimers);
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         const turnStartedPayload: ITurnStartedPayload = {
@@ -93,8 +96,8 @@ export class TurnService {
         if (!activeGame) return;
 
         // Always clear timers, even if the game is already finished
-        this.clearPreparationTimer(gameId);
-        this.clearTurnTimer(gameId);
+        this.clearTimerFromMap(gameId, this.turnTimers);
+        this.clearTimerFromMap(gameId, this.combatTimers);
 
         if (activeGame.isFinished) {
             return;
@@ -128,13 +131,17 @@ export class TurnService {
         this.startTurn(gameId);
     }
 
-    async suspendTurn(gameId: string): Promise<number> {
+    async suspendTurn(gameId: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) return 0;
+        if (!activeGame || !activeGame.currentAttack) return;
 
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         namespace.to(gameId).emit(SocketEvent.SuspendTurn);
-        return 0;
+
+        const secondsRemaining = this.clearTimerFromMap(gameId, this.turnTimers);
+        activeGame.currentAttack.suspendedTurnTimer = secondsRemaining;
+
+        this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
 
     async continueTurn(gameId: string): Promise<void> {
@@ -158,21 +165,27 @@ export class TurnService {
         return activeGame.players.find((player) => player.name === playerName);
     }
 
-    private clearPreparationTimer(gameId: string): void {
-        const timer = this.preparationTimers.get(gameId);
-        if (!timer) {
-            return;
-        }
-        clearTimeout(timer);
-        this.preparationTimers.delete(gameId);
+    startCombatTimer(durationS: number, gameId: string): void {
+        this.clearTimerFromMap(gameId, this.combatTimers);
+
+        const timer = setTimeout(() => {
+            this.combatTimers.delete(gameId);
+            this.combatService.applyCombatTurn(gameId);
+        }, durationS * 1000);
+
+        this.combatTimers.set(gameId, timer);
     }
 
-    private clearTurnTimer(gameId: string): void {
-        const timer = this.turnTimers.get(gameId);
+    private clearTimerFromMap(gameId: string, map: Map<string, NodeJS.Timeout>): number {
+        const timer = map.get(gameId);
         if (!timer) {
-            return;
+            return 0;
         }
+
+        const secondsRemaining = Math.ceil(((timer as any)._idleStart + (timer as any)._idleTimeout - Date.now()) / 1000);
+
         clearTimeout(timer);
-        this.turnTimers.delete(gameId);
+        map.delete(gameId);
+        return secondsRemaining;
     }
 }

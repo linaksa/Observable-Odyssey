@@ -151,7 +151,6 @@ export class GameSocketsService {
                 this.gameplayService.turnService.suspendTurn(gameId);
 
                 this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
-                this.namespace?.to(gameId).emit(SocketEvent.SuspendTurn, gameId);
 
                 // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {

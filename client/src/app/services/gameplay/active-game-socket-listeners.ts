@@ -10,6 +10,7 @@ import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
+import { GameTurnService } from './game-turn.service';
 
 interface BooleanSignal {
     update(updater: (current: boolean) => boolean): void;
@@ -19,6 +20,7 @@ export interface ActiveGameSocketContext {
     socket: SocketService;
     localPlayer: LocalPlayerService;
     toastService: ToastService;
+    turnService: GameTurnService;
     router: Router;
     getActiveGame: () => IActiveGame | undefined;
     setActiveGame: (activeGame: IActiveGame) => void;
@@ -26,7 +28,6 @@ export interface ActiveGameSocketContext {
     currentPlayer: {
         set(value: number): void;
     };
-    setActiveGame: (activeGame: IActiveGame) => void;
     hasChangedLocation: BooleanSignal;
     hasAbandonned: BooleanSignal;
     gameHasEnded: BooleanSignal;

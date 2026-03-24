@@ -9,19 +9,14 @@ import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import {
-    IAttackData,
-    IAttackPostureData,
-    IDebugTeleportData,
-    IDebugToggleState,
-    IPlayerMoveData,
-} from '@common/socket-payloads';
+import { IAttackData, IAttackPostureData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
-import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 import { AttackPosture } from '@common/attackResult';
+import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
+import { GameTurnService } from './game-turn.service';
 
 @Injectable({
     providedIn: 'root',
@@ -31,6 +26,7 @@ export class ActiveGameService implements OnDestroy {
     private readonly gameService = inject(GameService);
     private readonly socket = inject(SocketService);
     private readonly localPlayer = inject(LocalPlayerService);
+    private readonly gameTurnService = inject(GameTurnService);
     private readonly router = inject(Router);
 
     private readonly socketSubscriptions: Subscription[] = [];
@@ -58,11 +54,11 @@ export class ActiveGameService implements OnDestroy {
                 socket: this.socket,
                 localPlayer: this.localPlayer,
                 toastService: this.toastService,
+                turnService: this.gameTurnService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
-                setActiveGame: (activeGame: IActiveGame) => {this.activeGame = activeGame},
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandonned: this.hasAbandonned,
@@ -335,16 +331,15 @@ export class ActiveGameService implements OnDestroy {
         );
     }
 
-    chooseAttackMode(posture : AttackPosture) {
+    chooseAttackMode(posture: AttackPosture) {
         const currentPlayerName = this.currentPlayer.name;
         const currentAttack = this.activeGame.currentAttack;
-        if(currentAttack && currentAttack?.attacker === currentPlayerName && currentAttack.attackerPosture) {
+        if (currentAttack && currentAttack?.attacker === currentPlayerName && currentAttack.attackerPosture) {
             return;
         }
-        if(currentAttack && currentAttack?.defender === currentPlayerName && currentAttack.defenderPosture) {
+        if (currentAttack && currentAttack?.defender === currentPlayerName && currentAttack.defenderPosture) {
             return;
         }
-
 
         const playerPosture: IAttackPostureData = {
             gameId: this.activeGame._id,
@@ -354,5 +349,4 @@ export class ActiveGameService implements OnDestroy {
 
         this.socket.emit<IAttackPostureData, void>(Namespaces.Game, SocketEvent.ChooseAttackPosture, playerPosture);
     }
-
 }
