@@ -139,7 +139,9 @@ export class GameSocketsService {
                     return;
                 }
 
-                await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+
+                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, { activeGame: result });
 
                 // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
@@ -151,16 +153,16 @@ export class GameSocketsService {
                 // });
 
                 // End the game if the defender cannot move anymore
-                const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
-                if (reachable.length === 0) {
-                    await this.gameplayService.turnService.endTurn(gameId);
-                }
+                // const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
+                // if (reachable.length === 0) {
+                //     await this.gameplayService.turnService.endTurn(gameId);
+                // }
 
-                const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
-                if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-                    await this.activeGameService.deleteGameById(gameId);
-                }
+                // const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+                // if (gameEnded) {
+                //     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+                //     await this.activeGameService.deleteGameById(gameId);
+                // }
             });
             // =======================
             // End turn
