@@ -1,12 +1,15 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { CombatResult } from '@app/services/interfaces/combat-result';
+import { CombatOutcome } from '@app/services/interfaces/combat-result';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX } from '@common/constants';
+import { Namespaces } from '@common/namespaces';
+import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
+import { SocketService } from '../realtime/socket.service';
 
 @Service()
 export class CombatService {
@@ -20,6 +23,7 @@ export class CombatService {
     constructor(
         private activeGameService: ActiveGameService,
         private positionValidatorService: PositionValidatorService,
+        private readonly socketService: SocketService,
     ) {}
 
     // checks if the attacker can attack the defender according to the game rules
@@ -59,7 +63,7 @@ export class CombatService {
         return false;
     }
 
-    async applyCombat(activeGameId: string): Promise<IActiveGame> {
+    async applyCombatTurn(activeGameId: string): Promise<IActiveGame> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {
             throw new Error(`Active game with id ${activeGameId} not found`);
@@ -85,30 +89,68 @@ export class CombatService {
         attacker.currentHealth = Math.max(attacker.currentHealth - attackerNetDamage, 0);
         defender.currentHealth = Math.max(defender.currentHealth - defenderNetDamage, 0);
 
+        const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
+        const namespace = this.socketService.getNamespace(Namespaces.Game);
+
+        if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
+            const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
+            namespace.to(currentActiveGame._id).emit(SocketEvent.CombatResolved, combatOutcome);
+        }
+
+        namespace.to(currentActiveGame._id).emit(SocketEvent.CombatTurnApplied, updatedGame);
+
         return currentActiveGame;
     }
 
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
-    async resolveCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {
-        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-        const attacker = currentActiveGame?.players.find((p) => p.name === attackerName);
-        const defender = currentActiveGame?.players.find((p) => p.name === defenderName);
-        if (!currentActiveGame || !attacker || !defender) {
-            throw new Error(`resolveCombat called with invalid state: ${activeGameId}`);
-        }
+    async resolveCombat(currentActiveGame: IActiveGame, attackerName: string, defenderName: string): Promise<CombatOutcome> {
+        const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
+        const defender = currentActiveGame.players.find((p) => p.name === defenderName);
 
         attacker.actionsLeft--;
-        attacker.victories++;
-        if (defender.positionGrille.x !== defender.positionDepart.x || defender.positionGrille.y !== defender.positionDepart.y)
-            defender.positionGrille = this.findNearestAvailableSpawn(defender.positionDepart, currentActiveGame);
-        const combatResult: CombatResult = {
-            attackerVictories: attacker.victories,
-            defenderNewPosition: defender.positionGrille,
-            attackerActionsLeft: attacker.actionsLeft,
+
+        let winner: ICharacter | null = null;
+        let losers: ICharacter[] = [];
+
+        if (attacker.currentHealth > 0) {
+            winner = defender;
+        } else if (defender.currentHealth > 0) {
+            winner = attacker;
+        } else {
+            losers = [attacker, defender];
+        }
+
+        if (winner) {
+            winner.victories++;
+        }
+
+        losers.forEach((loser) => {
+            loser.currentHealth = loser.initialHealth;
+            this.relocateLoser(loser, currentActiveGame);
+        });
+
+        currentActiveGame.currentAttack = null; // reset current attack after resolving combat
+        const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
+
+        const combatResult: CombatOutcome = {
+            updatedActiveGame: updatedGame,
+            winner: winner?.name || null,
+            losers: losers.map((l) => l.name),
         };
-        await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
+
         return combatResult;
     }
+
+    private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {
+        const positionGrille = player.positionGrille;
+        const positionDepart = player.positionDepart;
+
+        if (positionGrille.x === positionDepart.x && positionGrille.y === positionDepart.y) {
+            return;
+        }
+        this.findNearestAvailableSpawn(positionDepart, activeGame);
+    }
+
     // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)
     findNearestAvailableSpawn(spawn: Position, currentActiveGame: IActiveGame): Position {
         const queue: Position[] = [];

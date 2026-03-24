@@ -25,8 +25,11 @@
 @if (isGameFinished) {
     <app-game-ended></app-game-ended>
 }
-@if (this.activeGameService.attackSent) {
-    <app-combat-mode></app-combat-mode>
+
+@if (currentAttack) {
+    @if (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name) {
+        <app-combat-mode></app-combat-mode>
+    }
 }
 
 <div class="fixed bottom-6 left-6">

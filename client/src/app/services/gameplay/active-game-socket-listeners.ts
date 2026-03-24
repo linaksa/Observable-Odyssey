@@ -21,6 +21,7 @@ export interface ActiveGameSocketContext {
     toastService: ToastService;
     router: Router;
     getActiveGame: () => IActiveGame | undefined;
+    setActiveGame: (activeGame: IActiveGame) => void;
     getPlayerByName: (playerName: string) => ICharacter | undefined;
     currentPlayer: {
         set(value: number): void;
@@ -77,6 +78,16 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 toggle(context.hasChangedLocation);
             }
         }),
+
+        context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatStarted).subscribe((data) => {
+            let activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            context.setActiveGame(data);
+        }),
+
         context.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {

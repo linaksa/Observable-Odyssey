@@ -29,6 +29,12 @@ export const currentAttackSchema = new Schema<ICurrentAttack>({
         enum: [AttackPosture.Offensive, AttackPosture.Defensive],
         default: null,
     },
+
+    suspendedTurnTimer: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
 });
 
 export const currentAttackModel = inMemoryDb.model<ICurrentAttack>('CurrentAttack', currentAttackSchema);

@@ -171,12 +171,8 @@ export class ActiveGameService {
             attackerPosture: null,
             defenderPosture: null,
         };
-
-        return await activeGameModel.findOneAndUpdate(
-            { _id: activeGameId },
-            { $push: { currentAttack: currentAttack } },
-            { returnDocument: 'after' },
-        );
+        activeGame.currentAttack = currentAttack;
+        return await activeGame.save();
     }
 
     async choosePosture(activeGameId: string, playerName: string, posture: AttackPosture): Promise<IActiveGame> {
@@ -196,6 +192,10 @@ export class ActiveGameService {
             currentAttack.defenderPosture = posture;
         }
 
-        return await activeGameModel.findOneAndUpdate({ _id: activeGameId }, { currentAttack: currentAttack }, { returnDocument: 'after' });
+        return await activeGameModel.findOneAndUpdate(
+            { _id: activeGameId },
+            { $push: { currentAttack: currentAttack } },
+            { returnDocument: 'after' },
+        );
     }
 }

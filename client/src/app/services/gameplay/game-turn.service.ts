@@ -86,6 +86,12 @@ export class GameTurnService {
                 this.startCountdown(TEMPS_TOUR);
             },
         });
+
+        this.turnStartedSubscription = this.socketService.on<void>(Namespaces.Game, SocketEvent.SuspendTurn).subscribe({
+            next: () => {
+                this.stopCountdown();
+            },
+        });
     }
 
     // Requests the server to end the current turn (server is authoritative)
@@ -125,7 +131,7 @@ export class GameTurnService {
     }
 
     // Stops the local timer and clears its reference
-    private stopCountdown(): void {
+    stopCountdown(): void {
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
             this.countdownInterval = undefined;

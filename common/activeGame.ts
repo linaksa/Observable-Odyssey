@@ -25,6 +25,8 @@ export interface ICurrentAttack {
     defender: string;
     turnCount: number;
 
+    suspendedTurnTimer: number;
+
     attackerPosture: AttackPosture | null;
     defenderPosture: AttackPosture | null;
 }

@@ -1,51 +1,42 @@
 <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
     <div class="bg-[#233f74] text-white p-6 rounded-xl shadow-2xl w-[480px] border-4 border-black">
-
         <div class="bg-blue-300 text-black border-2 border-black px-3 py-1 inline-block mb-6 shadow">
             <h2 class="text-xl font-bold tracking-wide">Ecran de Combat</h2>
         </div>
 
         <div class="flex items-center justify-between mb-6">
-
             <div class="flex-1">
-                <p class="font-bold text-left">{{ activeGameService.activeDefender.name }}</p>
+                <p class="font-bold text-left">{{ defenderCharacter?.name }}</p>
 
                 <div class="flex gap-[2px] mt-1">
-                    @for (health of getHealthRange(activeGameService.activeDefender); track $index) {
+                    @for (health of getHealthRange(defenderCharacter); track $index) {
                         <div
                             class="h-3 flex-1 border border-black"
-                            [class.bg-green-500]="$index < getFilledBlocks(activeGameService.activeDefender)"
-                            [class.bg-red-700]="$index >= getFilledBlocks(activeGameService.activeDefender)">
-                        </div>
+                            [class.bg-green-500]="$index < getFilledBlocks(defenderCharacter)"
+                            [class.bg-red-700]="$index >= getFilledBlocks(defenderCharacter)"
+                        ></div>
                     }
                 </div>
 
                 <p class="text-xs text-left">HP</p>
             </div>
 
-            <img
-                [src]="getAvatarUrl(activeGameService.activeDefender.avatar)"
-                class="w-16 h-16 ml-4 border-2 border-black rounded bg-white object-contain"
-            />
+            <img [src]="getAvatarUrl(defenderCharacter)" class="w-16 h-16 ml-4 border-2 border-black rounded bg-white object-contain" />
         </div>
 
         <div class="flex items-center justify-between mb-6">
-
-            <img
-                [src]="getAvatarUrl(activeGameService.activeAttacker.avatar)"
-                class="w-16 h-16 mr-4 border-2 border-black rounded bg-white object-contain"
-            />
+            <img [src]="getAvatarUrl(attackerCharacter)" class="w-16 h-16 mr-4 border-2 border-black rounded bg-white object-contain" />
 
             <div class="flex-1 text-right">
-                <p class="font-bold">{{ activeGameService.activeAttacker.name }}</p>
+                <p class="font-bold">{{ attackerCharacter?.name }}</p>
 
                 <div class="flex gap-[2px] mt-1 justify-end">
-                    @for (health of getHealthRange(activeGameService.activeAttacker); track $index) {
+                    @for (health of getHealthRange(attackerCharacter); track $index) {
                         <div
                             class="h-3 flex-1 border border-black"
-                            [class.bg-green-500]="$index < getFilledBlocks(activeGameService.activeAttacker)"
-                            [class.bg-red-700]="$index >= getFilledBlocks(activeGameService.activeAttacker)">
-                        </div>
+                            [class.bg-green-500]="$index < getFilledBlocks(attackerCharacter)"
+                            [class.bg-red-700]="$index >= getFilledBlocks(attackerCharacter)"
+                        ></div>
                     }
                 </div>
 
@@ -58,13 +49,8 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-            <button class="bg-red-500 hover:bg-red-600 text-white border-2 border-black py-2 shadow">
-                Defensive move
-            </button>
-            <button class="bg-blue-500 hover:bg-blue-600 text-white border-2 border-black py-2 shadow">
-                Offensive move
-            </button>
+            <button class="bg-red-500 hover:bg-red-600 text-white border-2 border-black py-2 shadow">Defensive move</button>
+            <button class="bg-blue-500 hover:bg-blue-600 text-white border-2 border-black py-2 shadow">Offensive move</button>
         </div>
-
     </div>
 </div>

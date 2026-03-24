@@ -53,6 +53,7 @@ export class ActiveGameService implements OnDestroy {
                 toastService: this.toastService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
+                setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,

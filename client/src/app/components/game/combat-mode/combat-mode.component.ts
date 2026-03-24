@@ -1,25 +1,36 @@
 import { Component, inject } from '@angular/core';
-import { ActiveGameService } from '@app/services/active-game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
-import { Avatar } from '@common/constants';
 
 @Component({
-  selector: 'app-combat-mode',
-  imports: [],
-  templateUrl: './combat-mode.component.html',
+    selector: 'app-combat-mode',
+    imports: [],
+    templateUrl: './combat-mode.component.html',
 })
 export class CombatModeComponent {
     activeGameService: ActiveGameService = inject(ActiveGameService);
 
-    getHealthRange (player: ICharacter) {
+    get attackerCharacter(): ICharacter | undefined {
+        const attackerName = this.activeGameService.activeGame.currentAttack?.attacker;
+        return this.activeGameService.activeGame.players.find((player) => player.name === attackerName);
+    }
+
+    get defenderCharacter(): ICharacter | undefined {
+        const defenderName = this.activeGameService.activeGame.currentAttack?.defender;
+        return this.activeGameService.activeGame.players.find((player) => player.name === defenderName);
+    }
+
+    getHealthRange(player: ICharacter | undefined) {
+        if (!player) return [];
         return new Array(player.initialHealth);
     }
 
-    getFilledBlocks(player: ICharacter) {
+    getFilledBlocks(player: ICharacter | undefined): number {
+        if (!player) return 0;
         return Math.floor((player.currentHealth / player.initialHealth) * player.initialHealth);
     }
 
-    getAvatarUrl(avatar: Avatar): string {
-        return `assets/form-page/${avatar}.png`;
+    getAvatarUrl(character: ICharacter | undefined): string {
+        return `assets/form-page/${character?.avatar || ''}.png`;
     }
 }

@@ -128,6 +128,26 @@ export class TurnService {
         this.startTurn(gameId);
     }
 
+    async suspendTurn(gameId: string): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) return;
+
+        const namespace = this.socketService.getNamespace(Namespaces.Game);
+        namespace.to(gameId).emit(SocketEvent.SuspendTurn);
+    }
+
+    async continueTurn(gameId: string): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) return;
+
+        const namespace = this.socketService.getNamespace(Namespaces.Game);
+        namespace.to(gameId).emit(SocketEvent.TurnStarted, {
+            player: this.getCurrentPlayer(activeGame)?.name,
+            movementLeft: this.getCurrentPlayer(activeGame)?.movementLeft ?? 0,
+            actionLeft: this.getCurrentPlayer(activeGame)?.actionsLeft ?? 0,
+        });
+    }
+
     private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {
         const playerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (!playerName) {

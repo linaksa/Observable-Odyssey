@@ -148,8 +148,10 @@ export class GameSocketsService {
                 }
 
                 const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+                this.gameplayService.turnService.suspendTurn(gameId);
 
-                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, { activeGame: result });
+                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
+                this.namespace?.to(gameId).emit(SocketEvent.SuspendTurn, gameId);
 
                 // const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
                 // this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
@@ -178,10 +180,11 @@ export class GameSocketsService {
                 const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
 
                 const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack.defenderPosture;
-                if (combatReady) {
-                    await this.gameplayService.combatService.applyCombat(gameId);
+                if (!combatReady) {
+                    this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
                 }
-                this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+
+                await this.gameplayService.combatService.applyCombatTurn(gameId);
             });
 
             // =======================
