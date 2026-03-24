@@ -150,6 +150,23 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
         }),
+        context.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
+            const activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            const player = context.getPlayerByName(data.playerName);
+            if (!player) return;
+
+            activeGame.hasFlagId = player.name;
+
+            const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
+            if (flag) {
+                flag.isCarried = true;
+            }
+            toggle(context.hasChangedLocation);
+        }),
     ];
 }
 
