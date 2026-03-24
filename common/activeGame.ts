@@ -15,6 +15,7 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
     turnIsInPreparation: boolean;
+    hasFlagId: string | null;
 }
 
 export interface IActiveGameWithPlayer {

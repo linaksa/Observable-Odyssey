@@ -1,8 +1,8 @@
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
-import { ICharacter, Position } from '@common/character';
+import { ICharacter, Position, Team } from '@common/character';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
 
 @Service()
 export class StartGameService {
@@ -10,9 +10,24 @@ export class StartGameService {
     // Logic to initialize a game (e.g., create a game state, assign players, etc.)
     async initializeGame(gameId: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (activeGame.game.gameMode === 'ctf') {
+            await this.assignTeamsForCTF(activeGame);
+        }
         await this.assignRandomStartPositions(activeGame);
         this.initializeTurnOrder(activeGame);
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
+    }
+
+    private async assignTeamsForCTF(activeGame: IActiveGame): Promise<void> {
+        const players = activeGame.players;
+        const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
+        const midIndex = Math.ceil(shuffledPlayers.length / 2);
+        const teamA = shuffledPlayers.slice(0, midIndex);
+        const teamB = shuffledPlayers.slice(midIndex);
+
+        teamA.forEach((player) => (player.team = Team.RED));
+        teamB.forEach((player) => (player.team = Team.BLUE));
+        console.log(activeGame.players.map((p) => `${p.name}: ${p.team}`));
     }
     // Logic to assign random starting positions to players
     private async assignRandomStartPositions(activeGame: IActiveGame): Promise<void> {

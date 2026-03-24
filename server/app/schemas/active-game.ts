@@ -41,6 +41,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Boolean,
         required: true,
     },
+    hasFlagId: {
+        type: String,
+        default: null,
+    },
 });
 
 export const activeGameModel = inMemoryDb.model<IActiveGame>('ActiveGame', activeGameSchema);

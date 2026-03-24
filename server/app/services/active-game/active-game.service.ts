@@ -45,6 +45,7 @@ export class ActiveGameService {
             organizerName: characterForm.name,
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
             turnIsInPreparation: false,
+            hasFlagId: '',
         };
         return await activeGameModel.create(newActiveGame);
     }

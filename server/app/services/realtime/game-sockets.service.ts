@@ -87,7 +87,12 @@ export class GameSocketsService {
                 if (!socket.rooms.has(activeGameId)) {
                     return;
                 }
-
+                if (activeGame.game.gameMode === 'ctf' && activeGame.players.length % 2 !== 0) {
+                    socket.emit(SocketEvent.StartGameError, {
+                        message: 'Le mode CTF nécessite un nombre pair de joueurs.',
+                    });
+                    return;
+                }
                 if (activeGame.players.length < 2) {
                     socket.emit(SocketEvent.StartGameError, {
                         message: 'Il faut au moins 2 joueurs pour démarrer la partie.',

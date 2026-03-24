@@ -4,6 +4,11 @@ export interface Position {
     x: number;
     y: number;
 }
+
+export enum Team {
+    RED = 'red',
+    BLUE = 'blue',
+}
 export interface ICharacter {
     name: string;
     avatar: Avatar;
@@ -20,6 +25,7 @@ export interface ICharacter {
     hasAbandoned: boolean;
     positionDepart: Position;
     positionGrille: Position;
+    team?: Team | null;
 }
 
 export interface CharacterFormData {
