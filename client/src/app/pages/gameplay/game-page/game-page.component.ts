@@ -20,6 +20,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
+import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
 
 @Component({
     selector: 'app-game-page',
@@ -32,6 +33,7 @@ import { Subscription } from 'rxjs';
         GameAttackComponent,
         GameEndedComponent,
         TurnStatusComponent,
+        CombatModeComponent,
     ],
     providers: [GameTurnService],
     templateUrl: './game-page.component.html',
@@ -40,7 +42,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly debugSocketService = inject(DebugSocketService);
     private readonly socketService = inject(SocketService);
-    private readonly activeGameService = inject(ActiveGameService);
+    protected readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly gameTurnService = inject(GameTurnService);
     private routeSubscription?: Subscription;
