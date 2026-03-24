@@ -30,4 +30,5 @@ export const enum SocketEvent {
     DebugToggle = 'debug-toggle',
     DebugTeleport = 'debug-teleport',
     JoinableGamesUpdated = 'joinable-games-updated',
+    FlagPickedUp = 'flag-picked-up',
 }

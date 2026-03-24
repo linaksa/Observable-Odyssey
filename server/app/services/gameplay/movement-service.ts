@@ -1,16 +1,20 @@
-import { IActiveGame } from '@common/activeGame';
-import { CellType } from '@common/board';
-import { Position } from '@common/character';
-import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
-import { Service } from 'typedi';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { SocketService } from '@app/services/realtime/socket.service';
+import { IActiveGame } from '@common/activeGame';
+import { CellType } from '@common/board';
+import { ICharacter, Position } from '@common/character';
+import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { Namespaces } from '@common/namespaces';
+import { SocketEvent } from '@common/socket-events';
+import { Service } from 'typedi';
 
 @Service()
 export class MovementService {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly positionValidatorService: PositionValidatorService,
+        private readonly socketService: SocketService,
     ) {}
 
     // Validates and applies the movement in a single DB access. Throws an error if invalid.
@@ -43,6 +47,7 @@ export class MovementService {
 
         player.positionGrille = newPosition;
         player.movementLeft -= price;
+        this.updateFlagPosition(activeGame, player);
         await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
         return { newPosition, movementLeft: player.movementLeft };
     }
@@ -83,6 +88,26 @@ export class MovementService {
             }
         }
         return reachable;
+    }
+
+    private updateFlagPosition(activeGame: IActiveGame, player: ICharacter): void {
+        console.log(`Checking flag pickup for player ${player.name} at position (${player.positionGrille.x},${player.positionGrille.y})`);
+        if (activeGame.game.gameMode !== 'ctf') return;
+        const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
+        console.log(`Flag is at position (${flag?.x},${flag?.y}) and is ${activeGame.hasFlagId ? 'carried' : 'on the ground'}`);
+        const flagIsOnGround = activeGame.hasFlagId === '';
+        if (flagIsOnGround && player.positionGrille.x === flag?.y && player.positionGrille.y === flag?.x) {
+            activeGame.hasFlagId = player.name;
+            flag.isCarried = true;
+            flag.x = null;
+            flag.y = null;
+            const namespace = this.socketService.getNamespace(Namespaces.Game);
+            namespace.to(activeGame._id.toString()).emit(SocketEvent.FlagPickedUp, {
+                playerName: player.name,
+            });
+            console.log(activeGame._id);
+            console.log(`Player ${player.name} has picked up the flag`);
+        }
     }
 
     private getPriceTile(activeGame: IActiveGame, pos: Position): number {

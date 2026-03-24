@@ -1,7 +1,9 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { ToastService } from '@app/services/ui/toast.service';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { AttackResult } from '@common/attackResult';
@@ -12,8 +14,6 @@ import { SocketEvent } from '@common/socket-events';
 import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { ToastService } from '@app/services/ui/toast.service';
 
 @Injectable({
     providedIn: 'root',
@@ -51,6 +51,7 @@ export class ActiveGameService implements OnDestroy {
     private gameCanceledSubscription?: Subscription;
     private gameEndedSubscription?: Subscription;
     private setActiveGameSubscription?: Subscription;
+    private flagPickedUpSubscription?: Subscription;
 
     constructor() {
         this.socket.connect(Namespaces.Game);
@@ -169,6 +170,23 @@ export class ActiveGameService implements OnDestroy {
             this.toastService.show("L'organiseur a annulé la partie.");
             this.router.navigate(['/home']);
         });
+        this.flagPickedUpSubscription = this.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
+            if (!this.activeGame) {
+                return;
+            }
+
+            const player = this.getPlayerByName(data.playerName);
+            if (!player) return;
+
+            this.activeGame.hasFlagId = player.name;
+
+            const flag = this.activeGame.game.board.items.find((item) => item.itemType === 'flag');
+            if (flag) {
+                flag.isCarried = true;
+            }
+
+            this.hasChangedLocation.set(!this.hasChangedLocation());
+        });
     }
 
     applyDebugModeState(data: IDebugToggleState) {
@@ -267,6 +285,7 @@ export class ActiveGameService implements OnDestroy {
         this.setActiveGameSubscription?.unsubscribe();
         this.playerLeftSubscription?.unsubscribe();
         this.gameCanceledSubscription?.unsubscribe();
+        this.flagPickedUpSubscription?.unsubscribe();
     }
 
     updatePlayers(players: ICharacter[]): void {

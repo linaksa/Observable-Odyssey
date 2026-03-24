@@ -6,6 +6,8 @@ import { IItem, ItemType } from '@common/items';
 })
 export class BoardSharedService {
     cellBelongsToObject(obj: IItem, row: number, col: number): boolean {
+        if (obj.isCarried) return false;
+
         if (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) {
             return row >= obj.x && row <= obj.x + 1 && col >= obj.y && col <= obj.y + 1;
         }
