@@ -12,8 +12,8 @@ export class ActiveGameController {
 
     constructor(
         private readonly activeGameService: ActiveGameService,
-        private readonly gameSocketsService: GameSocketsService,
         private readonly activeGameListSocketsService: ActiveGameListSocketsService,
+        private readonly gameSocketService: GameSocketsService,
     ) {
         this.configureRouter();
     }
@@ -65,7 +65,6 @@ export class ActiveGameController {
                 }
                 const newActiveGame = await this.activeGameService.createActiveGame(gameId, characterForm);
 
-                this.gameSocketsService.emitPlayersUpdated(newActiveGame._id, newActiveGame.players);
                 this.activeGameListSocketsService.emitJoinableGamesUpdated(newActiveGame._id);
                 const payload: IActiveGameWithPlayer = { activeGame: newActiveGame, player: newActiveGame.players[0] };
                 return res.status(StatusCodes.CREATED).json(payload);
@@ -121,9 +120,7 @@ export class ActiveGameController {
                 }
                 const updatedActiveGame = await this.activeGameService.addPlayerToActiveGame(activeGameId, characterForm);
                 // Emit a socket to clients when a player joins the active game.
-                if (updatedActiveGame) {
-                    this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
-                } else {
+                if (!updatedActiveGame) {
                     return res.status(StatusCodes.NOT_FOUND).json({ message: 'Partie active introuvable' });
                 }
 
@@ -131,9 +128,10 @@ export class ActiveGameController {
                 if (!joinedPlayer) {
                     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Impossible de trouver le joueur ajouté' });
                 }
-
-                this.gameSocketsService.emitPlayersUpdated(updatedActiveGame._id, updatedActiveGame.players);
                 this.activeGameListSocketsService.emitJoinableGamesUpdated(updatedActiveGame._id);
+                if (characterForm.virtualPlayerProfile) {
+                    this.gameSocketService.emitVirtualPlayerJoined(updatedActiveGame);
+                }
                 const payload: IActiveGameWithPlayer = { activeGame: updatedActiveGame, player: joinedPlayer };
                 return res.status(StatusCodes.OK).json(payload);
             } catch (error) {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, InputSignal } from '@angular/core';
+import { Component, inject, input, InputSignal, output } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
 
@@ -13,6 +13,7 @@ export class WaitPlayerListComponent {
     players: InputSignal<ICharacter[]> = input.required<ICharacter[]>();
     localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
     organizerName: InputSignal<string> = input.required<string>();
+    openVirtualPlayerDialog = output<void>();
 
     get otherPlayers(): ICharacter[] {
         const localName = this.localPlayer()?.name;
@@ -24,6 +25,10 @@ export class WaitPlayerListComponent {
         return !!local && this.isOrganizer(local.name);
     }
 
+    get canAddVirtualPlayer(): boolean {
+        return this.isOrganizer(this.localPlayer()?.name) && this.players().length < (this.activeGameService.activeGame?.maxPlayerCount ?? 0);
+    }
+
     isOrganizer(playerName: string | undefined): boolean {
         return playerName === this.organizerName();
     }
@@ -33,5 +38,9 @@ export class WaitPlayerListComponent {
         if (this.isOrganizer(localName)) {
             this.activeGameService.kickPlayer(playerName);
         }
+    }
+
+    emitOpenVirtualPlayerDialog() {
+        this.openVirtualPlayerDialog.emit();
     }
 }
