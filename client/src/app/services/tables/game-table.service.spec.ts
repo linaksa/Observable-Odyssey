@@ -38,7 +38,6 @@ describe('GameTableService', () => {
             lastModifiedDate: new Date(),
             visibility: Visibility.Viewable,
             dateCreated: new Date(),
-            preview: '',
         },
         {
             _id: '102974rj32ofqeqhjbfeqi',
@@ -49,7 +48,6 @@ describe('GameTableService', () => {
             lastModifiedDate: new Date(),
             visibility: Visibility.Hidden,
             dateCreated: new Date(),
-            preview: '',
         },
     ];
 

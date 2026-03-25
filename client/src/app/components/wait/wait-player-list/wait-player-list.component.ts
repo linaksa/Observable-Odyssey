@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
+import { Avatar, buildAvatarAssetPath } from '@common/constants';
 
 @Component({
     selector: 'app-wait-player-list',
@@ -26,6 +27,10 @@ export class WaitPlayerListComponent {
 
     isOrganizer(playerName: string | undefined): boolean {
         return playerName === this.organizerName();
+    }
+
+    buildPlayerAvatarUrl(avatar: Avatar): string {
+        return buildAvatarAssetPath(avatar, true);
     }
 
     kickPlayer(playerName: string): void {

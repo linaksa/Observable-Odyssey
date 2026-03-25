@@ -4,14 +4,20 @@
             @let game = getGame(gameRow);
             <article class="flex flex-col sm:flex-row items-start justify-between gap-4 p-4">
                 <section class="flex flex-row min-w-1/2 items-start gap-4">
-                    <img
-                        class="rounded-lg object-cover w-32 h-32"
-                        [src]="game.preview"
-                        [alt]="game.gameTitle"
+                    <div
+                        class="relative h-32 w-32 shrink-0 overflow-hidden rounded-lg"
                         (mouseenter)="showDescriptionTooltip($event, game.description)"
                         (mousemove)="updateDescriptionTooltipPosition($event)"
                         (mouseleave)="hideDescriptionTooltip()"
-                    />
+                    >
+                        <app-game-grid
+                            class="absolute inset-0 pointer-events-none"
+                            [cells]="game.board.cells"
+                            [getObjectAt]="getBoardObjectAt(game)"
+                            [useBackgroundRendering]="true"
+                            gridClass="rounded-none"
+                        />
+                    </div>
 
                     <div class="flex shrink flex-col justify-between text-white/80 text-base tracking-wider min-h-32">
                         <span class="text-2xl font-black text-white wrap-anywhere">{{ game.gameTitle }}</span>

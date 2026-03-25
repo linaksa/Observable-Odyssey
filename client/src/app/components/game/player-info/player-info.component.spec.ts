@@ -60,9 +60,12 @@ describe('PlayerInfoComponent', () => {
     });
 
     it('should expose avatar and dice icon urls for current player', () => {
-        expect(component.avatarUrl).toBe('./assets/form-page/avatar1.png');
+        expect(component.avatarUrl).toBe('./assets/characters/archer-portrait.png');
         expect(component.attackDiceIconUrl).toBe('./assets/form-page/4_sided_dice.svg');
         expect(component.defenseDiceIconUrl).toBe('./assets/form-page/6_sided_dice.svg');
+
+        const avatarImage = fixture.nativeElement.querySelector('img[alt="Player Avatar"]') as HTMLImageElement;
+        expect(avatarImage.className).toContain('[image-rendering:pixelated]');
     });
 
     // Edge case: When local player is undefined, return empty urls.

@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, InputSignal, OnInit, TemplateRef, ViewChild, input, signal } from '@angular/core';
+import { Component, ElementRef, InputSignal, OnInit, TemplateRef, ViewChild, inject, input, signal } from '@angular/core';
+import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { IActiveGame } from '@common/activeGame';
 import { IExistingGame, IGame } from '@common/game';
+import { IItem } from '@common/items';
 
 type GameTableRow = IExistingGame | IActiveGame;
 type TooltipPosition = { x: number; y: number };
@@ -13,12 +16,15 @@ const TOOLTIP_FALLBACK_HEIGHT_PX = 80;
 
 @Component({
     selector: 'app-game-table',
-    imports: [CommonModule, LoadingOverlayComponent],
+    imports: [CommonModule, GameGridComponent, LoadingOverlayComponent],
     templateUrl: './game-table.component.html',
 })
 export class GameTableComponent implements OnInit {
     @ViewChild('tableContainer') private tableContainerRef?: ElementRef<HTMLDivElement>;
     @ViewChild('descriptionTooltipElement') private descriptionTooltipRef?: ElementRef<HTMLDivElement>;
+
+    private readonly boardSharedService = inject(BoardSharedService);
+    private readonly boardObjectLookupCache = new WeakMap<IGame, (rowIndex: number, colIndex: number) => IItem | null>();
 
     readonly games: InputSignal<IExistingGame[] | undefined> = input<IExistingGame[] | undefined>();
     readonly activeGames: InputSignal<IActiveGame[] | undefined> = input<IActiveGame[] | undefined>();
@@ -52,6 +58,21 @@ export class GameTableComponent implements OnInit {
 
     getGame(gameRow: GameTableRow): IGame {
         return this.isActiveGameRow(gameRow) ? gameRow.game : gameRow;
+    }
+
+    getBoardObjectAt(game: IGame): (rowIndex: number, colIndex: number) => IItem | null {
+        const cachedLookup = this.boardObjectLookupCache.get(game);
+
+        if (cachedLookup) {
+            return cachedLookup;
+        }
+
+        const objectAt = (rowIndex: number, colIndex: number): IItem | null => {
+            return this.boardSharedService.getObjectAt(rowIndex, colIndex, game.board.items);
+        };
+
+        this.boardObjectLookupCache.set(game, objectAt);
+        return objectAt;
     }
 
     numOfPlayer(gameRow: GameTableRow): number {

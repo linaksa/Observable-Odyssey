@@ -4,7 +4,6 @@ import { CellType, IBoard } from '@common/board';
 import { EditGameFormData, GameType } from '@common/game';
 
 import { IItem } from '@common/items';
-import html2canvas from 'html2canvas-pro';
 import { GameService } from '@app/services/admin/game.service';
 
 @Injectable({
@@ -15,10 +14,8 @@ export class GameEditFormService {
 
     form: FormGroup;
     formValid: boolean = false;
-    formErrors: string[];
+    formErrors: string[] = [];
     isSubmitting: WritableSignal<boolean> = signal(false);
-
-    customHtml2Canvas = html2canvas;
 
     constructor(private formBuilder: FormBuilder) {
         this.form = this.formBuilder.group({
@@ -41,35 +38,9 @@ export class GameEditFormService {
         });
     }
 
-    private async getPreviewImage(gridSelector: HTMLElement | null): Promise<Base64URLString | null> {
-        if (!gridSelector) {
-            return null;
-        }
-
-        let imgData: Base64URLString;
-        try {
-            const canvas: HTMLCanvasElement = await this.customHtml2Canvas(gridSelector);
-            imgData = canvas.toDataURL('image/png');
-        } catch {
-            return null;
-        }
-        return imgData;
-    }
-
-    async submitForm(id: string, gameMode: GameType, cells: CellType[][], items: IItem[], gridSelector: HTMLElement | null): Promise<void> {
+    async submitForm(id: string, gameMode: GameType, cells: CellType[][], items: IItem[]): Promise<void> {
         this.isSubmitting.set(true);
-        // Allow angular to rerender before html2canvas blocks the cycle somehow
-        const timeout = 50;
-        await new Promise((resolve) => setTimeout(resolve, timeout));
         this.formErrors = [];
-
-        const previewImage = await this.getPreviewImage(gridSelector);
-        if (!previewImage) {
-            this.formValid = false;
-            this.formErrors = ["Une erreur est survenue lors de la génération de l'aperçu du plateau."];
-            this.isSubmitting.set(false);
-            return Promise.reject();
-        }
 
         const formData = this.form.value;
         const board: IBoard = {
@@ -81,7 +52,6 @@ export class GameEditFormService {
             gameTitle: formData.gameTitle,
             description: formData.description,
             gameMode,
-            preview: previewImage,
             board,
         };
 

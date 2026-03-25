@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ICharacter } from '@common/character';
-import { DiceType } from '@common/constants';
+import { DiceType, buildAvatarAssetPath } from '@common/constants';
 
 const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     [DiceType.FourSided]: './assets/form-page/4_sided_dice.svg',
@@ -25,7 +25,7 @@ export class PlayerInfoComponent {
     }
 
     get avatarUrl(): string {
-        return this.player ? `./assets/form-page/${this.player.avatar}.png` : '';
+        return this.player ? buildAvatarAssetPath(this.player.avatar, true) : '';
     }
 
     get attackDiceIconUrl(): string {

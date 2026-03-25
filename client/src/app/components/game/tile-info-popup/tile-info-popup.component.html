@@ -20,7 +20,11 @@
             <h5 class="mb-1 text-sm font-semibold text-gray-900">Joueur</h5>
             <div class="flex items-center gap-2">
                 @if (data().playerAvatarUrl) {
-                    <img class="h-10 w-10 rounded-full object-cover" [src]="data().playerAvatarUrl" [alt]="'Avatar de ' + data().playerName" />
+                    <img
+                        class="h-10 w-10 rounded-full object-cover [image-rendering:pixelated]"
+                        [src]="data().playerAvatarUrl"
+                        [alt]="'Avatar de ' + data().playerName"
+                    />
                 }
                 <p class="text-sm font-medium text-gray-800">{{ data().playerName }}</p>
             </div>
