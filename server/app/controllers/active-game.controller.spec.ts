@@ -35,7 +35,6 @@ describe('ActiveGameController', () => {
         description: 'Test Description',
         gameMode: GameType.Classic,
         board: {} as IBoard,
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),

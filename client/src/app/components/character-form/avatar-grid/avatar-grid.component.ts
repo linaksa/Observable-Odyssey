@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { AVATAR_IMAGE_PATH_MODEL } from '@app/constants/character-form';
-import { Avatar } from '@common/constants';
+import { Avatar, buildAvatarAssetPath } from '@common/constants';
 
 @Component({
     selector: 'app-avatar-grid',
@@ -39,6 +38,6 @@ export class AvatarGridComponent {
     }
 
     getImageForAvatar(avatar: Avatar): string {
-        return AVATAR_IMAGE_PATH_MODEL.replace('{}', avatar);
+        return buildAvatarAssetPath(avatar, true);
     }
 }

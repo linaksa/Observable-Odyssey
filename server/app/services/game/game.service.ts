@@ -58,7 +58,6 @@ export class GameService {
 
     private validateBoard(gameData: IGame): void {
         if (!gameData.board) throw new ValidationError("Il n'y a pas de carte");
-        if (!gameData.preview) throw new ValidationError('Il manque une image de preview du jeu');
 
         const boardErrors = this.boardService.validateBoard(gameData.board, gameData.gameMode);
         if (boardErrors.length > 0) throw new ValidationError(boardErrors.join(' '));
@@ -91,7 +90,6 @@ export class GameService {
                 gameMode: gameData.gameMode,
                 board: gameData.board,
                 visibility: Visibility.Hidden,
-                preview: gameData.preview,
                 lastModifiedDate: new Date(),
             },
             { new: true },

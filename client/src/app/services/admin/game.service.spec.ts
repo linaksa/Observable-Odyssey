@@ -33,7 +33,6 @@ describe('GameService', () => {
         lastModifiedDate: new Date(),
         visibility: Visibility.Viewable,
         dateCreated: new Date(),
-        preview: '',
     };
 
     beforeEach(() => {

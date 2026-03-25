@@ -72,6 +72,8 @@ describe('EditionItemSelectorObjectComponent', () => {
             ITEM_INFO_BY_TYPE[ItemType.LifeSanctuary].description,
         );
         expect((buttons[flagIndex].querySelector('img') as HTMLImageElement).alt).toBe('Drapeau');
+        expect((buttons[flagIndex].querySelector('img') as HTMLImageElement).className).toContain('[image-rendering:pixelated]');
+        expect((fixture.nativeElement.querySelector('div.w-64.h-64 img') as HTMLImageElement).className).toContain('[image-rendering:pixelated]');
 
         buttons[startingPositionIndex].click();
 

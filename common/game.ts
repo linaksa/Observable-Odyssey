@@ -17,7 +17,6 @@ export interface IGame {
     lastModifiedDate: Date;
     dateCreated: Date;
     visibility: Visibility;
-    preview: Base64URLString;
     board: IBoard;
 }
 
@@ -29,6 +28,5 @@ export interface EditGameFormData {
     gameTitle: string;
     description: string;
     gameMode: GameType;
-    preview: Base64URLString;
     board: IBoard;
 }

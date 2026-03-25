@@ -84,7 +84,7 @@ describe('EditionPageComponent', () => {
 
         component.ngOnInit();
         routeParams$.next({ gameId: '123' });
-        tick();
+        tick(componentApi.timeout);
 
         expect(unsubscribeSpy).toHaveBeenCalled();
         expect(gameServiceSpy.getGameById).toHaveBeenCalledWith('123');
@@ -111,7 +111,7 @@ describe('EditionPageComponent', () => {
 
         component.ngOnInit();
         routeParams$.next({ gameId: '123' });
-        tick();
+        tick(componentApi.timeout);
 
         expect(component.editedGame).toBeNull();
         expect(buildGridSpy).not.toHaveBeenCalled();
@@ -132,7 +132,7 @@ describe('EditionPageComponent', () => {
 
         component.ngOnInit();
         routeParams$.next({ gameId: 'creation' });
-        tick();
+        tick(componentApi.timeout);
 
         expect(unsubscribeSpy).toHaveBeenCalled();
         expect(gameServiceSpy.getGameById).not.toHaveBeenCalled();
@@ -153,7 +153,7 @@ describe('EditionPageComponent', () => {
 
         component.ngOnInit();
         routeParams$.next({ gameId: 'creation' });
-        tick();
+        tick(componentApi.timeout);
 
         const firstRow = firstIndex(component.previousVersion.board.cells);
         const firstCol = firstIndex(component.previousVersion.board.cells[firstRow]);
@@ -268,28 +268,17 @@ describe('EditionPageComponent', () => {
     }));
 
     it('should submit the form and navigate back on success', fakeAsync(() => {
-        const componentApi = component as unknown as EditionPageApi;
-        const gridElement = document.createElement('div');
         const submitFormSpy = gameEditFormServiceStub.submitForm as jasmine.Spy;
 
         submitFormSpy.and.returnValue(Promise.resolve());
         boardEditorService.buildGrid(GridSize.MEDIUM);
         boardEditorService.gameMode = GameType.Ctf;
         component.editedGame = randomGame;
-        componentApi.gridPanel = {
-            getGridElement: () => gridElement,
-        };
 
         component.submitGameForm();
         flushMicrotasks();
 
-        expect(submitFormSpy).toHaveBeenCalledWith(
-            randomGame._id,
-            GameType.Ctf,
-            boardEditorService.gameCells,
-            boardEditorService.objects,
-            gridElement,
-        );
+        expect(submitFormSpy).toHaveBeenCalledWith(randomGame._id, GameType.Ctf, boardEditorService.gameCells, boardEditorService.objects);
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin']);
     }));
 
@@ -413,13 +402,13 @@ function createGame(gameMode: GameType): IExistingGame {
         lastModifiedDate: referenceDate,
         visibility: Visibility.Hidden,
         dateCreated: referenceDate,
-        preview: '' as Base64URLString,
     };
 }
 
 type EditionPageApi = {
     isLoading: () => boolean;
     showButton: () => boolean;
+    timeout: number;
     previousVersion: IExistingGame;
     mouseState: {
         isDrawing: boolean;

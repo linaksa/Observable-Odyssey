@@ -64,7 +64,10 @@ describe('PlayerListComponent', () => {
     });
 
     it('should build avatar URL from avatar enum', () => {
-        expect(component.buildPlayerAvatarUrl(Avatar.Avatar4)).toBe('./assets/form-page/avatar4.png');
+        expect(component.buildPlayerAvatarUrl(Avatar.Avatar4)).toBe('./assets/characters/cocoa-portrait.png');
+
+        const avatarImage = fixture.nativeElement.querySelector('img[alt="Player Avatar"]') as HTMLImageElement;
+        expect(avatarImage.className).toContain('[image-rendering:pixelated]');
     });
 
     it('should identify organizer correctly', () => {

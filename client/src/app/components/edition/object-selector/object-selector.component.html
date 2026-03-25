@@ -5,7 +5,7 @@
         <img
             [src]="objectImagePath(boardEditorService.selectedObject)"
             [alt]="displayTitle(boardEditorService.itemTypesInfo[boardEditorService.selectedObject].title)"
-            class="h-full w-full object-cover object-top"
+            class="h-full w-full object-cover object-top [image-rendering:pixelated]"
             draggable="false"
         />
     } @else {
@@ -29,7 +29,7 @@
             <img
                 [src]="objectImagePath(type)"
                 [alt]="displayTitle(boardEditorService.itemTypesInfo[type].title)"
-                class="h-full w-full object-cover pointer-events-none"
+                class="h-full w-full object-cover pointer-events-none [image-rendering:pixelated]"
                 draggable="false"
             />
             @if (boardEditorService.selectedObject === type) {

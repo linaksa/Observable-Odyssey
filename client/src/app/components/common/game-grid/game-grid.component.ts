@@ -8,6 +8,7 @@ import {
 } from '@app/constants/backgrounds-mapping';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
+import { buildAvatarAssetPath } from '@common/constants';
 import { IItem, ItemType } from '@common/items';
 
 export interface GameGridCellEvent {
@@ -33,6 +34,7 @@ export class GameGridComponent {
     readonly editable = input(false);
     readonly useBackgroundRendering = input(false);
     readonly players = input<readonly ICharacter[] | null>(null);
+    readonly playerAvatarPortrait = input(true);
     readonly highlightedTiles = input<ReadonlySet<number> | null>(null);
     readonly gridClass = input('');
 
@@ -80,6 +82,14 @@ export class GameGridComponent {
         return playersByCell;
     });
 
+    readonly playerAvatarClass = computed(() =>
+        this.joinClasses(
+            'absolute inset-0 z-40 bg-center bg-size-[100%_100%] bg-no-repeat focus-visible:ring-2',
+            'focus-visible:ring-blue-400 [image-rendering:pixelated]',
+            this.playerAvatarPortrait() ? 'rounded-full m-1' : '',
+        ),
+    );
+
     objectAt(rowIndex: number, colIndex: number): IItem | null {
         return this.getObjectAt()(rowIndex, colIndex);
     }
@@ -101,7 +111,7 @@ export class GameGridComponent {
     }
 
     playerAvatarUrl(player: ICharacter): string {
-        return `assets/form-page/${player.avatar}.png`;
+        return buildAvatarAssetPath(player.avatar, this.playerAvatarPortrait());
     }
 
     playersAt(rowIndex: number, colIndex: number): ICharacter[] {
