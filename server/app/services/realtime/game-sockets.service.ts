@@ -5,7 +5,6 @@ import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
-import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
@@ -240,13 +239,6 @@ export class GameSocketsService {
             await this.gameplayService.turnService.endTurn(gameId);
         }
     }
-    emitPlayersUpdated(activeGameId: string, players: ICharacter[]): void {
-        if (!this.namespace || !activeGameId) {
-            return;
-        }
-
-        this.namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, players);
-    }
 
     private parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
         if (typeof payload === 'string') {
@@ -302,5 +294,10 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+    }
+
+    emitVirtualPlayerJoined(activeGame: IActiveGame) {
+        const gameId = activeGame._id.toString();
+        this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, activeGame.players);
     }
 }

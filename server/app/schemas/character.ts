@@ -65,6 +65,10 @@ export const characterSchema = new Schema<ICharacter>(
             type: Boolean,
             default: false,
         },
+        virtualPlayerProfile: {
+            type: String,
+            required: false,
+        },
     },
     { _id: false },
 );

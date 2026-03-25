@@ -9,9 +9,9 @@ import { PlayerInfoComponent } from '@app/components/game/player-info/player-inf
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { ICharacter } from '@common/character';
@@ -63,6 +63,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
                         this.activeGameService.updatePlayers(players);
                     },
                 });
+
                 this.gameTurnService.initializeTurnListeners();
             }
 

@@ -24,7 +24,7 @@
 
     <div class="border-t border-white"></div>
 
-    <div class="flex flex-col gap-2">
+    <div class="grow flex flex-col gap-2">
         @for (player of otherPlayers; track $index) {
             <div class="flex flex-row items-center justify-between">
                 <div class="flex flex-row items-center justify-start gap-4">
@@ -40,6 +40,10 @@
                                 <div class="flex flex-col rounded-md px-2 bg-[#ffcdd2] items-center justify-center">
                                     <span class="text-sm text-black tracking-wider">Organisateur</span>
                                 </div>
+                            } @else if (player.virtualPlayerProfile) {
+                                <div class="flex flex-col rounded-md px-2 bg-[#ffcdd2] items-center justify-center">
+                                    <span class="text-sm text-black tracking-wider">Joueur virtuel</span>
+                                </div>
                             }
                         </div>
                         <div class="text-sm text-white/80 tracking-wider">{{ player.initialHealth }} HP / {{ player.movementLeft }} SPD</div>
@@ -53,4 +57,8 @@
             <div class="text-base text-white tracking-wider text-center">Aucun autre joueur connecté</div>
         }
     </div>
+    @if (canAddVirtualPlayer) {
+        <div class="border-t border-white"></div>
+        <button (click)="emitOpenVirtualPlayerDialog()" type="button" class="btn">Ajouter un joueur virtuel</button>
+    }
 </div>
