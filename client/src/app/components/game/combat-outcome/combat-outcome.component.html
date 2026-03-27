@@ -31,6 +31,8 @@
                     <p>Vous avez perdu le combat</p>
                     @if (outcome.winner) {
                         <p><b>{{ outcome.winner }} a gagne le combat</b></p>
+                    } @else {
+                        <p><b>Le combat s'est termine par une egalite</b></p>
                     }
                 </div>
             </div>
