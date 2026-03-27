@@ -180,7 +180,11 @@ export class TurnService {
             callback();
         }, durationMs);
 
-        this.combatTimers.set(activeGame._id, timer);
+        this.combatTimers.set(activeGame._id.toString(), timer);
+    }
+
+    clearCombatTimer(activeGame: IActiveGame): void {
+        this.clearTimerFromMap(activeGame, this.combatTimers);
     }
 
     private clearTimerFromMap(activeGame: IActiveGame, map: Map<string, NodeJS.Timeout>): number {
@@ -191,7 +195,7 @@ export class TurnService {
             return 0;
         }
 
-        const secondsRemaining = Date.now() - activeGame.turnStartTimeStamp;
+        const secondsRemaining = TEMPS_TOUR - (Date.now() - activeGame.turnStartTimeStamp);
 
         clearTimeout(timer);
         map.delete(stringGameId);

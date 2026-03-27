@@ -188,12 +188,14 @@ export class GameSocketsService {
                 const { gameId, playerName, posture } = data;
                 const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
 
-                const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack.defenderPosture;
+                const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
                 if (!combatReady) {
                     this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
                     return;
                 }
 
+                // The combat turn is applied immediately
+                this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
                 await this.gameplayService.combatService.applyCombatTurn(gameId);
             });
 

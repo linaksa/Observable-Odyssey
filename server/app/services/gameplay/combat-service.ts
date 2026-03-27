@@ -90,6 +90,10 @@ export class CombatService {
         attacker.currentHealth = Math.max(attacker.currentHealth - attackerNetDamage, 0);
         defender.currentHealth = Math.max(defender.currentHealth - defenderNetDamage, 0);
 
+        currentActiveGame.currentAttack.turnCount++;
+        currentActiveGame.currentAttack.attackerPosture = null;
+        currentActiveGame.currentAttack.defenderPosture = null;
+
         const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         const namespace = this.socketService.getNamespace(Namespaces.Game);
 
