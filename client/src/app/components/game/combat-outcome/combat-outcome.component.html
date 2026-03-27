@@ -12,7 +12,7 @@
                     </button>
 
                     <h2 class="text-2xl font-bold mb-2">Victory</h2>
-                    <p>You won the fight</p>
+                    <p>Vous avez gagnez le combat</p>
                 </div>
             </div>
         }
@@ -28,7 +28,10 @@
                     </button>
 
                     <h2 class="text-2xl font-bold mb-2">Defeat</h2>
-                    <p>You lost the fight</p>
+                    <p>Vous avez perdu le combat</p>
+                    @if (outcome.winner) {
+                        <p><b>{{ outcome.winner }} a gagne le combat</b></p>
+                    }
                 </div>
             </div>
         }
