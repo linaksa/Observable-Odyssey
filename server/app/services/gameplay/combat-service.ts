@@ -100,7 +100,6 @@ export class CombatService {
         if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
             const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
             namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
-            return currentActiveGame;
         }
 
         namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
