@@ -115,11 +115,11 @@ export class CombatService {
         let losers: ICharacter[] = [];
 
         if (attacker.currentHealth > 0) {
-            winner = defender;
-            losers = [attacker];
-        } else if (defender.currentHealth > 0) {
             winner = attacker;
             losers = [defender];
+        } else if (defender.currentHealth > 0) {
+            winner = defender;
+            losers = [attacker];
         } else {
             losers = [attacker, defender];
         }
@@ -128,10 +128,13 @@ export class CombatService {
             winner.victories++;
         }
 
-        for (const loser of losers) {
-            loser.currentHealth = loser.initialHealth;
-            this.relocateLoser(loser, currentActiveGame);
-        }
+        currentActiveGame.players = currentActiveGame.players.map((player) => {
+            if (player.currentHealth === 0) {
+                player.currentHealth = player.initialHealth;
+                this.relocateLoser(player, currentActiveGame);
+            }
+            return player;
+        });
 
         const turnRemainingTime = currentActiveGame.currentAttack.suspendedTurnTimer;
 
@@ -156,7 +159,7 @@ export class CombatService {
         if (positionGrille.x === positionDepart.x && positionGrille.y === positionDepart.y) {
             return;
         }
-        this.findNearestAvailableSpawn(positionDepart, activeGame);
+        player.positionGrille = this.findNearestAvailableSpawn(positionDepart, activeGame);
     }
 
     // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)

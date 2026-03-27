@@ -95,7 +95,7 @@ export class GameTurnService {
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
 
-                const countdownDuration = timeLeft !== null ? timeLeft * MILLISECONDS_PER_SECOND : TEMPS_TOUR;
+                const countdownDuration = timeLeft ? timeLeft : TEMPS_TOUR;
                 this.startCountdown(countdownDuration);
             },
         });
@@ -145,15 +145,12 @@ export class GameTurnService {
         const deadline = Date.now() + durationMs;
         this._turnTimeLeftSeconds = Math.ceil(durationMs / MILLISECONDS_PER_SECOND);
 
-        console.log(`Starting turn countdown: ${this._turnTimeLeftSeconds} seconds`);
         this.countdownInterval = setInterval(() => {
             const remainingMs = deadline - Date.now();
             const nextSeconds = Math.ceil(Math.max(remainingMs, COUNTDOWN_MIN_REMAINING_MS) / MILLISECONDS_PER_SECOND);
             this._turnTimeLeftSeconds = nextSeconds;
-            console.log(`Turn countdown: ${nextSeconds} seconds left`);
 
             if (remainingMs <= COUNTDOWN_MIN_REMAINING_MS) {
-                console.log('Turn countdown ended');
                 this.stopCountdown();
             }
         }, COUNTDOWN_TICK_INTERVAL_MS);

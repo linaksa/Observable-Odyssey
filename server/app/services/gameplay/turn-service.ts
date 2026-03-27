@@ -154,6 +154,13 @@ export class TurnService {
             actionLeft: this.getCurrentPlayer(activeGame)?.actionsLeft ?? 0,
             timeLeft,
         });
+
+        const stringGameId = activeGame._id.toString();
+        const timer = setTimeout(() => {
+            this.turnTimers.delete(stringGameId);
+            this.endTurn(stringGameId);
+        }, timeLeft);
+        this.turnTimers.set(stringGameId, timer);
     }
 
     private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {
@@ -184,7 +191,7 @@ export class TurnService {
             return 0;
         }
 
-        const secondsRemaining = (Date.now() - activeGame.turnStartTimeStamp) / 1000;
+        const secondsRemaining = Date.now() - activeGame.turnStartTimeStamp;
 
         clearTimeout(timer);
         map.delete(stringGameId);

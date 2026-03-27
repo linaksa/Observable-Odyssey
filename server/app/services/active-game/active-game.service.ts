@@ -194,10 +194,6 @@ export class ActiveGameService {
             currentAttack.defenderPosture = posture;
         }
 
-        return await activeGameModel.findOneAndUpdate(
-            { _id: activeGameId },
-            { $push: { currentAttack: currentAttack } },
-            { returnDocument: 'after' },
-        );
+        return await activeGame.save();
     }
 }

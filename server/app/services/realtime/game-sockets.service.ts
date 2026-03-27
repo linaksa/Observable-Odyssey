@@ -191,6 +191,7 @@ export class GameSocketsService {
                 const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack.defenderPosture;
                 if (!combatReady) {
                     this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+                    return;
                 }
 
                 await this.gameplayService.combatService.applyCombatTurn(gameId);
