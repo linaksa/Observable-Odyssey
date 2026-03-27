@@ -160,7 +160,6 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!player) return;
 
             activeGame.hasFlagId = player.name;
-
             const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
             if (flag) {
                 flag.isCarried = true;

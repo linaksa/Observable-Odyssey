@@ -27,7 +27,9 @@ export class PlayerListComponent {
     buildPlayerAvatarUrl(avatar: Avatar): string {
         return buildAvatarAssetPath(avatar, true);
     }
-
+    hasFlag(player: ICharacter): boolean {
+        return this.activeGameService.activeGame.hasFlagId === player.name;
+    }
     get organizerName(): string {
         return this.activeGameService.activeGame.organizerName;
     }
