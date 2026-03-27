@@ -90,11 +90,13 @@ export class GameTurnService {
         });
 
         this.turnStartedSubscription = this.socketService.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
-            next: ({ player, movementLeft, actionLeft }) => {
+            next: ({ player, movementLeft, actionLeft, timeLeft }) => {
                 this.activeTurnPlayerName = player;
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
-                this.startCountdown(TEMPS_TOUR);
+
+                const countdownDuration = timeLeft !== null ? timeLeft * MILLISECONDS_PER_SECOND : TEMPS_TOUR;
+                this.startCountdown(countdownDuration);
             },
         });
 

@@ -107,7 +107,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             }
 
             context.setActiveGame(combatOutcome.updatedActiveGame);
-            toggle(context.hasChangedLocation);
+            console.log('Combat resolved:', combatOutcome);
         }),
 
         context.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {

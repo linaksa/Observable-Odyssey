@@ -141,6 +141,11 @@ export class GameSocketsService {
             // =======================
             socket.on(SocketEvent.Attack, async (data: IAttackData) => {
                 const { gameId, attackerName, defenderName } = data;
+                const activeGame = await this.activeGameService.getActiveGameById(gameId);
+                if (!activeGame) {
+                    socket.emit(SocketEvent.AttackError, { message: 'Partie introuvable' });
+                    return;
+                }
 
                 const allowed = await this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
                 if (!allowed) {
@@ -148,12 +153,11 @@ export class GameSocketsService {
                     return;
                 }
 
+                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
                 this.gameplayService.turnService.suspendTurn(gameId);
-                this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, gameId, () =>
+                this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, () =>
                     this.gameplayService.combatService.applyCombatTurn(gameId),
                 );
-
-                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
 
                 this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
                 this.namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);

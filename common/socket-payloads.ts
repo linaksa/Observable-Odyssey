@@ -54,4 +54,5 @@ export interface ITurnStartedPayload {
     player: string;
     movementLeft: number;
     actionLeft: number;
+    timeLeft: number | null;
 }

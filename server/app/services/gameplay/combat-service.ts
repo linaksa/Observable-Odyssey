@@ -95,11 +95,12 @@ export class CombatService {
 
         if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
             const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
-            namespace.to(currentActiveGame._id).emit(SocketEvent.CombatResolved, combatOutcome);
+            namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            return currentActiveGame;
         }
 
         namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
-        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGameId, () => this.applyCombatTurn(activeGameId));
+        this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
         return currentActiveGame;
     }
 
@@ -115,8 +116,10 @@ export class CombatService {
 
         if (attacker.currentHealth > 0) {
             winner = defender;
+            losers = [attacker];
         } else if (defender.currentHealth > 0) {
             winner = attacker;
+            losers = [defender];
         } else {
             losers = [attacker, defender];
         }
@@ -125,10 +128,12 @@ export class CombatService {
             winner.victories++;
         }
 
-        losers.forEach((loser) => {
+        for (const loser of losers) {
             loser.currentHealth = loser.initialHealth;
             this.relocateLoser(loser, currentActiveGame);
-        });
+        }
+
+        const turnRemainingTime = currentActiveGame.currentAttack.suspendedTurnTimer;
 
         currentActiveGame.currentAttack = null; // reset current attack after resolving combat
         const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
@@ -138,6 +143,8 @@ export class CombatService {
             winner: winner?.name || null,
             losers: losers.map((l) => l.name),
         };
+
+        this.turnService.continueTurn(currentActiveGame._id.toString(), turnRemainingTime);
 
         return combatResult;
     }

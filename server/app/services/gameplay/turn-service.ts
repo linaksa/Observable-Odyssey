@@ -1,5 +1,6 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
@@ -39,8 +40,8 @@ export class TurnService {
         }
 
         // Always clear old timers before creating new ones.
-        this.clearTimerFromMap(gameId, this.preparationTimers);
-        this.clearTimerFromMap(gameId, this.turnTimers);
+        this.clearTimerFromMap(activeGame, this.preparationTimers);
+        this.clearTimerFromMap(activeGame, this.turnTimers);
 
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
@@ -65,18 +66,21 @@ export class TurnService {
         }
 
         activeGame.turnIsInPreparation = false;
+        activeGame.turnStartTimeStamp = Date.now();
+
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
         const player = this.getCurrentPlayer(activeGame);
         if (!player) return;
 
-        this.clearTimerFromMap(gameId, this.turnTimers);
+        this.clearTimerFromMap(activeGame, this.turnTimers);
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         const turnStartedPayload: ITurnStartedPayload = {
             player: player.name,
             movementLeft: player?.movementLeft ?? 0,
             actionLeft: player?.actionsLeft ?? 0,
+            timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
 
@@ -94,8 +98,8 @@ export class TurnService {
         if (!activeGame) return;
 
         // Always clear timers, even if the game is already finished
-        this.clearTimerFromMap(gameId, this.turnTimers);
-        this.clearTimerFromMap(gameId, this.combatTimers);
+        this.clearTimerFromMap(activeGame, this.turnTimers);
+        this.clearTimerFromMap(activeGame, this.combatTimers);
 
         if (activeGame.isFinished) {
             return;
@@ -133,13 +137,13 @@ export class TurnService {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame || !activeGame.currentAttack) return;
 
-        const secondsRemaining = this.clearTimerFromMap(gameId, this.turnTimers);
+        const secondsRemaining = this.clearTimerFromMap(activeGame, this.turnTimers);
         activeGame.currentAttack.suspendedTurnTimer = secondsRemaining;
 
         this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
 
-    async continueTurn(gameId: string): Promise<void> {
+    async continueTurn(gameId: string, timeLeft: number): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return;
 
@@ -148,6 +152,7 @@ export class TurnService {
             player: this.getCurrentPlayer(activeGame)?.name,
             movementLeft: this.getCurrentPlayer(activeGame)?.movementLeft ?? 0,
             actionLeft: this.getCurrentPlayer(activeGame)?.actionsLeft ?? 0,
+            timeLeft,
         });
     }
 
@@ -160,27 +165,29 @@ export class TurnService {
         return activeGame.players.find((player) => player.name === playerName);
     }
 
-    startCombatTimer(durationMs: number, gameId: string, callback: () => void): void {
-        this.clearTimerFromMap(gameId, this.combatTimers);
+    startCombatTimer(durationMs: number, activeGame: IActiveGame, callback: () => void): void {
+        this.clearTimerFromMap(activeGame, this.combatTimers);
 
         const timer = setTimeout(() => {
-            this.combatTimers.delete(gameId);
+            this.combatTimers.delete(activeGame._id);
             callback();
         }, durationMs);
 
-        this.combatTimers.set(gameId, timer);
+        this.combatTimers.set(activeGame._id, timer);
     }
 
-    private clearTimerFromMap(gameId: string, map: Map<string, NodeJS.Timeout>): number {
-        const timer = map.get(gameId);
+    private clearTimerFromMap(activeGame: IActiveGame, map: Map<string, NodeJS.Timeout>): number {
+        const stringGameId = activeGame._id.toString();
+
+        const timer = map.get(stringGameId);
         if (!timer) {
             return 0;
         }
 
-        const secondsRemaining = Math.ceil(((timer as any)._idleStart + (timer as any)._idleTimeout - Date.now()) / 1000);
+        const secondsRemaining = (Date.now() - activeGame.turnStartTimeStamp) / 1000;
 
         clearTimeout(timer);
-        map.delete(gameId);
+        map.delete(stringGameId);
         return secondsRemaining;
     }
 }

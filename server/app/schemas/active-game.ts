@@ -42,6 +42,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Boolean,
         required: true,
     },
+    turnStartTimeStamp: {
+        type: Number,
+        default: 0,
+    },
 
     currentAttack: currentAttackSchema,
 });
