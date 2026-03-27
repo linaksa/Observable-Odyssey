@@ -6,6 +6,7 @@ import { GameAttackComponent } from '@app/components/game/game-attack/game-attac
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
+import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
@@ -35,6 +36,7 @@ import { Subscription } from 'rxjs';
         GameEndedComponent,
         TurnStatusComponent,
         CombatModeComponent,
+        CombatOutcomeComponent,
     ],
     providers: [GameTurnService],
     templateUrl: './game-page.component.html',

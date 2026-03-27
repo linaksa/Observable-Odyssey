@@ -1,0 +1,37 @@
+@if (getCombatOutcome(); as outcome) {
+    @if (localPlayerService.getLocalPlayer(); as player) {
+        @if (outcome.winner && outcome.winner === player.name) {
+            <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70">
+                <div class="bg-green-600 text-white p-6 rounded-xl border-4 border-black shadow-2xl w-[320px] text-center relative">
+
+                    <button
+                        class="absolute top-2 right-2 bg-black text-white px-2 border border-white"
+                        (click)="closeOutcome()"
+                    >
+                        X
+                    </button>
+
+                    <h2 class="text-2xl font-bold mb-2">Victory</h2>
+                    <p>You won the fight</p>
+                </div>
+            </div>
+        }
+        @if (outcome.losers.includes(player.name)) {
+            <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70">
+                <div class="bg-red-700 text-white p-6 rounded-xl border-4 border-black shadow-2xl w-[320px] text-center relative">
+
+                    <button
+                        class="absolute top-2 right-2 bg-black text-white px-2 border border-white"
+                        (click)="closeOutcome()"
+                    >
+                        X
+                    </button>
+
+                    <h2 class="text-2xl font-bold mb-2">Defeat</h2>
+                    <p>You lost the fight</p>
+                </div>
+            </div>
+        }
+
+    }
+}

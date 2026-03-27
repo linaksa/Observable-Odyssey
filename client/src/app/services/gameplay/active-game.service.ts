@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
-import { AttackPosture } from '@common/attackResult';
+import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 @Injectable({
@@ -40,6 +40,7 @@ export class ActiveGameService implements OnDestroy {
     hasAbandonned = signal(false);
     gameHasEnded = signal(false);
     attackMode = signal(false);
+    combatOutcome = signal(null as CombatOutcome | null);
 
     reachableTiles = new Set<number>();
     currentPlayer = signal<number>(0);
@@ -55,6 +56,7 @@ export class ActiveGameService implements OnDestroy {
                 router: this.router,
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
+                setCombatOutcome: (combatOutcome: CombatOutcome) => (this.combatOutcome.set(combatOutcome)),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,

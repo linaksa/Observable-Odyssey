@@ -23,6 +23,7 @@ export interface ActiveGameSocketContext {
     getActiveGame: () => IActiveGame | undefined;
     setActiveGame: (activeGame: IActiveGame) => void;
     getPlayerByName: (playerName: string) => ICharacter | undefined;
+    setCombatOutcome: (combatOutcome: CombatOutcome) => void;
     currentPlayer: {
         set(value: number): void;
     };
@@ -80,7 +81,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
         }),
 
         context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatStarted).subscribe((data) => {
-            let activeGame = context.getActiveGame();
+            const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
@@ -90,7 +91,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
         context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {
             console.log('Received CombatTurnStart event with data:', data);
-            let activeGame = context.getActiveGame();
+            const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
@@ -101,10 +102,13 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
         }),
 
         context.socket.on<CombatOutcome>(Namespaces.Game, SocketEvent.CombatResolved).subscribe((combatOutcome) => {
-            let activeGame = context.getActiveGame();
+            const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
+            console.log('Received CombatOutcome event with data:', combatOutcome);
+            context.setCombatOutcome(combatOutcome);
+            console.log('set combat outcome');
 
             context.setActiveGame(combatOutcome.updatedActiveGame);
             console.log('Combat resolved:', combatOutcome);

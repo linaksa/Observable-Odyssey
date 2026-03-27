@@ -3,6 +3,7 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
+import { LocalPlayerService} from '@app/services/player/local-player.service';
 
 @Component({
     selector: 'app-combat-mode',
@@ -12,6 +13,8 @@ import { ICharacter } from '@common/character';
 export class CombatModeComponent {
     activeGameService: ActiveGameService = inject(ActiveGameService);
     turnService = inject(GameTurnService);
+    localPlayerService = inject(LocalPlayerService);
+
 
     get attackerCharacter(): ICharacter | undefined {
         const attackerName = this.activeGameService.activeGame.currentAttack?.attacker;
@@ -36,6 +39,7 @@ export class CombatModeComponent {
     getAvatarUrl(character: ICharacter | undefined): string {
         return `assets/form-page/${character?.avatar || ''}.png`;
     }
+
 
     protected readonly AttackPosture = AttackPosture;
 }
