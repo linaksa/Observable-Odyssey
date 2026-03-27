@@ -340,7 +340,7 @@ export class ActiveGameService implements OnDestroy {
 
         const playerPosture: IAttackPostureData = {
             gameId: this.activeGame._id,
-            playerName: this.getCurrentPlayer()?.name ?? '',
+            playerName: this.localPlayer.getLocalPlayer()?.name ?? '',
             posture,
         };
 
