@@ -65,6 +65,13 @@ describe('WaitPlayerListComponent', () => {
         expect(component.isOrganizer(undefined)).toBeFalse();
     });
 
+    it('should render portrait avatars with pixelated rendering', () => {
+        const avatarImage = fixture.nativeElement.querySelector('img[alt="Organizer"]') as HTMLImageElement;
+
+        expect(avatarImage.getAttribute('src')).toBe('./assets/characters/archer-portrait.png');
+        expect(avatarImage.className).toContain('[image-rendering:pixelated]');
+    });
+
     it('should kick player only when local player is organizer', () => {
         component.kickPlayer(player2.name);
         expect(activeGameServiceMock.kickPlayer).toHaveBeenCalledWith(player2.name);

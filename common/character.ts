@@ -9,6 +9,10 @@ export enum Team {
     RED = 'red',
     BLUE = 'blue',
 }
+export enum VirtualPlayerProfile {
+    Agressive = 'agressif',
+    Defensive = 'defensive',
+}
 export interface ICharacter {
     name: string;
     avatar: Avatar;
@@ -26,8 +30,8 @@ export interface ICharacter {
     positionDepart: Position;
     positionGrille: Position;
     team?: Team | null;
+    virtualPlayerProfile?: VirtualPlayerProfile;
 }
-
 export interface CharacterFormData {
     name: string;
     avatar: Avatar;
@@ -37,4 +41,5 @@ export interface CharacterFormData {
     rapidityPoints: number;
     attackPoints: number;
     defensePoints: number;
+    virtualPlayerProfile?: VirtualPlayerProfile;
 }

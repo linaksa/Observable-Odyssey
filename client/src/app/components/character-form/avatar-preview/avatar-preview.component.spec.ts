@@ -12,7 +12,6 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AVATAR_IMAGE_PATH_MODEL } from '@app/constants/character-form';
 import { Avatar } from '@common/constants';
 import { AvatarPreviewComponent } from './avatar-preview.component';
 
@@ -36,7 +35,7 @@ describe('AvatarPreviewComponent', () => {
     it('should build avatar image path from model', () => {
         const imagePath = component.getImageForAvatar(Avatar.Avatar2);
 
-        expect(imagePath).toBe(AVATAR_IMAGE_PATH_MODEL.replace('{}', Avatar.Avatar2));
+        expect(imagePath).toBe('./assets/characters/brick.png');
     });
 
     // Edge case: When no avatar is selected, show placeholder.
@@ -55,7 +54,8 @@ describe('AvatarPreviewComponent', () => {
 
         const image = (fixture.nativeElement as HTMLElement).querySelector('img');
 
-        expect(image?.getAttribute('src')).toBe('./assets/form-page/avatar4.png');
+        expect(image?.getAttribute('src')).toBe('./assets/characters/cocoa.png');
         expect(image?.getAttribute('alt')).toBe(Avatar.Avatar4);
+        expect(image?.className).toContain('[image-rendering:pixelated]');
     });
 });

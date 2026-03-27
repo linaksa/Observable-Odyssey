@@ -73,4 +73,11 @@ describe('AvatarGridComponent', () => {
         component.form.patchValue({ avatar });
         expect(component.selectedAvatar).toBe(avatar);
     });
+
+    it('should build portrait avatar paths and render pixelated thumbnails', () => {
+        expect(component.getImageForAvatar(Avatar.Avatar1)).toBe('./assets/characters/archer-portrait.png');
+
+        const image = fixture.nativeElement.querySelector('img') as HTMLImageElement;
+        expect(image.className).toContain('[image-rendering:pixelated]');
+    });
 });

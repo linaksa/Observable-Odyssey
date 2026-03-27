@@ -338,7 +338,6 @@ function createActiveGame(id: string, organizerName: string, players: ICharacter
             lastModifiedDate: new Date('2024-01-01'),
             dateCreated: new Date('2024-01-01'),
             visibility: Visibility.Viewable,
-            preview: '' as Base64URLString,
             board: {
                 cells: [[CellType.Empty], [CellType.Empty]],
                 items: [],

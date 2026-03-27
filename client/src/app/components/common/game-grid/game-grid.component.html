@@ -15,14 +15,14 @@
                 @if (useBackgroundRendering()) {
                     <div
                         [class]="cellBackgroundClass(cell)"
-                        class="absolute inset-0 bg-no-repeat bg-cover pointer-events-none"
+                        class="absolute inset-0 bg-no-repeat bg-cover pointer-events-none [image-rendering:pixelated]"
                         data-testid="game-grid-cell-background"
                     ></div>
 
                     @if (item) {
                         <div
                             [class]="itemBackgroundClass(item)"
-                            class="absolute inset-0 z-10 pointer-events-none"
+                            class="absolute inset-0 z-10 pointer-events-none [image-rendering:pixelated]"
                             [style.backgroundPosition]="itemBackgroundPosition(item, rowIndex, colIndex)"
                             data-testid="game-grid-item"
                         ></div>
@@ -31,7 +31,7 @@
                     <img
                         [src]="cellImagePath(cell)"
                         [alt]="cell"
-                        class="h-full w-full object-fill pointer-events-none select-none"
+                        class="h-full w-full object-fill pointer-events-none select-none [image-rendering:pixelated]"
                         draggable="false"
                         data-testid="game-grid-cell-image"
                     />
@@ -40,7 +40,7 @@
                         <img
                             [src]="itemImagePath(item)"
                             [alt]="item.itemType"
-                            class="absolute pointer-events-none select-none max-w-none max-h-none"
+                            class="absolute pointer-events-none select-none max-w-none max-h-none [image-rendering:pixelated]"
                             [style.top]="itemTop(item, rowIndex)"
                             [style.left]="itemLeft(item, rowIndex, colIndex)"
                             [style.width]="itemWidth(item)"
@@ -62,7 +62,7 @@
                     @for (player of players; track player.name) {
                         <button
                             type="button"
-                            class="absolute inset-0 z-40 bg-center bg-size-[100%_100%] bg-no-repeat rounded-full m-1 focus-visible:ring-2 focus-visible:ring-blue-400"
+                            [class]="playerAvatarClass()"
                             [style.background-image]="'url(' + playerAvatarUrl(player) + ')'"
                             [attr.aria-label]="player.name"
                             (click)="onPlayerClick(player, $event)"

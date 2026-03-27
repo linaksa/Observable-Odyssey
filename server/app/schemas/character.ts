@@ -70,6 +70,10 @@ export const characterSchema = new Schema<ICharacter>(
             enum: Object.values(Team),
             default: null,
         },
+        virtualPlayerProfile: {
+            type: String,
+            required: false,
+        },
     },
     { _id: false },
 );

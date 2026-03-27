@@ -35,7 +35,6 @@ describe('ActiveGameController', () => {
         description: 'Test Description',
         gameMode: GameType.Classic,
         board: {} as IBoard,
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
@@ -140,7 +139,6 @@ describe('ActiveGameController', () => {
     it('post route should return 200 and return ', async () => {
         const createdActiveGame = { ...dummyActiveGame, players: [dummyPlayerCharacter] };
         activeGameService.createActiveGame.resolves(createdActiveGame);
-        gameSocketService.emitPlayersUpdated.returnsThis();
         activeGameListSocketsService.emitJoinableGamesUpdated.returnsThis();
 
         return supertest(expressApp)
@@ -150,8 +148,6 @@ describe('ActiveGameController', () => {
             .then((response) => {
                 expect(response.body.activeGame._id).to.equal(createdActiveGame._id);
                 expect(response.body.player).to.deep.equal(createdActiveGame.players[0]);
-
-                expect(gameSocketService.emitPlayersUpdated.calledWith(createdActiveGame._id, createdActiveGame.players)).to.be.equal(true);
                 expect(activeGameListSocketsService.emitJoinableGamesUpdated.calledWith(createdActiveGame._id)).to.be.equal(true);
             });
     });
@@ -241,7 +237,6 @@ describe('ActiveGameController', () => {
         const dummyPlayer = { ...dummyPlayerCharacter, avatar: selectedAvatar };
         const updatedActiveGame = { ...dummyActiveGame, players: [dummyPlayer] };
         activeGameService.addPlayerToActiveGame.resolves(updatedActiveGame);
-        gameSocketService.emitPlayersUpdated.returnsThis();
         activeGameListSocketsService.emitJoinableGamesUpdated.returnsThis();
 
         const dummyCharacterForm: CharacterFormData = {
@@ -262,8 +257,6 @@ describe('ActiveGameController', () => {
             .then((response) => {
                 expect(response.body.activeGame._id).to.equal(updatedActiveGame._id);
                 expect(response.body.player).to.deep.equal(updatedActiveGame.players[0]);
-
-                expect(gameSocketService.emitPlayersUpdated.calledWith(updatedActiveGame._id, updatedActiveGame.players)).to.be.equal(true);
                 expect(activeGameListSocketsService.emitJoinableGamesUpdated.calledWith(updatedActiveGame._id)).to.be.equal(true);
             });
     });

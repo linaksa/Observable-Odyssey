@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
-import { Avatar } from '@common/constants';
+import { Avatar, buildAvatarAssetPath } from '@common/constants';
 
 @Component({
     selector: 'app-player-list',
@@ -25,7 +25,7 @@ export class PlayerListComponent {
     }
 
     buildPlayerAvatarUrl(avatar: Avatar): string {
-        return `./assets/form-page/${avatar}.png`;
+        return buildAvatarAssetPath(avatar, true);
     }
 
     get organizerName(): string {

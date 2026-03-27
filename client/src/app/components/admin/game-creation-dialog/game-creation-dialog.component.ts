@@ -111,7 +111,6 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
             lastModifiedDate: new Date(),
             description: '',
             visibility: Visibility.Hidden,
-            preview: '',
         };
 
         this.gameService.gameUnderCreation = game;

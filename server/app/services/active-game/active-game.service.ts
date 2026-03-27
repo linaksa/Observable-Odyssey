@@ -68,7 +68,7 @@ export class ActiveGameService {
 
         const uniquePlayerName = this.generateUniquePlayerName(characterForm.name, activeGameToUpdate.players);
 
-        const newPlayerCharacter = {
+        const newPlayerCharacter: ICharacter = {
             name: uniquePlayerName,
             avatar: characterForm.avatar,
             initialHealth: characterForm.initialHealth,
@@ -84,8 +84,10 @@ export class ActiveGameService {
             hasAbandoned: false,
             positionDepart: { x: 0, y: 0 },
             positionGrille: { x: 0, y: 0 },
+            virtualPlayerProfile: characterForm.virtualPlayerProfile ?? undefined,
         };
         activeGameToUpdate.players.push(newPlayerCharacter);
+
         return await activeGameToUpdate.save();
     }
     async getActiveGameById(activeGameId: string): Promise<IActiveGame> {

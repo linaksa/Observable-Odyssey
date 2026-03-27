@@ -13,6 +13,15 @@
             }
         </div>
     } @else {
+        @if (isVirtualPlayerDialogOpen()) {
+            <div class="fixed inset-0 flex items-center justify-center w-full h-full bg-black/70 z-10" (click)="isVirtualPlayerDialogOpen.set(false)">
+                <app-virtual-player-dialog
+                    (closeDialog)="isVirtualPlayerDialogOpen.set(false)"
+                    (click)="$event.stopPropagation()"
+                ></app-virtual-player-dialog>
+            </div>
+        }
+
         <app-nav-buttons />
         <app-page-title title="Vue d'attente" />
 
@@ -22,6 +31,7 @@
                 [players]="activeGameService.activeGame.players"
                 [localPlayer]="localPlayer"
                 [organizerName]="activeGameService.activeGame.organizerName"
+                (openVirtualPlayerDialog)="isVirtualPlayerDialogOpen.set(true)"
             />
 
             <app-wait-game-grid class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4" />

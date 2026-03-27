@@ -5,7 +5,7 @@
         <img
             [src]="cellImagePath(boardEditorService.selectedMaterial)"
             [alt]="displayTitle(boardEditorService.cellTypesInfo[boardEditorService.selectedMaterial].title)"
-            class="h-full w-full object-cover object-top"
+            class="h-full w-full object-cover object-top [image-rendering:pixelated]"
             draggable="false"
         />
     } @else {
@@ -23,7 +23,7 @@
             <img
                 [src]="cellImagePath(type)"
                 [alt]="displayTitle(boardEditorService.cellTypesInfo[type].title)"
-                class="h-full w-full object-cover pointer-events-none"
+                class="h-full w-full object-cover pointer-events-none [image-rendering:pixelated]"
                 draggable="false"
             />
             @if (boardEditorService.selectedMaterial === type) {

@@ -1,15 +1,16 @@
-import { Component, effect, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { VirtualPlayerDialogComponent } from '@app/components/wait/virtual-player-dialog/virtual-player-dialog.component';
 import { WaitChatSidebarComponent } from '@app/components/wait/wait-chat-sidebar/wait-chat-sidebar.component';
 import { WaitGameGridComponent } from '@app/components/wait/wait-game-grid/wait-game-grid.component';
 import { WaitPlayerListComponent } from '@app/components/wait/wait-player-list/wait-player-list.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { WaitGridService } from '@app/services/lobby/wait-grid.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { WaitGridService } from '@app/services/lobby/wait-grid.service';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -26,10 +27,12 @@ import { Subscription } from 'rxjs';
         WaitGameGridComponent,
         WaitChatSidebarComponent,
         RouterLink,
+        VirtualPlayerDialogComponent,
     ],
     templateUrl: './wait-page.component.html',
 })
 export class WaitPageComponent implements OnInit, OnDestroy {
+    isVirtualPlayerDialogOpen = signal<boolean>(false);
     private readonly socketService = inject(SocketService);
     private readonly router = inject(Router);
     private readonly route: ActivatedRoute = inject(ActivatedRoute);
