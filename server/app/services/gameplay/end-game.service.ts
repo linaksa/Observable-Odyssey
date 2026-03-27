@@ -16,8 +16,9 @@ export class EndGameService {
         const winnerByCombat = activeGame.players.find((p) => p.victories === VICTORIES_TO_WIN);
         const ctfWinner = this.checkCTFWinCondition(activeGame);
         if (ctfWinner) {
+            const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
             activeGame.isFinished = true;
-            activeGame.winner = activeGame.players.find((p) => p.name === activeGame.hasFlagId)?.name || null;
+            activeGame.winner = flagHolder?.team === 'blue' ? 'blue team' : flagHolder?.team === 'red' ? 'red team' : null;
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
@@ -34,6 +35,23 @@ export class EndGameService {
             activeGame.winner = null; // No clear winner, all other players have abandoned
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
+        }
+        // si une des 2 équipes n'a plus de joueurs actifs, l'autre équipe gagne (mode ctf)
+        if (activeGame.game.gameMode === 'ctf') {
+            const redPlayers = activeGame.players.filter((p) => p.team === 'red' && !p.hasAbandoned);
+            const bluePlayers = activeGame.players.filter((p) => p.team === 'blue' && !p.hasAbandoned);
+            if (redPlayers.length === 0) {
+                activeGame.isFinished = true;
+                activeGame.winner = 'blue team';
+                await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+                return true;
+            }
+            if (bluePlayers.length === 0) {
+                activeGame.isFinished = true;
+                activeGame.winner = 'red team';
+                await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+                return true;
+            }
         }
         return false;
     }

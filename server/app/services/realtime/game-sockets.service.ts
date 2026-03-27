@@ -129,7 +129,8 @@ export class GameSocketsService {
                     }
                     const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                     if (gameEnded) {
-                        this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: playerId });
+                        const endedGame = await this.activeGameService.getActiveGameById(gameId);
+                        this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
                         await this.activeGameService.deleteGameById(gameId);
                     }
                 } catch (error) {
@@ -165,7 +166,8 @@ export class GameSocketsService {
 
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+                    const endedGame = await this.activeGameService.getActiveGameById(gameId);
+                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
                     await this.activeGameService.deleteGameById(gameId);
                 }
             });
@@ -189,7 +191,8 @@ export class GameSocketsService {
                 this.namespace?.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    const endedGame = await this.activeGameService.getActiveGameById(gameId);
+                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
                     await this.activeGameService.deleteGameById(gameId);
                 }
 
@@ -242,7 +245,8 @@ export class GameSocketsService {
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
-            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+            const endedGame = await this.activeGameService.getActiveGameById(gameId);
+            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
             await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
