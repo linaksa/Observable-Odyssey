@@ -95,7 +95,7 @@ export class ActiveGameService {
     }
 
     async saveActiveGameById(activeGameId: string, update: Partial<IActiveGame>): Promise<IActiveGame | null> {
-        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
+        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { returnDocument: 'after' });
     }
     async deleteGameById(activeGameId: string): Promise<void> {
         return await activeGameModel.findByIdAndDelete(activeGameId);

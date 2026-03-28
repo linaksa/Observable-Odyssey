@@ -8,7 +8,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { ITurnStartedPayload } from '@common/socket-payloads';
+import { IFlagActionData, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 interface BooleanSignal {
@@ -28,6 +28,8 @@ export interface ActiveGameSocketContext {
     hasChangedLocation: BooleanSignal;
     hasAbandonned: BooleanSignal;
     gameHasEnded: BooleanSignal;
+    handleFlagActionRequest: (data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag) => void;
+    closeFlagActionRequestIfExpired: (currentTurnPlayerName: string) => void;
 }
 
 export function registerActiveGameSocketListeners(context: ActiveGameSocketContext): Subscription[] {
@@ -53,6 +55,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
+            context.closeFlagActionRequestIfExpired(data.player);
+
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             if (index !== -1) {
                 activeGame.currentPlayerIndex = index;
@@ -65,6 +69,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!activeGame) {
                 return;
             }
+
+            context.closeFlagActionRequestIfExpired(data.player);
 
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             const currentPlayer = context.getPlayerByName(data.player);
@@ -165,6 +171,12 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 flag.isCarried = true;
             }
             toggle(context.hasChangedLocation);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
+            context.handleFlagActionRequest(data, SocketEvent.TakeFlag);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.GiveFlag).subscribe((data) => {
+            context.handleFlagActionRequest(data, SocketEvent.GiveFlag);
         }),
     ];
 }

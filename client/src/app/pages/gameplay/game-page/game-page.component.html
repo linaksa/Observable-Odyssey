@@ -29,3 +29,16 @@
 <div class="fixed bottom-6 left-6">
     <app-game-attack></app-game-attack>
 </div>
+
+@if (pendingFlagQuestion) {
+    <div class="fixed inset-0 z-20 flex items-center justify-center bg-black/70">
+        <div class="w-full max-w-md rounded-lg bg-[#233f74] p-6 text-white shadow-xl">
+            <h3 class="mb-4 text-center text-xl font-semibold">Demande de drapeau</h3>
+            <p class="mb-6 text-center">{{ pendingFlagQuestion }}</p>
+            <div class="flex justify-center gap-3">
+                <button type="button" class="btn" (click)="respondToFlagRequest(false)">Refuser</button>
+                <button type="button" class="btn btn-blue" (click)="respondToFlagRequest(true)">Accepter</button>
+            </div>
+        </div>
+    </div>
+}

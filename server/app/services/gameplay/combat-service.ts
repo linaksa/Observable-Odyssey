@@ -1,9 +1,9 @@
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { CombatResult } from '@app/services/interfaces/combat-result';
 import { IActiveGame } from '@common/activeGame';
 import { Position } from '@common/character';
 import { Service } from 'typedi';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { CombatResult } from '@app/services/interfaces/combat-result';
-import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 
 @Service()
 export class CombatService {
@@ -18,43 +18,6 @@ export class CombatService {
         private activeGameService: ActiveGameService,
         private positionValidatorService: PositionValidatorService,
     ) {}
-
-    // checks if the attacker can attack the defender according to the game rules
-    async canAttack(activeGameId: string, attackerName: string, defenderName: string): Promise<boolean> {
-        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!currentActiveGame) {
-            return false;
-        }
-        const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
-        const defender = currentActiveGame.players.find((p) => p.name === defenderName);
-        if (!attacker || !defender) {
-            return false;
-        }
-        if (attacker.name === defender.name) return false;
-        if (attacker.hasAbandoned || defender.hasAbandoned) return false;
-
-        const activePlayerName = currentActiveGame.turnOrder[currentActiveGame.currentPlayerIndex];
-        if (activePlayerName !== attacker.name) return false;
-        if (attacker.actionsLeft === 0) return false;
-
-        if (!this.positionValidatorService.isAdjacent(attacker.positionGrille, defender.positionGrille)) return false;
-        return true;
-    }
-    // calls canAttack for each opponent to check if the attacker can attack at least one of them
-    async canAttackAnyPlayer(activeGameId: string, attackerName: string): Promise<boolean> {
-        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!currentActiveGame) {
-            return false;
-        }
-
-        for (const defender of currentActiveGame.players) {
-            if (await this.canAttack(activeGameId, attackerName, defender.name)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
     async resolveCombat(activeGameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {

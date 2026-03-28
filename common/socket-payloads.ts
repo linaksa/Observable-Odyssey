@@ -11,10 +11,22 @@ export interface IPlayerMoveData {
     direction: Position;
 }
 
-export interface IAttackData {
+export interface IActionData {
     gameId: string;
-    attackerName: string;
-    defenderName: string;
+    currentPlayerName: string;
+    targetName: string;
+}
+
+export interface IFlagActionData {
+    gameId: string;
+    currentPlayerName: string;
+    currentPlayerActionsLeft: number;
+    targetPlayerName: string;
+}
+
+export interface IFlagDecisionData {
+    gameId: string;
+    newFlagCarrierName: string;
 }
 
 export interface IStartTurnData {

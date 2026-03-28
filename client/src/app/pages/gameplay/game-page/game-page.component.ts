@@ -120,7 +120,15 @@ export class GamePageComponent implements OnInit, OnDestroy {
         };
     }
 
+    get pendingFlagQuestion(): string | null {
+        return this.activeGameService.pendingFlagRequest()?.question ?? null;
+    }
+
     endTurn(): void {
         this.gameTurnService.endTurn();
+    }
+
+    respondToFlagRequest(accepted: boolean): void {
+        this.activeGameService.respondToFlagActionRequest(accepted);
     }
 }

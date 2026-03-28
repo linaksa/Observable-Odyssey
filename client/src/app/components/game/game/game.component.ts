@@ -139,12 +139,12 @@ export class GameComponent implements OnInit {
     }
 
     onPlayerClicked(playerName: string): void {
-        if (!this.activeGameService.attackMode() || !this.isLocalPlayerTurn) {
+        if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn) {
             return;
         }
 
-        this.activeGameService.attackPlayer(playerName);
-        this.activeGameService.attackMode.set(false);
+        this.activeGameService.actionOnPlayer(playerName);
+        this.activeGameService.actionMode.set(false);
     }
 
     onDocumentClick(): void {

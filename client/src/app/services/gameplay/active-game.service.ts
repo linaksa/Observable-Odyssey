@@ -9,12 +9,18 @@ import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
+import { IActionData, IDebugTeleportData, IDebugToggleState, IFlagActionData, IFlagDecisionData, IPlayerMoveData } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
+
+interface PendingFlagRequest {
+    data: IFlagActionData;
+    acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag;
+    question: string;
+}
 
 @Injectable({
     providedIn: 'root',
@@ -38,7 +44,8 @@ export class ActiveGameService implements OnDestroy {
     hasChangedLocation = signal(false);
     hasAbandonned = signal(false);
     gameHasEnded = signal(false);
-    attackMode = signal(false);
+    actionMode = signal(false);
+    pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     reachableTiles = new Set<number>();
     currentPlayer = signal<number>(0);
 
@@ -57,6 +64,8 @@ export class ActiveGameService implements OnDestroy {
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandonned: this.hasAbandonned,
                 gameHasEnded: this.gameHasEnded,
+                handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
+                closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
             }),
         );
     }
@@ -113,7 +122,7 @@ export class ActiveGameService implements OnDestroy {
     }
 
     toggleAttackMode(): void {
-        this.toggle(this.attackMode);
+        this.toggle(this.actionMode);
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
@@ -277,29 +286,98 @@ export class ActiveGameService implements OnDestroy {
         });
     }
 
-    attackPlayer(targetPlayerName: string): void {
-        const attacker = this.getCurrentPlayer();
+    actionOnPlayer(targetPlayerName: string): void {
+        const currentPlayer = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
-        if (!attacker || !target || attacker === target) {
+        if (!currentPlayer || !target || currentPlayer === target) {
             return;
         }
 
-        const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
-        const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
+        const dx = Math.abs(currentPlayer.positionGrille.x - target.positionGrille.x);
+        const dy = Math.abs(currentPlayer.positionGrille.y - target.positionGrille.y);
 
         if (dx + dy !== 1) {
             return;
         }
 
-        const attackData: IAttackData = {
+        const actionData: IActionData = {
             gameId: this.activeGame._id,
-            attackerName: attacker.name,
-            defenderName: target.name,
+            currentPlayerName: currentPlayer.name,
+            targetName: target.name,
         };
 
-        this.socket.emit(Namespaces.Game, SocketEvent.Attack, attackData);
-        this.attackMode.set(false);
+        this.socket.emit(Namespaces.Game, SocketEvent.Action, actionData);
+        this.actionMode.set(false);
+    }
+
+    handleFlagActionRequest(data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag): void {
+        const localPlayerName = this.localPlayer.getLocalPlayer()?.name;
+        if (!localPlayerName || data.targetPlayerName !== localPlayerName) {
+            return;
+        }
+
+        if (!this.activeGame) {
+            return;
+        }
+
+        const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
+        const question = isTakingFlag
+            ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
+            : `${data.currentPlayerName} veut vous donner son drapeau. Voulez-vous le prendre ?`;
+
+        this.pendingFlagRequest.set({ data, acceptEvent, question });
+    }
+
+    respondToFlagActionRequest(accepted: boolean): void {
+        const pendingRequest = this.pendingFlagRequest();
+        if (!pendingRequest) {
+            return;
+        }
+
+        this.pendingFlagRequest.set(null);
+        const { data, acceptEvent } = pendingRequest;
+
+        const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
+
+        if (!accepted) {
+            this.toastService.show(isTakingFlag ? 'Vous avez refusé de donner votre drapeau.' : 'Vous avez refusé de prendre le drapeau.');
+            return;
+        }
+
+        const currentPlayer = this.getPlayerByName(data.currentPlayerName);
+        if (currentPlayer) {
+            currentPlayer.actionsLeft = data.currentPlayerActionsLeft;
+        }
+
+        this.activeGame.hasFlagId = isTakingFlag ? data.currentPlayerName : data.targetPlayerName;
+        if (isTakingFlag) {
+            const responseData: IFlagDecisionData = {
+                gameId: data.gameId,
+                newFlagCarrierName: data.currentPlayerName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.FlagTaken, responseData);
+        } else {
+            const responseData: IFlagDecisionData = {
+                gameId: data.gameId,
+                newFlagCarrierName: data.targetPlayerName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.FlagGiven, responseData);
+        }
+        this.toggle(this.hasChangedLocation);
+    }
+
+    closeFlagActionRequestIfExpired(currentTurnPlayerName: string): void {
+        const pendingRequest = this.pendingFlagRequest();
+        if (!pendingRequest) {
+            return;
+        }
+
+        if (pendingRequest.data.currentPlayerName === currentTurnPlayerName) {
+            return;
+        }
+
+        this.pendingFlagRequest.set(null);
     }
 
     debugTeleport(row: number, col: number): void {

@@ -14,10 +14,10 @@ export class GameAttackComponent {
     protected readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
 
     toggle() {
-        if (!this.gameTurnService.canEndTurn || this.hasAttackedThisTurn()) return;
+        if (!this.gameTurnService.canEndTurn || this.hasUsedActionThisTurn()) return;
         this.activeGameService.toggleAttackMode();
     }
-    hasAttackedThisTurn(): boolean {
+    hasUsedActionThisTurn(): boolean {
         const localPlayer = this.localPlayerService.getLocalPlayer();
         if (!localPlayer) return false;
         const player = this.activeGameService.getPlayerByName(localPlayer.name);

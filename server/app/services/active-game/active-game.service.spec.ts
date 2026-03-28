@@ -357,7 +357,7 @@ describe('ActiveGameService', () => {
             expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
             expect(findByIdAndUpdateStub.firstCall.args[0]).to.equal('dummyActiveGameId');
             expect(findByIdAndUpdateStub.firstCall.args[1]).to.deep.equal({ isFinished: true });
-            expect(findByIdAndUpdateStub.firstCall.args[2]).to.deep.equal({ new: true });
+            expect(findByIdAndUpdateStub.firstCall.args[2]).to.deep.equal({ returnDocument: 'after' });
         });
 
         it('should delete the active game in the db when deleteActiveGameById is called', () => {
