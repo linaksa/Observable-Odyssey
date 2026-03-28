@@ -231,6 +231,7 @@ export class GameSocketsService {
                 }
 
                 await this.gameplayService.actionService.giveFlag(gameId, newFlagCarrierName);
+                this.namespace?.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
                 this.pendingFlagRequestsByGameId.delete(gameId);
             });
             // FlagTaken
@@ -253,6 +254,7 @@ export class GameSocketsService {
                 }
 
                 await this.gameplayService.actionService.takeFlag(gameId, newFlagCarrierName);
+                this.namespace?.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
                 this.pendingFlagRequestsByGameId.delete(gameId);
             });
             // =======================
