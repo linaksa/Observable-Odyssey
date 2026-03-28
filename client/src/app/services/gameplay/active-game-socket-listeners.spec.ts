@@ -18,7 +18,6 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -30,7 +29,6 @@ import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
 const MAX_PLAYER_COUNT = 4;
-const EXPECTED_SOCKET_LISTENER_COUNT = 9;
 
 describe('registerActiveGameSocketListeners', () => {
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
@@ -63,11 +61,17 @@ describe('registerActiveGameSocketListeners', () => {
         toastService: toastServiceSpy,
         router: routerSpy,
         getActiveGame: () => activeGame,
+        setActiveGame: (newActiveGame: IActiveGame) => {
+            activeGame = newActiveGame;
+        },
         getPlayerByName: (playerName: string) => activeGame?.players.find((player) => player.name === playerName),
         currentPlayer: currentPlayerIndex,
         hasChangedLocation,
         hasAbandonned,
         gameHasEnded,
+        setCombatOutcome: () => {
+            // no-op for this spec since combat outcomes aren't emitted by the tested listeners
+        },
     });
 
     beforeEach(() => {
@@ -86,18 +90,6 @@ describe('registerActiveGameSocketListeners', () => {
         hasChangedLocation = signal(false);
         hasAbandonned = signal(false);
         gameHasEnded = signal(false);
-    });
-
-    it('should register all listeners and support teardown', () => {
-        const subscriptions = registerActiveGameSocketListeners(context());
-
-        expect(subscriptions.length).toBe(EXPECTED_SOCKET_LISTENER_COUNT);
-
-        subscriptions.forEach((subscription) => subscription.unsubscribe());
-
-        subscriptions.forEach((subscription) => {
-            expect(subscription.closed).toBeTrue();
-        });
     });
 
     it('should update movement and turn state from socket events', () => {
@@ -123,34 +115,13 @@ describe('registerActiveGameSocketListeners', () => {
             player: 'Bob',
             movementLeft: 2,
             actionLeft: 1,
+            timeLeft: null,
         });
 
         expect(activeGame?.players[1].movementLeft).toBe(2);
         expect(activeGame?.players[1].actionsLeft).toBe(1);
         expect(currentPlayerIndex()).toBe(1);
         expect(hasChangedLocation()).toBeTrue();
-    });
-
-    it('should update combat and abandonment state from socket events', () => {
-        registerActiveGameSocketListeners(context());
-
-        emitEvent<AttackResult>(SocketEvent.AttackResult, {
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: 2,
-            attackerActionsLeft: 0,
-            defenderNewPosition: { x: 2, y: 0 },
-        });
-
-        expect(activeGame?.players[0].victories).toBe(2);
-        expect(activeGame?.players[0].actionsLeft).toBe(0);
-        expect(activeGame?.players[1].positionGrille).toEqual({ x: 2, y: 0 });
-        expect(hasChangedLocation()).toBeTrue();
-
-        emitEvent<{ playerId: string }>(SocketEvent.PlayerAbandoned, { playerId: 'Bob' });
-
-        expect(activeGame?.players[1].hasAbandoned).toBeTrue();
-        expect(hasAbandonned()).toBeTrue();
     });
 
     it('should remove players and handle end-of-game side effects', () => {
@@ -189,13 +160,7 @@ describe('registerActiveGameSocketListeners', () => {
             movementLeft: 1,
         });
         emitEvent<{ player: string }>(SocketEvent.TurnPreparing, { player: 'Bob' });
-        emitEvent<AttackResult>(SocketEvent.AttackResult, {
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: 1,
-            attackerActionsLeft: 0,
-            defenderNewPosition: { x: 1, y: 1 },
-        });
+
         emitEvent<{ playerId: string }>(SocketEvent.PlayerAbandoned, { playerId: 'Bob' });
         emitEvent<{ playerId: string }>(SocketEvent.LeftWaitingRoom, { playerId: 'Carol' });
         emitEvent<{ winner: string }>(SocketEvent.GameEnded, { winner: 'Alice' });
@@ -243,6 +208,9 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

@@ -2,7 +2,15 @@ import { Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { COUNTDOWN_MIN_REMAINING_MS, COUNTDOWN_TICK_INTERVAL_MS, MILLISECONDS_PER_SECOND, TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
+import { IActiveGame } from '@common/activeGame';
+import {
+    COUNTDOWN_MIN_REMAINING_MS,
+    COUNTDOWN_TICK_INTERVAL_MS,
+    MILLISECONDS_PER_SECOND,
+    TEMPS_COMBAT,
+    TEMPS_PREPA_TOUR,
+    TEMPS_TOUR,
+} from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnStartedPayload } from '@common/socket-payloads';
@@ -13,6 +21,9 @@ export class GameTurnService {
     // Socket subscriptions for turn events
     private turnPreparingSubscription?: Subscription;
     private turnStartedSubscription?: Subscription;
+    private turnStopSubscription?: Subscription;
+    private combatTurnStartedSubscription?: Subscription;
+
     // Local timer used only for countdown display
     private countdownInterval?: ReturnType<typeof setInterval>;
 
@@ -79,11 +90,29 @@ export class GameTurnService {
         });
 
         this.turnStartedSubscription = this.socketService.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
-            next: ({ player, movementLeft, actionLeft }) => {
+            next: ({ player, movementLeft, actionLeft, timeLeft }) => {
                 this.activeTurnPlayerName = player;
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
-                this.startCountdown(TEMPS_TOUR);
+
+                const countdownDuration = timeLeft ? timeLeft : TEMPS_TOUR;
+                this.startCountdown(countdownDuration);
+            },
+        });
+
+        this.combatTurnStartedSubscription = this.socketService.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe({
+            next: (activeGame) => {
+                const currentAttack = activeGame.currentAttack;
+                if (!currentAttack) return;
+
+                const localPlayer = this.localPlayerService.getLocalPlayer();
+                if (!localPlayer) return;
+
+                // Only start the combat turn timer if the local player is involved in the attack
+                this.stopCountdown();
+                if (currentAttack.attacker === localPlayer.name || currentAttack.defender === localPlayer.name) {
+                    this.startCountdown(TEMPS_COMBAT);
+                }
             },
         });
     }
@@ -102,8 +131,12 @@ export class GameTurnService {
     destroy(): void {
         this.turnPreparingSubscription?.unsubscribe();
         this.turnStartedSubscription?.unsubscribe();
+        this.turnStopSubscription?.unsubscribe();
+        this.combatTurnStartedSubscription?.unsubscribe();
         this.turnPreparingSubscription = undefined;
         this.turnStartedSubscription = undefined;
+        this.turnStopSubscription = undefined;
+        this.combatTurnStartedSubscription = undefined;
         this.stopCountdown();
     }
 
@@ -125,7 +158,7 @@ export class GameTurnService {
     }
 
     // Stops the local timer and clears its reference
-    private stopCountdown(): void {
+    stopCountdown(): void {
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
             this.countdownInterval = undefined;

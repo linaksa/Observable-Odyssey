@@ -1,6 +1,7 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, ICurrentAttack } from '@common/activeGame';
+import { AttackPosture } from '@common/attackResult';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IMessage, INewMessage } from '@common/message';
@@ -157,5 +158,44 @@ export class ActiveGameService {
             return `${newPlayerName}-${uniquePlayerIdToAppend}`;
         }
         return newPlayerName;
+    }
+
+    async startCombat(activeGameId: string, attacker: string, defender: string): Promise<IActiveGame> {
+        const activeGame = await activeGameModel.findById(activeGameId);
+        if (!activeGame) {
+            throw new Error(`Active game with id ${activeGameId} not found`);
+        }
+
+        const currentAttack: ICurrentAttack = {
+            attacker,
+            defender,
+            turnCount: 1,
+            attackerPosture: null,
+            defenderPosture: null,
+
+            suspendedTurnTimer: 0,
+        };
+        activeGame.currentAttack = currentAttack;
+        return await activeGame.save();
+    }
+
+    async choosePosture(activeGameId: string, playerName: string, posture: AttackPosture): Promise<IActiveGame> {
+        const activeGame = await activeGameModel.findById(activeGameId);
+        if (!activeGame) {
+            throw new Error(`Active game with id ${activeGameId} not found`);
+        }
+
+        const currentAttack = activeGame.currentAttack;
+        if (!currentAttack) {
+            throw new Error(`No ongoing attack in active game with id ${activeGameId}`);
+        }
+
+        if (currentAttack.attacker === playerName) {
+            currentAttack.attackerPosture = posture;
+        } else if (currentAttack.defender === playerName) {
+            currentAttack.defenderPosture = posture;
+        }
+
+        return await activeGame.save();
     }
 }

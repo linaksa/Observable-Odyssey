@@ -9,11 +9,12 @@ import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
+import { IAttackData, IAttackPostureData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
+import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 @Injectable({
@@ -39,6 +40,7 @@ export class ActiveGameService implements OnDestroy {
     hasAbandonned = signal(false);
     gameHasEnded = signal(false);
     attackMode = signal(false);
+    combatOutcome = signal(null as CombatOutcome | null);
 
     reachableTiles = new Set<number>();
     currentPlayer = signal<number>(0);
@@ -53,6 +55,8 @@ export class ActiveGameService implements OnDestroy {
                 toastService: this.toastService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
+                setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
+                setCombatOutcome: (combatOutcome: CombatOutcome) => (this.combatOutcome.set(combatOutcome)),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
@@ -324,5 +328,24 @@ export class ActiveGameService implements OnDestroy {
         this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
             (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
         );
+    }
+
+    chooseAttackMode(posture: AttackPosture) {
+        const currentPlayerName = this.currentPlayer.name;
+        const currentAttack = this.activeGame.currentAttack;
+        if (currentAttack && currentAttack?.attacker === currentPlayerName && currentAttack.attackerPosture) {
+            return;
+        }
+        if (currentAttack && currentAttack?.defender === currentPlayerName && currentAttack.defenderPosture) {
+            return;
+        }
+
+        const playerPosture: IAttackPostureData = {
+            gameId: this.activeGame._id,
+            playerName: this.localPlayer.getLocalPlayer()?.name ?? '',
+            posture,
+        };
+
+        this.socket.emit<IAttackPostureData, void>(Namespaces.Game, SocketEvent.ChooseAttackPosture, playerPosture);
     }
 }

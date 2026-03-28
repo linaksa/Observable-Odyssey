@@ -18,8 +18,15 @@ export const enum DiceType {
     SixSided = 'six sided',
 }
 
+export const SIX_SIDED_DICE_MAX = 6;
+export const FOUR_SIDED_DICE_MAX = 4;
+
+export const POSTURE_BONUS = 2;
+export const ICE_CELL_MALUS = 2;
+
 export const TEMPS_PREPA_TOUR = 3000; // 3 secondes
 export const TEMPS_TOUR = 30000; // 30 secondes
+export const TEMPS_COMBAT = 10000; // 10 secondes
 export const MILLISECONDS_PER_SECOND = 1000;
 export const COUNTDOWN_TICK_INTERVAL_MS = 250;
 export const COUNTDOWN_MIN_REMAINING_MS = 0;

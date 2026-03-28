@@ -143,6 +143,9 @@ describe('FormPageComponent', () => {
             organizerName: '',
             maxPlayerCount: 4,
             turnIsInPreparation: false,
+
+            turnStartTimeStamp: 0,
+            currentAttack: null,
         };
 
         const response = {

@@ -53,6 +53,9 @@ describe('ActiveGameController', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 
     const dummyPlayerCharacter: ICharacter = {
