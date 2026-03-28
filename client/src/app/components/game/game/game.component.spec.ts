@@ -310,6 +310,9 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: PLAYER_COUNT_LIMIT,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

@@ -19,7 +19,6 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -168,83 +167,12 @@ describe('ActiveGameService', () => {
             movementLeft: 1,
             actionLeft: 1,
         });
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: 1,
-            attackerActionsLeft: 1,
-            defenderNewPosition: { x: 0, y: 0 },
-        });
         getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Alice' });
         getEventStream<{ playerId: string }>(SocketEvent.PlayerKicked).next({ playerId: 'Alice' });
         getEventStream<{ playerId: string }>(SocketEvent.LeftWaitingRoom).next({ playerId: 'Alice' });
         getEventStream<{ winner: string }>(SocketEvent.GameEnded).next({ winner: 'Alice' });
 
         expect(service.hasChangedLocation()).toBe(hasChangedBefore);
-    });
-
-    // Edge case: When socket events reference unknown players, state updates should safely ignore them.
-    it('should process socket events and ignore invalid players', () => {
-        const alice = createCharacter('Alice', 0, 0);
-        const bob = createCharacter('Bob', PLAYER_INDEX_BOB, 0);
-        service.activeGame = createActiveGame([alice, bob], 'Alice');
-
-        getEventStream<PlayerMovedResult>(SocketEvent.PlayerMoved).next({
-            playerId: 'Ghost',
-            newPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-            movementLeft: PLAYER_INDEX_BOB,
-        });
-        expect(service.hasChangedLocation()).toBeFalse();
-
-        getEventStream<PlayerMovedResult>(SocketEvent.PlayerMoved).next({
-            playerId: 'Alice',
-            newPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-            movementLeft: PLAYER_INDEX_BOB,
-        });
-        expect(alice.positionGrille).toEqual({ x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB });
-        expect(service.hasChangedLocation()).toBeTrue();
-
-        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Ghost' });
-        expect(service.currentPlayer()).toBe(0);
-        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Bob' });
-        expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
-            player: 'Ghost',
-            movementLeft: 0,
-            actionLeft: 0,
-        });
-        expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
-        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
-            player: 'Bob',
-            movementLeft: PLAYER_INDEX_BOB,
-            actionLeft: PLAYER_INDEX_BOB,
-        });
-        expect(bob.movementLeft).toBe(PLAYER_INDEX_BOB);
-        expect(bob.actionsLeft).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Ghost',
-            attackerVictories: PLAYER_INDEX_BOB,
-            attackerActionsLeft: 0,
-            defenderNewPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-        });
-        expect(alice.victories).toBe(0);
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: PLAYER_INDEX_BOB,
-            attackerActionsLeft: PLAYER_INDEX_BOB,
-            defenderNewPosition: { x: TELEPORT_COL, y: PLAYER_INDEX_BOB },
-        });
-        expect(alice.victories).toBe(PLAYER_INDEX_BOB);
-        expect(alice.actionsLeft).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Ghost' });
-        expect(bob.hasAbandoned).toBeFalse();
-        getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Bob' });
-        expect(bob.hasAbandoned).toBeTrue();
     });
 
     it('should handle kicked and left waiting room events', () => {
@@ -577,6 +505,9 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

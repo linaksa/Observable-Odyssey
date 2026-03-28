@@ -5,10 +5,19 @@ import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
+import { TEMPS_COMBAT } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAbandonData, IAttackData, IDebugToggleState, IJoinGamePayload, IPlayerMoveData, ISocketData } from '@common/socket-payloads';
+import {
+    IAbandonData,
+    IAttackData,
+    IAttackPostureData,
+    IDebugToggleState,
+    IJoinGamePayload,
+    IPlayerMoveData,
+    ISocketData,
+} from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -131,6 +140,11 @@ export class GameSocketsService {
             // =======================
             socket.on(SocketEvent.Attack, async (data: IAttackData) => {
                 const { gameId, attackerName, defenderName } = data;
+                const activeGame = await this.activeGameService.getActiveGameById(gameId);
+                if (!activeGame) {
+                    socket.emit(SocketEvent.AttackError, { message: 'Partie introuvable' });
+                    return;
+                }
 
                 const allowed = await this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
                 if (!allowed) {
@@ -138,27 +152,40 @@ export class GameSocketsService {
                     return;
                 }
 
-                const result = await this.gameplayService.combatService.resolveCombat(gameId, attackerName, defenderName);
-                this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
-                    attackerName,
-                    defenderName,
-                    attackerActionsLeft: result.attackerActionsLeft,
-                    attackerVictories: result.attackerVictories,
-                    defenderNewPosition: result.defenderNewPosition,
+                const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+                this.gameplayService.turnService.suspendTurn(gameId);
+                this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+                    const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
+                    if (combatResolved) {
+                        await this.handleTurnAndGameEndCase(attackerName, gameId);
+                    }
                 });
 
-                // End the game if the defender cannot move anymore
-                const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
-                if (reachable.length === 0) {
-                    await this.gameplayService.turnService.endTurn(gameId);
+                this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
+                this.namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);
+            });
+
+            socket.on(SocketEvent.ChooseAttackPosture, async (data: IAttackPostureData) => {
+                const { gameId, playerName, posture } = data;
+                const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+
+                const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
+                if (!combatReady) {
+                    this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+                    return;
                 }
 
-                const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
-                if (gameEnded) {
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-                    await this.activeGameService.deleteGameById(gameId);
+                // The combat turn is applied immediately
+                this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
+
+                const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
+
+                const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
+                if (combatResolved && currentPlayerName) {
+                    await this.handleTurnAndGameEndCase(currentPlayerName, gameId);
                 }
             });
+
             // =======================
             // End turn
             // =======================
@@ -294,6 +321,19 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+    }
+
+    private async handleTurnAndGameEndCase(attackerName: string, gameId: string): Promise<void> {
+        const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
+        if (reachable.length === 0) {
+            await this.gameplayService.turnService.endTurn(gameId);
+        }
+
+        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        if (gameEnded) {
+            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+            await this.activeGameService.deleteGameById(gameId);
+        }
     }
 
     emitVirtualPlayerJoined(activeGame: IActiveGame) {
