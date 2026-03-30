@@ -1,10 +1,10 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { IMessage, INewMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subscription } from 'rxjs';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from './socket.service';
 
 @Injectable({
@@ -15,6 +15,7 @@ export class ChatService implements OnDestroy {
     private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
     private chatSubscription: Subscription;
+
     connect() {
         this.chatSubscription?.unsubscribe();
         this.socketService.connect(Namespaces.Game);
