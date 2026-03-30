@@ -3,6 +3,8 @@ export const enum SocketEvent {
     GameModified = 'modified-game',
     JoinChat = 'join-chat',
     NewMessage = 'new-message',
+    GameLog = 'game-log',
+    GameLogPrivate = 'game-log-private',
     // ActiveGame events
     LeaveWaitingRoom = 'leave-waiting-room',
     LeftWaitingRoom = 'leave-waiting-room',
@@ -31,6 +33,7 @@ export const enum SocketEvent {
     EndTurn = 'end-turn',
     TurnPreparing = 'TurnPreparing',
     TurnStarted = 'TurnStarted',
+    PlayerTurnAlert = 'player-turn-alert',
     JoinGame = 'join-game',
     PlayersUpdated = 'players-updated',
     DebugToggle = 'debug-toggle',

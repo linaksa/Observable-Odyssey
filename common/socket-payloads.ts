@@ -56,3 +56,8 @@ export interface ITurnStartedPayload {
     actionLeft: number;
     timeLeft: number | null;
 }
+
+export interface IGameLogPayload {
+    message: string;
+    postedAt: string;
+}

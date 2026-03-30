@@ -14,6 +14,7 @@ import {
     IAttackData,
     IAttackPostureData,
     IDebugToggleState,
+    IGameLogPayload,
     IJoinGamePayload,
     IPlayerMoveData,
     ISocketData,
@@ -154,6 +155,9 @@ export class GameSocketsService {
 
                 const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
                 this.gameplayService.turnService.suspendTurn(gameId);
+
+                this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
+                
                 this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
                     const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
                     if (combatResolved) {
@@ -198,6 +202,7 @@ export class GameSocketsService {
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
                 await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+                this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
                 const updatedGame = await this.activeGameService.getActiveGameById(gameId);
                 await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
@@ -207,6 +212,7 @@ export class GameSocketsService {
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
                     await this.activeGameService.deleteGameById(gameId);
                 }
 
@@ -249,6 +255,7 @@ export class GameSocketsService {
 
     private async handleActiveGameDisconnect(gameId: string, playerId: string): Promise<void> {
         await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+        this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
@@ -260,6 +267,7 @@ export class GameSocketsService {
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+            this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
             await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
@@ -311,6 +319,21 @@ export class GameSocketsService {
         }
     }
 
+    private emitGameLogToRoom(gameId: string, message: string): void {
+        if (!this.namespace || !gameId || !message.trim()) {
+            return;
+        }
+
+        this.namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
+    }
+
     private async disableDebugModeIfOrganizerLeft(gameId: string, playerId: string, activeGame: IActiveGame): Promise<void> {
         const gameHasStarted = activeGame.turnOrder.length > 0;
         if (playerId !== activeGame.organizerName || !gameHasStarted || !activeGame.isDebugMode) {
@@ -321,6 +344,7 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+        this.emitGameLogToRoom(gameId, `Mode debug desactive (organisateur ${playerId} absent).`);
     }
 
     private async handleTurnAndGameEndCase(attackerName: string, gameId: string): Promise<void> {
