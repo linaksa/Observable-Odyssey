@@ -173,9 +173,19 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             toggle(context.hasChangedLocation);
         }),
         context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
+            const requester = context.getPlayerByName(data.currentPlayerName);
+            if (requester) {
+                requester.actionsLeft = data.currentPlayerActionsLeft;
+                toggle(context.hasChangedLocation);
+            }
             context.handleFlagActionRequest(data, SocketEvent.TakeFlag);
         }),
         context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.GiveFlag).subscribe((data) => {
+            const requester = context.getPlayerByName(data.currentPlayerName);
+            if (requester) {
+                requester.actionsLeft = data.currentPlayerActionsLeft;
+                toggle(context.hasChangedLocation);
+            }
             context.handleFlagActionRequest(data, SocketEvent.GiveFlag);
         }),
     ];
