@@ -23,8 +23,8 @@
  */
 import { Component } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
-import { ActiveGameTableService } from '@app/services/tables/active-game-table.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { ActiveGameTableService } from '@app/services/tables/active-game-table.service';
 import { IActiveGame } from '@common/activeGame';
 import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
@@ -112,6 +112,7 @@ function createActiveGame(id: string): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 }
 

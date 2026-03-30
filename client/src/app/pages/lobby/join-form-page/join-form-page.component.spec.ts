@@ -61,6 +61,7 @@ const dummyActiveGame: IActiveGame = {
     organizerName: 'Dummy Organizer',
     maxPlayerCount: 4,
     turnIsInPreparation: false,
+    hasFlagId: '',
 };
 
 describe('JoinFormPageComponent', () => {

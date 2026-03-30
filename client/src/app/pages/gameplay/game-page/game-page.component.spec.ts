@@ -265,6 +265,7 @@ function createActiveGame(id: string, isFinished = false): IActiveGame {
         organizerName: 'Alice',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 }
 

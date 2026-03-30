@@ -43,8 +43,8 @@ describe('GameComponent', () => {
         updateMovementRange: jasmine.Spy;
         getCurrentPlayer: jasmine.Spy<() => ICharacter | undefined>;
         tryMove: jasmine.Spy;
-        attackMode: ReturnType<typeof signal<boolean>>;
-        attackPlayer: jasmine.Spy;
+        actionMode: ReturnType<typeof signal<boolean>>;
+        actionOnPlayer: jasmine.Spy;
         isDebugMode: jasmine.Spy<() => boolean>;
         debugTeleport: jasmine.Spy;
         getPlayersAtPosition: jasmine.Spy<(row: number, col: number) => ICharacter[]>;
@@ -68,8 +68,8 @@ describe('GameComponent', () => {
             updateMovementRange: jasmine.createSpy('updateMovementRange'),
             getCurrentPlayer: jasmine.createSpy('getCurrentPlayer').and.returnValue(alice),
             tryMove: jasmine.createSpy('tryMove'),
-            attackMode: signal(false),
-            attackPlayer: jasmine.createSpy('attackPlayer'),
+            actionMode: signal(false),
+            actionOnPlayer: jasmine.createSpy('actionOnPlayer'),
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
             debugTeleport: jasmine.createSpy('debugTeleport'),
             getPlayersAtPosition: jasmine.createSpy('getPlayersAtPosition').and.returnValue([]),
@@ -163,16 +163,16 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.tryMove).not.toHaveBeenCalled();
     });
 
-    it('should attack clicked player only in attack mode during local turn', () => {
-        activeGameServiceStub.attackMode.set(false);
+    it('should attack clicked player only in action mode during local turn', () => {
+        activeGameServiceStub.actionMode.set(false);
         component.onPlayerClicked('Bob');
-        expect(activeGameServiceStub.attackPlayer).not.toHaveBeenCalled();
+        expect(activeGameServiceStub.actionOnPlayer).not.toHaveBeenCalled();
 
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         component.onPlayerClicked('Bob');
 
-        expect(activeGameServiceStub.attackPlayer).toHaveBeenCalledWith('Bob');
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionOnPlayer).toHaveBeenCalledWith('Bob');
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should expose tile info popup data from current component state', () => {
@@ -310,6 +310,7 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: PLAYER_COUNT_LIMIT,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 }
 

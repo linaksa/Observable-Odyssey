@@ -298,36 +298,36 @@ describe('ActiveGameService', () => {
         );
     });
 
-    it('should emit attack only when target is adjacent and different', () => {
+    it('should emit action only when target is adjacent and different', () => {
         const attacker = createCharacter('Alice', 0, 0);
         const adjacentTarget = createCharacter('Bob', PLAYER_INDEX_BOB, 0);
         const distantTarget = createCharacter('Carol', FAR_POSITION_INDEX, FAR_POSITION_INDEX);
 
         service.activeGame = createActiveGame([attacker, adjacentTarget, distantTarget], 'Alice');
         service.currentPlayer.set(0);
-        service.attackMode.set(true);
+        service.actionMode.set(true);
         socketServiceSpy.emit.calls.reset();
 
-        service.attackPlayer('Alice');
-        service.attackPlayer('Carol');
+        service.actionOnPlayer('Alice');
+        service.actionOnPlayer('Carol');
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
-        service.attackPlayer('Bob');
+        service.actionOnPlayer('Bob');
 
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.Attack, {
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.Action, {
             gameId: service.activeGame._id,
-            attackerName: 'Alice',
-            defenderName: 'Bob',
+            currentPlayerName: 'Alice',
+            targetName: 'Bob',
         });
-        expect(service.attackMode()).toBeFalse();
+        expect(service.actionMode()).toBeFalse();
     });
 
-    it('should toggle attack mode', () => {
-        expect(service.attackMode()).toBeFalse();
-        service.toggleAttackMode();
-        expect(service.attackMode()).toBeTrue();
-        service.toggleAttackMode();
-        expect(service.attackMode()).toBeFalse();
+    it('should toggle action mode', () => {
+        expect(service.actionMode()).toBeFalse();
+        service.toggleActionMode();
+        expect(service.actionMode()).toBeTrue();
+        service.toggleActionMode();
+        expect(service.actionMode()).toBeFalse();
     });
 
     it('should synchronize turn order and index when players are updated', () => {
@@ -434,12 +434,12 @@ describe('ActiveGameService', () => {
         spyOn(service, 'getCurrentPlayer').and.returnValue(undefined);
         service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
         service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
-        service.attackPlayer('Alice');
+        service.actionOnPlayer('Alice');
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
         (service.getCurrentPlayer as jasmine.Spy).and.returnValue(createCharacter('Alice'));
-        service.attackPlayer('Ghost');
+        service.actionOnPlayer('Ghost');
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
@@ -577,6 +577,7 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 }
 

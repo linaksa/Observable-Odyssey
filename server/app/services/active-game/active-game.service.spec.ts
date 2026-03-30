@@ -60,6 +60,7 @@ describe('ActiveGameService', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 
     const dummyCharacterForm: CharacterFormData = {

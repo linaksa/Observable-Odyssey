@@ -30,7 +30,7 @@ import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
 const MAX_PLAYER_COUNT = 4;
-const EXPECTED_SOCKET_LISTENER_COUNT = 9;
+const EXPECTED_SOCKET_LISTENER_COUNT = 12;
 
 describe('registerActiveGameSocketListeners', () => {
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
@@ -68,6 +68,8 @@ describe('registerActiveGameSocketListeners', () => {
         hasChangedLocation,
         hasAbandonned,
         gameHasEnded,
+        handleFlagActionRequest: jasmine.createSpy('handleFlagActionRequest'),
+        closeFlagActionRequestIfExpired: jasmine.createSpy('closeFlagActionRequestIfExpired'),
     });
 
     beforeEach(() => {
@@ -243,6 +245,7 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+        hasFlagId: '',
     };
 }
 

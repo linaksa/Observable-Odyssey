@@ -1,7 +1,7 @@
 import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
-import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
+import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
@@ -29,7 +29,7 @@ import { Subscription } from 'rxjs';
         PlayerListComponent,
         GameInfosComponent,
         ChatPanelComponent,
-        GameAttackComponent,
+        GameActionComponent,
         GameEndedComponent,
         TurnStatusComponent,
     ],

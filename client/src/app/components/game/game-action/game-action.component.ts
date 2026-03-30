@@ -4,18 +4,18 @@ import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 
 @Component({
-    selector: 'app-game-attack',
+    selector: 'app-game-action',
     imports: [],
-    templateUrl: './game-attack.component.html',
+    templateUrl: './game-action.component.html',
 })
-export class GameAttackComponent {
+export class GameActionComponent {
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly gameTurnService: GameTurnService = inject(GameTurnService);
     protected readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
 
     toggle() {
         if (!this.gameTurnService.canEndTurn || this.hasUsedActionThisTurn()) return;
-        this.activeGameService.toggleAttackMode();
+        this.activeGameService.toggleActionMode();
     }
     hasUsedActionThisTurn(): boolean {
         const localPlayer = this.localPlayerService.getLocalPlayer();

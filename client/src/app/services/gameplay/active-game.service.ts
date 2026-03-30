@@ -121,7 +121,7 @@ export class ActiveGameService implements OnDestroy {
         }
     }
 
-    toggleAttackMode(): void {
+    toggleActionMode(): void {
         this.toggle(this.actionMode);
     }
 

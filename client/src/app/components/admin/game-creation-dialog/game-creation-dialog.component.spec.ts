@@ -47,7 +47,7 @@ describe('GameCreationDialogComponent', () => {
     it('should initialize form with default size and game info', () => {
         expect(component.form.get('dimension')?.value).toBe('small');
         expect(component.form.get('isCTF')?.value).toBeFalse();
-        expect(component.form.get('isCTF')?.disabled).toBeTrue();
+        expect(component.form.get('isCTF')?.disabled).toBeFalse();
         expect(component.numberOfPlayers).toBe('2');
         expect(component.displaySize).toBe('10x10');
     });
