@@ -17,17 +17,17 @@ export class StartGameService {
         this.initializeTurnOrder(activeGame);
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
-
+    // Logic to assign teams for CTF mode
     private async assignTeamsForCTF(activeGame: IActiveGame): Promise<void> {
+        const half = 0.5;
         const players = activeGame.players;
-        const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
+        const shuffledPlayers = [...players].sort(() => Math.random() - half);
         const midIndex = Math.ceil(shuffledPlayers.length / 2);
         const teamA = shuffledPlayers.slice(0, midIndex);
         const teamB = shuffledPlayers.slice(midIndex);
 
         teamA.forEach((player) => (player.team = Team.RED));
         teamB.forEach((player) => (player.team = Team.BLUE));
-        console.log(activeGame.players.map((p) => `${p.name}: ${p.team}`));
     }
     // Logic to assign random starting positions to players
     private async assignRandomStartPositions(activeGame: IActiveGame): Promise<void> {

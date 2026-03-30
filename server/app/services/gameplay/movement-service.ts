@@ -91,22 +91,28 @@ export class MovementService {
     }
 
     private updateFlagPosition(activeGame: IActiveGame, player: ICharacter): void {
-        console.log(`Checking flag pickup for player ${player.name} at position (${player.positionGrille.x},${player.positionGrille.y})`);
         if (activeGame.game.gameMode !== 'ctf') return;
         const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
-        console.log(`Flag is at position (${flag?.x},${flag?.y}) and is ${activeGame.hasFlagId ? 'carried' : 'on the ground'}`);
-        const flagIsOnGround = activeGame.hasFlagId === '';
-        if (flagIsOnGround && player.positionGrille.x === flag?.y && player.positionGrille.y === flag?.x) {
+        if (!flag) return;
+
+        const playerCarriesFlag = activeGame.hasFlagId === player.name;
+        // if player has the flag, it moves with them
+        if (playerCarriesFlag) {
+            flag.x = player.positionGrille.y;
+            flag.y = player.positionGrille.x;
+            return;
+        }
+        // if player doesn't have the flag, check if they can pick it up
+        const flagIsOnGround = !activeGame.hasFlagId;
+        if (flagIsOnGround && player.positionGrille.x === flag.y && player.positionGrille.y === flag.x) {
             activeGame.hasFlagId = player.name;
             flag.isCarried = true;
-            flag.x = null;
-            flag.y = null;
+            flag.x = player.positionGrille.y;
+            flag.y = player.positionGrille.x;
             const namespace = this.socketService.getNamespace(Namespaces.Game);
             namespace.to(activeGame._id.toString()).emit(SocketEvent.FlagPickedUp, {
                 playerName: player.name,
             });
-            console.log(activeGame._id);
-            console.log(`Player ${player.name} has picked up the flag`);
         }
     }
 

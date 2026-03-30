@@ -155,61 +155,7 @@ export class GameSocketsService {
             // Action
             // =======================
             socket.on(SocketEvent.Action, async (data: IActionData) => {
-                const { gameId, currentPlayerName, targetName } = data;
-                const activeGame = await this.activeGameService.getActiveGameById(gameId);
-                const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
-                if (!allowed) {
-                    socket.emit(SocketEvent.ActionError, { message: 'Action non autorisée' });
-                    return;
-                }
-                if (activeGame.game.gameMode === 'ctf') {
-                    const areOnSameTeam = await this.gameplayService.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
-                    if (areOnSameTeam) {
-                        // flag logic
-                        const canGiveFlag = await this.gameplayService.actionService.canGiveFlag(currentPlayerName, gameId);
-                        if (canGiveFlag) {
-                            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-                            this.pendingFlagRequestsByGameId.set(gameId, {
-                                requesterName: currentPlayerName,
-                                targetPlayerName: targetName,
-                            });
-                            this.namespace?.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
-                            return;
-                        }
-                        const canTakeFlag = await this.gameplayService.actionService.canTakeFlag(targetName, gameId);
-                        if (canTakeFlag) {
-                            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-                            this.pendingFlagRequestsByGameId.set(gameId, {
-                                requesterName: currentPlayerName,
-                                targetPlayerName: targetName,
-                            });
-                            this.namespace?.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
-                            return;
-                        }
-                        return;
-                    }
-                }
-                const result = await this.gameplayService.actionService.resolveCombat(gameId, currentPlayerName, targetName);
-                this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
-                    attackerName: currentPlayerName,
-                    defenderName: targetName,
-                    attackerActionsLeft: result.attackerActionsLeft,
-                    attackerVictories: result.attackerVictories,
-                    defenderNewPosition: result.defenderNewPosition,
-                });
-
-                // End the turn if the defender cannot move anymore
-                const reachable = await this.gameplayService.movementService.getReachablePositions(currentPlayerName, gameId);
-                if (reachable.length === 0) {
-                    await this.gameplayService.turnService.endTurn(gameId);
-                }
-
-                const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
-                if (gameEnded) {
-                    const endedGame = await this.activeGameService.getActiveGameById(gameId);
-                    this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
-                    await this.activeGameService.deleteGameById(gameId);
-                }
+                await this.handleAction(socket, data);
             });
             // FlagGiven
             socket.on(SocketEvent.FlagGiven, async (data: IFlagDecisionData) => {
@@ -397,6 +343,78 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+    }
+
+    private async handleAction(socket: Socket, data: IActionData): Promise<void> {
+        const { gameId, currentPlayerName, targetName } = data;
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
+
+        if (!allowed) {
+            socket.emit(SocketEvent.ActionError, { message: 'Action non autorisée' });
+            return;
+        }
+
+        const handledAsFlagAction = await this.handleCtfFlagAction(activeGame, data);
+        if (handledAsFlagAction) {
+            return;
+        }
+
+        await this.resolveCombatAction(gameId, currentPlayerName, targetName);
+    }
+
+    private async handleCtfFlagAction(activeGame: IActiveGame, data: IActionData): Promise<boolean> {
+        const { gameId, currentPlayerName, targetName } = data;
+
+        if (activeGame.game.gameMode !== 'ctf') {
+            return false;
+        }
+
+        const areOnSameTeam = await this.gameplayService.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
+        if (!areOnSameTeam) {
+            return false;
+        }
+
+        const canGiveFlag = await this.gameplayService.actionService.canGiveFlag(currentPlayerName, gameId);
+        if (canGiveFlag) {
+            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
+            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
+            this.namespace?.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
+            return true;
+        }
+
+        const canTakeFlag = await this.gameplayService.actionService.canTakeFlag(targetName, gameId);
+        if (canTakeFlag) {
+            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
+            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
+            this.namespace?.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
+            return true;
+        }
+
+        return true;
+    }
+
+    private async resolveCombatAction(gameId: string, currentPlayerName: string, targetName: string): Promise<void> {
+        const result = await this.gameplayService.actionService.resolveCombat(gameId, currentPlayerName, targetName);
+        this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
+            attackerName: currentPlayerName,
+            defenderName: targetName,
+            attackerActionsLeft: result.attackerActionsLeft,
+            attackerVictories: result.attackerVictories,
+            defenderNewPosition: result.defenderNewPosition,
+        });
+
+        const reachable = await this.gameplayService.movementService.getReachablePositions(currentPlayerName, gameId);
+        if (reachable.length === 0) {
+            await this.gameplayService.turnService.endTurn(gameId);
+        }
+
+        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        if (gameEnded) {
+            const endedGame = await this.activeGameService.getActiveGameById(gameId);
+            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            await this.activeGameService.deleteGameById(gameId);
+        }
     }
 
     emitVirtualPlayerJoined(activeGame: IActiveGame) {

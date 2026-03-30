@@ -15,13 +15,15 @@ export class EndGameService {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         const winnerByCombat = activeGame.players.find((p) => p.victories === VICTORIES_TO_WIN);
         const ctfWinner = this.checkCTFWinCondition(activeGame);
+        // if a player in ctf mode has the flag and is on their starting tile, they win
         if (ctfWinner) {
             const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
             activeGame.isFinished = true;
-            activeGame.winner = flagHolder?.team === 'blue' ? 'blue team' : flagHolder?.team === 'red' ? 'red team' : null;
+            activeGame.winner = flagHolder?.team ? `${flagHolder.team} team` : null;
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
+        // if a player has won enough combats, they win the game
         if (winnerByCombat) {
             activeGame.isFinished = true;
             activeGame.winner = winnerByCombat.name;
