@@ -108,12 +108,12 @@ export class CombatService {
                 if (combatIsDone) {
                     const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
                     namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
-                    resolve(true);
+                    return resolve(true);
                 }
 
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
                 this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
-                resolve(false);
+                return resolve(false);
             }, 5000);
         });
     }
