@@ -1,7 +1,7 @@
+import { SocketService } from '@app/services/realtime/socket.service';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
-import { SocketService } from '@app/services/realtime/socket.service';
 
 @Service()
 export class ActiveGameListSocketsService {

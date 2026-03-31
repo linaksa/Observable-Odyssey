@@ -3,7 +3,7 @@ import { PositionValidatorService } from '@app/services/gameplay/position-valida
 import { Position } from '@common/character';
 import { IItem, ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
-import { IDebugTeleportData, IDebugToggleState } from '@common/socket-payloads';
+import { IDebugTeleportData, IDebugToggleState, IGameLogPayload } from '@common/socket-payloads';
 import { Socket } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -27,6 +27,10 @@ export class DebugSocketService {
                     const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
                     socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
                     socket.emit(SocketEvent.DebugToggle, payload);
+                    const statusLabel = activeGame.isDebugMode ? 'active' : 'desactive';
+                    const logPayload = this.createGameLogPayload(`Mode debug ${statusLabel} par ${playerName}.`);
+                    socket.to(activeGameId).emit(SocketEvent.GameLog, logPayload);
+                    socket.emit(SocketEvent.GameLog, logPayload);
                     await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
                 }
             } catch {
@@ -72,6 +76,13 @@ export class DebugSocketService {
                 return;
             }
         });
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
     }
 
     private cellHasItem(items: IItem[], row: number, col: number): boolean {

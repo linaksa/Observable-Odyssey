@@ -1,0 +1,40 @@
+<div class="flex flex-col gap-2 min-w-75">
+    <div class="flex gap-2">
+        <button
+            type="button"
+            class="btn flex-1"
+            [class.bg-white]="activeTab === journalTab.Chat"
+            [class.text-black]="activeTab === journalTab.Chat"
+            (click)="setActiveTab(journalTab.Chat)"
+        >
+            {{ journalTabLabels[journalTab.Chat] }}
+        </button>
+        <button
+            type="button"
+            class="btn flex-1"
+            [class.bg-white]="activeTab === journalTab.Journal"
+            [class.text-black]="activeTab === journalTab.Journal"
+            (click)="setActiveTab(journalTab.Journal)"
+        >
+            {{ journalTabLabels[journalTab.Journal] }}
+        </button>
+    </div>
+
+    @if (activeTab === journalTab.Chat) {
+        <app-chat-panel class="flex h-100"></app-chat-panel>
+    } @else {
+        <div class="bg-gray-100 flex h-100 flex-col rounded-sm p-2 gap-2 min-w-75">
+            <div #journalScrollContainer class="flex flex-col overflow-y-auto h-full gap-2">
+                @if (gameLogs.length === 0) {
+                    <div class="text-sm text-gray-700">{{ journalEmptyMessage }}</div>
+                }
+                @for (log of gameLogs; track $index) {
+                    <div class="rounded-md bg-gray-200 p-2 text-sm text-gray-800">
+                        <div class="font-medium">{{ log.postedAt | date: journalDateFormat }}</div>
+                        <div>{{ log.message }}</div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

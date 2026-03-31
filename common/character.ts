@@ -4,6 +4,11 @@ export interface Position {
     x: number;
     y: number;
 }
+
+export enum VirtualPlayerProfile {
+    Agressive = 'agressif',
+    Defensive = 'defensive',
+}
 export interface ICharacter {
     name: string;
     avatar: Avatar;
@@ -20,8 +25,11 @@ export interface ICharacter {
     hasAbandoned: boolean;
     positionDepart: Position;
     positionGrille: Position;
+    virtualPlayerProfile?: VirtualPlayerProfile;
+    fightSanctuaryUsed?: boolean;
+    fightSanctuaryTurnsRemaining?: number;
+    fightSanctuaryBonus?: number;
 }
-
 export interface CharacterFormData {
     name: string;
     avatar: Avatar;
@@ -31,4 +39,5 @@ export interface CharacterFormData {
     rapidityPoints: number;
     attackPoints: number;
     defensePoints: number;
+    virtualPlayerProfile?: VirtualPlayerProfile;
 }

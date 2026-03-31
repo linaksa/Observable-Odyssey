@@ -7,7 +7,7 @@
         <img
             [src]="getImageForAvatar(avatar)"
             [alt]="avatar"
-            class="h-full w-full object-cover"
+            class="h-full w-full object-cover [image-rendering:pixelated]"
             [class.opacity-25]="unavailableAvatars.includes(avatar)"
         />
         @if (selectedAvatar === avatar) {

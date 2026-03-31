@@ -1,15 +1,41 @@
-<div class="flex flex-col min-h-screen p-4 gap-4">
-    @if (editedGame) {
-        <app-game-edition [gameToEdit]="editedGame"></app-game-edition>
-    } @else {
+<div class="content">
+    @if (this.isLoading() || !this.editedGame) {
         <div class="flex flex-1 justify-center items-center">
-            <app-loading-overlay loadingText="Chargement du jeu..." class="flex flex-col gap-8 items-center justify-center"></app-loading-overlay>
+            <app-loading-overlay
+                loadingText="Chargement de la partie..."
+                class="flex flex-col gap-8 items-center justify-center"
+            ></app-loading-overlay>
         </div>
 
-        <div class="absolute bottom-4 w-full flex justify-center">
-            @if (showButton) {
+        <div class="absolute left-0 bottom-4 w-full flex justify-center">
+            @if (showButton()) {
                 <button class="btn" routerLink="/admin">Retour vers la vue d'administration</button>
             }
         </div>
+    } @else {
+        <app-nav-buttons linkBack="/admin" textBack="Retour vers la vue d'administration" />
+        <app-page-title title="Vue d'édition" />
+
+        <section class="flex flex-col lg:flex-row justify-center gap-4">
+            <app-edition-tool-panel
+                class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
+                [toolDescriptions]="toolDescToolTip"
+                (toolSelected)="boardEditorService.activeTool = $event"
+                (materialSelected)="boardEditorService.selectedMaterial = $event"
+                (objectSelected)="boardEditorService.selectedObject = $event"
+            />
+
+            <app-edition-grid-panel
+                class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4"
+                (cellMouseDown)="onMouseDown($event.rowIndex, $event.colIndex, $event.event)"
+                (cellMouseEnter)="onMouseEnter($event.rowIndex, $event.colIndex, $event.event)"
+            />
+
+            <app-edition-form-panel
+                class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
+                (submitRequested)="submitGameForm()"
+                (revertRequested)="revertToOriginal()"
+            />
+        </section>
     }
 </div>

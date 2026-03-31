@@ -7,11 +7,12 @@ import {
     BonusType,
     DiceSelectionType,
     PLAYER_NAME_PATTERN,
+    RandomCharacterData,
 } from '@app/constants/character-form';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
 import { ResponseType } from '@app/http/http-model';
 import { IActiveGameWithPlayer } from '@common/activeGame';
-import { CharacterFormData } from '@common/character';
+import { CharacterFormData, VirtualPlayerProfile } from '@common/character';
 import {
     Avatar,
     DEFAULT_PLAYER_ATTACK_POINTS,
@@ -109,7 +110,27 @@ export class CharacterFormService {
         }
     }
 
+    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
+        // Logic to create an active game with the provided character data
+        this.unavailableAvatars.set([...this.unavailableAvatars(), characterData.avatar]);
+        return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
+    }
+
+    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
+        this.unavailableAvatars.set([...this.unavailableAvatars(), characterData.avatar]);
+        return this.httpClient.patch(
+            `${this.baseUrl}/activeGame/join`,
+            { activeGameId, characterForm: characterData },
+            { responseType: ResponseType.Text },
+        );
+    }
+
     populateWithRandomData(): void {
+        const data = this.generateRandomCharacterData();
+        this.characterForm.patchValue(data);
+    }
+
+    private generateRandomCharacterData(): RandomCharacterData {
         const random = Math.random;
         const randomName = `${RANDOM_PLAYER_NAME_PREFIX}${Math.floor(random() * RANDOM_NUMBER_SCALE)}`;
 
@@ -120,22 +141,29 @@ export class CharacterFormService {
 
         const randomDice = AVAILABLE_DICE_TYPES[Math.floor(random() * AVAILABLE_DICE_TYPES.length)];
 
-        this.characterForm.controls.playerName.setValue(randomName);
-        this.characterForm.controls.avatar.setValue(randomAvatar);
-        this.characterForm.controls.bonusType.setValue(randomBonus as BonusType);
-        this.characterForm.controls.diceType.setValue(randomDice as DiceSelectionType);
+        return {
+            playerName: randomName,
+            avatar: randomAvatar,
+            bonusType: randomBonus as BonusType,
+            diceType: randomDice as DiceSelectionType,
+        };
     }
 
-    createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
-        // Logic to create an active game with the provided character data
-        return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
-    }
+    createVirtualPlayer(profileOptions: VirtualPlayerProfile, activeGameId: string): Observable<IActiveGameWithPlayer> {
+        this.populateWithRandomData();
+        const data: CharacterFormData = {
+            name: this.characterForm.controls.playerName.value,
+            avatar: this.characterForm.controls.avatar.value as Avatar,
+            initialHealth: this.lifePoints,
+            rapidityPoints: this.speedPoints,
+            attackPoints: this.attackPoints,
+            defensePoints: this.defensePoints,
+            attackBonusDiceType: this.attackDiceType,
+            defenseBonusDiceType: this.defenseDiceType,
+            virtualPlayerProfile: profileOptions,
+        };
+        this.unavailableAvatars.set([...this.unavailableAvatars(), data.avatar]);
 
-    joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
-        return this.httpClient.patch(
-            `${this.baseUrl}/activeGame/join`,
-            { activeGameId, characterForm: characterData },
-            { responseType: ResponseType.Text },
-        );
+        return this.joinActiveGameWithCharacter(activeGameId, data);
     }
 }

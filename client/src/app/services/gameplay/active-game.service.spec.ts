@@ -14,12 +14,11 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { GameService } from '@app/services/admin/game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -28,7 +27,7 @@ import { IItem, ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { of, Subject, throwError } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ActiveGameService } from './active-game.service';
 
@@ -42,6 +41,8 @@ const PLAYER_INDEX_BOB = 1;
 const TELEPORT_ROW = 2;
 const TELEPORT_COL = 3;
 const UNKNOWN_TILE_INDEX = 99;
+const INTERACTION_ROW = 2;
+const INTERACTION_COL = 3;
 
 describe('ActiveGameService', () => {
     let service: ActiveGameService;
@@ -49,13 +50,7 @@ describe('ActiveGameService', () => {
     let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
     let toastServiceSpy: jasmine.SpyObj<ToastService>;
     let routerSpy: jasmine.SpyObj<Router>;
-    let httpClientSpy: jasmine.SpyObj<{
-        get: (...args: unknown[]) => unknown;
-        post: (...args: unknown[]) => unknown;
-        put: (...args: unknown[]) => unknown;
-        patch: (...args: unknown[]) => unknown;
-        delete: (...args: unknown[]) => unknown;
-    }>;
+    let gameServiceSpy: jasmine.SpyObj<GameService>;
 
     const eventStreams = new Map<string, Subject<unknown>>();
 
@@ -73,12 +68,12 @@ describe('ActiveGameService', () => {
         toastServiceSpy = jasmine.createSpyObj<ToastService>('ToastService', ['show']);
         routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
         routerSpy.navigate.and.resolveTo(true);
-        httpClientSpy = jasmine.createSpyObj('HttpClientPort', ['get', 'post', 'put', 'patch', 'delete']);
+        gameServiceSpy = jasmine.createSpyObj<GameService>('GameService', ['getActiveGameById']);
 
         eventStreams.clear();
         socketServiceSpy.on.and.callFake(<T>(_namespace: string, event: string) => getEventStream<T>(event).asObservable());
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
-        httpClientSpy.get.and.returnValue(of(createActiveGame([createCharacter('Alice')])));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(createActiveGame([createCharacter('Alice')])));
 
         TestBed.configureTestingModule({
             providers: [
@@ -87,7 +82,7 @@ describe('ActiveGameService', () => {
                 { provide: LocalPlayerService, useValue: localPlayerServiceSpy },
                 { provide: ToastService, useValue: toastServiceSpy },
                 { provide: Router, useValue: routerSpy },
-                { provide: HTTP_CLIENT, useValue: httpClientSpy },
+                { provide: GameService, useValue: gameServiceSpy },
             ],
         });
 
@@ -124,10 +119,11 @@ describe('ActiveGameService', () => {
         const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
         fetchedGame.isDebugMode = true;
         fetchedGame.currentPlayerIndex = PLAYER_INDEX_BOB;
-        httpClientSpy.get.and.returnValue(of(fetchedGame));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGame));
 
         service.setActiveGame('remote-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('remote-game-id');
         expect(service.activeGame).toBe(fetchedGame);
         expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
         expect(service.isDebugMode()).toBeTrue();
@@ -138,20 +134,22 @@ describe('ActiveGameService', () => {
     it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {
         const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
         const fetchedGameWithoutIndex = { ...fetchedGame, currentPlayerIndex: undefined } as unknown as IActiveGame;
-        httpClientSpy.get.and.returnValue(of(fetchedGameWithoutIndex));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGameWithoutIndex));
 
         service.setActiveGame('remote-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('remote-game-id');
         expect(service.currentPlayer()).toBe(0);
     });
 
-    // Edge case: When setActiveGame request fails, clear loading flag.
-    it('should clear loading flag when setActiveGame request fails', () => {
+    // Edge case: When GameService returns no active game, keep the previous state and clear loading.
+    it('should clear loading flag when setActiveGame returns no game', () => {
         const previousGame = service.activeGame;
-        httpClientSpy.get.and.returnValue(throwError(() => new Error('network error')));
+        gameServiceSpy.getActiveGameById.and.returnValue(of(undefined as unknown as IActiveGame));
 
         service.setActiveGame('broken-game-id');
 
+        expect(gameServiceSpy.getActiveGameById).toHaveBeenCalledWith('broken-game-id');
         expect(service.activeGame).toBe(previousGame);
         expect(service.isLoading()).toBeFalse();
     });
@@ -171,83 +169,12 @@ describe('ActiveGameService', () => {
             movementLeft: 1,
             actionLeft: 1,
         });
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: 1,
-            attackerActionsLeft: 1,
-            defenderNewPosition: { x: 0, y: 0 },
-        });
         getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Alice' });
         getEventStream<{ playerId: string }>(SocketEvent.PlayerKicked).next({ playerId: 'Alice' });
         getEventStream<{ playerId: string }>(SocketEvent.LeftWaitingRoom).next({ playerId: 'Alice' });
         getEventStream<{ winner: string }>(SocketEvent.GameEnded).next({ winner: 'Alice' });
 
         expect(service.hasChangedLocation()).toBe(hasChangedBefore);
-    });
-
-    // Edge case: When socket events reference unknown players, state updates should safely ignore them.
-    it('should process socket events and ignore invalid players', () => {
-        const alice = createCharacter('Alice', 0, 0);
-        const bob = createCharacter('Bob', PLAYER_INDEX_BOB, 0);
-        service.activeGame = createActiveGame([alice, bob], 'Alice');
-
-        getEventStream<PlayerMovedResult>(SocketEvent.PlayerMoved).next({
-            playerId: 'Ghost',
-            newPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-            movementLeft: PLAYER_INDEX_BOB,
-        });
-        expect(service.hasChangedLocation()).toBeFalse();
-
-        getEventStream<PlayerMovedResult>(SocketEvent.PlayerMoved).next({
-            playerId: 'Alice',
-            newPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-            movementLeft: PLAYER_INDEX_BOB,
-        });
-        expect(alice.positionGrille).toEqual({ x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB });
-        expect(service.hasChangedLocation()).toBeTrue();
-
-        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Ghost' });
-        expect(service.currentPlayer()).toBe(0);
-        getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Bob' });
-        expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
-            player: 'Ghost',
-            movementLeft: 0,
-            actionLeft: 0,
-        });
-        expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
-        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
-            player: 'Bob',
-            movementLeft: PLAYER_INDEX_BOB,
-            actionLeft: PLAYER_INDEX_BOB,
-        });
-        expect(bob.movementLeft).toBe(PLAYER_INDEX_BOB);
-        expect(bob.actionsLeft).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Ghost',
-            attackerVictories: PLAYER_INDEX_BOB,
-            attackerActionsLeft: 0,
-            defenderNewPosition: { x: PLAYER_INDEX_BOB, y: PLAYER_INDEX_BOB },
-        });
-        expect(alice.victories).toBe(0);
-        getEventStream<AttackResult>(SocketEvent.AttackResult).next({
-            attackerName: 'Alice',
-            defenderName: 'Bob',
-            attackerVictories: PLAYER_INDEX_BOB,
-            attackerActionsLeft: PLAYER_INDEX_BOB,
-            defenderNewPosition: { x: TELEPORT_COL, y: PLAYER_INDEX_BOB },
-        });
-        expect(alice.victories).toBe(PLAYER_INDEX_BOB);
-        expect(alice.actionsLeft).toBe(PLAYER_INDEX_BOB);
-
-        getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Ghost' });
-        expect(bob.hasAbandoned).toBeFalse();
-        getEventStream<{ playerId: string }>(SocketEvent.PlayerAbandoned).next({ playerId: 'Bob' });
-        expect(bob.hasAbandoned).toBeTrue();
     });
 
     it('should handle kicked and left waiting room events', () => {
@@ -323,6 +250,35 @@ describe('ActiveGameService', () => {
             defenderName: 'Bob',
         });
         expect(service.attackMode()).toBeFalse();
+    });
+
+    it('should emit door toggle requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
+        service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
+
+        service.toggleDoor(INTERACTION_ROW, INTERACTION_COL);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.ToggleDoor, {
+            gameId: service.activeGame._id,
+            playerId: 'Alice',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
+        });
+    });
+
+    it('should emit sanctuary interaction requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
+        service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
+
+        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, 'double');
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            gameId: service.activeGame._id,
+            playerId: 'Alice',
+            choice: 'double',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
+        });
     });
 
     it('should toggle attack mode', () => {
@@ -421,8 +377,10 @@ describe('ActiveGameService', () => {
             ],
         ];
 
+        const previousReachableTiles = service.reachableTiles;
         service.updateMovementRange(2, graph);
 
+        expect(service.reachableTiles).not.toBe(previousReachableTiles);
         expect([...service.reachableTiles].sort((a, b) => a - b)).toEqual([0, PLAYER_INDEX_BOB, 2]);
     });
 
@@ -436,6 +394,7 @@ describe('ActiveGameService', () => {
         service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
         service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
         service.attackPlayer('Alice');
+        service.toggleDoor(TELEPORT_ROW, TELEPORT_COL);
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
@@ -493,31 +452,26 @@ describe('ActiveGameService', () => {
         );
 
         Object.assign(service as unknown as Record<string, unknown>, {
-            playerMovedSubscription: createUnsubscribeSpy(),
-            turnPreparingSubscription: createUnsubscribeSpy(),
-            turnStartedSubscription: createUnsubscribeSpy(),
-            attackResultSubscription: createUnsubscribeSpy(),
-            playerKickedSubscription: createUnsubscribeSpy(),
-            playerAbandonedSubscription: createUnsubscribeSpy(),
-            gameEndedSubscription: createUnsubscribeSpy(),
+            socketSubscriptions: [
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+                createUnsubscribeSpy(),
+            ],
             setActiveGameSubscription: createUnsubscribeSpy(),
-            playerLeftSubscription: createUnsubscribeSpy(),
-            gameCanceledSubscription: createUnsubscribeSpy(),
         });
 
         service.ngOnDestroy();
 
-        const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy }>;
-        expect(subscriptions.playerMovedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.turnPreparingSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.turnStartedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.attackResultSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerKickedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerAbandonedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.gameEndedSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.setActiveGameSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.playerLeftSubscription.unsubscribe).toHaveBeenCalled();
-        expect(subscriptions.gameCanceledSubscription.unsubscribe).toHaveBeenCalled();
+        const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy } | { unsubscribe?: jasmine.Spy }[]>;
+        for (const subscription of subscriptions.socketSubscriptions as { unsubscribe?: jasmine.Spy }[]) {
+            expect(subscription.unsubscribe).toHaveBeenCalled();
+        }
+        expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
     });
 
     it('should keep non-starting items and only remove unused spawn points', () => {
@@ -561,7 +515,6 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         dateCreated: new Date('2026-01-01T00:00:00.000Z'),
         lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
         visibility: Visibility.Hidden,
-        preview: '' as Base64URLString,
         board: {
             cells: [
                 [CellType.Empty, CellType.Empty],
@@ -584,6 +537,9 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 
@@ -619,3 +575,5 @@ function createItem(itemType: ItemType, x: number, y: number): IItem {
 function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
     return { unsubscribe: jasmine.createSpy('unsubscribe') };
 }
+
+

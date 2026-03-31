@@ -43,7 +43,6 @@ describe('GameController', () => {
         description: 'Test Description',
         gameMode: GameType.Classic,
         board: {} as IBoard,
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
@@ -53,7 +52,6 @@ describe('GameController', () => {
         description: 'Test Description2',
         gameMode: GameType.Classic,
         board: {} as IBoard,
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
@@ -290,7 +288,6 @@ describe('GameController', () => {
                 gameTitle: '',
                 description: '',
                 gameMode: 'Invalid',
-                preview: '',
             },
         };
         return supertest(expressApp)

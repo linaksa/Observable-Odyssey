@@ -57,9 +57,6 @@ export class GameController {
          *                     enum: [Ctf, Classic]
          *                   board:
          *                     type: object
-         *                   preview:
-         *                     type: string
-         *                     description: Base64 encoded image
          *                   visibility:
          *                     type: string
          *                     enum: [Viewable, Hidden]
@@ -116,9 +113,6 @@ export class GameController {
          *                   enum: [Ctf, Classic]
          *                 board:
          *                   type: object
-         *                 preview:
-         *                   type: string
-         *                   description: Base64 encoded image
          *                 visibility:
          *                   type: string
          *                   enum: [Viewable, Hidden]
@@ -159,7 +153,7 @@ export class GameController {
          *     parameters:
          *       - in: body
          *         name: game
-         *         description: Game object containing title, description, mode, board and preview image
+         *         description: Game object containing title, description, mode and board
          *         required: true
          *         schema:
          *           type: object
@@ -173,7 +167,6 @@ export class GameController {
          *                 - description
          *                 - gameMode
          *                 - board
-         *                 - preview
          *               properties:
          *                 gameTitle:
          *                   type: string
@@ -184,9 +177,6 @@ export class GameController {
          *                   enum: [Ctf, Classic]
          *                 board:
          *                   type: object
-         *                 preview:
-         *                   type: string
-         *                   description: Base64 encoded image
          *     responses:
          *       201:
          *         description: Game created successfully
@@ -283,9 +273,6 @@ export class GameController {
          *                   enum: [Ctf, Classic]
          *                 board:
          *                   type: object
-         *                 preview:
-         *                   type: string
-         *                   description: image
          *     responses:
          *       200:
          *         description: Game updated successfully

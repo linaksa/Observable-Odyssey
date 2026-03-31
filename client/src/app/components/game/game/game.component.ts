@@ -1,29 +1,41 @@
-import { CommonModule } from '@angular/common';
-import { Component, effect, HostListener, inject, OnInit } from '@angular/core';
-import { EditionCellComponent } from '@app/components/edition/edition-cell/edition-cell.component';
+import { Component, effect, inject, OnInit } from '@angular/core';
+import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
+import { SanctuaryPopupComponent } from '@app/components/game/sanctuary-popup/sanctuary-popup.component';
 import { TileInfoPopupComponent } from '@app/components/game/tile-info-popup/tile-info-popup.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GameInteractionService } from '@app/services/gameplay/game-interaction.service';
+import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
-import { TileInfoService } from '@app/services/ui/tile-info.service';
-import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { buildGraph } from '@app/utils/pathfinding';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { TileInfoPopupData } from '@common/info';
+import { SanctuaryChoice, SanctuaryPopupData, TileInfoPopupData } from '@common/info';
 import { IItem } from '@common/items';
+
+const GAME_HOST_BINDINGS = {
+    ['(window:keydown)']: 'handleKeyboard($event)',
+    ['(document:click)']: 'onDocumentClick($event)',
+} as const;
 
 @Component({
     selector: 'app-game',
-    imports: [CommonModule, EditionCellComponent, TileInfoPopupComponent],
+    imports: [GameGridComponent, SanctuaryPopupComponent, TileInfoPopupComponent],
     styleUrl: '../../../styles/game-cell.scss',
     templateUrl: './game.component.html',
+    host: GAME_HOST_BINDINGS,
 })
 export class GameComponent implements OnInit {
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
-    private readonly tileInfoService: TileInfoService = inject(TileInfoService);
     private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
+    private readonly interactionService: GameInteractionService = inject(GameInteractionService);
+    private readonly popupStateService: GamePopupStateService = inject(GamePopupStateService);
+
+    graph: [number, number][][] = [];
+
+    totalRows = 0;
+    totalColumns = 0;
 
     protected get isLocalPlayerTurn(): boolean {
         const localPlayer = this.localPlayerService.getLocalPlayer();
@@ -32,32 +44,41 @@ export class GameComponent implements OnInit {
         return currentPlayer?.name === localPlayer.name;
     }
 
-    graph: [number, number][][] = [];
+    protected get gameCells(): CellType[][] {
+        return this.activeGameService.activeGame?.game.board.cells ?? [];
+    }
 
-    totalRows = 0;
-    totalColumns = 0;
+    protected get gamePlayers(): readonly ICharacter[] | null {
+        const activeGame = this.activeGameService.activeGame;
 
-    isTileInfoVisible = false;
-    tileInfoTitle = '';
-    tileInfoDescription = '';
-    tileInfoMovementCost = '';
-    tileInfoItemTitle: string | null = null;
-    tileInfoItemDescription: string | null = null;
-    tileInfoPlayerName: string | null = null;
-    tileInfoPlayerAvatarUrl: string | null = null;
+        if (!activeGame) {
+            return null;
+        }
+
+        return [...activeGame.players];
+    }
+
+    protected get reachableTiles(): ReadonlySet<number> | null {
+        return this.isLocalPlayerTurn ? this.activeGameService.reachableTiles : null;
+    }
 
     protected get tileInfoPopupData(): TileInfoPopupData {
-        return {
-            visible: this.isTileInfoVisible,
-            title: this.tileInfoTitle,
-            description: this.tileInfoDescription,
-            movementCost: this.tileInfoMovementCost,
-            itemTitle: this.tileInfoItemTitle,
-            itemDescription: this.tileInfoItemDescription,
-            playerName: this.tileInfoPlayerName,
-            playerAvatarUrl: this.tileInfoPlayerAvatarUrl,
-        };
+        return this.popupStateService.tileInfoPopupData;
     }
+
+    protected get sanctuaryPopupData(): SanctuaryPopupData {
+        return this.popupStateService.sanctuaryPopupData;
+    }
+
+    readonly getObjectAt = (rowIndex: number, colIndex: number): IItem | null => {
+        const activeGame = this.activeGameService.activeGame;
+
+        if (!activeGame) {
+            return null;
+        }
+
+        return this.boardSharedService.getObjectAt(rowIndex, colIndex, activeGame.game.board.items);
+    };
 
     constructor() {
         effect(() => {
@@ -65,99 +86,67 @@ export class GameComponent implements OnInit {
             this.activeGameService.hasChangedLocation();
             this.activeGameService.hasAbandonned();
             this.activeGameService.gameHasEnded();
+
+            if (this.popupStateService.isSanctuaryPopupVisible && (!this.isLocalPlayerTurn || this.activeGameService.gameHasEnded())) {
+                this.popupStateService.closeSanctuaryPopup();
+            }
+
+            this.refreshGraphFromBoard();
             this.activeGameService.updateMovementRange(this.totalColumns, this.graph);
         });
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
+        this.popupStateService.closeAllPopups();
         const board = this.activeGameService.activeGame.game.board.cells;
         this.totalRows = board.length;
         this.totalColumns = board[0].length;
-        this.graph = buildGraph(board);
-
+        this.refreshGraphFromBoard();
         this.activeGameService.updateMovementRange(this.totalColumns, this.graph);
     }
 
-    @HostListener('window:keydown', ['$event'])
-    handleKeyboard(event: KeyboardEvent) {
-        if (isTypingInChatMessageInput(event)) return;
-        if (!this.isLocalPlayerTurn) return;
-
-        switch (event.key.toLowerCase()) {
-            case 'w':
-                this.activeGameService.tryMove(-1, 0, this.totalColumns);
-                break;
-
-            case 's':
-                this.activeGameService.tryMove(1, 0, this.totalColumns);
-                break;
-
-            case 'a':
-                this.activeGameService.tryMove(0, -1, this.totalColumns);
-                break;
-
-            case 'd':
-                this.activeGameService.tryMove(0, 1, this.totalColumns);
-                break;
-        }
+    handleKeyboard(event: KeyboardEvent): void {
+        this.interactionService.handleKeyboard(event, this.totalColumns);
     }
 
-    onPlayerClicked(playerName: string) {
-        if (!this.activeGameService.attackMode() || !this.isLocalPlayerTurn) {
-            return;
-        }
-        this.activeGameService.attackPlayer(playerName);
-
-        this.activeGameService.attackMode.set(false);
+    onGridCellContextMenu(event: GameGridCellEvent): void {
+        this.onCellRightClick(event.event, event.rowIndex, event.colIndex, event.cellType, event.item);
     }
 
-    @HostListener('document:click')
-    onDocumentClick(): void {
-        this.closeTileInfo();
+    onGridCellClick(event: GameGridCellEvent): void {
+        this.interactionService.handleGridCellClick(event.rowIndex, event.colIndex, event.cellType, event.item);
     }
 
-    onCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType): void {
-        event.preventDefault();
-        event.stopPropagation();
+    onPlayerClicked(playerName: string): void {
+        this.interactionService.handlePlayerClick(playerName);
+    }
 
-        if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn) {
-            if (!this.isTeleportableCell(rowIndex, colIndex, cellType)) return;
-            this.closeTileInfo();
-            this.activeGameService.debugTeleport(rowIndex, colIndex);
+    onDocumentClick(event?: MouseEvent): void {
+        this.interactionService.handleDocumentClick(event);
+    }
+
+    onSanctuaryChoice(choice: SanctuaryChoice): void {
+        this.interactionService.handleSanctuaryChoice(choice);
+    }
+
+    onCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null = null): void {
+        this.interactionService.handleCellRightClick(event, rowIndex, colIndex, cellType, item);
+    }
+
+    private refreshGraphFromBoard(): void {
+        const activeGame = this.activeGameService.activeGame;
+        if (!activeGame) {
+            this.graph = [];
             return;
         }
 
-        const itemAtPosition = this.boardSharedService.getObjectAt(rowIndex, colIndex, this.activeGameService.activeGame.game.board.items);
-        const playerAtPosition = this.activeGameService.getPlayersAtPosition(rowIndex, colIndex)[0] ?? null;
-        this.openTileInfo(cellType, itemAtPosition, playerAtPosition);
-    }
+        const board = activeGame.game.board.cells;
 
-    private isTeleportableCell(row: number, col: number, cellType: CellType): boolean {
-        if (cellType === CellType.Wall || cellType === CellType.ClosedDoor) return false;
-        if (this.boardSharedService.getObjectAt(row, col, this.activeGameService.activeGame.game.board.items)) return false;
-        if (this.activeGameService.getPlayersAtPosition(row, col).length > 0) return false;
-        return true;
-    }
+        if (!board.length || !board[0]?.length) {
+            this.graph = [];
+            return;
+        }
 
-    private openTileInfo(cellType: CellType, item: IItem | null, player: ICharacter | null): void {
-        const tileInfo = this.tileInfoService.getTileInfo(cellType);
-        this.tileInfoTitle = tileInfo.title;
-        this.tileInfoDescription = tileInfo.description;
-        this.tileInfoMovementCost = tileInfo.movementCost;
-        const itemInfo = this.tileInfoService.getItemInfo(item);
-        this.tileInfoItemTitle = itemInfo?.title ?? null;
-        this.tileInfoItemDescription = itemInfo?.description ?? null;
-        const playerInfo = this.tileInfoService.getPlayerInfo(player);
-        this.tileInfoPlayerName = playerInfo?.name ?? null;
-        this.tileInfoPlayerAvatarUrl = playerInfo?.avatarUrl ?? null;
-        this.isTileInfoVisible = true;
-    }
-
-    private closeTileInfo(): void {
-        this.isTileInfoVisible = false;
-        this.tileInfoItemTitle = null;
-        this.tileInfoItemDescription = null;
-        this.tileInfoPlayerName = null;
-        this.tileInfoPlayerAvatarUrl = null;
+        this.graph = buildGraph(board, activeGame.game.board.items, activeGame.players);
     }
 }

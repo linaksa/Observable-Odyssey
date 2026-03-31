@@ -1,0 +1,40 @@
+<div class="text-2xl text-white tracking-wider text-center">Objet</div>
+
+<div class="w-64 h-64 aspect-square bg-[#0f1528] text-white/60 rounded-lg overflow-hidden">
+    @if (boardEditorService.selectedObject !== null) {
+        <img
+            [src]="objectImagePath(boardEditorService.selectedObject)"
+            [alt]="displayTitle(boardEditorService.itemTypesInfo[boardEditorService.selectedObject].title)"
+            class="h-full w-full object-cover object-top [image-rendering:pixelated]"
+            draggable="false"
+        />
+    } @else {
+        <span class="flex h-full w-full items-center justify-center p-3 text-center">Veuillez en choisir un ci-dessous</span>
+    }
+</div>
+
+@if (boardEditorService.selectedObject !== null) {
+    <span class="text-white tracking-widest text-center">
+        {{ displayTitle(boardEditorService.itemTypesInfo[boardEditorService.selectedObject].title) }}
+        <br />
+        <span [class]="boardEditorService.getRemainingObjectCount(boardEditorService.selectedObject) !== 0 ? 'text-red-500' : ''">
+            ({{ boardEditorService.getRemainingObjectCount(boardEditorService.selectedObject) }} restants)
+        </span>
+    </span>
+}
+
+<div class="flex shrink flex-wrap justify-center gap-1">
+    @for (type of boardEditorService.availableObjectTypes(); track type) {
+        <button type="button" [class]="objectButtonClass(type)" [attr.title]="objectDescription(type)" (click)="selectObject(type)">
+            <img
+                [src]="objectImagePath(type)"
+                [alt]="displayTitle(boardEditorService.itemTypesInfo[type].title)"
+                class="h-full w-full object-cover pointer-events-none [image-rendering:pixelated]"
+                draggable="false"
+            />
+            @if (boardEditorService.selectedObject === type) {
+                <div class="absolute inset-0 bg-blue-600/30 pointer-events-none"></div>
+            }
+        </button>
+    }
+</div>

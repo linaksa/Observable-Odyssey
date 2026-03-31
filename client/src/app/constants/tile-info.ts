@@ -52,13 +52,13 @@ export const UNKNOWN_TILE_INFO: TileInfoData = {
 export const ITEM_INFO_BY_TYPE: Record<ItemType, ItemInfoData> = {
     [ItemType.LifeSanctuary]: {
         title: 'Sanctuaire de vie :',
-        description: 'Soigne le joueur qui intéragit avec ce sanctuaire.',
-        editorTooltip: 'Soigne le joueur.',
+        description: 'Soigne le joueur de 2 points de vie. Le bonus peut être doublé.',
+        editorTooltip: 'Soigne le joueur de 2 PV.',
     },
     [ItemType.FightSanctuary]: {
         title: 'Sanctuaire de combat :',
-        description: "Augmente les dégâts d'attaque du joueur qui interagit avec ce sanctuaire.",
-        editorTooltip: "Augmente les dégâts d'attaque.",
+        description: 'Donne un buff temporaire de +1 attaque et +1 défense. Le bonus peut être doublé.',
+        editorTooltip: "Buff temporaire d'attaque et de défense.",
     },
     [ItemType.StartingPosition]: {
         title: 'Position de depart :',

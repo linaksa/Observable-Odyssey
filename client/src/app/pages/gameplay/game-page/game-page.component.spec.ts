@@ -246,7 +246,6 @@ function createActiveGame(id: string, isFinished = false): IActiveGame {
         dateCreated: new Date('2026-01-01T00:00:00.000Z'),
         lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
         visibility: Visibility.Hidden,
-        preview: '' as Base64URLString,
         board: {
             cells: [[CellType.Empty]],
             items: [],
@@ -266,6 +265,9 @@ function createActiveGame(id: string, isFinished = false): IActiveGame {
         organizerName: 'Alice',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

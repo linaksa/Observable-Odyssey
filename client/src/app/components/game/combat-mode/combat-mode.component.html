@@ -1,0 +1,154 @@
+<div class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div class="w-full max-w-[480px] mx-4 bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
+        <div class="flex items-center justify-between bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3">
+            <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
+            <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
+                    {{ turnService.turnTimeLeftSeconds }}</span
+                >
+            </div>
+        </div>
+
+        <div class="p-4 flex flex-col gap-4">
+            <div class="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
+                <div class="bg-[#0f2248] border-[1.5px] border-[#2d5199] rounded-xl p-3">
+                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#6b9ed4] mb-2">Défenseur</div>
+
+                    <div class="flex items-center gap-2">
+                        <img
+                            [src]="getAvatarUrl(defenderCharacter)"
+                            class="w-11 h-11 rounded-lg bg-[#1e3a70] border-2 border-[#4a7fd4] object-contain shrink-0"
+                        />
+
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-[#e8f0ff] truncate">
+                                {{ defenderCharacter?.name }}
+                            </div>
+
+                            <div class="text-[10px] font-semibold text-[#6b9ed4] mt-0.5">
+                                HP {{ getFilledBlocks(defenderCharacter) }} / {{ getHealthRange(defenderCharacter).length }}
+                            </div>
+
+                            <div class="flex gap-[2px] mt-1.5">
+                                @for (health of getHealthRange(defenderCharacter); track $index) {
+                                    <div
+                                        class="h-2 flex-1 rounded-sm"
+                                        [class.bg-green-500]="$index < getFilledBlocks(defenderCharacter)"
+                                        [class.bg-red-900]="$index >= getFilledBlocks(defenderCharacter)"
+                                    ></div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="text-xs font-bold text-[#e8f0ff] bg-[#0d1f42] border-2 border-[#4a7fd4] rounded-full w-10 h-10 flex items-center justify-center shrink-0 tracking-wider"
+                >
+                    VS
+                </div>
+
+                <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-xl p-3">
+                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-right">Attaquant</div>
+
+                    <div class="flex flex-row-reverse items-center gap-2">
+                        <img
+                            [src]="getAvatarUrl(attackerCharacter)"
+                            class="w-11 h-11 rounded-lg bg-[#1e3a70] border-2 border-[#e8a832] object-contain shrink-0"
+                        />
+
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-[#e8f0ff] truncate text-right">
+                                {{ attackerCharacter?.name }}
+                            </div>
+
+                            <div class="text-[10px] font-semibold text-[#e8a832] mt-0.5 text-right">
+                                HP {{ getFilledBlocks(attackerCharacter) }} / {{ getHealthRange(attackerCharacter).length }}
+                            </div>
+
+                            <div class="flex gap-[2px] mt-1.5">
+                                @for (health of getHealthRange(attackerCharacter); track $index) {
+                                    <div
+                                        class="h-2 flex-1 rounded-sm"
+                                        [class.bg-green-500]="$index < getFilledBlocks(attackerCharacter)"
+                                        [class.bg-red-900]="$index >= getFilledBlocks(attackerCharacter)"
+                                    ></div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-[#0d1f42] border-2 border-[#2d5199] rounded-lg px-4 py-3">
+                <p class="text-[11px] text-[#c8dcff] leading-loose tracking-wide font-mono">
+                    {{ dialogMessage }}
+                    <span class="inline-block w-[7px] h-[7px] bg-[#c8dcff] ml-1 animate-[blink_1.1s_step-end_infinite]"></span>
+                </p>
+            </div>
+
+            <p class="text-[10px] font-bold text-[#5a7fad] tracking-[3px] uppercase text-center">Choisir une action</p>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button
+                    (click)="selectAction(this.attackPosture.Defensive)"
+                    class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
+                    [ngClass]="
+                        selectedMode === this.attackPosture.Defensive
+                            ? 'bg-[#1e4a8a] border-[#6aadff] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                            : 'bg-[#1a3365] border-[#2d5199] text-[#a8c8ff] hover:bg-[#1e3d75] hover:border-[#4a7fd4]'
+                    "
+                >
+                    <span class="text-xl">🛡</span>
+
+                    <span class="text-sm font-bold tracking-wide">
+                        @if (selectedMode === this.attackPosture.Defensive) {
+                            ✓
+                        }
+                        Défensif
+                    </span>
+
+                    <span class="text-[10px] font-semibold opacity-70"> +DEF & -ATK </span>
+                </button>
+
+                <button
+                    (click)="selectAction(this.attackPosture.Offensive)"
+                    class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
+                    [ngClass]="
+                        selectedMode === this.attackPosture.Offensive
+                            ? 'bg-[#7a2e08] border-[#ff8833] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                            : 'bg-[#2a1500] border-[#7a3d0a] text-[#f5b060] hover:bg-[#3a1e00] hover:border-[#b06020]'
+                    "
+                >
+                    <span class="text-xl">⚔</span>
+
+                    <span class="text-sm font-bold tracking-wide">
+                        @if (selectedMode === this.attackPosture.Offensive) {
+                            ✓
+                        }
+                        Offensif</span
+                    >
+
+                    <span class="text-[10px] font-semibold opacity-70">+ATK & -DEF</span>
+                </button>
+            </div>
+
+            @if (selectedMode !== null) {
+                <button
+                    (click)="confirmAction()"
+                    class="w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
+                >
+                    Confirmer
+                </button>
+            }
+        </div>
+
+        <div class="h-[3px] bg-[#0d1f42]">
+            <div
+                class="h-full bg-gradient-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
+                [style.width.%]="timerPercent"
+            ></div>
+        </div>
+    </div>
+</div>

@@ -13,11 +13,14 @@
  */
 import { TestBed } from '@angular/core/testing';
 import { GridSize, ToolOption } from '@app/constants/grid-edition';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE } from '@common/items';
 import { BoardEditorService } from './edition.service';
+
+const TEST_GRID_SIZE = 5;
 
 describe('BoardEditorService', () => {
     let service: BoardEditorService;
@@ -42,19 +45,81 @@ describe('BoardEditorService', () => {
         expect(service.objects).toEqual([]);
     });
 
-    it('should toggle open door tiles and clear object on the cell', () => {
-        service.buildGrid(2);
+    it('should place a closed door on a valid horizontal corridor and toggle it on repeated placement', () => {
+        service.buildGrid(TEST_GRID_SIZE);
         service.activeTool = ToolOption.Placement;
-        service.selectedMaterial = CellType.OpenDoor;
-        service.objects = [createItem(ItemType.StartingPosition, 0, 0, 1)];
+        service.selectedMaterial = CellType.ClosedDoor;
+        service.objects = [createItem(ItemType.StartingPosition, 2, 2, 1)];
         const eraseSpy = spyOn(service, 'eraseObject').and.callThrough();
 
-        service.applyTile(0, 0);
-        expect(service.gameCells[0][0]).toBe(CellType.OpenDoor);
+        service.gameCells[2][1] = CellType.Wall;
+        service.gameCells[2][3] = CellType.Wall;
+        service.gameCells[1][2] = CellType.Ice;
+        service.gameCells[3][2] = CellType.Water;
 
-        service.applyTile(0, 0);
-        expect(service.gameCells[0][0]).toBe(CellType.ClosedDoor);
-        expect(eraseSpy).toHaveBeenCalledWith(0, 0);
+        service.applyTile(2, 2);
+        expect(service.gameCells[2][2]).toBe(CellType.ClosedDoor);
+        expect(eraseSpy).toHaveBeenCalledWith(2, 2);
+
+        service.applyTile(2, 2);
+        expect(service.gameCells[2][2]).toBe(CellType.OpenDoor);
+    });
+
+    it('should expose closed doors in the placement palette', () => {
+        expect(service.availableCellTypes).toContain(CellType.ClosedDoor);
+        expect(service.availableCellTypes).not.toContain(CellType.OpenDoor);
+    });
+
+    it('should place a closed door on a valid vertical corridor', () => {
+        service.buildGrid(TEST_GRID_SIZE);
+        service.activeTool = ToolOption.Placement;
+        service.selectedMaterial = CellType.ClosedDoor;
+
+        service.gameCells[1][2] = CellType.Wall;
+        service.gameCells[3][2] = CellType.Wall;
+        service.gameCells[2][1] = CellType.Empty;
+        service.gameCells[2][3] = CellType.Ice;
+
+        service.applyTile(2, 2);
+
+        expect(service.gameCells[2][2]).toBe(CellType.ClosedDoor);
+    });
+
+    it('should place doors on the edge of the board', () => {
+        service.buildGrid(TEST_GRID_SIZE);
+        service.activeTool = ToolOption.Placement;
+        service.selectedMaterial = CellType.ClosedDoor;
+        service.objects = [createItem(ItemType.Flag, 0, 1, 1)];
+        const eraseSpy = spyOn(service, 'eraseObject').and.callThrough();
+
+        service.gameCells[0][0] = CellType.Wall;
+        service.gameCells[0][2] = CellType.Wall;
+        service.gameCells[1][1] = CellType.Empty;
+
+        service.applyTile(0, 1);
+
+        expect(service.gameCells[0][1]).toBe(CellType.ClosedDoor);
+        expect(service.objects).toEqual([]);
+        expect(eraseSpy).toHaveBeenCalledWith(0, 1);
+    });
+
+    it('should place doors even when the surrounding layout is not valid', () => {
+        service.buildGrid(TEST_GRID_SIZE);
+        service.activeTool = ToolOption.Placement;
+        service.selectedMaterial = CellType.ClosedDoor;
+        service.objects = [createItem(ItemType.Flag, 2, 2, 1)];
+        const eraseSpy = spyOn(service, 'eraseObject').and.callThrough();
+
+        service.gameCells[2][1] = CellType.Wall;
+        service.gameCells[2][3] = CellType.Wall;
+        service.gameCells[1][2] = CellType.Wall;
+        service.gameCells[3][2] = CellType.Wall;
+
+        service.applyTile(2, 2);
+
+        expect(service.gameCells[2][2]).toBe(CellType.ClosedDoor);
+        expect(service.objects).toEqual([]);
+        expect(eraseSpy).toHaveBeenCalledWith(2, 2);
     });
 
     // Edge case: When placement tool is inactive, it should not apply tile.
@@ -250,6 +315,23 @@ describe('BoardEditorService', () => {
         expect(service.getRemainingObjectCount(ItemType.StartingPosition)).toBeGreaterThan(0);
     });
 
+    it('should expose the base object types in classic mode', () => {
+        service.gameMode = GameType.Classic;
+
+        expect(service.availableObjectTypes()).toEqual([ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition]);
+    });
+
+    it('should expose the flag in capture-the-flag mode', () => {
+        service.gameMode = GameType.Ctf;
+
+        expect(service.availableObjectTypes()).toEqual([ItemType.LifeSanctuary, ItemType.FightSanctuary, ItemType.StartingPosition, ItemType.Flag]);
+    });
+
+    it('should expose shared tile and item info records', () => {
+        expect(service.cellTypesInfo).toBe(TILE_INFO_BY_TYPE);
+        expect(service.itemTypesInfo).toBe(ITEM_INFO_BY_TYPE);
+    });
+
     it('should return zero remaining amount for unsupported object type', () => {
         service.buildGrid(GridSize.SMALL);
 
@@ -280,7 +362,6 @@ function createGame(size: number, items: IItem[] = []): IExistingGame {
         dateCreated: new Date('2026-01-01T00:00:00.000Z'),
         lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
         visibility: Visibility.Hidden,
-        preview: '' as Base64URLString,
     };
 }
 
