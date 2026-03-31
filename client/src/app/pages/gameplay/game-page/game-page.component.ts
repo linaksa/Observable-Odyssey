@@ -1,14 +1,10 @@
 import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-<<<<<<< HEAD
 import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
-import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
-=======
 import { JournalComponent } from '@app/components/chat/journal/journal.component';
 import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
 import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
-import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
->>>>>>> dev
+import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
@@ -135,13 +131,11 @@ export class GamePageComponent implements OnInit, OnDestroy {
         };
     }
 
-<<<<<<< HEAD
     get pendingFlagQuestion(): string | null {
         return this.activeGameService.pendingFlagRequest()?.question ?? null;
-=======
+    }
     get localPlayer(): ICharacter | undefined {
         return this.localPlayerService.getLocalPlayer();
->>>>>>> dev
     }
 
     endTurn(): void {
