@@ -72,11 +72,17 @@ h1.header {
     --animate-timer-drain: timer-drain 30s linear forwards;
 
     @keyframes blink {
-        50% { opacity: 0; }
+        50% {
+            opacity: 0;
+        }
     }
 
     @keyframes timer-drain {
-        from { width: 100%; }
-        to   { width: 0%;   }
+        from {
+            width: 100%;
+        }
+        to {
+            width: 0%;
+        }
     }
 }

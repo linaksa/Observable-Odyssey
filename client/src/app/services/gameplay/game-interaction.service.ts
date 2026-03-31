@@ -87,13 +87,7 @@ export class GameInteractionService {
         this.activeGameService.attackMode.set(false);
     }
 
-    handleCellRightClick(
-        event: MouseEvent,
-        rowIndex: number,
-        colIndex: number,
-        cellType: CellType,
-        item: IItem | null = null,
-    ): void {
+    handleCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null = null): void {
         event.preventDefault();
         event.stopPropagation();
         this.popupStateService.closeSanctuaryPopup();

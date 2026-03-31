@@ -13,6 +13,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { EditionGameFormComponent } from './edition-game-form.component';
 
@@ -57,6 +58,14 @@ describe('EditionGameFormComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('.text-red-600').length).toBe(2);
         expect(fixture.nativeElement.querySelector('img[alt="Chargement"]')).toBeTruthy();
         expect((fixture.nativeElement.querySelector('button.btn-green') as HTMLButtonElement).disabled).toBeTrue();
+    });
+
+    it('should bind the shared title and description length limits', () => {
+        const titleInput = fixture.nativeElement.querySelector('#gameTitle') as HTMLInputElement;
+        const descriptionInput = fixture.nativeElement.querySelector('#description') as HTMLTextAreaElement;
+
+        expect(titleInput.getAttribute('maxlength')).toBe(String(MAX_TITLE_LENGTH));
+        expect(descriptionInput.getAttribute('maxlength')).toBe(String(MAX_DESCRIPTION_LENGTH));
     });
 
     it('should emit submitRequested when the form is submitted or confirmed', () => {
