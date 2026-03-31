@@ -6,6 +6,7 @@ import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX, TEMPS_COMBAT } from '@common/constants';
+import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
@@ -75,6 +76,7 @@ export class CombatService {
     async resolveCombat(currentActiveGame: IActiveGame, attackerName: string, defenderName: string): Promise<CombatOutcome> {
         const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
         const defender = currentActiveGame.players.find((p) => p.name === defenderName);
+        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(currentActiveGame);
 
         attacker.actionsLeft--;
 
@@ -103,6 +105,8 @@ export class CombatService {
             return player;
         });
 
+        this.dropFlagAtPositionIfCarrierDefeated(currentActiveGame, carrierDefeatPosition);
+
         const turnRemainingTime = currentActiveGame.currentAttack.suspendedTurnTimer;
 
         currentActiveGame.currentAttack = null; // reset current attack after resolving combat
@@ -117,6 +121,35 @@ export class CombatService {
         this.turnService.continueTurn(currentActiveGame._id.toString(), turnRemainingTime);
 
         return combatResult;
+    }
+
+    private getFlagCarrierDefeatPosition(activeGame: IActiveGame): Position | null {
+        if (activeGame.game.gameMode !== 'ctf' || !activeGame.hasFlagId) {
+            return null;
+        }
+
+        const carrier = activeGame.players.find((player) => player.name === activeGame.hasFlagId);
+        if (!carrier || carrier.currentHealth > 0) {
+            return null;
+        }
+
+        return carrier.positionGrille;
+    }
+
+    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, position: Position | null): void {
+        if (!position) {
+            return;
+        }
+
+        const flag = activeGame.game.board.items.find((item) => item.itemType === ItemType.Flag);
+        if (!flag) {
+            return;
+        }
+
+        activeGame.hasFlagId = '';
+        flag.isCarried = false;
+        flag.x = position.y;
+        flag.y = position.x;
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {

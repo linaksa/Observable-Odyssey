@@ -165,6 +165,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             context.setCombatOutcome(combatOutcome);
             context.setActiveGame(combatOutcome.updatedActiveGame);
+            toggle(context.hasChangedLocation);
         }),
 
         context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
