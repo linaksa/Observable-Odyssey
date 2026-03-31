@@ -2,7 +2,8 @@ import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ICharacter } from '@common/character';
-import { DiceType, buildAvatarAssetPath } from '@common/constants';
+import { DiceType } from '@common/constants';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     [DiceType.FourSided]: './assets/form-page/4_sided_dice.svg',

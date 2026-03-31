@@ -1,5 +1,8 @@
 import { AttackPosture } from './attackResult';
+import { CellType } from './board';
 import { Position } from './character';
+import { SanctuaryChoice } from './info';
+import { ItemType } from './items';
 
 export interface IJoinGamePayload {
     activeGameId: string;
@@ -16,6 +19,43 @@ export interface IAttackData {
     gameId: string;
     attackerName: string;
     defenderName: string;
+}
+
+export interface IDoorToggleData {
+    gameId: string;
+    playerId: string;
+    position: Position;
+}
+
+export interface IDoorToggledResult {
+    playerId: string;
+    position: Position;
+    cellType: CellType;
+    actionsLeft: number;
+}
+
+export interface ISanctuaryInteractionData {
+    gameId: string;
+    playerId: string;
+    position: Position;
+    choice: SanctuaryChoice;
+}
+
+export interface ISanctuaryInteractedResult {
+    playerId: string;
+    position: Position;
+    itemType: ItemType.LifeSanctuary | ItemType.FightSanctuary;
+    choice: SanctuaryChoice;
+    succeeded: boolean;
+    actionsLeft: number;
+    currentHealth: number;
+    attackPoints: number;
+    defensePoints: number;
+    sanctuaryActive: boolean;
+    sanctuaryInactiveTurnsRemaining: number;
+    fightSanctuaryUsed?: boolean;
+    fightSanctuaryTurnsRemaining?: number;
+    fightSanctuaryBonus?: number;
 }
 
 export interface IAttackPostureData {

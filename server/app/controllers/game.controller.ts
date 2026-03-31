@@ -52,14 +52,14 @@ export class GameController {
          *                     type: string
          *                   description:
          *                     type: string
-          *                   gameMode:
-          *                     type: string
-          *                     enum: [Ctf, Classic]
-          *                   board:
-          *                     type: object
-          *                   visibility:
-          *                     type: string
-          *                     enum: [Viewable, Hidden]
+         *                   gameMode:
+         *                     type: string
+         *                     enum: [Ctf, Classic]
+         *                   board:
+         *                     type: object
+         *                   visibility:
+         *                     type: string
+         *                     enum: [Viewable, Hidden]
          *                   dateCreated:
          *                     type: string
          *                     format: date-time
@@ -108,14 +108,14 @@ export class GameController {
          *                   type: string
          *                 description:
          *                   type: string
-          *                 gameMode:
-          *                   type: string
-          *                   enum: [Ctf, Classic]
-          *                 board:
-          *                   type: object
-          *                 visibility:
-          *                   type: string
-          *                   enum: [Viewable, Hidden]
+         *                 gameMode:
+         *                   type: string
+         *                   enum: [Ctf, Classic]
+         *                 board:
+         *                   type: object
+         *                 visibility:
+         *                   type: string
+         *                   enum: [Viewable, Hidden]
          *                 dateCreated:
          *                   type: string
          *                   format: date-time
@@ -153,7 +153,7 @@ export class GameController {
          *     parameters:
          *       - in: body
          *         name: game
-          *         description: Game object containing title, description, mode and board
+         *         description: Game object containing title, description, mode and board
          *         required: true
          *         schema:
          *           type: object
@@ -162,21 +162,21 @@ export class GameController {
          *           properties:
          *             game:
          *               type: object
-          *               required:
-          *                 - gameTitle
-          *                 - description
-          *                 - gameMode
-          *                 - board
-          *               properties:
-          *                 gameTitle:
-          *                   type: string
-          *                 description:
-          *                   type: string
-          *                 gameMode:
-          *                   type: string
-          *                   enum: [Ctf, Classic]
-          *                 board:
-          *                   type: object
+         *               required:
+         *                 - gameTitle
+         *                 - description
+         *                 - gameMode
+         *                 - board
+         *               properties:
+         *                 gameTitle:
+         *                   type: string
+         *                 description:
+         *                   type: string
+         *                 gameMode:
+         *                   type: string
+         *                   enum: [Ctf, Classic]
+         *                 board:
+         *                   type: object
          *     responses:
          *       201:
          *         description: Game created successfully
@@ -263,17 +263,17 @@ export class GameController {
          *           properties:
          *             game:
          *               type: object
-          *               properties:
-          *                 gameTitle:
-          *                   type: string
-          *                 description:
-          *                   type: string
-          *                 gameMode:
-          *                   type: string
-          *                   enum: [Ctf, Classic]
-          *                 board:
-          *                   type: object
-          *     responses:
+         *               properties:
+         *                 gameTitle:
+         *                   type: string
+         *                 description:
+         *                   type: string
+         *                 gameMode:
+         *                   type: string
+         *                   enum: [Ctf, Classic]
+         *                 board:
+         *                   type: object
+         *     responses:
          *       200:
          *         description: Game updated successfully
          *       201:

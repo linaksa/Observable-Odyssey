@@ -1,6 +1,44 @@
 import { CellType } from '@common/board';
+import { ICharacter } from '@common/character';
+import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { IItem } from '@common/items';
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 
-export function buildGraph(board: CellType[][]): [number, number][][] {
+export function buildGraph(board: CellType[][], items: IItem[] = [], players: ICharacter[] = []): [number, number][][] {
+    const blockedCells = buildBlockedCells(items, players);
+    return buildAdjacencyGraph(board, blockedCells);
+}
+
+function buildBlockedCells(items: IItem[], players: ICharacter[]): Set<string> {
+    const blockedCells = new Set<string>();
+
+    addSanctuaryBlockedCells(blockedCells, items);
+    addPlayerBlockedCells(blockedCells, players);
+
+    return blockedCells;
+}
+
+function addSanctuaryBlockedCells(blockedCells: Set<string>, items: IItem[]): void {
+    for (const item of items) {
+        if (!sanctuaryCoversCell(item, item.x, item.y)) {
+            continue;
+        }
+
+        for (let row = item.x; row <= item.x + 1; row++) {
+            for (let col = item.y; col <= item.y + 1; col++) {
+                blockedCells.add(`${row},${col}`);
+            }
+        }
+    }
+}
+
+function addPlayerBlockedCells(blockedCells: Set<string>, players: ICharacter[]): void {
+    for (const player of players) {
+        blockedCells.add(`${player.positionGrille.y},${player.positionGrille.x}`);
+    }
+}
+
+function buildAdjacencyGraph(board: CellType[][], blockedCells: Set<string>): [number, number][][] {
     const totalRows = board.length;
     const totalColumns = board[0].length;
 
@@ -29,7 +67,7 @@ export function buildGraph(board: CellType[][]): [number, number][][] {
                     continue;
                 }
 
-                const tileWeight = getTileCost(board[neighborRow][neighborColumn]);
+                const tileWeight = getTileCost(board[neighborRow][neighborColumn], neighborRow, neighborColumn, blockedCells);
 
                 if (!isFinite(tileWeight)) {
                     continue;
@@ -43,26 +81,30 @@ export function buildGraph(board: CellType[][]): [number, number][][] {
     return graph;
 }
 
-function getTileCost(tileType: CellType): number {
+function getTileCost(tileType: CellType, row: number, col: number, blockedCells: Set<string>): number {
+    if (blockedCells.has(`${row},${col}`)) {
+        return Infinity;
+    }
+
     switch (tileType) {
         case CellType.Empty:
-            return 1;
+            return PRIX_PORTE_GAZON;
 
         case CellType.Ice:
-            return 0;
+            return PRIX_GLACE;
 
         case CellType.OpenDoor:
-            return 0;
+            return PRIX_PORTE_GAZON;
         case CellType.ClosedDoor:
-            return Number.MAX_SAFE_INTEGER;
+            return Infinity;
 
         case CellType.Water:
-            return 2;
+            return PRIX_EAU;
 
         case CellType.Wall:
-            return Number.MAX_SAFE_INTEGER;
+            return Infinity;
 
         default:
-            return 1;
+            return PRIX_PORTE_GAZON;
     }
 }

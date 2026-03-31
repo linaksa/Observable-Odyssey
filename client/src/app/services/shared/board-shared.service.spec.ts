@@ -51,6 +51,17 @@ describe('BoardSharedService', () => {
         expect(service.cellBelongsToObject(flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_OUTSIDE_COLUMN)).toBeFalse();
     });
 
+    it('should detect adjacency to sanctuary and regular items', () => {
+        const sanctuary = createItem(ItemType.FightSanctuary, SANCTUARY_X, SANCTUARY_Y);
+        const flag = createItem(ItemType.Flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN);
+
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X - 1, SANCTUARY_Y)).toBeTrue();
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X, SANCTUARY_RIGHT_Y + 1)).toBeTrue();
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X, SANCTUARY_Y)).toBeFalse();
+        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN + 1)).toBeTrue();
+        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_POSITION + 1, REGULAR_ITEM_COLUMN + 1)).toBeFalse();
+    });
+
     it('should return object at coordinates when it exists', () => {
         const sanctuary = createItem(ItemType.FightSanctuary, OUTSIDE_TOP_X, OUTSIDE_TOP_X);
         const flag = createItem(ItemType.Flag, 0, 0);

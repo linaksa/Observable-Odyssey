@@ -26,6 +26,9 @@ export interface ICharacter {
     positionDepart: Position;
     positionGrille: Position;
     virtualPlayerProfile?: VirtualPlayerProfile;
+    fightSanctuaryUsed?: boolean;
+    fightSanctuaryTurnsRemaining?: number;
+    fightSanctuaryBonus?: number;
 }
 export interface CharacterFormData {
     name: string;

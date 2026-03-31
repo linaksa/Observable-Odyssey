@@ -6,6 +6,7 @@
             @let players = playersAt(rowIndex, colIndex);
             <div
                 [class]="resolvedCellClass()"
+                (click)="onCellClick(rowIndex, colIndex, cell, item, $event)"
                 (contextmenu)="onCellContextMenu(rowIndex, colIndex, cell, item, $event)"
                 (mousedown)="onCellMouseDown(rowIndex, colIndex, cell, item, $event)"
                 (mouseenter)="onCellMouseEnter(rowIndex, colIndex, cell, item, $event)"
@@ -41,6 +42,7 @@
                             [src]="itemImagePath(item)"
                             [alt]="item.itemType"
                             class="absolute pointer-events-none select-none max-w-none max-h-none [image-rendering:pixelated]"
+                            [class.opacity-50]="isInactiveSanctuary(item)"
                             [style.top]="itemTop(item, rowIndex)"
                             [style.left]="itemLeft(item, rowIndex, colIndex)"
                             [style.width]="itemWidth(item)"
@@ -52,10 +54,7 @@
                 }
 
                 @if (highlightedTiles()?.has(cellIndex)) {
-                    <div
-                        class="absolute inset-0 z-20 bg-blue-600/30 pointer-events-none"
-                        data-testid="game-grid-highlight"
-                    ></div>
+                    <div class="absolute inset-0 z-20 bg-blue-600/30 pointer-events-none" data-testid="game-grid-highlight"></div>
                 }
 
                 @if (players.length) {

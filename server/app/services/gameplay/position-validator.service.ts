@@ -2,6 +2,7 @@ import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { Service } from 'typedi';
+import { sanctuaryCoversCell } from '@app/services/gameplay/sanctuary-helpers';
 
 @Service()
 export class PositionValidatorService {
@@ -22,6 +23,8 @@ export class PositionValidatorService {
         }
         const tile = currentActiveGame.game.board.cells[position.y][position.x];
         if (!tile) return false;
+        const items = currentActiveGame.game.board.items ?? [];
+        if (items.some((item) => sanctuaryCoversCell(item, position.y, position.x))) return false;
         return this.isWalkableCell(tile);
     }
 

@@ -12,8 +12,10 @@
         [playerAvatarPortrait]="false"
         [useBackgroundRendering]="true"
         gridClass="rounded-lg"
+        (cellClick)="onGridCellClick($event)"
         (cellContextMenu)="onGridCellContextMenu($event)"
         (playerClicked)="onPlayerClicked($event.name)"
     />
     <app-tile-info-popup [data]="tileInfoPopupData" />
+    <app-sanctuary-popup [data]="sanctuaryPopupData" (choiceSelected)="onSanctuaryChoice($event)" (cancel)="onDocumentClick()" />
 </div>

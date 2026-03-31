@@ -20,6 +20,7 @@
  * - Insufficient starting points according to size (small / large):
  *   verifies that the required threshold varies with board dimensions.
  */
+import { CellType } from '@common/board';
 import { GameType } from '@common/game';
 import { expect } from 'chai';
 import { Container } from 'typedi';
@@ -138,6 +139,15 @@ describe('Board Service', () => {
     it('should validate a vertical door between walls with terrain on sides', () => {
         const board = verticalDoorWithWallsBoard;
         const errors = boardService.validateBoard(board, GameType.Classic);
+        expect(errors).to.not.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+    });
+
+    it('should validate a closed door between walls with terrain on sides', () => {
+        const board = structuredClone(verticalDoorWithWallsBoard);
+        board.cells[1][1] = CellType.ClosedDoor;
+
+        const errors = boardService.validateBoard(board, GameType.Classic);
+
         expect(errors).to.not.include("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
     });
 });
