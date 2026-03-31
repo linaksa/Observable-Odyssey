@@ -1,7 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { CombatResult } from '@app/services/interfaces/combat-result';
+import { CombatOutcome } from '@common/attackResult';
 import { IFlagActionData } from '@common/socket-payloads';
 import { Service } from 'typedi';
 
@@ -99,7 +99,14 @@ export class ActionService {
         return false;
     }
 
-    async resolveCombat(gameId: string, attackerName: string, defenderName: string): Promise<CombatResult> {
-        return this.combatService.resolveCombat(gameId, attackerName, defenderName);
+    async resolveCombat(gameId: string, attackerName: string, defenderName: string): Promise<CombatOutcome> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            throw new Error('Active game not found');
+        }
+        return this.combatService.resolveCombat(activeGame, attackerName, defenderName);
+    }
+    async applyCombatTurn(gameId: string): Promise<boolean> {
+        return this.combatService.applyCombatTurn(gameId);
     }
 }

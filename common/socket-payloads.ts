@@ -1,3 +1,4 @@
+import { AttackPosture } from './attackResult';
 import { Position } from './character';
 
 export interface IJoinGamePayload {
@@ -27,6 +28,12 @@ export interface IFlagActionData {
 export interface IFlagDecisionData {
     gameId: string;
     newFlagCarrierName: string;
+}
+
+export interface IAttackPostureData {
+    gameId: string;
+    playerName: string;
+    posture: AttackPosture;
 }
 
 export interface IStartTurnData {
@@ -59,4 +66,10 @@ export interface ITurnStartedPayload {
     player: string;
     movementLeft: number;
     actionLeft: number;
+    timeLeft: number | null;
+}
+
+export interface IGameLogPayload {
+    message: string;
+    postedAt: string;
 }

@@ -311,6 +311,9 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         maxPlayerCount: PLAYER_COUNT_LIMIT,
         turnIsInPreparation: false,
         hasFlagId: '',
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

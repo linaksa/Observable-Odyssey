@@ -144,6 +144,9 @@ describe('FormPageComponent', () => {
             maxPlayerCount: 4,
             turnIsInPreparation: false,
             hasFlagId: '',
+
+            turnStartTimeStamp: 0,
+            currentAttack: null,
         };
 
         const response = {

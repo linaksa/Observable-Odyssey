@@ -266,6 +266,9 @@ function createActiveGame(id: string, isFinished = false): IActiveGame {
         maxPlayerCount: 4,
         turnIsInPreparation: false,
         hasFlagId: '',
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

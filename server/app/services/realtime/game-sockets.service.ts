@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
@@ -5,14 +6,17 @@ import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
+import { TEMPS_COMBAT } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import {
     IAbandonData,
     IActionData,
+    IAttackPostureData,
     IDebugToggleState,
     IFlagDecisionData,
+    IGameLogPayload,
     IJoinGamePayload,
     IPlayerMoveData,
     ISocketData,
@@ -187,7 +191,6 @@ export class GameSocketsService {
                 if (!pendingRequest) {
                     return;
                 }
-
                 const activeGame = await this.activeGameService.getActiveGameById(gameId);
                 const currentTurnPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
                 const socketPlayerName = (socket.data as ISocketData).playerNamesByGameId?.[gameId];
@@ -203,6 +206,28 @@ export class GameSocketsService {
                 this.namespace?.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
                 this.pendingFlagRequestsByGameId.delete(gameId);
             });
+
+            socket.on(SocketEvent.ChooseAttackPosture, async (data: IAttackPostureData) => {
+                const { gameId, playerName, posture } = data;
+                const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+
+                const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
+                if (!combatReady) {
+                    this.namespace?.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+                    return;
+                }
+
+                // The combat turn is applied immediately
+                this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
+
+                const combatResolved = await this.gameplayService.actionService.applyCombatTurn(gameId);
+
+                const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
+                if (combatResolved && currentPlayerName) {
+                    await this.handleTurnAndGameEndCase(currentPlayerName, gameId);
+                }
+            });
+
             // =======================
             // End turn
             // =======================
@@ -216,6 +241,7 @@ export class GameSocketsService {
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
                 await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+                this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
                 const updatedGame = await this.activeGameService.getActiveGameById(gameId);
                 await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
@@ -226,6 +252,7 @@ export class GameSocketsService {
                 if (gameEnded) {
                     const endedGame = await this.activeGameService.getActiveGameById(gameId);
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+                    this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
                     await this.activeGameService.deleteGameById(gameId);
                     this.pendingFlagRequestsByGameId.delete(gameId);
                 }
@@ -269,6 +296,7 @@ export class GameSocketsService {
 
     private async handleActiveGameDisconnect(gameId: string, playerId: string): Promise<void> {
         await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+        this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
@@ -281,6 +309,7 @@ export class GameSocketsService {
         if (gameEnded) {
             const endedGame = await this.activeGameService.getActiveGameById(gameId);
             this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
             await this.activeGameService.deleteGameById(gameId);
             this.pendingFlagRequestsByGameId.delete(gameId);
         }
@@ -333,6 +362,21 @@ export class GameSocketsService {
         }
     }
 
+    private emitGameLogToRoom(gameId: string, message: string): void {
+        if (!this.namespace || !gameId || !message.trim()) {
+            return;
+        }
+
+        this.namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
+    }
+
     private async disableDebugModeIfOrganizerLeft(gameId: string, playerId: string, activeGame: IActiveGame): Promise<void> {
         const gameHasStarted = activeGame.turnOrder.length > 0;
         if (playerId !== activeGame.organizerName || !gameHasStarted || !activeGame.isDebugMode) {
@@ -343,6 +387,38 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+        this.emitGameLogToRoom(gameId, `Mode debug desactive (organisateur ${playerId} absent).`);
+    }
+
+    private async handleTurnAndGameEndCase(attackerName: string, gameId: string): Promise<void> {
+        const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
+        if (reachable.length === 0) {
+            await this.gameplayService.turnService.endTurn(gameId);
+        }
+
+        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        if (gameEnded) {
+            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+            await this.activeGameService.deleteGameById(gameId);
+        }
+    }
+
+    private async combatManager(gameId: string, attackerName: string, defenderName: string): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
+        this.gameplayService.turnService.suspendTurn(gameId);
+
+        this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
+
+        this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+            const combatResolved = await this.gameplayService.actionService.applyCombatTurn(gameId);
+            if (combatResolved) {
+                await this.handleTurnAndGameEndCase(attackerName, gameId);
+            }
+        });
+
+        this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
+        this.namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);
     }
 
     private async handleAction(socket: Socket, data: IActionData): Promise<void> {
@@ -359,8 +435,7 @@ export class GameSocketsService {
         if (handledAsFlagAction) {
             return;
         }
-
-        await this.resolveCombatAction(gameId, currentPlayerName, targetName);
+        await this.combatManager(gameId, currentPlayerName, targetName);
     }
 
     private async handleCtfFlagAction(activeGame: IActiveGame, data: IActionData): Promise<boolean> {
@@ -393,30 +468,6 @@ export class GameSocketsService {
 
         return true;
     }
-
-    private async resolveCombatAction(gameId: string, currentPlayerName: string, targetName: string): Promise<void> {
-        const result = await this.gameplayService.actionService.resolveCombat(gameId, currentPlayerName, targetName);
-        this.namespace?.to(gameId).emit(SocketEvent.AttackResult, {
-            attackerName: currentPlayerName,
-            defenderName: targetName,
-            attackerActionsLeft: result.attackerActionsLeft,
-            attackerVictories: result.attackerVictories,
-            defenderNewPosition: result.defenderNewPosition,
-        });
-
-        const reachable = await this.gameplayService.movementService.getReachablePositions(currentPlayerName, gameId);
-        if (reachable.length === 0) {
-            await this.gameplayService.turnService.endTurn(gameId);
-        }
-
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            const endedGame = await this.activeGameService.getActiveGameById(gameId);
-            this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
-            await this.activeGameService.deleteGameById(gameId);
-        }
-    }
-
     emitVirtualPlayerJoined(activeGame: IActiveGame) {
         const gameId = activeGame._id.toString();
         this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, activeGame.players);

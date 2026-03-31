@@ -308,6 +308,9 @@ function createActiveGame(id: string, game: IGame, players = 0, maxPlayerCount =
         maxPlayerCount,
         turnIsInPreparation: false,
         hasFlagId: '',
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

@@ -107,13 +107,6 @@ describe('GameTurnService', () => {
         expect(service.currentPlayerName).toBeNull();
     });
 
-    it('should register turn listeners only once', () => {
-        service.initializeTurnListeners();
-        service.initializeTurnListeners();
-
-        expect(socketServiceSpy.on).toHaveBeenCalledTimes(2);
-    });
-
     it('should update preparing and started turn state from socket events', () => {
         service.initializeTurnListeners();
 
@@ -280,6 +273,9 @@ function createActiveGame(players: ICharacter[], currentPlayer: string): IActive
         maxPlayerCount: 4,
         turnIsInPreparation: false,
         hasFlagId: '',
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

@@ -3,7 +3,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult } from '@common/attackResult';
+import { CombatOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -21,7 +21,9 @@ export interface ActiveGameSocketContext {
     toastService: ToastService;
     router: Router;
     getActiveGame: () => IActiveGame | undefined;
+    setActiveGame: (activeGame: IActiveGame) => void;
     getPlayerByName: (playerName: string) => ICharacter | undefined;
+    setCombatOutcome: (combatOutcome: CombatOutcome) => void;
     currentPlayer: {
         set(value: number): void;
     };
@@ -83,23 +85,34 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 toggle(context.hasChangedLocation);
             }
         }),
-        context.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
+
+        context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatStarted).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
 
-            const attacker = context.getPlayerByName(data.attackerName);
-            const defender = context.getPlayerByName(data.defenderName);
-            if (!defender || !attacker) return;
-
-            attacker.victories = data.attackerVictories;
-            attacker.actionsLeft = data.attackerActionsLeft;
-            defender.positionGrille.x = data.defenderNewPosition.x;
-            defender.positionGrille.y = data.defenderNewPosition.y;
-
-            toggle(context.hasChangedLocation);
+            context.setActiveGame(data);
         }),
+
+        context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {
+            const activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            context.setActiveGame(data);
+        }),
+
+        context.socket.on<CombatOutcome>(Namespaces.Game, SocketEvent.CombatResolved).subscribe((combatOutcome) => {
+            const activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+            context.setCombatOutcome(combatOutcome);
+            context.setActiveGame(combatOutcome.updatedActiveGame);
+        }),
+
         context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
