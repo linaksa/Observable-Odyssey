@@ -112,10 +112,12 @@ export class CharacterFormService {
 
     createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
         // Logic to create an active game with the provided character data
+        this.unavailableAvatars.set([...this.unavailableAvatars(), characterData.avatar]);
         return this.httpClient.post(`${this.baseUrl}/activeGame/`, { gameId, characterForm: characterData }, { responseType: ResponseType.Text });
     }
 
     joinActiveGameWithCharacter(activeGameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {
+        this.unavailableAvatars.set([...this.unavailableAvatars(), characterData.avatar]);
         return this.httpClient.patch(
             `${this.baseUrl}/activeGame/join`,
             { activeGameId, characterForm: characterData },
@@ -134,7 +136,6 @@ export class CharacterFormService {
 
         const availableAvatars = Object.values(Avatar).filter((avatar) => !this.unavailableAvatars().includes(avatar));
         const randomAvatar = availableAvatars[Math.floor(random() * availableAvatars.length)];
-        this.unavailableAvatars.set([...this.unavailableAvatars(), randomAvatar]);
 
         const randomBonus = AVAILABLE_BONUS_TYPES[Math.floor(random() * AVAILABLE_BONUS_TYPES.length)];
 
@@ -161,6 +162,8 @@ export class CharacterFormService {
             defenseBonusDiceType: this.defenseDiceType,
             virtualPlayerProfile: profileOptions,
         };
+        this.unavailableAvatars.set([...this.unavailableAvatars(), data.avatar]);
+
         return this.joinActiveGameWithCharacter(activeGameId, data);
     }
 }
