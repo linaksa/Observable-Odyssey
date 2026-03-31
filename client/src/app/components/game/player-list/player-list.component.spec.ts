@@ -16,6 +16,7 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+import { GameType } from '@common/game';
 import { PlayerListComponent } from './player-list.component';
 
 describe('PlayerListComponent', () => {
@@ -34,6 +35,10 @@ describe('PlayerListComponent', () => {
                 players: [alice, bob],
                 turnOrder: ['Bob', 'Missing', 'Alice'],
                 organizerName: 'Alice',
+                game: {
+                    gameMode: GameType.Classic,
+                },
+                hasFlagId: '',
             } as unknown as IActiveGame,
             currentPlayer: jasmine.createSpy('currentPlayer').and.returnValue(0),
         };

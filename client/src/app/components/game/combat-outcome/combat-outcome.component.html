@@ -1,14 +1,10 @@
 @if (getCombatOutcome(); as outcome) {
     @if (localPlayerService.getLocalPlayer(); as player) {
-
         @if (outcome.winner && outcome.winner === player.name) {
             <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                <div
-                    class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
-
+                <div class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
-                        <span
-                            class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
+                        <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
                         <div class="flex items-center gap-2">
                             @if (this.activeGameService.activeGame.isDebugMode) {
                                 <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
@@ -22,14 +18,14 @@
                                 (click)="closeOutcome()"
                                 (keydown.enter)="closeOutcome()"
                                 class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
-                            >X
+                            >
+                                X
                             </div>
                         </div>
                     </div>
 
                     <div class="p-6 flex flex-col items-center gap-4">
-                        <div
-                            class="w-20 h-20 rounded-full bg-[#2a4a1a] border-2 border-[#3d9e32] flex items-center justify-center overflow-hidden">
+                        <div class="w-20 h-20 rounded-full bg-[#2a4a1a] border-2 border-[#3d9e32] flex items-center justify-center overflow-hidden">
                             <img src="assets/outcome-assets/crown.gif" class="w-14 h-14 object-contain" />
                         </div>
 
@@ -39,22 +35,18 @@
                         </div>
 
                         <div class="w-full h-1 bg-[#0d1f42] rounded-full overflow-hidden">
-                            <div
-                                class="h-full bg-[#3d9e32] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
+                            <div class="h-full bg-[#3d9e32] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
                         </div>
                     </div>
-
                 </div>
             </div>
         }
 
         @if (outcome.losers.includes(player.name)) {
             <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                <div
-                    class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
+                <div class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
-                        <span
-                            class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
+                        <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
                         <div class="flex items-center gap-2">
                             @if (this.activeGameService.activeGame.isDebugMode) {
                                 <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
@@ -66,36 +58,34 @@
                                 role="button"
                                 (click)="closeOutcome()"
                                 class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
-                        >X
+                            >
+                                X
+                            </div>
                         </div>
-                    </div>
                     </div>
 
                     <div class="p-6 flex flex-col items-center gap-4">
-
                         @if (outcome.winner) {
                             <div
-                                class="w-20 h-20 rounded-full bg-[#3a0a0a] border-2 border-[#9e3232] flex items-center justify-center overflow-hidden">
-                                <img src="assets/outcome-assets/skull-and-crossbones.gif"
-                                     class="w-14 h-14 object-contain" />
+                                class="w-20 h-20 rounded-full bg-[#3a0a0a] border-2 border-[#9e3232] flex items-center justify-center overflow-hidden"
+                            >
+                                <img src="assets/outcome-assets/skull-and-crossbones.gif" class="w-14 h-14 object-contain" />
                             </div>
                             <div class="text-center">
                                 <div class="text-2xl font-bold text-[#ef7474] tracking-wide mb-1">Défaite</div>
                                 <div class="text-sm text-[#a8c8ff]">Vous avez perdu le combat</div>
                             </div>
-                            <div
-                                class="w-full bg-[#0d1f42] border-[1.5px] border-[#2d5199] rounded-xl px-4 py-3 text-center">
+                            <div class="w-full bg-[#0d1f42] border-[1.5px] border-[#2d5199] rounded-xl px-4 py-3 text-center">
                                 <div class="text-[10px] text-[#5a7fad] uppercase tracking-[2px] mb-1">Vainqueur</div>
                                 <div class="text-sm font-bold text-[#e8f0ff]">{{ outcome.winner }}</div>
                             </div>
                             <div class="w-full h-1 bg-[#0d1f42] rounded-full overflow-hidden">
-                                <div
-                                    class="h-full bg-[#9e3232] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
+                                <div class="h-full bg-[#9e3232] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
                             </div>
-
                         } @else {
                             <div
-                                class="w-20 h-20 rounded-full bg-[#3a2e00] border-2 border-[#c8a800] flex items-center justify-center overflow-hidden">
+                                class="w-20 h-20 rounded-full bg-[#3a2e00] border-2 border-[#c8a800] flex items-center justify-center overflow-hidden"
+                            >
                                 <img src="assets/outcome-assets/handshake.gif" class="w-14 h-14 object-contain" />
                             </div>
                             <div class="text-center">
@@ -106,22 +96,17 @@
                             @if (this.activeGameService.activeGame.isDebugMode) {
                                 <div class="w-full bg-[#0d1f42] border-[1.5px] border-[#c8a800] rounded-xl px-4 py-3">
                                     <div class="text-[10px] text-[#ffd84d] uppercase tracking-[2px] mb-1 text-center">Mode débogage actif</div>
-                                    <div class="text-[9px] text-[#a8c8ff] text-center">
-                                        Dés max pour l'attaquant, dés min pour le défenseur
-                                    </div>
+                                    <div class="text-[9px] text-[#a8c8ff] text-center">Dés max pour l'attaquant, dés min pour le défenseur</div>
                                 </div>
                             }
 
                             <div class="w-full h-1 bg-[#0d1f42] rounded-full overflow-hidden">
-                                <div
-                                    class="h-full bg-[#c8a800] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
+                                <div class="h-full bg-[#c8a800] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
                             </div>
                         }
-
                     </div>
                 </div>
             </div>
         }
-
     }
 }

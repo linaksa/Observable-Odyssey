@@ -1,6 +1,5 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
 import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
@@ -11,9 +10,10 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import {
     IAbandonData,
-    IAttackData,
+    IActionData,
     IAttackPostureData,
     IDoorToggleData,
+    IFlagDecisionData,
     IJoinGamePayload,
     IPlayerMoveData,
     ISanctuaryInteractionData,
@@ -27,7 +27,6 @@ export class GameSocketsService {
 
     /* eslint-disable max-params */
     constructor(
-        private readonly gameplayService: GameplayServices,
         private readonly socketService: SocketService,
         private readonly debugSocketService: DebugSocketService,
         private readonly activeGameService: ActiveGameService,
@@ -99,9 +98,9 @@ export class GameSocketsService {
                 await this.gameplayActionService.handleSanctuaryInteraction(data, socket, this.namespace, this.emitGameLog.bind(this));
             });
 
-            socket.on(SocketEvent.Attack, async (data: IAttackData) => {
+            socket.on(SocketEvent.Action, async (data: IActionData) => {
                 if (!this.namespace) return;
-                await this.gameplayActionService.handleAttack(data, socket, this.namespace, this.emitGameLog.bind(this));
+                await this.gameplayActionService.handleAction(data, socket, this.namespace);
             });
 
             socket.on(SocketEvent.ChooseAttackPosture, async (data: IAttackPostureData) => {
@@ -110,12 +109,20 @@ export class GameSocketsService {
             });
 
             socket.on(SocketEvent.EndTurn, (gameId: string) => {
-                this.gameplayService.turnService.endTurn(gameId);
+                this.gameplayActionService.handleEndTurn(gameId);
             });
 
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 if (!this.namespace) return;
                 await this.gameSessionService.handlePlayerAbandon(data, this.namespace, socket, this.emitGameLog.bind(this));
+            });
+            socket.on(SocketEvent.FlagTaken, async (data: IFlagDecisionData) => {
+                if (!this.namespace) return;
+                await this.gameplayActionService.handleFlagTaken(data, this.namespace);
+            });
+            socket.on(SocketEvent.FlagGiven, async (data: IFlagDecisionData) => {
+                if (!this.namespace) return;
+                await this.gameplayActionService.handleFlagGiven(data, this.namespace);
             });
 
             socket.on('disconnect', async () => {

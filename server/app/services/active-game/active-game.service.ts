@@ -54,6 +54,7 @@ export class ActiveGameService {
             organizerName: characterForm.name,
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
             turnIsInPreparation: false,
+            hasFlagId: '',
         };
 
         return await activeGameModel.create(newActiveGame);
@@ -114,7 +115,7 @@ export class ActiveGameService {
     }
 
     async saveActiveGameById(activeGameId: string, update: Partial<IActiveGame>): Promise<IActiveGame | null> {
-        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
+        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { returnDocument: 'after' });
     }
     async deleteGameById(activeGameId: string): Promise<void> {
         return await activeGameModel.findByIdAndDelete(activeGameId);

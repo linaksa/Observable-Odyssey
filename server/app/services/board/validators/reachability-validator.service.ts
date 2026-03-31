@@ -19,12 +19,13 @@ export class ReachabilityValidator implements IBoardValidator {
         const rows = board.cells.length;
         const cols = board.cells[0].length;
         const visited: boolean[][] = Array.from({ length: rows }, () => Array(cols).fill(false));
+        const blockedCells = this.getBlockedCells(board);
 
         let startRow = -1;
         let startCol = -1;
         for (let i = 0; i < rows && startRow === -1; i++) {
             for (let j = 0; j < cols; j++) {
-                if (board.cells[i][j] !== CellType.Wall) {
+                if (board.cells[i][j] !== CellType.Wall && !blockedCells.has(`${i},${j}`)) {
                     startRow = i;
                     startCol = j;
                     break;
@@ -35,8 +36,6 @@ export class ReachabilityValidator implements IBoardValidator {
         if (startRow === -1) {
             return false;
         }
-
-        const blockedCells = this.getBlockedCells(board);
 
         this.floodFill(board, visited, startRow, startCol, blockedCells);
 
@@ -100,8 +99,8 @@ export class ReachabilityValidator implements IBoardValidator {
                 continue;
             }
 
-            for (let row = item.x; row <= item.x + 1; row++) {
-                for (let col = item.y; col <= item.y + 1; col++) {
+            for (let row = item.y; row <= item.y + 1; row++) {
+                for (let col = item.x; col <= item.x + 1; col++) {
                     if (sanctuaryCoversCell(item, row, col)) {
                         blockedCells.add(`${row},${col}`);
                     }

@@ -89,7 +89,7 @@ describe('BoardEditorService', () => {
         service.buildGrid(TEST_GRID_SIZE);
         service.activeTool = ToolOption.Placement;
         service.selectedMaterial = CellType.ClosedDoor;
-        service.objects = [createItem(ItemType.Flag, 0, 1, 1)];
+        service.objects = [createItem(ItemType.Flag, 1, 0, 1)];
         const eraseSpy = spyOn(service, 'eraseObject').and.callThrough();
 
         service.gameCells[0][0] = CellType.Wall;

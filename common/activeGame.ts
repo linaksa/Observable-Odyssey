@@ -6,6 +6,7 @@ import { IMessage } from './message';
 export interface IActiveGame {
     _id: string;
     game: IGame;
+    createdAt?: Date;
     players: ICharacter[];
     currentPlayerIndex: number;
     turnOrder: string[]; // List of player names in turn order
@@ -16,6 +17,7 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
     turnIsInPreparation: boolean;
+    hasFlagId: string | null;
     turnStartTimeStamp: number;
 
     currentAttack: ICurrentAttack | null;

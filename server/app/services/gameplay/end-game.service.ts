@@ -1,7 +1,8 @@
-import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/constants';
-import { Service } from 'typedi';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { IActiveGame } from '@common/activeGame';
+import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/constants';
+import { Service } from 'typedi';
 
 @Service()
 export class EndGameService {
@@ -13,6 +14,16 @@ export class EndGameService {
     async checkEndGame(gameId: string): Promise<boolean> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         const winnerByCombat = activeGame.players.find((p) => p.victories === VICTORIES_TO_WIN);
+        const ctfWinner = this.checkCTFWinCondition(activeGame);
+        // if a player in ctf mode has the flag and is on their starting tile, they win
+        if (ctfWinner) {
+            const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
+            activeGame.isFinished = true;
+            activeGame.winner = flagHolder?.team ? `${flagHolder.team} team` : null;
+            await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+            return true;
+        }
+        // if a player has won enough combats, they win the game
         if (winnerByCombat) {
             activeGame.isFinished = true;
             activeGame.winner = winnerByCombat.name;
@@ -27,9 +38,42 @@ export class EndGameService {
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
+        // si une des 2 équipes n'a plus de joueurs actifs, l'autre équipe gagne (mode ctf)
+        if (activeGame.game.gameMode === 'ctf') {
+            const redPlayers = activeGame.players.filter((p) => p.team === 'red' && !p.hasAbandoned);
+            const bluePlayers = activeGame.players.filter((p) => p.team === 'blue' && !p.hasAbandoned);
+            if (redPlayers.length === 0) {
+                activeGame.isFinished = true;
+                activeGame.winner = 'blue team';
+                await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+                return true;
+            }
+            if (bluePlayers.length === 0) {
+                activeGame.isFinished = true;
+                activeGame.winner = 'red team';
+                await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
+                return true;
+            }
+        }
         return false;
     }
 
+    checkCTFWinCondition(activeGame: IActiveGame): boolean {
+        if (activeGame.game.gameMode !== 'ctf') {
+            return false;
+        }
+        const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
+        if (!flagHolder) {
+            return false;
+        }
+        const isOnStartTile =
+            flagHolder.positionGrille.x === flagHolder.positionDepart.x && flagHolder.positionGrille.y === flagHolder.positionDepart.y;
+
+        if (isOnStartTile) {
+            return true;
+        }
+        return false;
+    }
     async checkIfOrganizer(gameId: string, playerId: string): Promise<boolean> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) return false;

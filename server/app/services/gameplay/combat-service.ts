@@ -6,6 +6,7 @@ import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@c
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX, TEMPS_COMBAT } from '@common/constants';
+import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
@@ -26,43 +27,6 @@ export class CombatService {
         private turnService: TurnService,
         private readonly socketService: SocketService,
     ) {}
-
-    // checks if the attacker can attack the defender according to the game rules
-    async canAttack(activeGameId: string, attackerName: string, defenderName: string): Promise<boolean> {
-        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!currentActiveGame) {
-            return false;
-        }
-        const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
-        const defender = currentActiveGame.players.find((p) => p.name === defenderName);
-        if (!attacker || !defender) {
-            return false;
-        }
-        if (attacker.name === defender.name) return false;
-        if (attacker.hasAbandoned || defender.hasAbandoned) return false;
-
-        const activePlayerName = currentActiveGame.turnOrder[currentActiveGame.currentPlayerIndex];
-        if (activePlayerName !== attacker.name) return false;
-        if (attacker.actionsLeft === 0) return false;
-
-        if (!this.positionValidatorService.isAdjacent(attacker.positionGrille, defender.positionGrille)) return false;
-        return true;
-    }
-    // calls canAttack for each opponent to check if the attacker can attack at least one of them
-    async canAttackAnyPlayer(activeGameId: string, attackerName: string): Promise<boolean> {
-        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!currentActiveGame) {
-            return false;
-        }
-
-        for (const defender of currentActiveGame.players) {
-            if (await this.canAttack(activeGameId, attackerName, defender.name)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     async applyCombatTurn(activeGameId: string): Promise<boolean> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
@@ -132,6 +96,7 @@ export class CombatService {
     async resolveCombat(currentActiveGame: IActiveGame, attackerName: string, defenderName: string): Promise<CombatOutcome> {
         const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
         const defender = currentActiveGame.players.find((p) => p.name === defenderName);
+        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(currentActiveGame);
 
         attacker.nCombats++;
         defender.nCombats++;
@@ -165,6 +130,8 @@ export class CombatService {
             return player;
         });
 
+        this.dropFlagAtPositionIfCarrierDefeated(currentActiveGame, carrierDefeatPosition);
+
         const turnRemainingTime = currentActiveGame.currentAttack.suspendedTurnTimer;
 
         currentActiveGame.currentAttack = null; // reset current attack after resolving combat
@@ -179,6 +146,35 @@ export class CombatService {
         this.turnService.continueTurn(currentActiveGame._id.toString(), turnRemainingTime);
 
         return combatResult;
+    }
+
+    private getFlagCarrierDefeatPosition(activeGame: IActiveGame): Position | null {
+        if (activeGame.game.gameMode !== 'ctf' || !activeGame.hasFlagId) {
+            return null;
+        }
+
+        const carrier = activeGame.players.find((player) => player.name === activeGame.hasFlagId);
+        if (!carrier || carrier.currentHealth > 0) {
+            return null;
+        }
+
+        return carrier.positionGrille;
+    }
+
+    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, position: Position | null): void {
+        if (!position) {
+            return;
+        }
+
+        const flag = activeGame.game.board.items.find((item) => item.itemType === ItemType.Flag);
+        if (!flag) {
+            return;
+        }
+
+        activeGame.hasFlagId = '';
+        flag.isCarried = false;
+        flag.x = position.x;
+        flag.y = position.y;
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {

@@ -112,6 +112,7 @@ function createActiveGame(id: string): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,

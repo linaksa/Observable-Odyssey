@@ -53,6 +53,7 @@ describe('ActiveGameController', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,

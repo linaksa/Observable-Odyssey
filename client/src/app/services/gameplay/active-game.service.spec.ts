@@ -228,28 +228,36 @@ describe('ActiveGameService', () => {
         );
     });
 
-    it('should emit attack only when target is adjacent and different', () => {
+    it('should emit action only when target is adjacent and different', () => {
         const attacker = createCharacter('Alice', 0, 0);
         const adjacentTarget = createCharacter('Bob', PLAYER_INDEX_BOB, 0);
         const distantTarget = createCharacter('Carol', FAR_POSITION_INDEX, FAR_POSITION_INDEX);
 
         service.activeGame = createActiveGame([attacker, adjacentTarget, distantTarget], 'Alice');
         service.currentPlayer.set(0);
-        service.attackMode.set(true);
+        service.actionMode.set(true);
         socketServiceSpy.emit.calls.reset();
 
-        service.attackPlayer('Alice');
-        service.attackPlayer('Carol');
+        service.actionOnPlayer('Alice');
+        service.actionOnPlayer('Carol');
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
-        service.attackPlayer('Bob');
+        service.actionOnPlayer('Bob');
 
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.Attack, {
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.Action, {
             gameId: service.activeGame._id,
-            attackerName: 'Alice',
-            defenderName: 'Bob',
+            currentPlayerName: 'Alice',
+            targetName: 'Bob',
         });
-        expect(service.attackMode()).toBeFalse();
+        expect(service.actionMode()).toBeFalse();
+    });
+
+    it('should toggle action mode', () => {
+        expect(service.actionMode()).toBeFalse();
+        service.toggleActionMode();
+        expect(service.actionMode()).toBeTrue();
+        service.toggleActionMode();
+        expect(service.actionMode()).toBeFalse();
     });
 
     it('should emit door toggle requests for the current player', () => {
@@ -279,14 +287,6 @@ describe('ActiveGameService', () => {
             choice: 'double',
             position: { x: INTERACTION_COL, y: INTERACTION_ROW },
         });
-    });
-
-    it('should toggle attack mode', () => {
-        expect(service.attackMode()).toBeFalse();
-        service.toggleAttackMode();
-        expect(service.attackMode()).toBeTrue();
-        service.toggleAttackMode();
-        expect(service.attackMode()).toBeFalse();
     });
 
     it('should synchronize turn order and index when players are updated', () => {
@@ -393,13 +393,13 @@ describe('ActiveGameService', () => {
         spyOn(service, 'getCurrentPlayer').and.returnValue(undefined);
         service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
         service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
-        service.attackPlayer('Alice');
+        service.actionOnPlayer('Alice');
         service.toggleDoor(TELEPORT_ROW, TELEPORT_COL);
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
         (service.getCurrentPlayer as jasmine.Spy).and.returnValue(createCharacter('Alice'));
-        service.attackPlayer('Ghost');
+        service.actionOnPlayer('Ghost');
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
@@ -501,79 +501,77 @@ describe('ActiveGameService', () => {
 
         expect(service.activeGame.game.board.items).toEqual(itemsBefore);
     });
+    function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
+        const turnOrder = players.map((player) => player.name);
+        const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
+        const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
+
+        const game: IGame = {
+            gameTitle: 'Arena',
+            description: '',
+            gameMode: GameType.Classic,
+            dateCreated: new Date('2026-01-01T00:00:00.000Z'),
+            lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
+            visibility: Visibility.Hidden,
+            board: {
+                cells: [
+                    [CellType.Empty, CellType.Empty],
+                    [CellType.Empty, CellType.Empty],
+                ],
+                items: [],
+            },
+        };
+
+        return {
+            _id: id,
+            game,
+            players,
+            currentPlayerIndex,
+            turnOrder,
+            isFinished: false,
+            winner: null,
+            messages: [],
+            isDebugMode: false,
+            organizerName: 'Organizer',
+            maxPlayerCount: MAX_PLAYER_COUNT,
+            turnIsInPreparation: false,
+            hasFlagId: '',
+
+            turnStartTimeStamp: 0,
+            currentAttack: null,
+        };
+    }
+
+    function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVEMENT_LEFT): ICharacter {
+        return {
+            name,
+            avatar: Avatar.Avatar1,
+            initialHealth: 10,
+            currentHealth: 10,
+            attackBonusDiceType: DiceType.FourSided,
+            defenseBonusDiceType: DiceType.SixSided,
+            rapidityPoints: 4,
+            attackPoints: 4,
+            defensePoints: 4,
+            actionsLeft: 1,
+            movementLeft,
+            victories: 0,
+            hasAbandoned: false,
+            positionDepart: { x, y },
+            positionGrille: { x, y },
+        };
+    }
+
+    function createItem(itemType: ItemType, x: number, y: number): IItem {
+        return {
+            itemType,
+            x,
+            y,
+            size: itemType === ItemType.StartingPosition || itemType === ItemType.Flag ? 1 : SANCTUARY_ITEM_SIZE,
+        };
+    }
+
+    function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
+        return { unsubscribe: jasmine.createSpy('unsubscribe') };
+    }
 });
-
-function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
-    const turnOrder = players.map((player) => player.name);
-    const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
-    const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
-
-    const game: IGame = {
-        gameTitle: 'Arena',
-        description: '',
-        gameMode: GameType.Classic,
-        dateCreated: new Date('2026-01-01T00:00:00.000Z'),
-        lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
-        visibility: Visibility.Hidden,
-        board: {
-            cells: [
-                [CellType.Empty, CellType.Empty],
-                [CellType.Empty, CellType.Empty],
-            ],
-            items: [],
-        },
-    };
-
-    return {
-        _id: id,
-        game,
-        players,
-        currentPlayerIndex,
-        turnOrder,
-        isFinished: false,
-        winner: null,
-        messages: [],
-        isDebugMode: false,
-        organizerName: 'Organizer',
-        maxPlayerCount: MAX_PLAYER_COUNT,
-        turnIsInPreparation: false,
-
-        turnStartTimeStamp: 0,
-        currentAttack: null,
-    };
-}
-
-function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVEMENT_LEFT): ICharacter {
-    return {
-        name,
-        avatar: Avatar.Avatar1,
-        initialHealth: 10,
-        currentHealth: 10,
-        attackBonusDiceType: DiceType.FourSided,
-        defenseBonusDiceType: DiceType.SixSided,
-        rapidityPoints: 4,
-        attackPoints: 4,
-        defensePoints: 4,
-        actionsLeft: 1,
-        movementLeft,
-        victories: 0,
-        hasAbandoned: false,
-        positionDepart: { x, y },
-        positionGrille: { x, y },
-    };
-}
-
-function createItem(itemType: ItemType, x: number, y: number): IItem {
-    return {
-        itemType,
-        x,
-        y,
-        size: itemType === ItemType.StartingPosition || itemType === ItemType.Flag ? 1 : SANCTUARY_ITEM_SIZE,
-    };
-}
-
-function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
-    return { unsubscribe: jasmine.createSpy('unsubscribe') };
-}
-
-
