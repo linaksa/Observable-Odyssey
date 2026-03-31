@@ -1,5 +1,6 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -8,7 +9,6 @@ import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Service } from 'typedi';
-import { SocketService } from '../realtime/socket.service';
 import { TurnService } from './turn-service';
 
 @Service()
@@ -64,7 +64,7 @@ export class CombatService {
         return false;
     }
 
-    async applyCombatTurn(activeGameId: string): Promise<IActiveGame> {
+    async applyCombatTurn(activeGameId: string): Promise<boolean> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {
             throw new Error(`Active game with id ${activeGameId} not found`);
@@ -75,14 +75,14 @@ export class CombatService {
             throw new Error(`No current attack found for active game with id ${activeGameId}`);
         }
 
-        let attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);
-        let defender = currentActiveGame.players.find((p) => p.name === currentAttack.defender);
+        const attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);
+        const defender = currentActiveGame.players.find((p) => p.name === currentAttack.defender);
 
         const attackerDamage = this.computeAttackDamage(currentActiveGame, attacker, currentAttack.attackerPosture);
         const defenderDamage = this.computeAttackDamage(currentActiveGame, defender, currentAttack.defenderPosture);
 
-        const attackerDefensePoints = this.computeDefensePoints(currentActiveGame, attacker, currentAttack.attackerPosture, attackerDamage);
-        const defenderDefensePoints = this.computeDefensePoints(currentActiveGame, defender, currentAttack.defenderPosture, defenderDamage);
+        const attackerDefensePoints = this.computeDefensePoints(currentActiveGame, attacker, currentAttack.attackerPosture);
+        const defenderDefensePoints = this.computeDefensePoints(currentActiveGame, defender, currentAttack.defenderPosture);
 
         const attackerNetDamage = Math.max(defenderDamage - attackerDefensePoints, 0);
         const defenderNetDamage = Math.max(attackerDamage - defenderDefensePoints, 0);
@@ -100,11 +100,12 @@ export class CombatService {
         if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
             const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
             namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            return true;
         }
 
         namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
         this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
-        return currentActiveGame;
+        return false;
     }
 
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
@@ -201,7 +202,7 @@ export class CombatService {
         return Math.max(character.attackPoints + diceBonus + postureBonus - iceMalus, 0);
     }
 
-    private computeDefensePoints(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture, attackPoints: number): number {
+    private computeDefensePoints(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): number {
         const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
 
         const diceBonus = this.rollDice(character.defenseBonusDiceType);

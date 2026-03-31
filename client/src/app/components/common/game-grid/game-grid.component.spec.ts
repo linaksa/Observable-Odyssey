@@ -76,8 +76,10 @@ describe('GameGridComponent', () => {
         expect(cellImages.length).toBe(expectedCellImageCount);
         expect(cellImages[0].getAttribute('src')).toContain(CELL_TYPE_PATHS[CellType.Empty]);
         expect(cellImages[1].getAttribute('src')).toContain(CELL_TYPE_PATHS[CellType.Water]);
+        expect(cellImages[0].className).toContain('[image-rendering:pixelated]');
         expect(objectImages.length).toBeGreaterThan(0);
         expect(objectImages[0].getAttribute('src')).toContain(ITEM_TYPE_PATHS[ItemType.LifeSanctuary]);
+        expect(objectImages[0].className).toContain('[image-rendering:pixelated]');
     });
 
     it('should emit mouse events when editable', () => {
@@ -146,11 +148,25 @@ describe('GameGridComponent', () => {
         const playerButton = fixture.nativeElement.querySelector('[data-testid="game-grid-player"]') as HTMLButtonElement;
 
         expect(playerButton).toBeTruthy();
-        expect(playerButton.style.backgroundImage).toContain('assets/form-page/avatar1.png');
+        expect(playerButton.style.backgroundImage).toContain('assets/characters/archer-portrait.png');
+        expect(playerButton.className).toContain('[image-rendering:pixelated]');
 
         playerButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
         expect(clickSpy).toHaveBeenCalledWith(player);
+    });
+
+    it('should render full-tile players when portrait mode is disabled', () => {
+        fixture.componentRef.setInput('playerAvatarPortrait', false);
+        fixture.componentRef.setInput('players', [createCharacter('Alice')]);
+        fixture.detectChanges();
+
+        const playerButton = fixture.nativeElement.querySelector('[data-testid="game-grid-player"]') as HTMLButtonElement;
+
+        expect(playerButton).toBeTruthy();
+        expect(playerButton.style.backgroundImage).toContain('assets/characters/archer.png');
+        expect(playerButton.className).not.toContain('rounded-full');
+        expect(playerButton.className).not.toContain('m-1');
     });
 
     it('should render background mode with css classes', () => {
@@ -168,6 +184,8 @@ describe('GameGridComponent', () => {
         expect(itemBackground.className).toContain(OBJECT_IMAGES[ItemType.LifeSanctuary]);
         expect(itemBackground.className).toContain(OBJECT_SPECIFIC_CLASSES[ItemType.LifeSanctuary]);
         expect(itemBackground.style.backgroundPosition).toBe('0% 0%');
+        expect(cellBackground.className).toContain('[image-rendering:pixelated]');
+        expect(itemBackground.className).toContain('[image-rendering:pixelated]');
         expect(highlight.className).toContain('bg-blue-600/30');
         expect(highlight.className).toContain('z-20');
         expect(highlight.previousElementSibling).toBe(itemBackground);

@@ -46,7 +46,6 @@ describe('AdministrationPageComponent', () => {
         lastModifiedDate: new Date('2024-01-01'),
         visibility: Visibility.Viewable,
         dateCreated: new Date('2024-01-01'),
-        preview: '',
     };
 
     beforeEach(async () => {

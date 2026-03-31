@@ -15,9 +15,9 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { WaitGridService } from '@app/services/lobby/wait-grid.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { WaitGridService } from '@app/services/lobby/wait-grid.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
@@ -338,7 +338,6 @@ function createActiveGame(id: string, organizerName: string, players: ICharacter
             lastModifiedDate: new Date('2024-01-01'),
             dateCreated: new Date('2024-01-01'),
             visibility: Visibility.Viewable,
-            preview: '' as Base64URLString,
             board: {
                 cells: [[CellType.Empty], [CellType.Empty]],
                 items: [],
@@ -354,5 +353,8 @@ function createActiveGame(id: string, organizerName: string, players: ICharacter
         organizerName,
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }

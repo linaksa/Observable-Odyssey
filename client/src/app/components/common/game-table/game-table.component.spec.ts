@@ -125,6 +125,16 @@ describe('GameTableComponent', () => {
         expect(tableComponent.maximumNumOfPlayer(game)).toBe(0);
     });
 
+    it('should render the shared game grid as the preview for regular games', () => {
+        const game = createExistingGame('game-1', 'Game 1');
+        hostComponent.games = [game];
+
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('app-game-grid'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="game-grid"]'))).toBeTruthy();
+    });
+
     it('should expose active game rows and player counts when activeGames input is set', () => {
         const game = createExistingGame('game-1', 'Game 1');
         const activeGame = createActiveGame('active-game-1', game, TWO_PLAYERS, MAX_PLAYER_COUNT_SIX);
@@ -279,7 +289,6 @@ function createExistingGame(id: string, title: string): IExistingGame {
         lastModifiedDate: new Date('2024-01-01'),
         dateCreated: new Date('2024-01-01'),
         visibility: Visibility.Viewable,
-        preview: '' as Base64URLString,
         board: { cells: [[CellType.Empty]], items: [] },
     };
 }
@@ -298,6 +307,9 @@ function createActiveGame(id: string, game: IGame, players = 0, maxPlayerCount =
         organizerName: 'Organizer',
         maxPlayerCount,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

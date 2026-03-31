@@ -41,7 +41,6 @@ describe('ActiveGameService', () => {
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
         visibility: Visibility.Viewable,
-        preview: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA',
         board: {
             cells: [],
             items: [],
@@ -61,6 +60,9 @@ describe('ActiveGameService', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 
     const dummyCharacterForm: CharacterFormData = {

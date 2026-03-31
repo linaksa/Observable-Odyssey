@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, ViewChild, inject, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, OnDestroy, OnInit, signal, ViewChild, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { EditionFormPanelComponent } from '@app/components/edition/form-panel/edition-form-panel.component';
-import { EditionGridPanelComponent } from '@app/components/edition/grid-panel/edition-grid-panel.component';
-import { EditionToolPanelComponent } from '@app/components/edition/tool-panel/edition-tool-panel.component';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { EditionFormPanelComponent } from '@app/components/edition/form-panel/edition-form-panel.component';
+import { EditionGridPanelComponent } from '@app/components/edition/grid-panel/edition-grid-panel.component';
+import { EditionToolPanelComponent } from '@app/components/edition/tool-panel/edition-tool-panel.component';
 import { GridSize, ToolOption } from '@app/constants/grid-edition';
 import { GameService } from '@app/services/admin/game.service';
 import { BoardEditorService } from '@app/services/editor/edition.service';
@@ -50,6 +50,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
     editedGame: IExistingGame | null = null;
     previousVersion!: IExistingGame;
 
+    private readonly timeout: number = 3000;
     private routeSubscription?: Subscription;
     private gameServiceSubscription?: Subscription;
     private buttonTimeoutId?: ReturnType<typeof setTimeout>;
@@ -147,13 +148,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
         }
 
         this.gameEditFormService
-            .submitForm(
-                this.editedGame._id,
-                this.boardEditorService.gameMode,
-                this.boardEditorService.gameCells,
-                this.boardEditorService.objects,
-                this.getGridElement(),
-            )
+            .submitForm(this.editedGame._id, this.boardEditorService.gameMode, this.boardEditorService.gameCells, this.boardEditorService.objects)
             .then(() => {
                 return this.router.navigate(['/admin']);
             })
@@ -230,7 +225,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
     private initializeButtonTimeout(): void {
         this.buttonTimeoutId = setTimeout(() => {
             this.showButton.set(true);
-        }, 0);
+        }, this.timeout);
     }
 
     private initializeEditor(game: IExistingGame): void {
@@ -253,15 +248,10 @@ export class EditionPageComponent implements OnInit, OnDestroy {
             lastModifiedDate: new Date(),
             dateCreated: new Date(),
             visibility: Visibility.Hidden,
-            preview: '',
             board: {
                 items: [],
                 cells: Array.from({ length: GridSize.SMALL }, () => Array(GridSize.SMALL).fill(CellType.Empty)),
             },
         };
-    }
-
-    private getGridElement(): HTMLElement | null {
-        return this.gridPanel?.getGridElement() ?? null;
     }
 }

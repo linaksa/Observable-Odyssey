@@ -5,7 +5,6 @@ import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
-import { ICharacter } from '@common/character';
 import { TEMPS_COMBAT } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -15,6 +14,7 @@ import {
     IAttackData,
     IAttackPostureData,
     IDebugToggleState,
+    IGameLogPayload,
     IJoinGamePayload,
     IPlayerMoveData,
     ISocketData,
@@ -155,9 +155,14 @@ export class GameSocketsService {
 
                 const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
                 this.gameplayService.turnService.suspendTurn(gameId);
+
+                this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
+
                 this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
-                    this.gameplayService.combatService.applyCombatTurn(gameId);
-                    await this.handleTurnAndGameEndCase(attackerName, gameId);
+                    const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
+                    if (combatResolved) {
+                        await this.handleTurnAndGameEndCase(attackerName, gameId);
+                    }
                 });
 
                 this.namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
@@ -176,10 +181,11 @@ export class GameSocketsService {
 
                 // The combat turn is applied immediately
                 this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
-                await this.gameplayService.combatService.applyCombatTurn(gameId);
+
+                const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
 
                 const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
-                if (currentPlayerName) {
+                if (combatResolved && currentPlayerName) {
                     await this.handleTurnAndGameEndCase(currentPlayerName, gameId);
                 }
             });
@@ -196,6 +202,7 @@ export class GameSocketsService {
             socket.on(SocketEvent.PlayerAbandon, async (data: IAbandonData) => {
                 const { gameId, playerId } = data;
                 await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+                this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
                 const updatedGame = await this.activeGameService.getActiveGameById(gameId);
                 await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame);
@@ -205,6 +212,7 @@ export class GameSocketsService {
                 const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
                 if (gameEnded) {
                     this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+                    this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
                     await this.activeGameService.deleteGameById(gameId);
                 }
 
@@ -247,6 +255,7 @@ export class GameSocketsService {
 
     private async handleActiveGameDisconnect(gameId: string, playerId: string): Promise<void> {
         await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+        this.emitGameLogToRoom(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
@@ -258,18 +267,12 @@ export class GameSocketsService {
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+            this.emitGameLogToRoom(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
             await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
             await this.gameplayService.turnService.endTurn(gameId);
         }
-    }
-    emitPlayersUpdated(activeGameId: string, players: ICharacter[]): void {
-        if (!this.namespace || !activeGameId) {
-            return;
-        }
-
-        this.namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, players);
     }
 
     private parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
@@ -316,6 +319,21 @@ export class GameSocketsService {
         }
     }
 
+    private emitGameLogToRoom(gameId: string, message: string): void {
+        if (!this.namespace || !gameId || !message.trim()) {
+            return;
+        }
+
+        this.namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
+    }
+
     private async disableDebugModeIfOrganizerLeft(gameId: string, playerId: string, activeGame: IActiveGame): Promise<void> {
         const gameHasStarted = activeGame.turnOrder.length > 0;
         if (playerId !== activeGame.organizerName || !gameHasStarted || !activeGame.isDebugMode) {
@@ -326,6 +344,7 @@ export class GameSocketsService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         this.namespace?.to(gameId).emit(SocketEvent.DebugToggle, payload);
+        this.emitGameLogToRoom(gameId, `Mode debug desactive (organisateur ${playerId} absent).`);
     }
 
     private async handleTurnAndGameEndCase(attackerName: string, gameId: string): Promise<void> {
@@ -339,5 +358,10 @@ export class GameSocketsService {
             this.namespace?.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
             await this.activeGameService.deleteGameById(gameId);
         }
+    }
+
+    emitVirtualPlayerJoined(activeGame: IActiveGame) {
+        const gameId = activeGame._id.toString();
+        this.namespace?.to(gameId).emit(SocketEvent.PlayersUpdated, activeGame.players);
     }
 }

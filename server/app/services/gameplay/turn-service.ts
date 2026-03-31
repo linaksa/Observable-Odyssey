@@ -5,7 +5,7 @@ import { ICharacter } from '@common/character';
 import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { ITurnStartedPayload } from '@common/socket-payloads';
+import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 
 @Service()
@@ -56,6 +56,7 @@ export class TurnService {
 
         this.preparationTimers.set(gameId, preparationTimer);
     }
+
     // logic for the 30-second turn timer
     private async beginTurn(gameId: string) {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
@@ -83,6 +84,10 @@ export class TurnService {
             timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
+        namespace.to(gameId).emit(SocketEvent.PlayerTurnAlert, {
+            log: `Debut du tour de ${player.name}.`,
+        });
+        namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`Debut du tour de ${player.name}.`));
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
@@ -200,5 +205,12 @@ export class TurnService {
         clearTimeout(timer);
         map.delete(stringGameId);
         return secondsRemaining;
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
     }
 }

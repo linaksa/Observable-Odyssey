@@ -1,0 +1,22 @@
+<div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg w-full h-full sm:w-100 sm:h-fit gap-4 p-4">
+    <div class="text-2xl text-white tracking-wider text-center">Créer un joueur</div>
+
+    <form [formGroup]="form" class="flex grow flex-col justify-center gap-4">
+        <div class="flex flex-col gap-2">
+            <label for="profile-select" class="text-white tracking-wider">Sélectionner le profil du joueur virtuel</label>
+            <select id="profile-select" formControlName="profileOption" class="select w-full">
+                @for (option of profileOptions; track $index) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                }
+            </select>
+        </div>
+
+        <div class="flex flex-col text-sm text-white tracking-widest gap-1">
+            <span>Le joueur virtuel {{ selectedProfileLabel }}</span>
+        </div>
+    </form>
+
+    <div class="flex shrink flex-col gap-2">
+        <button type="button" class="btn btn-green" (click)="createVirtualPlayer()" [disabled]="form.invalid">Ajouter joueur virtuel</button>
+    </div>
+</div>

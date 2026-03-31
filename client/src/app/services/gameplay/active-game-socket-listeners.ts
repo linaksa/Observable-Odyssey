@@ -90,13 +90,10 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
         }),
 
         context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {
-            console.log('Received CombatTurnStart event with data:', data);
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
-
-            console.log('Combat turn started:', activeGame.currentAttack, 'data', data);
 
             context.setActiveGame(data);
         }),
@@ -106,31 +103,10 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!activeGame) {
                 return;
             }
-            console.log('Received CombatOutcome event with data:', combatOutcome);
             context.setCombatOutcome(combatOutcome);
-            console.log('set combat outcome');
-
             context.setActiveGame(combatOutcome.updatedActiveGame);
-            console.log('Combat resolved:', combatOutcome);
         }),
 
-        context.socket.on<AttackResult>(Namespaces.Game, SocketEvent.AttackResult).subscribe((data) => {
-            const activeGame = context.getActiveGame();
-            if (!activeGame) {
-                return;
-            }
-
-            const attacker = context.getPlayerByName(data.attackerName);
-            const defender = context.getPlayerByName(data.defenderName);
-            if (!defender || !attacker) return;
-
-            attacker.victories = data.attackerVictories;
-            attacker.actionsLeft = data.attackerActionsLeft;
-            defender.positionGrille.x = data.defenderNewPosition.x;
-            defender.positionGrille.y = data.defenderNewPosition.y;
-
-            toggle(context.hasChangedLocation);
-        }),
         context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {

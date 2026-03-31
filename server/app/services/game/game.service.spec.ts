@@ -12,7 +12,7 @@
  * - No games in DB (empty array): getAllGames() should return [] without error.
  * - Nonexistent id: getGame() / deleteGame() / changeVisibility() /
  *   updateGame() should handle null without throwing an uncontrolled exception.
- * - Missing fields (title, description, board, preview): createGame() should
+ * - Missing fields (title, description, board): createGame() should
  *   reject each missing field independently with a clear message.
  * - Field containing only whitespace: title or description with only whitespace
  *   should be rejected as empty.
@@ -54,7 +54,6 @@ describe('Game Service', () => {
         description: 'Test Description',
         gameMode: GameType.Classic,
         board: { cells: [[CellType.Empty]], items: [] },
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
@@ -65,7 +64,6 @@ describe('Game Service', () => {
         description: 'Test Description2',
         gameMode: GameType.Classic,
         board: { cells: [[CellType.Empty]], items: [] },
-        preview: 'image.png',
         visibility: Visibility.Hidden,
         lastModifiedDate: new Date(),
         dateCreated: new Date(),
@@ -289,7 +287,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: GameType.Classic,
             board,
-            preview: 'image.png',
             lastModifiedDate: new Date(),
             dateCreated: new Date(),
             visibility: Visibility.Hidden,
@@ -317,7 +314,6 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -335,7 +331,6 @@ describe('Game Service', () => {
             description: '',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -353,7 +348,6 @@ describe('Game Service', () => {
             description: '     ',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -372,7 +366,6 @@ describe('Game Service', () => {
             description: 'a'.repeat(BAD_DESCRIPTION_LENGTH), // 201 chars
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -421,7 +414,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -438,7 +430,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -456,7 +447,6 @@ describe('Game Service', () => {
             description: 'Valid description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -475,7 +465,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -492,7 +481,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'invalidMode',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {
@@ -508,7 +496,6 @@ describe('Game Service', () => {
             gameTitle: 'Test Game',
             description: 'Test Description',
             gameMode: 'classic',
-            preview: 'image.png',
         };
 
         try {
@@ -519,22 +506,6 @@ describe('Game Service', () => {
         }
     });
 
-    it('should throw an error when preview is missing', async () => {
-        const mockGameData = {
-            gameTitle: 'Test Game',
-            description: 'Test Description',
-            gameMode: 'classic',
-            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-        };
-
-        try {
-            await gameService.createGame(mockGameData as unknown as IGame);
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect((error as Error).message).to.equal('Il manque une image de preview du jeu');
-        }
-    });
-
     it('should throw an error when board is invalid', async () => {
         mockBoardService.validateBoard.returns(['Moins de 50% de la surface totale de la carte est couverte par des tuiles.']);
         const mockGameData = {
@@ -542,7 +513,6 @@ describe('Game Service', () => {
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-            preview: 'image.png',
         };
 
         try {

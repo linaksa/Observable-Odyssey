@@ -288,7 +288,6 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         dateCreated: new Date('2026-01-01T00:00:00.000Z'),
         lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
         visibility: Visibility.Hidden,
-        preview: '' as Base64URLString,
         board: {
             cells: [
                 [CellType.Empty, CellType.Empty],
@@ -311,6 +310,9 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: PLAYER_COUNT_LIMIT,
         turnIsInPreparation: false,
+
+        turnStartTimeStamp: 0,
+        currentAttack: null,
     };
 }
 

@@ -14,7 +14,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE, UNKNOWN_TILE_INFO } from '@app/constants/tile-info';
 import { CellType } from '@common/board';
-import { Avatar, DiceType, AVATAR_ASSET_BASE_PATH } from '@common/constants';
+import { Avatar, DiceType } from '@common/constants';
 import { ItemType } from '@common/items';
 import { TileInfoService } from './tile-info.service';
 
@@ -63,7 +63,7 @@ describe('TileInfoService', () => {
             }),
         ).toEqual({
             name: 'Alice',
-            avatarUrl: `${AVATAR_ASSET_BASE_PATH}/${Avatar.Avatar1}.png`,
+            avatarUrl: './assets/characters/archer-portrait.png',
         });
     });
 });

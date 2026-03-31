@@ -1,7 +1,8 @@
 import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
+import { JournalComponent } from '@app/components/chat/journal/journal.component';
 import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
+import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
 import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
@@ -31,7 +32,7 @@ import { Subscription } from 'rxjs';
         GameComponent,
         PlayerListComponent,
         GameInfosComponent,
-        ChatPanelComponent,
+        JournalComponent,
         GameAttackComponent,
         GameEndedComponent,
         TurnStatusComponent,
@@ -68,6 +69,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
                         this.activeGameService.updatePlayers(players);
                     },
                 });
+
                 this.gameTurnService.initializeTurnListeners();
             }
 

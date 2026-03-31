@@ -109,6 +109,7 @@ export class GameTurnService {
                 if (!localPlayer) return;
 
                 // Only start the combat turn timer if the local player is involved in the attack
+                this.stopCountdown();
                 if (currentAttack.attacker === localPlayer.name || currentAttack.defender === localPlayer.name) {
                     this.startCountdown(TEMPS_COMBAT);
                 }

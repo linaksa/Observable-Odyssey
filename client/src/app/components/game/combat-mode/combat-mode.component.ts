@@ -1,9 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { LocalPlayerService} from '@app/services/player/local-player.service';
+import { buildAvatarAssetPath } from '@common/constants';
 
 @Component({
     selector: 'app-combat-mode',
@@ -15,6 +17,7 @@ export class CombatModeComponent {
     turnService = inject(GameTurnService);
     localPlayerService = inject(LocalPlayerService);
 
+    protected readonly attackPosture = AttackPosture;
 
     get attackerCharacter(): ICharacter | undefined {
         const attackerName = this.activeGameService.activeGame.currentAttack?.attacker;
@@ -37,7 +40,8 @@ export class CombatModeComponent {
     }
 
     getAvatarUrl(character: ICharacter | undefined): string {
-        return `assets/form-page/${character?.avatar || ''}.png`;
+        if (!character) return '';
+        return buildAvatarAssetPath(character.avatar, true);
     }
 
 

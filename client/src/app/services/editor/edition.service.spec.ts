@@ -303,7 +303,6 @@ function createGame(size: number, items: IItem[] = []): IExistingGame {
         dateCreated: new Date('2026-01-01T00:00:00.000Z'),
         lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
         visibility: Visibility.Hidden,
-        preview: '' as Base64URLString,
     };
 }
 

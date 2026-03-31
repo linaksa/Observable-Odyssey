@@ -50,6 +50,8 @@ describe('EditionItemSelectorMaterialComponent', () => {
         expect(title.textContent?.trim()).toBe('Glace');
         expect(buttons[selectedMaterialIndex].getAttribute('title')).toBe(TILE_INFO_BY_TYPE[CellType.Ice].description);
         expect((buttons[selectedMaterialIndex].querySelector('img') as HTMLImageElement).alt).toBe('Glace');
+        expect((buttons[selectedMaterialIndex].querySelector('img') as HTMLImageElement).className).toContain('[image-rendering:pixelated]');
+        expect((fixture.nativeElement.querySelector('div.w-64.h-64 img') as HTMLImageElement).className).toContain('[image-rendering:pixelated]');
 
         buttons[selectedMaterialIndex].click();
 

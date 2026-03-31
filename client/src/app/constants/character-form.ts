@@ -1,6 +1,6 @@
-export const PLAYER_NAME_PATTERN = /^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/;
+import { Avatar } from '@common/constants';
 
-export const AVATAR_IMAGE_PATH_MODEL = './assets/form-page/{}.png';
+export const PLAYER_NAME_PATTERN = /^(?:[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF0-9])+$/;
 
 export enum BonusType {
     Life,
@@ -10,6 +10,13 @@ export enum BonusType {
 export enum DiceSelectionType {
     D6AttackAndD4Defense,
     D4AttackAndD6Defense,
+}
+
+export interface RandomCharacterData {
+    playerName: string;
+    avatar: Avatar;
+    bonusType: BonusType;
+    diceType: DiceSelectionType;
 }
 
 export const AVAILABLE_BONUS_TYPES = [BonusType.Life, BonusType.Speed];
