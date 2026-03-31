@@ -78,6 +78,7 @@ export class CombatService {
         const attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);
         const defender = currentActiveGame.players.find((p) => p.name === currentAttack.defender);
 
+
         const attackerStats = this.getAttackStatsForPlayer(currentActiveGame, attacker, currentAttack.attackerPosture);
         const defenderStats = this.getAttackStatsForPlayer(currentActiveGame, defender, currentAttack.defenderPosture);
 
@@ -212,28 +213,28 @@ export class CombatService {
 
         const baseAttackPoints = character.attackPoints;
         const attackDiceBonus = this.rollDice(character.attackBonusDiceType);
-        const postureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
-        const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
+        const attackPostureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
+        const attackIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
         const baseDefensePoints = character.defensePoints;
         const defenseDiceBonus = this.rollDice(character.defenseBonusDiceType);
         const defensePostureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
         const defenseIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
-        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + postureBonus - iceMalus, 0);
-        const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus - defenseIceMalus, 0);
+        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + attackIceMalus, 0);
+        const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus + defenseIceMalus, 0);
 
         return {
             baseAttackPoints,
             attackDiceBonus,
-            postureAttackBonus: postureBonus,
-            attackIceMalus: iceMalus,
+            postureAttackBonus: attackPostureBonus,
+            attackIceMalus,
             totalAttackPoints,
 
             baseDefensePoints,
             defenseDiceBonus,
             postureDefenseBonus: defensePostureBonus,
-            defenseIceMalus: defenseIceMalus,
+            defenseIceMalus,
             totalDefensePoints,
         };
     }
