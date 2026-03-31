@@ -66,6 +66,9 @@ describe('registerActiveGameSocketListeners', () => {
         setActiveGame: (newActiveGame: IActiveGame) => {
             activeGame = newActiveGame;
         },
+        setRoundOutcome: () => {
+            // no-op for this spec since combat outcomes aren't emitted by the tested listeners
+        },
         getPlayerByName: (playerName: string) => activeGame?.players.find((player) => player.name === playerName),
         currentPlayer: currentPlayerIndex,
         hasChangedLocation,

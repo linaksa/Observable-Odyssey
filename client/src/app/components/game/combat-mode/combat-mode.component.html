@@ -93,6 +93,222 @@
                 </p>
             </div>
 
+            @if (activeGameService.roundOutcome; as outcome) {
+                <div class="grid grid-cols-2 gap-4">
+
+                    <div class="bg-[#0f2248] border-[1.5px] border-[#2d5199] rounded-lg p-3">
+                        <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#6b9ed4] mb-2 text-center">
+                            Défenseur
+                        </div>
+
+                        <div class="text-[10px] font-mono space-y-1 text-[#a8c8ff] tabular-nums">
+
+                            <div class="text-[8px] font-semibold uppercase">Attaque</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.defenderStats.baseAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                        {{ outcome.defenderStats.attackDiceBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                        {{ outcome.defenderStats.postureAttackBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span> {{ outcome.defenderStats.attackIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total ATK</span>
+                                <span>{{ outcome.defenderStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="text-[8px] font-semibold uppercase">Défense</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.defenderStats.baseDefensePoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                        {{ outcome.defenderStats.defenseDiceBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                        {{ outcome.defenderStats.postureDefenseBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.defenderStats.defenseIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.defenderStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-2"></div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>ATK adverse</span>
+                                <span>{{ outcome.attackerStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.defenderStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-red-400">
+                                <span>Dégâts subis</span>
+                                <span>
+                                    {{
+                                        Math.max(
+                                            0,
+                                            outcome.attackerStats.totalAttackPoints -
+                                            outcome.defenderStats.totalDefensePoints
+                                        )
+                                    }}
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
+                        <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">
+                            Attaquant
+                        </div>
+
+                        <div class="text-[10px] font-mono space-y-1 text-[#f5b060] tabular-nums">
+
+                            <div class="text-[8px] font-semibold uppercase">Attaque</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.attackerStats.baseAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                        {{ outcome.attackerStats.attackDiceBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                        {{ outcome.attackerStats.postureAttackBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.attackerStats.attackIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total ATK</span>
+                                <span>{{ outcome.attackerStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="text-[8px] font-semibold uppercase">Défense</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.attackerStats.baseDefensePoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                        {{ outcome.attackerStats.defenseDiceBonus  }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                        {{ outcome.attackerStats.postureDefenseBonus }}
+                    </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.attackerStats.defenseIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.attackerStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-2"></div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>ATK adverse</span>
+                                <span>{{ outcome.defenderStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.attackerStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-red-400">
+                                <span>Dégâts subis</span>
+                                <span>
+                                    {{
+                                        Math.max(
+                                            0,
+                                            outcome.defenderStats.totalAttackPoints -
+                                            outcome.attackerStats.totalDefensePoints
+                                        )
+                                    }}
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            }
+
             <p class="text-[10px] font-bold text-[#5a7fad] tracking-[3px] uppercase text-center">Choisir une action</p>
 
             <div class="grid grid-cols-2 gap-3">
