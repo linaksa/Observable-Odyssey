@@ -248,7 +248,7 @@ describe('GameComponent', () => {
     });
 
     it('should toggle a door from attack mode when the door cell is clicked', () => {
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.isDebugMode.and.returnValue(false);
         boardSharedServiceSpy.getObjectAt.and.returnValue(null);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -256,25 +256,25 @@ describe('GameComponent', () => {
         component.onGridCellClick(createGridCellEvent(1, 1, CellType.ClosedDoor));
 
         expect(activeGameServiceStub.toggleDoor).toHaveBeenCalledWith(1, 1);
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should not toggle a door from attack mode when a player or flag occupies the cell', () => {
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.isDebugMode.and.returnValue(false);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([createCharacter('Bob')]);
 
         component.onGridCellClick(createGridCellEvent(1, 1, CellType.OpenDoor));
 
         expect(activeGameServiceStub.toggleDoor).not.toHaveBeenCalled();
-        expect(activeGameServiceStub.attackMode()).toBeTrue();
+        expect(activeGameServiceStub.actionMode()).toBeTrue();
     });
 
     it('should open a sanctuary popup from attack mode when the player is adjacent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -291,7 +291,7 @@ describe('GameComponent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -313,7 +313,7 @@ describe('GameComponent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -340,7 +340,7 @@ describe('GameComponent', () => {
 
         expect(activeGameServiceStub.interactSanctuary).toHaveBeenCalledWith(SANCTUARY_INTERACTION_ROW, SANCTUARY_INTERACTION_COL, 'double');
         expect(popupStateService.isSanctuaryPopupVisible).toBeFalse();
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should keep tile info instead of toggling when a flag or player occupies a door tile', () => {
