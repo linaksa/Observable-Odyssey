@@ -272,6 +272,7 @@ function createActiveGame(players: ICharacter[], currentPlayer: string): IActive
         organizerName: 'Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,

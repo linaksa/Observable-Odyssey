@@ -9,7 +9,7 @@ import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IDoorToggledResult, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
+import { IDoorToggledResult, IFlagActionData, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 interface BooleanSignal {
@@ -31,6 +31,8 @@ export interface ActiveGameSocketContext {
     hasChangedLocation: BooleanSignal;
     hasAbandonned: BooleanSignal;
     gameHasEnded: BooleanSignal;
+    handleFlagActionRequest: (data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag) => void;
+    closeFlagActionRequestIfExpired: (currentTurnPlayerName: string) => void;
 }
 
 export function registerActiveGameSocketListeners(context: ActiveGameSocketContext): Subscription[] {
@@ -56,6 +58,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
+            context.closeFlagActionRequestIfExpired(data.player);
+
             advanceSanctuaryCooldowns(activeGame.game.board.items);
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             if (index !== -1) {
@@ -69,6 +73,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!activeGame) {
                 return;
             }
+
+            context.closeFlagActionRequestIfExpired(data.player);
 
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             const currentPlayer = context.getPlayerByName(data.player);
@@ -217,6 +223,38 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.localPlayer.clear();
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
+        }),
+        context.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
+            const activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            const player = context.getPlayerByName(data.playerName);
+            if (!player) return;
+
+            activeGame.hasFlagId = player.name;
+            const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
+            if (flag) {
+                flag.isCarried = true;
+            }
+            toggle(context.hasChangedLocation);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
+            const requester = context.getPlayerByName(data.currentPlayerName);
+            if (requester) {
+                requester.actionsLeft = data.currentPlayerActionsLeft;
+                toggle(context.hasChangedLocation);
+            }
+            context.handleFlagActionRequest(data, SocketEvent.TakeFlag);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.GiveFlag).subscribe((data) => {
+            const requester = context.getPlayerByName(data.currentPlayerName);
+            if (requester) {
+                requester.actionsLeft = data.currentPlayerActionsLeft;
+                toggle(context.hasChangedLocation);
+            }
+            context.handleFlagActionRequest(data, SocketEvent.GiveFlag);
         }),
     ];
 }

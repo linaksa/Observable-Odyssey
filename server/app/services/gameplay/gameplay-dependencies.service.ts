@@ -1,11 +1,11 @@
-import { Container, Service } from 'typedi';
-import { CombatService } from '@app/services/gameplay/combat-service';
+import { ActionService } from '@app/services/gameplay/action-service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { Container, Service } from 'typedi';
 
 @Service()
 export class GameplayServices {
@@ -21,8 +21,8 @@ export class GameplayServices {
         return Container.get(MovementService);
     }
 
-    get combatService(): CombatService {
-        return Container.get(CombatService);
+    get actionService(): ActionService {
+        return Container.get(ActionService);
     }
 
     get doorService(): DoorService {

@@ -50,8 +50,8 @@ describe('GameComponent', () => {
         updateMovementRange: jasmine.Spy;
         getCurrentPlayer: jasmine.Spy<() => ICharacter | undefined>;
         tryMove: jasmine.Spy;
-        attackMode: ReturnType<typeof signal<boolean>>;
-        attackPlayer: jasmine.Spy;
+        actionMode: ReturnType<typeof signal<boolean>>;
+        actionOnPlayer: jasmine.Spy;
         isDebugMode: jasmine.Spy<() => boolean>;
         debugTeleport: jasmine.Spy;
         toggleDoor: jasmine.Spy;
@@ -77,8 +77,8 @@ describe('GameComponent', () => {
             updateMovementRange: jasmine.createSpy('updateMovementRange'),
             getCurrentPlayer: jasmine.createSpy('getCurrentPlayer').and.returnValue(alice),
             tryMove: jasmine.createSpy('tryMove'),
-            attackMode: signal(false),
-            attackPlayer: jasmine.createSpy('attackPlayer'),
+            actionMode: signal(false),
+            actionOnPlayer: jasmine.createSpy('actionOnPlayer'),
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
             debugTeleport: jasmine.createSpy('debugTeleport'),
             toggleDoor: jasmine.createSpy('toggleDoor'),
@@ -222,16 +222,16 @@ describe('GameComponent', () => {
         expect(activeGameServiceStub.tryMove).not.toHaveBeenCalled();
     });
 
-    it('should attack clicked player only in attack mode during local turn', () => {
-        activeGameServiceStub.attackMode.set(false);
+    it('should attack clicked player only in action mode during local turn', () => {
+        activeGameServiceStub.actionMode.set(false);
         component.onPlayerClicked('Bob');
-        expect(activeGameServiceStub.attackPlayer).not.toHaveBeenCalled();
+        expect(activeGameServiceStub.actionOnPlayer).not.toHaveBeenCalled();
 
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         component.onPlayerClicked('Bob');
 
-        expect(activeGameServiceStub.attackPlayer).toHaveBeenCalledWith('Bob');
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionOnPlayer).toHaveBeenCalledWith('Bob');
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should toggle a door on right click during the local turn', () => {
@@ -248,7 +248,7 @@ describe('GameComponent', () => {
     });
 
     it('should toggle a door from attack mode when the door cell is clicked', () => {
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.isDebugMode.and.returnValue(false);
         boardSharedServiceSpy.getObjectAt.and.returnValue(null);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -256,25 +256,25 @@ describe('GameComponent', () => {
         component.onGridCellClick(createGridCellEvent(1, 1, CellType.ClosedDoor));
 
         expect(activeGameServiceStub.toggleDoor).toHaveBeenCalledWith(1, 1);
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should not toggle a door from attack mode when a player or flag occupies the cell', () => {
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.isDebugMode.and.returnValue(false);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([createCharacter('Bob')]);
 
         component.onGridCellClick(createGridCellEvent(1, 1, CellType.OpenDoor));
 
         expect(activeGameServiceStub.toggleDoor).not.toHaveBeenCalled();
-        expect(activeGameServiceStub.attackMode()).toBeTrue();
+        expect(activeGameServiceStub.actionMode()).toBeTrue();
     });
 
     it('should open a sanctuary popup from attack mode when the player is adjacent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -291,7 +291,7 @@ describe('GameComponent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -313,7 +313,7 @@ describe('GameComponent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
         currentPlayer.positionGrille = { x: 0, y: 1 };
-        activeGameServiceStub.attackMode.set(true);
+        activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
 
@@ -340,7 +340,7 @@ describe('GameComponent', () => {
 
         expect(activeGameServiceStub.interactSanctuary).toHaveBeenCalledWith(SANCTUARY_INTERACTION_ROW, SANCTUARY_INTERACTION_COL, 'double');
         expect(popupStateService.isSanctuaryPopupVisible).toBeFalse();
-        expect(activeGameServiceStub.attackMode()).toBeFalse();
+        expect(activeGameServiceStub.actionMode()).toBeFalse();
     });
 
     it('should keep tile info instead of toggling when a flag or player occupies a door tile', () => {
@@ -502,6 +502,7 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         organizerName: 'Organizer',
         maxPlayerCount: PLAYER_COUNT_LIMIT,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,

@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+// recheck this file after refactor to see if some functions can be moved to other services to take out some lines
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService } from '@app/services/admin/game.service';
@@ -11,11 +13,13 @@ import { SanctuaryChoice } from '@common/info';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import {
-    IAttackData,
+    IActionData,
     IAttackPostureData,
     IDebugTeleportData,
     IDebugToggleState,
     IDoorToggleData,
+    IFlagActionData,
+    IFlagDecisionData,
     IPlayerMoveData,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
@@ -25,6 +29,12 @@ import { environment } from 'src/environments/environment';
 
 import { AttackPosture, CombatOutcome } from '@common/attackResult';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
+
+interface PendingFlagRequest {
+    data: IFlagActionData;
+    acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag;
+    question: string;
+}
 
 @Injectable({
     providedIn: 'root',
@@ -48,7 +58,8 @@ export class ActiveGameService implements OnDestroy {
     hasChangedLocation = signal(false);
     hasAbandonned = signal(false);
     gameHasEnded = signal(false);
-    attackMode = signal(false);
+    actionMode = signal(false);
+    pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
 
     reachableTiles = new Set<number>();
@@ -71,6 +82,8 @@ export class ActiveGameService implements OnDestroy {
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandonned: this.hasAbandonned,
                 gameHasEnded: this.gameHasEnded,
+                handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
+                closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
             }),
         );
     }
@@ -80,11 +93,7 @@ export class ActiveGameService implements OnDestroy {
     }
 
     applyDebugModeState(data: IDebugToggleState) {
-        if (!this.activeGame) {
-            return;
-        }
-
-        if (data.playerName !== this.activeGame.organizerName) {
+        if (!this.activeGame || data.playerName !== this.activeGame.organizerName) {
             return;
         }
 
@@ -126,8 +135,8 @@ export class ActiveGameService implements OnDestroy {
         }
     }
 
-    toggleAttackMode(): void {
-        this.toggle(this.attackMode);
+    toggleActionMode(): void {
+        this.toggle(this.actionMode);
     }
 
     getPlayerByName(playerName: string): ICharacter | undefined {
@@ -143,12 +152,7 @@ export class ActiveGameService implements OnDestroy {
 
     getCurrentPlayer(): ICharacter | undefined {
         const currentPlayerName = this.activeGame?.turnOrder[this.currentPlayer()];
-
-        if (!currentPlayerName) {
-            return undefined;
-        }
-
-        return this.getPlayerByName(currentPlayerName);
+        return currentPlayerName ? this.getPlayerByName(currentPlayerName) : undefined;
     }
 
     getIndex(row: number, column: number, totalColumns: number): number {
@@ -159,7 +163,6 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerKick, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -170,7 +173,6 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -317,36 +319,100 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerAbandon, {
             gameId: this.activeGame._id,
             playerId: playerName,
         });
     }
 
-    attackPlayer(targetPlayerName: string): void {
-        const attacker = this.getCurrentPlayer();
+    actionOnPlayer(targetPlayerName: string): void {
+        const currentPlayer = this.getCurrentPlayer();
         const target = this.getPlayerByName(targetPlayerName);
 
-        if (!attacker || !target || attacker === target) {
+        if (!currentPlayer || !target || currentPlayer === target) {
             return;
         }
 
-        const dx = Math.abs(attacker.positionGrille.x - target.positionGrille.x);
-        const dy = Math.abs(attacker.positionGrille.y - target.positionGrille.y);
+        const dx = Math.abs(currentPlayer.positionGrille.x - target.positionGrille.x);
+        const dy = Math.abs(currentPlayer.positionGrille.y - target.positionGrille.y);
 
         if (dx + dy !== 1) {
             return;
         }
 
-        const attackData: IAttackData = {
+        const actionData: IActionData = {
             gameId: this.activeGame._id,
-            attackerName: attacker.name,
-            defenderName: target.name,
+            currentPlayerName: currentPlayer.name,
+            targetName: target.name,
         };
 
-        this.socket.emit(Namespaces.Game, SocketEvent.Attack, attackData);
-        this.attackMode.set(false);
+        this.socket.emit(Namespaces.Game, SocketEvent.Action, actionData);
+        this.actionMode.set(false);
+    }
+
+    handleFlagActionRequest(data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag): void {
+        const localPlayerName = this.localPlayer.getLocalPlayer()?.name;
+        if (!localPlayerName || data.targetPlayerName !== localPlayerName) {
+            return;
+        }
+
+        if (!this.activeGame) {
+            return;
+        }
+
+        const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
+        const question = isTakingFlag
+            ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
+            : `${data.currentPlayerName} veut vous donner son drapeau. Voulez-vous le prendre ?`;
+
+        this.pendingFlagRequest.set({ data, acceptEvent, question });
+    }
+
+    respondToFlagActionRequest(accepted: boolean): void {
+        const pendingRequest = this.pendingFlagRequest();
+        if (!pendingRequest) {
+            return;
+        }
+
+        this.pendingFlagRequest.set(null);
+        const { data, acceptEvent } = pendingRequest;
+
+        const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
+
+        if (!accepted) {
+            this.toastService.show(isTakingFlag ? 'Vous avez refusé de donner votre drapeau.' : 'Vous avez refusé de prendre le drapeau.');
+            return;
+        }
+
+        const currentPlayer = this.getPlayerByName(data.currentPlayerName);
+        if (currentPlayer) {
+            currentPlayer.actionsLeft = data.currentPlayerActionsLeft;
+        }
+
+        this.activeGame.hasFlagId = isTakingFlag ? data.currentPlayerName : data.targetPlayerName;
+        if (isTakingFlag) {
+            const responseData: IFlagDecisionData = {
+                gameId: data.gameId,
+                newFlagCarrierName: data.currentPlayerName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.FlagTaken, responseData);
+        } else {
+            const responseData: IFlagDecisionData = {
+                gameId: data.gameId,
+                newFlagCarrierName: data.targetPlayerName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.FlagGiven, responseData);
+        }
+        this.toggle(this.hasChangedLocation);
+    }
+
+    closeFlagActionRequestIfExpired(currentTurnPlayerName: string): void {
+        const pendingRequest = this.pendingFlagRequest();
+        if (!pendingRequest || pendingRequest.data.currentPlayerName === currentTurnPlayerName) {
+            return;
+        }
+
+        this.pendingFlagRequest.set(null);
     }
 
     debugTeleport(row: number, col: number): void {
@@ -381,13 +447,11 @@ export class ActiveGameService implements OnDestroy {
         if (currentAttack && currentAttack?.defender === currentPlayerName && currentAttack.defenderPosture) {
             return;
         }
-
         const playerPosture: IAttackPostureData = {
             gameId: this.activeGame._id,
             playerName: this.localPlayer.getLocalPlayer()?.name ?? '',
             posture,
         };
-
         this.socket.emit<IAttackPostureData, void>(Namespaces.Game, SocketEvent.ChooseAttackPosture, playerPosture);
     }
 }

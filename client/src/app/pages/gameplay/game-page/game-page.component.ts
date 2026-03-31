@@ -2,11 +2,11 @@ import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/cor
 import { ActivatedRoute } from '@angular/router';
 import { JournalComponent } from '@app/components/chat/journal/journal.component';
 import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
-import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
+import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
+import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
 import { GameComponent } from '@app/components/game/game/game.component';
-import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
@@ -31,8 +31,8 @@ import { Subscription } from 'rxjs';
         GameComponent,
         PlayerListComponent,
         GameInfosComponent,
+        GameActionComponent,
         JournalComponent,
-        GameAttackComponent,
         GameEndedComponent,
         TurnStatusComponent,
         CombatModeComponent,
@@ -129,11 +129,18 @@ export class GamePageComponent implements OnInit, OnDestroy {
         };
     }
 
+    get pendingFlagQuestion(): string | null {
+        return this.activeGameService.pendingFlagRequest()?.question ?? null;
+    }
     get localPlayer(): ICharacter | undefined {
         return this.localPlayerService.getLocalPlayer();
     }
 
     endTurn(): void {
         this.gameTurnService.endTurn();
+    }
+
+    respondToFlagRequest(accepted: boolean): void {
+        this.activeGameService.respondToFlagActionRequest(accepted);
     }
 }

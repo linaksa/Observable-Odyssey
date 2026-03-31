@@ -49,6 +49,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Boolean,
         required: true,
     },
+    hasFlagId: {
+        type: String,
+        default: null,
+    },
     turnStartTimeStamp: {
         type: Number,
         default: 0,

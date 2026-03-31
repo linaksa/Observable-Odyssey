@@ -1,20 +1,24 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
+import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
-import { ICharacter } from '@common/character';
 import { ItemType } from '@common/items';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 
 describe('MovementService', () => {
     let movementService: MovementService;
     let activeGameService: {
         getActiveGameById: sinon.SinonStub;
         saveActiveGameById: sinon.SinonStub;
+    };
+    let socketService: {
+        getNamespace: sinon.SinonStub;
     };
 
     beforeEach(() => {
@@ -23,7 +27,11 @@ describe('MovementService', () => {
             saveActiveGameById: sinon.stub().resolves(),
         };
 
-        movementService = new MovementService(activeGameService as unknown as ActiveGameService, new PositionValidatorService());
+        movementService = new MovementService(
+            activeGameService as unknown as ActiveGameService,
+            new PositionValidatorService(),
+            socketService as unknown as SocketService,
+        );
     });
 
     afterEach(() => {
@@ -115,6 +123,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: null,
     };
 }
 

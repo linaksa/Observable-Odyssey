@@ -1,4 +1,4 @@
-import { ICharacter } from '@common/character';
+import { ICharacter, Team } from '@common/character';
 import { Schema } from 'mongoose';
 import { positionSchema } from './position';
 
@@ -64,6 +64,11 @@ export const characterSchema = new Schema<ICharacter>(
         hasAbandoned: {
             type: Boolean,
             default: false,
+        },
+        team: {
+            type: String,
+            enum: Object.values(Team),
+            default: null,
         },
         fightSanctuaryUsed: {
             type: Boolean,
