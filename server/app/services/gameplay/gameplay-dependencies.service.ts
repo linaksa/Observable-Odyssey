@@ -21,7 +21,7 @@ export class GameplayServices {
         return Container.get(MovementService);
     }
 
-    get combatService(): ActionService {
+    get actionService(): ActionService {
         return Container.get(ActionService);
     }
 
