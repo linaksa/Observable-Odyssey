@@ -3,6 +3,10 @@
     [class.border-2]="invalidSubmission()"
     [class.border-red-500]="invalidSubmission()"
 >
+    <div class="w-full border-b border-gray-300 pb-2">
+        <p class="font-semibold text-gray-900">{{ localPlayerService.getLocalPlayer()?.name }}</p>
+    </div>
+
     <div #scrollContainer class="flex flex-col w-full overflow-y-auto gap-2">
         @for (message of activeGameService.activeGame.messages; track $index) {
             <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
