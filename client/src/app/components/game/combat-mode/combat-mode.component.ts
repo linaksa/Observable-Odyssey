@@ -1,10 +1,10 @@
+import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { AttackPosture } from '@common/attackResult';
-import { CommonModule } from '@angular/common';
 import { ICharacter } from '@common/character';
 
 const COMBAT_DURATION = 10;
@@ -20,7 +20,7 @@ export class CombatModeComponent {
     protected readonly turnService = inject(GameTurnService);
     protected readonly localPlayerService = inject(LocalPlayerService);
 
-    protected readonly AttackPosture = AttackPosture;
+    protected readonly attackPosture = AttackPosture;
 
     selectedMode: AttackPosture | null = null;
     dialogMessage = 'Que ferez-vous ?';
@@ -32,17 +32,13 @@ export class CombatModeComponent {
 
     selectAction(mode: AttackPosture): void {
         this.selectedMode = mode;
-        this.dialogMessage = mode === AttackPosture.Defensive
-            ? 'Mode défensif sélectionné...'
-            : 'Mode offensif sélectionné...';
+        this.dialogMessage = mode === AttackPosture.Defensive ? 'Mode défensif sélectionné...' : 'Mode offensif sélectionné...';
     }
 
     confirmAction(): void {
         if (this.selectedMode === null) return;
         this.activeGameService.chooseAttackMode(this.selectedMode);
-        this.dialogMessage = this.selectedMode === AttackPosture.Defensive
-            ? 'Posture défensive adoptée !'
-            : 'Attaque préparée !';
+        this.dialogMessage = this.selectedMode === AttackPosture.Defensive ? 'Posture défensive adoptée !' : 'Attaque préparée !';
         this.selectedMode = null;
     }
 
