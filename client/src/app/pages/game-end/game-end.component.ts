@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
-import { FinalPlayerListComponent } from '@app/components/player-list/final-player-list.component';
+import { FinalPlayerListComponent } from '@app/components/end-game/final-player-list/final-player-list.component';
 import { GameService } from '@app/services/admin/game.service';
 import { IActiveGame } from '@common/activeGame';
 import { Subscription } from 'rxjs';
