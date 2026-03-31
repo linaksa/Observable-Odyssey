@@ -82,6 +82,7 @@ export class GameTurnService {
 
         this.turnPreparingSubscription = this.socketService.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe({
             next: ({ player }) => {
+                this.clearReachableTiles();
                 this.activeTurnPlayerName = player;
                 this.syncActiveGameTurnState(player);
                 this._isTurnPreparing = true;
@@ -91,6 +92,7 @@ export class GameTurnService {
 
         this.turnStartedSubscription = this.socketService.on<ITurnStartedPayload>(Namespaces.Game, SocketEvent.TurnStarted).subscribe({
             next: ({ player, movementLeft, actionLeft, timeLeft }) => {
+                this.clearReachableTiles();
                 this.activeTurnPlayerName = player;
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
@@ -193,5 +195,9 @@ export class GameTurnService {
 
         this.activeGameService.currentPlayer.set(nextIndex);
         this.activeGameService.hasChangedLocation.set(!this.activeGameService.hasChangedLocation());
+    }
+
+    private clearReachableTiles(): void {
+        this.activeGameService.reachableTiles = new Set<number>();
     }
 }
