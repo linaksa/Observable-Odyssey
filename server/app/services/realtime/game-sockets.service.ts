@@ -98,7 +98,7 @@ export class GameSocketsService {
                 await this.gameplayActionService.handleSanctuaryInteraction(data, socket, this.namespace, this.emitGameLog.bind(this));
             });
 
-            socket.on(SocketEvent.Attack, async (data: IActionData) => {
+            socket.on(SocketEvent.Action, async (data: IActionData) => {
                 if (!this.namespace) return;
                 await this.gameplayActionService.handleAction(data, socket, this.namespace);
             });
