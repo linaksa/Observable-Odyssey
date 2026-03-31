@@ -79,7 +79,7 @@ export class GameSessionService {
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
             emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
-            await this.activeGameService.deleteGameById(gameId);
+            // await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
             await this.gameplayService.turnService.endTurn(gameId);
@@ -125,7 +125,7 @@ export class GameSessionService {
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
             emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
-            await this.activeGameService.deleteGameById(gameId);
+            // await this.activeGameService.deleteGameById(gameId);
         }
 
         this.unregisterSocketFromGame(socket, gameId);

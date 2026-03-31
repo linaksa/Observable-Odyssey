@@ -222,10 +222,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.router.navigate(['/home']);
         }),
 
-        context.socket.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe(
-            (roundCombatOutcome) => {
-                context.setRoundOutcome(roundCombatOutcome);
-                console.log(roundCombatOutcome);
+        context.socket.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe((roundCombatOutcome) => {
+            context.setRoundOutcome(roundCombatOutcome);
+            console.log(roundCombatOutcome);
         }),
     ];
 }

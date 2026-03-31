@@ -4,13 +4,14 @@ import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { FinalPlayerListComponent } from '@app/components/end-game/final-player-list/final-player-list.component';
+import { GlobalStatsComponent } from '@app/components/end-game/global-stats/global-stats.component';
 import { GameService } from '@app/services/admin/game.service';
 import { IActiveGame } from '@common/activeGame';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-end',
-    imports: [NavButtonsComponent, PageTitleComponent, ChatPanelComponent, FinalPlayerListComponent],
+    imports: [NavButtonsComponent, PageTitleComponent, ChatPanelComponent, FinalPlayerListComponent, GlobalStatsComponent],
     templateUrl: './game-end.component.html',
 })
 export class GameEndComponent {

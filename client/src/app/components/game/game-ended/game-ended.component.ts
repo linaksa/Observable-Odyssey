@@ -15,12 +15,8 @@ export class GameEndedComponent {
 
     constructor() {
         setTimeout(() => {
-            this.router.navigate(['/']);
+            this.router.navigate([`/end/${this.activeGameService.activeGame._id}`]);
         }, TEMPS_ECRAN_FIN_PARTIE);
-    }
-
-    navigateHome() {
-        this.router.navigate(['/']);
     }
 
     get isFinished() {
