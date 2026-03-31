@@ -4,6 +4,7 @@ import { StatOrderService } from '@app/services/end/stat-order.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
+import { HUNDRED_PERCENT } from '@common/constants';
 
 @Component({
     selector: 'app-final-player-list',
@@ -33,7 +34,7 @@ export class FinalPlayerListComponent implements OnInit {
 
     getPlayerVisitedTilesRatio(player: ICharacter): number {
         const totalTiles = Math.pow(this.activeGame.game.board.cells.length, 2);
-        return Math.round((player.visitedCells.length / totalTiles) * 100);
+        return Math.round((player.visitedCells.length / totalTiles) * HUNDRED_PERCENT);
     }
 
     getOrderDirectionIconPath(orderArg: StatOrderArgs): string {

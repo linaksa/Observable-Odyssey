@@ -246,6 +246,13 @@ function createCharacter(name: string) {
         fightSanctuaryUsed: false,
         fightSanctuaryTurnsRemaining: 0,
         fightSanctuaryBonus: 0,
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 }
 

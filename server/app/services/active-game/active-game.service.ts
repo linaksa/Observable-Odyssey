@@ -102,7 +102,7 @@ export class ActiveGameService {
             nDefeats: 0,
             totalDamageDealt: 0,
             totalDamageReceived: 0,
-            visitedCells: [],
+            visitedCells: [] as string[],
 
             ...sanctuaryState,
         };

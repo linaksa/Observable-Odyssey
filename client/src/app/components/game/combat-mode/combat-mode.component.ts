@@ -15,7 +15,7 @@ const HUNDRED_PERCENT = 100;
     imports: [CommonModule],
     templateUrl: './combat-mode.component.html',
 })
-export class CombatModeComponent implements DoCheck,OnInit{
+export class CombatModeComponent implements DoCheck, OnInit {
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly turnService = inject(GameTurnService);
     protected readonly localPlayerService = inject(LocalPlayerService);
@@ -38,7 +38,6 @@ export class CombatModeComponent implements DoCheck,OnInit{
 
     ngDoCheck(): void {
         const current = this.turnService.turnTimeLeftSeconds ?? 0;
-        console.log("test");
 
         if (current > this.previousTime) {
             this.resetSelection();
@@ -46,8 +45,6 @@ export class CombatModeComponent implements DoCheck,OnInit{
 
         this.previousTime = current;
     }
-
-
 
     private resetSelection(): void {
         this.selectedMode = null;
@@ -92,6 +89,4 @@ export class CombatModeComponent implements DoCheck,OnInit{
         if (!character) return '';
         return buildAvatarAssetPath(character.avatar, true);
     }
-
-    protected readonly Math = Math;
 }

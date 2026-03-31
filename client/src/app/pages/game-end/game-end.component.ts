@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
     imports: [NavButtonsComponent, PageTitleComponent, ChatPanelComponent, FinalPlayerListComponent, GlobalStatsComponent],
     templateUrl: './game-end.component.html',
 })
-export class GameEndComponent {
+export class GameEndComponent implements OnInit, OnDestroy {
     private readonly router = inject(ActivatedRoute);
     private gameService = inject(GameService);
     private routeSubscription?: Subscription;

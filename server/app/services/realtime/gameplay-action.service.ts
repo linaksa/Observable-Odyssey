@@ -72,7 +72,6 @@ export class GameplayActionService {
                 await this.activeGameService.deleteGameById(gameId);
             }
         } catch (error) {
-            console.log('error', error);
             socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
         }
     }

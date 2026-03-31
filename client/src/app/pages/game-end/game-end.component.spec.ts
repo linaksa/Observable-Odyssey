@@ -8,7 +8,7 @@ describe('GameEndComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GameEndComponent]
+      imports: [GameEndComponent],
     })
     .compileComponents();
 

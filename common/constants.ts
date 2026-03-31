@@ -54,3 +54,6 @@ export enum GameSize {
     Mid = 225,
     Large = 400,
 }
+
+export const COMBAT_TURN_FEEDBACK_DURATION_MS = 5000;
+export const HUNDRED_PERCENT = 100;

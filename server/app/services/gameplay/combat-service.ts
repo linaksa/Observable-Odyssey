@@ -5,7 +5,15 @@ import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
-import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX, TEMPS_COMBAT } from '@common/constants';
+import {
+    COMBAT_TURN_FEEDBACK_DURATION_MS,
+    DiceType,
+    FOUR_SIDED_DICE_MAX,
+    ICE_CELL_MALUS,
+    POSTURE_BONUS,
+    SIX_SIDED_DICE_MAX,
+    TEMPS_COMBAT,
+} from '@common/constants';
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -42,7 +50,6 @@ export class CombatService {
         const attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);
         const defender = currentActiveGame.players.find((p) => p.name === currentAttack.defender);
 
-
         const attackerStats = this.getAttackStatsForPlayer(currentActiveGame, attacker, currentAttack.attackerPosture);
         const defenderStats = this.getAttackStatsForPlayer(currentActiveGame, defender, currentAttack.defenderPosture);
 
@@ -72,6 +79,9 @@ export class CombatService {
             updatedActiveGame: updatedGame,
             attackerStats,
             defenderStats,
+
+            attackerReceivedDamage: defenderDealtDamage,
+            defenderReceivedDamage: attackerDealtDamage,
         };
         namespace.to(activeGameId).emit(SocketEvent.CombatTurnApplied, turnResult);
 
@@ -88,7 +98,7 @@ export class CombatService {
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
                 this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
                 return resolve(false);
-            }, 5000);
+            }, COMBAT_TURN_FEEDBACK_DURATION_MS);
         });
     }
 
@@ -260,7 +270,7 @@ export class CombatService {
         };
     }
 
-    private  getMaxDice(dice: DiceType, name: string, activeGame: IActiveGame): number {
+    private getMaxDice(dice: DiceType, name: string, activeGame: IActiveGame): number {
         let attackDiceBonus: number;
         if (activeGame.currentAttack.attacker === name) {
             attackDiceBonus = dice === DiceType.SixSided ? SIX_SIDED_DICE_MAX : FOUR_SIDED_DICE_MAX;
@@ -270,5 +280,4 @@ export class CombatService {
 
         return attackDiceBonus;
     }
-
 }

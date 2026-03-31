@@ -8,7 +8,7 @@ describe('GlobalStatsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GlobalStatsComponent]
+      imports: [GlobalStatsComponent],
     })
     .compileComponents();
 
