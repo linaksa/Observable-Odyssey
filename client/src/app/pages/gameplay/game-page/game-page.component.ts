@@ -2,7 +2,6 @@ import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/cor
 import { ActivatedRoute } from '@angular/router';
 import { JournalComponent } from '@app/components/chat/journal/journal.component';
 import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
-import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
 import { GameAttackComponent } from '@app/components/game/game-attack/game-attack.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';

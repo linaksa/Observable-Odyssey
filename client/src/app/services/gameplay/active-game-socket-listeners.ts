@@ -3,7 +3,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackResult, CombatOutcome } from '@common/attackResult';
+import { CombatOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
