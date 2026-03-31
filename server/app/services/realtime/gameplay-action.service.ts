@@ -25,11 +25,7 @@ export class GameplayActionService {
         private readonly activeGameService: ActiveGameService,
     ) {}
 
-    async handlePlayerMove(
-        data: IPlayerMoveData,
-        socket: Socket,
-        namespace: Namespace,
-    ): Promise<void> {
+    async handlePlayerMove(data: IPlayerMoveData, socket: Socket, namespace: Namespace): Promise<void> {
         const { gameId, playerId, direction } = data;
         try {
             const { newPosition, movementLeft } = await this.gameplayService.movementService.movePlayer(playerId, gameId, direction);

@@ -1,14 +1,21 @@
 <form [formGroup]="gameEditFormService.form" (ngSubmit)="submitRequested.emit()" class="flex grow flex-col gap-4 mb-2">
     <div class="w-full">
         <label for="gameTitle" class="text-white tracking-wider">Titre</label>
-        <input id="gameTitle" type="text" maxlength="100" placeholder="Entrez un titre" formControlName="gameTitle" class="input w-full" />
+        <input
+            id="gameTitle"
+            type="text"
+            [attr.maxlength]="maxTitleLength"
+            placeholder="Entrez un titre"
+            formControlName="gameTitle"
+            class="input w-full"
+        />
     </div>
 
     <div class="w-full">
         <label for="description" class="text-white tracking-wider">Description</label>
         <textarea
             id="description"
-            maxlength="512"
+            [attr.maxlength]="maxDescriptionLength"
             placeholder="Entrez une description"
             formControlName="description"
             class="input w-full h-64 min-h-12"

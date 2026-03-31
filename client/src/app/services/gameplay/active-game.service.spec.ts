@@ -575,5 +575,3 @@ function createItem(itemType: ItemType, x: number, y: number): IItem {
 function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
     return { unsubscribe: jasmine.createSpy('unsubscribe') };
 }
-
-

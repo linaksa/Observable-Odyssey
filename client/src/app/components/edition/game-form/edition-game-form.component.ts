@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 
 @Component({
@@ -13,6 +14,8 @@ import { GameEditFormService } from '@app/services/forms/game-edit-form.service'
 })
 export class EditionGameFormComponent {
     protected readonly gameEditFormService = inject(GameEditFormService);
+    protected readonly maxTitleLength = MAX_TITLE_LENGTH;
+    protected readonly maxDescriptionLength = MAX_DESCRIPTION_LENGTH;
 
     readonly submitRequested = output<void>();
     readonly revertRequested = output<void>();

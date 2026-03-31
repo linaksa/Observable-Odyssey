@@ -135,10 +135,7 @@ describe('GameSocketsService', () => {
             activeGameListSocketService as unknown as ActiveGameListSocketsService,
         );
 
-        gameplayActionService = new GameplayActionService(
-            gameplayServices,
-            activeGameService as unknown as ActiveGameService,
-        );
+        gameplayActionService = new GameplayActionService(gameplayServices, activeGameService as unknown as ActiveGameService);
 
         fakeSocket = {
             on: sinon.stub().callsFake((event: string, handler: (...args: unknown[]) => Promise<void> | void) => {
