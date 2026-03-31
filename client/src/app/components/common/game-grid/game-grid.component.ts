@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { CELL_TYPE_BACKGROUNDS, CELL_TYPE_PATHS, ITEM_TYPE_PATHS, OBJECT_IMAGES, OBJECT_SPECIFIC_CLASSES } from '@app/constants/backgrounds-mapping';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { IItem, ItemType } from '@common/items';
-import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 export interface GameGridCellEvent {
     rowIndex: number;
@@ -154,7 +154,7 @@ export class GameGridComponent {
             return '0';
         }
 
-        const relativeRow = rowIndex - item.x;
+        const relativeRow = rowIndex - item.y;
         return relativeRow === 0 ? '0' : '-100%';
     }
 
@@ -163,7 +163,7 @@ export class GameGridComponent {
             return '0';
         }
 
-        const relativeCol = colIndex - item.y;
+        const relativeCol = colIndex - item.x;
         return relativeCol === 0 ? '0' : '-100%';
     }
 
@@ -192,8 +192,8 @@ export class GameGridComponent {
             return '';
         }
 
-        const relativeRow = rowIndex - item.x;
-        const relativeCol = colIndex - item.y;
+        const relativeRow = rowIndex - item.y;
+        const relativeCol = colIndex - item.x;
 
         if (relativeRow === 0 && relativeCol === 0) {
             return '0% 0%';

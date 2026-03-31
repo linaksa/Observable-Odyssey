@@ -148,8 +148,8 @@ export class CombatService {
 
         activeGame.hasFlagId = '';
         flag.isCarried = false;
-        flag.x = position.y;
-        flag.y = position.x;
+        flag.x = position.x;
+        flag.y = position.y;
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {

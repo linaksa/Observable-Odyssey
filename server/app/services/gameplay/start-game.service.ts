@@ -65,6 +65,6 @@ export class StartGameService {
     }
     // Retrieves all possible spawn positions on the map
     private getSpawnTiles(activeGame: IActiveGame): Position[] {
-        return activeGame.game.board.items.filter((item) => item.itemType === ItemType.StartingPosition).map((item) => ({ x: item.y, y: item.x }));
+        return activeGame.game.board.items.filter((item) => item.itemType === ItemType.StartingPosition).map((item) => ({ x: item.x, y: item.y }));
     }
 }

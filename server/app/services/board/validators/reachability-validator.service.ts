@@ -99,8 +99,8 @@ export class ReachabilityValidator implements IBoardValidator {
                 continue;
             }
 
-            for (let row = item.x; row <= item.x + 1; row++) {
-                for (let col = item.y; col <= item.y + 1; col++) {
+            for (let row = item.y; row <= item.y + 1; row++) {
+                for (let col = item.x; col <= item.x + 1; col++) {
                     if (sanctuaryCoversCell(item, row, col)) {
                         blockedCells.add(`${row},${col}`);
                     }
