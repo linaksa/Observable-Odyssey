@@ -1,10 +1,10 @@
-import { expect } from 'chai';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
+import { expect } from 'chai';
 
 describe('PositionValidatorService', () => {
     let service: PositionValidatorService;
@@ -79,6 +79,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: '',
     };
 }
 

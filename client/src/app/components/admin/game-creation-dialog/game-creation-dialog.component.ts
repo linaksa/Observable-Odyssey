@@ -62,7 +62,7 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         // Initialize form with proper control names and default values
         this.form = this.fb.group({
             dimension: [this.defaultDimension, Validators.required],
-            isCTF: [{ value: this.defaultIsCTF, disabled: true }],
+            isCTF: [{ value: this.defaultIsCTF, disabled: false }],
         });
 
         // Subscribe to dimension changes

@@ -1,13 +1,13 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
 import { ItemType } from '@common/items';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 
 const SANCTUARY_X = 1;
 const SANCTUARY_Y = 1;
@@ -222,6 +222,7 @@ function createActiveGame(itemType: ItemType): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: '',
     };
 }
 

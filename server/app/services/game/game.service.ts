@@ -1,10 +1,10 @@
 import { ValidationError } from '@app/error-types/validation-error';
 import { game } from '@app/schemas/game';
+import { BoardService } from '@app/services/board/board.service';
+import { UpdatedGame } from '@app/services/interfaces/updated-game';
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
 import { Service } from 'typedi';
-import { BoardService } from '@app/services/board/board.service';
-import { UpdatedGame } from '@app/services/interfaces/updated-game';
 
 @Service()
 export class GameService {
@@ -92,7 +92,7 @@ export class GameService {
                 visibility: Visibility.Hidden,
                 lastModifiedDate: new Date(),
             },
-            { new: true },
+            { returnDocument: 'after' },
         );
 
         const gameToUpdate = { game: updatedGame, created: false };

@@ -17,14 +17,14 @@ import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
-import { GameAttackComponent } from './game-attack.component';
+import { GameActionComponent } from './game-action.component';
 
-describe('GameAttackComponent', () => {
-    let component: GameAttackComponent;
-    let fixture: ComponentFixture<GameAttackComponent>;
+describe('GameActionComponent', () => {
+    let component: GameActionComponent;
+    let fixture: ComponentFixture<GameActionComponent>;
     let activeGameServiceStub: {
-        toggleAttackMode: jasmine.Spy;
-        attackMode: jasmine.Spy<() => boolean>;
+        toggleActionMode: jasmine.Spy;
+        actionMode: jasmine.Spy<() => boolean>;
         getPlayerByName: jasmine.Spy<(playerName: string) => ICharacter | undefined>;
     };
     let gameTurnServiceStub: { canEndTurn: boolean };
@@ -32,8 +32,8 @@ describe('GameAttackComponent', () => {
 
     beforeEach(async () => {
         activeGameServiceStub = {
-            toggleAttackMode: jasmine.createSpy('toggleAttackMode'),
-            attackMode: jasmine.createSpy('attackMode').and.returnValue(false),
+            toggleActionMode: jasmine.createSpy('toggleActionMode'),
+            actionMode: jasmine.createSpy('actionMode').and.returnValue(false),
             getPlayerByName: jasmine.createSpy('getPlayerByName').and.returnValue(undefined),
         };
         gameTurnServiceStub = { canEndTurn: true };
@@ -42,7 +42,7 @@ describe('GameAttackComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [GameAttackComponent],
+            imports: [GameActionComponent],
             providers: [
                 { provide: ActiveGameService, useValue: activeGameServiceStub },
                 { provide: GameTurnService, useValue: gameTurnServiceStub },
@@ -50,7 +50,7 @@ describe('GameAttackComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(GameAttackComponent);
+        fixture = TestBed.createComponent(GameActionComponent);
         component = fixture.componentInstance;
     });
 
@@ -63,20 +63,20 @@ describe('GameAttackComponent', () => {
 
         component.toggle();
 
-        expect(activeGameServiceStub.toggleAttackMode).toHaveBeenCalled();
+        expect(activeGameServiceStub.toggleActionMode).toHaveBeenCalled();
     });
 
-    // Edge case: When turn cannot end, it should not toggle attack mode.
-    it('should not toggle attack mode when turn cannot end', () => {
+    // Edge case: When turn cannot end, it should not toggle action mode.
+    it('should not toggle action mode when turn cannot end', () => {
         gameTurnServiceStub.canEndTurn = false;
 
         component.toggle();
 
-        expect(activeGameServiceStub.toggleAttackMode).not.toHaveBeenCalled();
+        expect(activeGameServiceStub.toggleActionMode).not.toHaveBeenCalled();
     });
 
-    // Edge case: When turn cannot end, disable attack button.
-    it('should disable attack button when turn cannot end', () => {
+    // Edge case: When turn cannot end, disable action button.
+    it('should disable action button when turn cannot end', () => {
         gameTurnServiceStub.canEndTurn = false;
         fixture.detectChanges();
         const button = (fixture.nativeElement as HTMLElement).querySelector('button') as HTMLButtonElement;
@@ -84,8 +84,8 @@ describe('GameAttackComponent', () => {
         expect(button.disabled).toBeTrue();
     });
 
-    it('should apply active attack style when attack mode is enabled', () => {
-        activeGameServiceStub.attackMode.and.returnValue(true);
+    it('should apply active action style when action mode is enabled', () => {
+        activeGameServiceStub.actionMode.and.returnValue(true);
         gameTurnServiceStub.canEndTurn = true;
         fixture.detectChanges();
         const button = (fixture.nativeElement as HTMLElement).querySelector('button');
@@ -94,37 +94,37 @@ describe('GameAttackComponent', () => {
         expect(button?.classList.contains('text-white')).toBeTrue();
     });
 
-    it('should return false from hasAttackedThisTurn when local player is missing', () => {
+    it('should return false from hasUsedActionThisTurn when local player is missing', () => {
         localPlayerServiceStub.getLocalPlayer.and.returnValue(undefined);
 
-        expect(component.hasAttackedThisTurn()).toBeFalse();
+        expect(component.hasUsedActionThisTurn()).toBeFalse();
     });
 
-    it('should return true from hasAttackedThisTurn when local player has no actions left', () => {
+    it('should return true from hasUsedActionThisTurn when local player has no actions left', () => {
         localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
         activeGameServiceStub.getPlayerByName.and.returnValue({
             ...createCharacter('Alice'),
             actionsLeft: 0,
         });
 
-        expect(component.hasAttackedThisTurn()).toBeTrue();
+        expect(component.hasUsedActionThisTurn()).toBeTrue();
     });
 
-    it('should treat missing active-game player as already attacked for this turn', () => {
+    it('should treat missing active-game player as already used action for this turn', () => {
         localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
         activeGameServiceStub.getPlayerByName.and.returnValue(undefined);
 
-        expect(component.hasAttackedThisTurn()).toBeTrue();
+        expect(component.hasUsedActionThisTurn()).toBeTrue();
     });
 
-    it('should return false from hasAttackedThisTurn when player still has actions left', () => {
+    it('should return false from hasUsedActionThisTurn when player still has actions left', () => {
         localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Alice'));
         activeGameServiceStub.getPlayerByName.and.returnValue({
             ...createCharacter('Alice'),
             actionsLeft: 1,
         });
 
-        expect(component.hasAttackedThisTurn()).toBeFalse();
+        expect(component.hasUsedActionThisTurn()).toBeFalse();
     });
 });
 

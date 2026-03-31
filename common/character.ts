@@ -5,6 +5,10 @@ export interface Position {
     y: number;
 }
 
+export enum Team {
+    RED = 'red',
+    BLUE = 'blue',
+}
 export enum VirtualPlayerProfile {
     Agressive = 'agressif',
     Defensive = 'defensive',
@@ -25,6 +29,7 @@ export interface ICharacter {
     hasAbandoned: boolean;
     positionDepart: Position;
     positionGrille: Position;
+    team?: Team | null;
     virtualPlayerProfile?: VirtualPlayerProfile;
     fightSanctuaryUsed?: boolean;
     fightSanctuaryTurnsRemaining?: number;

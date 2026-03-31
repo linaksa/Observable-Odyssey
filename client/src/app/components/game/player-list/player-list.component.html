@@ -15,12 +15,19 @@
             />
 
             <div class="flex items-center gap-2">
-                <span class="p-0"> {{ player.name }}</span>
-
+                <span class="p-0" [style.color]="playerNameColor(player)"> {{ player.name }}</span>
                 @if (isOrganizer(player.name)) {
                     <span class="bg-yellow-500 text-black text-xs px-2 py-1 rounded"> Organisateur </span>
                 } @else if (player.virtualPlayerProfile) {
                     <span class="bg-emerald-800 text-black text-xs px-2 py-1 rounded"> Joueur Virtuel </span>
+                }
+                @if (hasFlag(player)) {
+                    <img
+                        src="./assets/objects/flag.png"
+                        alt="Porteur du drapeau"
+                        class="w-4 h-4 [image-rendering:pixelated]"
+                        title="Porteur du drapeau"
+                    />
                 }
             </div>
 

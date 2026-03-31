@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
-import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { isPositionAdjacentToSanctuary, isSanctuaryItem } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
@@ -50,7 +50,7 @@ export class GameInteractionService {
     handleGridCellClick(rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null): void {
         this.popupStateService.closeAllPopups();
 
-        if (!this.activeGameService.attackMode() || !this.isLocalPlayerTurn()) {
+        if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
             return;
         }
 
@@ -61,7 +61,7 @@ export class GameInteractionService {
         if (this.shouldToggleDoor(cellType, playerAtPosition, boardItem)) {
             this.popupStateService.closeAllPopups();
             this.activeGameService.toggleDoor(rowIndex, colIndex);
-            this.activeGameService.attackMode.set(false);
+            this.activeGameService.actionMode.set(false);
             return;
         }
 
@@ -78,13 +78,13 @@ export class GameInteractionService {
     }
 
     handlePlayerClick(playerName: string): void {
-        if (!this.activeGameService.attackMode() || !this.isLocalPlayerTurn()) {
+        if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
             return;
         }
 
         this.popupStateService.closeAllPopups();
-        this.activeGameService.attackPlayer(playerName);
-        this.activeGameService.attackMode.set(false);
+        this.activeGameService.actionOnPlayer(playerName);
+        this.activeGameService.actionMode.set(false);
     }
 
     handleCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null = null): void {
@@ -108,7 +108,7 @@ export class GameInteractionService {
         if (this.shouldToggleDoor(cellType, playerAtPosition, boardItem)) {
             this.popupStateService.closeTileInfo();
             this.activeGameService.toggleDoor(rowIndex, colIndex);
-            this.activeGameService.attackMode.set(false);
+            this.activeGameService.actionMode.set(false);
             return;
         }
 
@@ -132,7 +132,7 @@ export class GameInteractionService {
         const { x, y } = position;
         this.popupStateService.closeSanctuaryPopup();
         this.activeGameService.interactSanctuary(y, x, choice);
-        this.activeGameService.attackMode.set(false);
+        this.activeGameService.actionMode.set(false);
     }
 
     private isLocalPlayerTurn(): boolean {

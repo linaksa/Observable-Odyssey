@@ -1,5 +1,3 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
@@ -11,6 +9,8 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 import { GameSocketsService } from './game-sockets.service';
 
 describe('GameSocketsService', () => {
@@ -79,9 +79,9 @@ describe('GameSocketsService', () => {
                 movePlayer: sinon.stub().resolves({ newPosition: { x: 0, y: 0 }, movementLeft: 1 }),
                 getReachablePositions: sinon.stub().resolves([{ x: 0, y: 0 }]),
             },
-            combatService: {
-                canAttackAnyPlayer: sinon.stub().resolves(true),
-                canAttack: sinon.stub().resolves(true),
+            actionService: {
+                canUseActionAnyPlayer: sinon.stub().resolves(true),
+                canUseAction: sinon.stub().resolves(true),
                 applyCombatTurn: sinon.stub().resolves(false),
             },
             doorService: {
@@ -135,7 +135,7 @@ describe('GameSocketsService', () => {
             activeGameListSocketService as unknown as ActiveGameListSocketsService,
         );
 
-        gameplayActionService = new GameplayActionService(gameplayServices, activeGameService as unknown as ActiveGameService);
+        gameplayActionService = new GameplayActionService(gameplayServices, gameSessionService, activeGameService as unknown as ActiveGameService);
 
         fakeSocket = {
             on: sinon.stub().callsFake((event: string, handler: (...args: unknown[]) => Promise<void> | void) => {
@@ -149,7 +149,6 @@ describe('GameSocketsService', () => {
         };
 
         service = new GameSocketsService(
-            gameplayServices,
             socketService as unknown as SocketService,
             debugSocketService as unknown as DebugSocketService,
             activeGameService as unknown as ActiveGameService,

@@ -1,5 +1,3 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
@@ -9,6 +7,8 @@ import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 
 describe('DoorService', () => {
     let doorService: DoorService;
@@ -168,6 +168,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: '',
     };
 }
 

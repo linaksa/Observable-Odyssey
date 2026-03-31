@@ -17,6 +17,7 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
     turnIsInPreparation: boolean;
+    hasFlagId: string | null;
     turnStartTimeStamp: number;
 
     currentAttack: ICurrentAttack | null;

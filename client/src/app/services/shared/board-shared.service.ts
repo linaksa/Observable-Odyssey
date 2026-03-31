@@ -7,6 +7,8 @@ import { isPositionAdjacentToSanctuary, sanctuaryCoversCell } from '@app/utils/s
 })
 export class BoardSharedService {
     cellBelongsToObject(obj: IItem, row: number, col: number): boolean {
+        if (obj.isCarried) return false;
+
         if (obj.itemType === ItemType.LifeSanctuary || obj.itemType === ItemType.FightSanctuary) {
             return sanctuaryCoversCell(obj, row, col);
         }

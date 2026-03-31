@@ -71,6 +71,8 @@ describe('registerActiveGameSocketListeners', () => {
         hasChangedLocation,
         hasAbandonned,
         gameHasEnded,
+        handleFlagActionRequest: jasmine.createSpy('handleFlagActionRequest'),
+        closeFlagActionRequestIfExpired: jasmine.createSpy('closeFlagActionRequestIfExpired'),
         setCombatOutcome: () => {
             // no-op for this spec since combat outcomes aren't emitted by the tested listeners
         },
@@ -242,6 +244,7 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,
