@@ -15,15 +15,15 @@ import { TestBed } from '@angular/core/testing';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { BoardSharedService } from './board-shared.service';
 
-const SANCTUARY_X = 3;
-const SANCTUARY_Y = 5;
-const SANCTUARY_BOTTOM_X = 4;
-const SANCTUARY_RIGHT_Y = 6;
-const OUTSIDE_TOP_X = 2;
-const OUTSIDE_BOTTOM_X = 5;
+const SANCTUARY_COLUMN = 3;
+const SANCTUARY_ROW = 5;
+const SANCTUARY_RIGHT_COLUMN = 4;
+const SANCTUARY_BOTTOM_ROW = 6;
+const OUTSIDE_TOP_ROW = 4;
+const OUTSIDE_BOTTOM_ROW = 7;
 const SEARCH_ROW = 3;
 const SEARCH_COLUMN = 3;
-const REGULAR_ITEM_POSITION = 1;
+const REGULAR_ITEM_ROW = 1;
 const REGULAR_ITEM_COLUMN = 2;
 const REGULAR_ITEM_OUTSIDE_COLUMN = 3;
 
@@ -36,39 +36,39 @@ describe('BoardSharedService', () => {
     });
 
     it('should detect sanctuary occupancy on each covered tile', () => {
-        const sanctuary = createItem(ItemType.LifeSanctuary, SANCTUARY_X, SANCTUARY_Y);
+        const sanctuary = createItem(ItemType.LifeSanctuary, SANCTUARY_COLUMN, SANCTUARY_ROW);
 
-        expect(service.cellBelongsToObject(sanctuary, SANCTUARY_X, SANCTUARY_Y)).toBeTrue();
-        expect(service.cellBelongsToObject(sanctuary, SANCTUARY_BOTTOM_X, SANCTUARY_RIGHT_Y)).toBeTrue();
-        expect(service.cellBelongsToObject(sanctuary, OUTSIDE_TOP_X, SANCTUARY_Y)).toBeFalse();
-        expect(service.cellBelongsToObject(sanctuary, OUTSIDE_BOTTOM_X, SANCTUARY_RIGHT_Y)).toBeFalse();
+        expect(service.cellBelongsToObject(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN)).toBeTrue();
+        expect(service.cellBelongsToObject(sanctuary, SANCTUARY_BOTTOM_ROW, SANCTUARY_RIGHT_COLUMN)).toBeTrue();
+        expect(service.cellBelongsToObject(sanctuary, OUTSIDE_TOP_ROW, SANCTUARY_COLUMN)).toBeFalse();
+        expect(service.cellBelongsToObject(sanctuary, OUTSIDE_BOTTOM_ROW, SANCTUARY_RIGHT_COLUMN)).toBeFalse();
     });
 
     it('should detect occupancy of regular one-cell objects', () => {
-        const flag = createItem(ItemType.Flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN);
+        const flag = createItem(ItemType.Flag, REGULAR_ITEM_COLUMN, REGULAR_ITEM_ROW);
 
-        expect(service.cellBelongsToObject(flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN)).toBeTrue();
-        expect(service.cellBelongsToObject(flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_OUTSIDE_COLUMN)).toBeFalse();
+        expect(service.cellBelongsToObject(flag, REGULAR_ITEM_ROW, REGULAR_ITEM_COLUMN)).toBeTrue();
+        expect(service.cellBelongsToObject(flag, REGULAR_ITEM_ROW, REGULAR_ITEM_OUTSIDE_COLUMN)).toBeFalse();
     });
 
     it('should detect adjacency to sanctuary and regular items', () => {
-        const sanctuary = createItem(ItemType.FightSanctuary, SANCTUARY_X, SANCTUARY_Y);
-        const flag = createItem(ItemType.Flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN);
+        const sanctuary = createItem(ItemType.FightSanctuary, SANCTUARY_COLUMN, SANCTUARY_ROW);
+        const flag = createItem(ItemType.Flag, REGULAR_ITEM_COLUMN, REGULAR_ITEM_ROW);
 
-        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X - 1, SANCTUARY_Y)).toBeTrue();
-        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X, SANCTUARY_RIGHT_Y + 1)).toBeTrue();
-        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_X, SANCTUARY_Y)).toBeFalse();
-        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_POSITION, REGULAR_ITEM_COLUMN + 1)).toBeTrue();
-        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_POSITION + 1, REGULAR_ITEM_COLUMN + 1)).toBeFalse();
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN - 1)).toBeTrue();
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_BOTTOM_ROW + 1, SANCTUARY_COLUMN)).toBeTrue();
+        expect(service.isAdjacentToObject(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN)).toBeFalse();
+        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_ROW, REGULAR_ITEM_COLUMN + 1)).toBeTrue();
+        expect(service.isAdjacentToObject(flag, REGULAR_ITEM_ROW + 1, REGULAR_ITEM_COLUMN + 1)).toBeFalse();
     });
 
     it('should return object at coordinates when it exists', () => {
-        const sanctuary = createItem(ItemType.FightSanctuary, OUTSIDE_TOP_X, OUTSIDE_TOP_X);
+        const sanctuary = createItem(ItemType.FightSanctuary, SEARCH_COLUMN - 1, SEARCH_ROW - 1);
         const flag = createItem(ItemType.Flag, 0, 0);
 
         const found = service.getObjectAt(SEARCH_ROW, SEARCH_COLUMN, [flag, sanctuary]);
 
-        expect(found).toBe(sanctuary);
+        expect(found).toEqual(sanctuary);
     });
 
     // Edge case: When no object occupies the coordinates, return null.

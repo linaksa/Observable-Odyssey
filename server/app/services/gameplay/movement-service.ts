@@ -98,17 +98,17 @@ export class MovementService {
         const playerCarriesFlag = activeGame.hasFlagId === player.name;
         // if player has the flag, it moves with them
         if (playerCarriesFlag) {
-            flag.x = player.positionGrille.y;
-            flag.y = player.positionGrille.x;
+            flag.x = player.positionGrille.x;
+            flag.y = player.positionGrille.y;
             return;
         }
         // if player doesn't have the flag, check if they can pick it up
         const flagIsOnGround = !activeGame.hasFlagId;
-        if (flagIsOnGround && player.positionGrille.x === flag.y && player.positionGrille.y === flag.x) {
+        if (flagIsOnGround && player.positionGrille.x === flag.x && player.positionGrille.y === flag.y) {
             activeGame.hasFlagId = player.name;
             flag.isCarried = true;
-            flag.x = player.positionGrille.y;
-            flag.y = player.positionGrille.x;
+            flag.x = player.positionGrille.x;
+            flag.y = player.positionGrille.y;
             const namespace = this.socketService.getNamespace(Namespaces.Game);
             namespace.to(activeGame._id.toString()).emit(SocketEvent.FlagPickedUp, {
                 playerName: player.name,

@@ -199,8 +199,8 @@ export class BoardEditorService {
             ...this.objects,
             {
                 itemType: selectedObject,
-                x: rowIndex,
-                y: colIndex,
+                x: colIndex,
+                y: rowIndex,
                 size: this.objectSizesMap[selectedObject],
             },
         ];
@@ -226,7 +226,7 @@ export class BoardEditorService {
 
         if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
 
-        this.objects = [...this.objects, { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE }];
+        this.objects = [...this.objects, { itemType: this.selectedObject, x: colIndex, y: rowIndex, size: SANCTUARY_SIZE }];
     }
 
     eraseTile(row: number, col: number): void {

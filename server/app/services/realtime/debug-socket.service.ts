@@ -90,9 +90,9 @@ export class DebugSocketService {
             if (item.isCarried) return false;
             if (item.itemType === ItemType.StartingPosition) return false;
             if (item.itemType === ItemType.LifeSanctuary || item.itemType === ItemType.FightSanctuary) {
-                return row >= item.x && row <= item.x + 1 && col >= item.y && col <= item.y + 1;
+                return row >= item.y && row <= item.y + 1 && col >= item.x && col <= item.x + 1;
             }
-            return item.x === row && item.y === col;
+            return item.x === col && item.y === row;
         });
     }
 

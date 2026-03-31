@@ -1,8 +1,8 @@
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
 import { IItem } from '@common/items';
-import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 
 export function buildGraph(board: CellType[][], items: IItem[] = [], players: ICharacter[] = []): [number, number][][] {
     const blockedCells = buildBlockedCells(items, players);
@@ -20,12 +20,12 @@ function buildBlockedCells(items: IItem[], players: ICharacter[]): Set<string> {
 
 function addSanctuaryBlockedCells(blockedCells: Set<string>, items: IItem[]): void {
     for (const item of items) {
-        if (!sanctuaryCoversCell(item, item.x, item.y)) {
+        if (!sanctuaryCoversCell(item, item.y, item.x)) {
             continue;
         }
 
-        for (let row = item.x; row <= item.x + 1; row++) {
-            for (let col = item.y; col <= item.y + 1; col++) {
+        for (let row = item.y; row <= item.y + 1; row++) {
+            for (let col = item.x; col <= item.x + 1; col++) {
                 blockedCells.add(`${row},${col}`);
             }
         }

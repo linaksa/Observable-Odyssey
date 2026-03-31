@@ -434,7 +434,7 @@ export class ActiveGameService implements OnDestroy {
         }
 
         this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
-            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.x, item.y).length > 0,
+            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.y, item.x).length > 0,
         );
     }
 
