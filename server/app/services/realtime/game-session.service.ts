@@ -1,7 +1,7 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
@@ -120,7 +120,12 @@ export class GameSessionService {
         const updatedGame = await this.activeGameService.getActiveGameById(gameId);
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame, namespace, emitGameLog);
 
-        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
+        const playerAbandonned : IPlayerAbandonnedGame = {
+            playerName: playerId,
+            activeGame: updatedGame,
+        };
+
+        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonned);
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
