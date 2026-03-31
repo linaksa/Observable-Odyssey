@@ -99,6 +99,13 @@ describe('ActiveGameService', () => {
             x: 1,
             y: 1,
         },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 
     beforeEach(async () => {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, DoCheck, inject, OnInit } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
@@ -15,7 +15,7 @@ const HUNDRED_PERCENT = 100;
     imports: [CommonModule],
     templateUrl: './combat-mode.component.html',
 })
-export class CombatModeComponent {
+export class CombatModeComponent implements DoCheck, OnInit {
     protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly turnService = inject(GameTurnService);
     protected readonly localPlayerService = inject(LocalPlayerService);
@@ -24,22 +24,45 @@ export class CombatModeComponent {
 
     selectedMode: AttackPosture | null = null;
     dialogMessage = 'Que ferez-vous ?';
+    confirmed = false;
+    private previousTime = 0;
 
     get timerPercent(): number {
         const left = this.turnService.turnTimeLeftSeconds ?? 0;
         return Math.max(0, (left / COMBAT_DURATION) * HUNDRED_PERCENT);
     }
 
+    ngOnInit() {
+        this.resetSelection();
+    }
+
+    ngDoCheck(): void {
+        const current = this.turnService.turnTimeLeftSeconds ?? 0;
+
+        if (current > this.previousTime) {
+            this.resetSelection();
+        }
+
+        this.previousTime = current;
+    }
+
+    private resetSelection(): void {
+        this.selectedMode = null;
+        this.confirmed = false;
+        this.dialogMessage = 'Que ferez-vous ?';
+    }
+
     selectAction(mode: AttackPosture): void {
+        if (this.confirmed) return;
         this.selectedMode = mode;
         this.dialogMessage = mode === AttackPosture.Defensive ? 'Mode défensif sélectionné...' : 'Mode offensif sélectionné...';
     }
 
     confirmAction(): void {
-        if (this.selectedMode === null) return;
+        if (this.selectedMode === null || this.confirmed) return;
+        this.confirmed = true;
         this.activeGameService.chooseAttackMode(this.selectedMode);
         this.dialogMessage = this.selectedMode === AttackPosture.Defensive ? 'Posture défensive adoptée !' : 'Attaque préparée !';
-        this.selectedMode = null;
     }
 
     get attackerCharacter(): ICharacter | undefined {

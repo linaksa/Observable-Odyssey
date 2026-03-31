@@ -34,7 +34,16 @@ export interface ICharacter {
     fightSanctuaryUsed?: boolean;
     fightSanctuaryTurnsRemaining?: number;
     fightSanctuaryBonus?: number;
+
+    // The following properties record stats about the character
+    nCombats: number;
+    nVictories: number;
+    nDefeats: number;
+    totalDamageDealt: number;
+    totalDamageReceived: number;
+    visitedCells: string[]; // list of "x,y" strings representing visited cells;
 }
+
 export interface CharacterFormData {
     name: string;
     avatar: Avatar;

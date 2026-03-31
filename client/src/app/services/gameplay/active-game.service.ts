@@ -27,7 +27,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
-import { AttackPosture, CombatOutcome } from '@common/attackResult';
+import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 interface PendingFlagRequest {
@@ -63,6 +63,8 @@ export class ActiveGameService implements OnDestroy {
     combatOutcome = signal(null as CombatOutcome | null);
 
     reachableTiles = new Set<number>();
+    roundOutcome: CombatTurnOutcome | null = null;
+
     currentPlayer = signal<number>(0);
 
     constructor() {
@@ -77,6 +79,7 @@ export class ActiveGameService implements OnDestroy {
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
                 setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
+                setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => (this.roundOutcome = roundOutcome),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,

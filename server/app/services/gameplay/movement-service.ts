@@ -47,6 +47,12 @@ export class MovementService {
 
         player.positionGrille = newPosition;
         player.movementLeft -= price;
+
+        const serializedPos = `${newPosition.x},${newPosition.y}`;
+        if (!player.visitedCells.includes(serializedPos)) {
+            player.visitedCells.push(serializedPos);
+        }
+
         this.updateFlagPosition(activeGame, player);
         await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
         return { newPosition, movementLeft: player.movementLeft };

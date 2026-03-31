@@ -189,6 +189,13 @@ function createCharacter(name: string, x = 0, y = 0): ICharacter {
         hasAbandoned: false,
         positionDepart: { x, y },
         positionGrille: { x, y },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 }
 

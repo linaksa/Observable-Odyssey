@@ -3,8 +3,8 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
-import { IActiveGame } from '@common/activeGame';
-import { CombatOutcome } from '@common/attackResult';
+import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
+import { CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -25,6 +25,7 @@ export interface ActiveGameSocketContext {
     setActiveGame: (activeGame: IActiveGame) => void;
     getPlayerByName: (playerName: string) => ICharacter | undefined;
     setCombatOutcome: (combatOutcome: CombatOutcome) => void;
+    setRoundOutcome: (roundCombatOutcome: CombatTurnOutcome | null) => void;
     currentPlayer: {
         set(value: number): void;
     };
@@ -154,6 +155,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
+            context.setRoundOutcome(null);
+
             context.setActiveGame(data);
         }),
 
@@ -168,13 +171,15 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             toggle(context.hasChangedLocation);
         }),
 
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
+        context.socket.on<IPlayerAbandonnedGame>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
 
-            const player = context.getPlayerByName(data.playerId);
+            context.setActiveGame(data.activeGame);
+
+            const player = context.getPlayerByName(data.playerName);
             if (!player) return;
 
             player.hasAbandoned = true;
@@ -225,6 +230,11 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
         }),
+
+        context.socket.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe((roundCombatOutcome) => {
+            context.setRoundOutcome(roundCombatOutcome);
+        }),
+
         context.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {

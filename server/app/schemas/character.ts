@@ -86,6 +86,31 @@ export const characterSchema = new Schema<ICharacter>(
             type: String,
             required: false,
         },
+
+        nCombats: {
+            type: Number,
+            required: true,
+        },
+        nVictories: {
+            type: Number,
+            required: true,
+        },
+        nDefeats: {
+            type: Number,
+            required: true,
+        },
+        totalDamageDealt: {
+            type: Number,
+            required: true,
+        },
+        totalDamageReceived: {
+            type: Number,
+            required: true,
+        },
+        visitedCells: {
+            type: [String],
+            default: [],
+        },
     },
     { _id: false },
 );

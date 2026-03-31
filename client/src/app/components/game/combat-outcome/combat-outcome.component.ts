@@ -10,7 +10,7 @@ const THREE_SECOND_TIMEOUT = 3000;
     templateUrl: './combat-outcome.component.html',
 })
 export class CombatOutcomeComponent implements OnInit {
-    private readonly activeGameService: ActiveGameService = inject(ActiveGameService);
+    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
     protected readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
 
     private outcomeTimeout: ReturnType<typeof setTimeout> | null = null;

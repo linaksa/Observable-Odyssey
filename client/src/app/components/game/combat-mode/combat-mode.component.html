@@ -2,11 +2,19 @@
     <div class="w-full max-w-[480px] mx-4 bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3">
             <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
-            <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
-                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
-                    {{ turnService.turnTimeLeftSeconds }}</span
-                >
+            <div class="flex items-center gap-2">
+                @if (this.activeGameService.activeGame.isDebugMode) {
+                    <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
+                        <span class="text-[12px] text-[#000] font-bold uppercase tracking-wider">DEBUG MODE</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#000] animate-pulse"></span>
+                    </div>
+                }
+                <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
+                        {{ turnService.turnTimeLeftSeconds }}</span
+                    >
+                </div>
             </div>
         </div>
 
@@ -88,60 +96,267 @@
                 </p>
             </div>
 
+            @if (activeGameService.roundOutcome; as outcome) {
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-[#0f2248] border-[1.5px] border-[#2d5199] rounded-lg p-3">
+                        <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#6b9ed4] mb-2 text-center">Défenseur</div>
+
+                        <div class="text-[10px] font-mono space-y-1 text-[#a8c8ff] tabular-nums">
+                            <div class="text-[8px] font-semibold uppercase">Attaque</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.defenderStats.baseAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                                    {{ outcome.defenderStats.attackDiceBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                                    {{ outcome.defenderStats.postureAttackBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span> {{ outcome.defenderStats.attackIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total ATK</span>
+                                <span>{{ outcome.defenderStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="text-[8px] font-semibold uppercase">Défense</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.defenderStats.baseDefensePoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                                    {{ outcome.defenderStats.defenseDiceBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                                    {{ outcome.defenderStats.postureDefenseBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.defenderStats.defenseIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.defenderStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-2"></div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>ATK adverse</span>
+                                <span>{{ outcome.attackerStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.defenderStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#2d5199] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-red-400">
+                                <span>Dégâts subis</span>
+                                <span>
+                                    {{ outcome.defenderReceivedDamage }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
+                        <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
+
+                        <div class="text-[10px] font-mono space-y-1 text-[#f5b060] tabular-nums">
+                            <div class="text-[8px] font-semibold uppercase">Attaque</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.attackerStats.baseAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                                    {{ outcome.attackerStats.attackDiceBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                                    {{ outcome.attackerStats.postureAttackBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.attackerStats.attackIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total ATK</span>
+                                <span>{{ outcome.attackerStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="text-[8px] font-semibold uppercase">Défense</div>
+
+                            <div class="flex justify-between">
+                                <span>Base</span>
+                                <span>+{{ outcome.attackerStats.baseDefensePoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Dés</span>
+                                <span>
+                                    {{ outcome.attackerStats.defenseDiceBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Posture</span>
+                                <span>
+                                    {{ outcome.attackerStats.postureDefenseBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between text-white">
+                                <span>Glace</span>
+                                <span>{{ outcome.attackerStats.defenseIceMalus }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-white">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.attackerStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-2"></div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>ATK adverse</span>
+                                <span>{{ outcome.defenderStats.totalAttackPoints }}</span>
+                            </div>
+
+                            <div class="flex justify-between text-[#c8dcff]">
+                                <span>Total DEF</span>
+                                <span>{{ outcome.attackerStats.totalDefensePoints }}</span>
+                            </div>
+
+                            <div class="border-t border-[#e8a832] my-1"></div>
+
+                            <div class="flex justify-between font-bold text-red-400">
+                                <span>Dégâts subis</span>
+                                <span>
+                                    {{ outcome.attackerReceivedDamage }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             <p class="text-[10px] font-bold text-[#5a7fad] tracking-[3px] uppercase text-center">Choisir une action</p>
 
             <div class="grid grid-cols-2 gap-3">
                 <button
-                    (click)="selectAction(this.attackPosture.Defensive)"
+                    (click)="selectAction(attackPosture.Defensive)"
+                    [disabled]="confirmed || !!activeGameService.roundOutcome"
                     class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
                     [ngClass]="
-                        selectedMode === this.attackPosture.Defensive
-                            ? 'bg-[#1e4a8a] border-[#6aadff] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
-                            : 'bg-[#1a3365] border-[#2d5199] text-[#a8c8ff] hover:bg-[#1e3d75] hover:border-[#4a7fd4]'
+                        confirmed || !!activeGameService.roundOutcome
+                            ? selectedMode === attackPosture.Defensive
+                                ? 'bg-[#1e4a8a] border-[#6aadff] text-white opacity-60 cursor-not-allowed'
+                                : 'bg-[#111e35] border-[#1e3060] text-[#3a5580] opacity-40 cursor-not-allowed'
+                            : selectedMode === attackPosture.Defensive
+                              ? 'bg-[#1e4a8a] border-[#6aadff] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                              : 'bg-[#1a3365] border-[#2d5199] text-[#a8c8ff] hover:bg-[#1e3d75] hover:border-[#4a7fd4]'
                     "
                 >
                     <span class="text-xl">🛡</span>
-
                     <span class="text-sm font-bold tracking-wide">
-                        @if (selectedMode === this.attackPosture.Defensive) {
+                        @if (selectedMode === attackPosture.Defensive) {
                             ✓
                         }
                         Défensif
                     </span>
-
-                    <span class="text-[10px] font-semibold opacity-70"> +DEF & -ATK </span>
+                    <span class="text-[10px] font-semibold opacity-70">+DEF & -ATK</span>
                 </button>
 
                 <button
-                    (click)="selectAction(this.attackPosture.Offensive)"
+                    (click)="selectAction(attackPosture.Offensive)"
+                    [disabled]="confirmed || !!activeGameService.roundOutcome"
                     class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
                     [ngClass]="
-                        selectedMode === this.attackPosture.Offensive
-                            ? 'bg-[#7a2e08] border-[#ff8833] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
-                            : 'bg-[#2a1500] border-[#7a3d0a] text-[#f5b060] hover:bg-[#3a1e00] hover:border-[#b06020]'
+                        confirmed || !!activeGameService.roundOutcome
+                            ? selectedMode === attackPosture.Offensive
+                                ? 'bg-[#7a2e08] border-[#ff8833] text-white opacity-60 cursor-not-allowed'
+                                : 'bg-[#1a0d00] border-[#3a1e00] text-[#6b3d10] opacity-40 cursor-not-allowed'
+                            : selectedMode === attackPosture.Offensive
+                              ? 'bg-[#7a2e08] border-[#ff8833] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                              : 'bg-[#2a1500] border-[#7a3d0a] text-[#f5b060] hover:bg-[#3a1e00] hover:border-[#b06020]'
                     "
                 >
                     <span class="text-xl">⚔</span>
-
                     <span class="text-sm font-bold tracking-wide">
-                        @if (selectedMode === this.attackPosture.Offensive) {
+                        @if (selectedMode === attackPosture.Offensive) {
                             ✓
                         }
-                        Offensif</span
-                    >
-
+                        Offensif
+                    </span>
                     <span class="text-[10px] font-semibold opacity-70">+ATK & -DEF</span>
                 </button>
-            </div>
 
-            @if (selectedMode !== null) {
-                <button
-                    (click)="confirmAction()"
-                    class="w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
-                >
-                    Confirmer
-                </button>
-            }
+                @if (selectedMode !== null && !confirmed && !activeGameService.roundOutcome) {
+                    <button
+                        (click)="confirmAction()"
+                        class="col-span-2 w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
+                    >
+                        Confirmer
+                    </button>
+                }
+                @if (confirmed) {
+                    <div
+                        class="col-span-2 w-full bg-[#0d1f0d] border-2 border-[#2a5e25] rounded-xl py-3 text-center text-[#4a8e44] text-base font-bold tracking-widest opacity-60"
+                    >
+                        Action confirmée
+                    </div>
+                }
+            </div>
         </div>
 
         <div class="h-[3px] bg-[#0d1f42]">

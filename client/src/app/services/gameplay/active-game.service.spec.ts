@@ -559,6 +559,13 @@ describe('ActiveGameService', () => {
             hasAbandoned: false,
             positionDepart: { x, y },
             positionGrille: { x, y },
+
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [],
         };
     }
 

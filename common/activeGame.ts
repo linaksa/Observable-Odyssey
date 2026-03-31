@@ -38,3 +38,8 @@ export interface IActiveGameWithPlayer {
     activeGame: IActiveGame;
     player: ICharacter;
 }
+
+export interface IPlayerAbandonnedGame {
+    playerName: string;
+    activeGame: IActiveGame;
+}

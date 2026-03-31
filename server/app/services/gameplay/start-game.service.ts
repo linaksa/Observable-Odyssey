@@ -37,6 +37,8 @@ export class StartGameService {
             const tile = spawnTiles.splice(randomIndex, 1)[0];
             player.positionGrille = tile;
             player.positionDepart = tile;
+
+            player.visitedCells.push(`${tile.x},${tile.y}`);
         }
     }
     // Logic to determine the turn order

@@ -12,6 +12,8 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { TestBed } from '@angular/core/testing';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -19,9 +21,7 @@ import { IMessage, INewMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subject } from 'rxjs';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ChatService } from './chat.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from './socket.service';
 
 describe('ChatService', () => {
@@ -162,5 +162,12 @@ function createCharacter(name: string): ICharacter {
         hasAbandoned: false,
         positionDepart: { x: 0, y: 0 },
         positionGrille: { x: 0, y: 0 },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }

@@ -96,5 +96,12 @@ function createCharacter(name: string, avatar: Avatar, attackDiceType: DiceType,
         hasAbandoned: false,
         positionDepart: { x: 0, y: 0 },
         positionGrille: { x: 0, y: 0 },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }

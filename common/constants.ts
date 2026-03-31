@@ -22,7 +22,7 @@ export const SIX_SIDED_DICE_MAX = 6;
 export const FOUR_SIDED_DICE_MAX = 4;
 
 export const POSTURE_BONUS = 2;
-export const ICE_CELL_MALUS = 2;
+export const ICE_CELL_MALUS = -2;
 
 export const TEMPS_PREPA_TOUR = 3000; // 3 secondes
 export const TEMPS_TOUR = 30000; // 30 secondes
@@ -54,3 +54,6 @@ export enum GameSize {
     Mid = 225,
     Large = 400,
 }
+
+export const COMBAT_TURN_FEEDBACK_DURATION_MS = 5000;
+export const HUNDRED_PERCENT = 100;

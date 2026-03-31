@@ -147,6 +147,13 @@ function createActiveGame(): IActiveGame {
                 fightSanctuaryUsed: true,
                 fightSanctuaryTurnsRemaining: 2,
                 fightSanctuaryBonus: 1,
+
+                nCombats: 0,
+                nVictories: 0,
+                nDefeats: 0,
+                totalDamageDealt: 0,
+                totalDamageReceived: 0,
+                visitedCells: [] as string[],
             },
             {
                 name: 'Bob',
@@ -164,6 +171,13 @@ function createActiveGame(): IActiveGame {
                 hasAbandoned: false,
                 positionDepart: { x: 1, y: 0 },
                 positionGrille: { x: 1, y: 0 },
+
+                nCombats: 0,
+                nVictories: 0,
+                nDefeats: 0,
+                totalDamageDealt: 0,
+                totalDamageReceived: 0,
+                visitedCells: [] as string[],
             },
         ],
         currentPlayerIndex: 0,

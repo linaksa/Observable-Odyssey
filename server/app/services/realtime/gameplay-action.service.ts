@@ -18,6 +18,7 @@ import {
     ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
+import { Error } from 'mongoose';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { GameSessionService } from './game-session.service';
@@ -346,7 +347,8 @@ export class GameplayActionService {
         const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-            await this.activeGameService.deleteGameById(gameId);
+
+            //await this.activeGameService.deleteGameById(gameId);
         }
     }
 }
