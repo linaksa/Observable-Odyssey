@@ -7,9 +7,18 @@ import { ToastService } from '@app/services/ui/toast.service';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
+import { SanctuaryChoice } from '@common/info';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IAttackData, IAttackPostureData, IDebugTeleportData, IDebugToggleState, IPlayerMoveData } from '@common/socket-payloads';
+import {
+    IAttackData,
+    IAttackPostureData,
+    IDebugTeleportData,
+    IDebugToggleState,
+    IDoorToggleData,
+    IPlayerMoveData,
+    ISanctuaryInteractionData,
+} from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
@@ -56,7 +65,7 @@ export class ActiveGameService implements OnDestroy {
                 router: this.router,
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
-                setCombatOutcome: (combatOutcome: CombatOutcome) => (this.combatOutcome.set(combatOutcome)),
+                setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
@@ -269,6 +278,39 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove, moveData);
+    }
+
+    toggleDoor(row: number, col: number): void {
+        const player = this.getCurrentPlayer();
+        if (!player || !this.activeGame) {
+            return;
+        }
+
+        this.socket.emit<IDoorToggleData, void>(Namespaces.Game, SocketEvent.ToggleDoor, {
+            gameId: this.activeGame._id,
+            playerId: player.name,
+            position: {
+                x: col,
+                y: row,
+            },
+        });
+    }
+
+    interactSanctuary(row: number, col: number, choice: SanctuaryChoice): void {
+        const player = this.getCurrentPlayer();
+        if (!player || !this.activeGame) {
+            return;
+        }
+
+        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            gameId: this.activeGame._id,
+            playerId: player.name,
+            choice,
+            position: {
+                x: col,
+                y: row,
+            },
+        });
     }
 
     abandonGame(playerName: string): void {

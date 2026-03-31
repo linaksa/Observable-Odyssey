@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Avatar, buildAvatarAssetPath } from '@common/constants';
+import { Avatar } from '@common/constants';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 @Component({
     selector: 'app-avatar-grid',

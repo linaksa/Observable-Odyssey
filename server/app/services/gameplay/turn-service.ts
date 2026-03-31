@@ -7,6 +7,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
+import { SanctuaryService } from './sanctuary-service';
 
 @Service()
 export class TurnService {
@@ -17,6 +18,7 @@ export class TurnService {
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
+        private readonly sanctuaryService: SanctuaryService,
     ) {}
 
     // logic for the 3-second delay before the start of a turn
@@ -26,6 +28,7 @@ export class TurnService {
         if (activeGame.isFinished) return;
 
         activeGame.turnIsInPreparation = true;
+        this.sanctuaryService.onTurnStarted(activeGame);
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
         const player = this.getCurrentPlayer(activeGame);
@@ -110,6 +113,7 @@ export class TurnService {
             return;
         }
 
+        const endingPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         const totalPlayers = activeGame.turnOrder.length;
 
         let nextIndex = activeGame.currentPlayerIndex;
@@ -128,12 +132,18 @@ export class TurnService {
 
         const nextPlayer = activeGame.players.find((p) => p.name === activeGame.turnOrder[nextIndex]);
 
+        if (endingPlayerName) {
+            this.sanctuaryService.onTurnEnded(activeGame, endingPlayerName);
+        }
+
         if (nextPlayer) {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;
             nextPlayer.actionsLeft = 1;
         }
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
+
+        this.socketService.getNamespace(Namespaces.Game).to(gameId).emit(SocketEvent.PlayersUpdated, activeGame.players);
 
         this.startTurn(gameId);
     }

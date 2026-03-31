@@ -2,10 +2,10 @@ import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { AttackPosture } from '@common/attackResult';
 import { CommonModule } from '@angular/common';
 import { ICharacter } from '@common/character';
-import { buildAvatarAssetPath } from '@common/constants';
 
 const COMBAT_DURATION = 10;
 const HUNDRED_PERCENT = 100;

@@ -8,6 +8,7 @@ export const itemSchema = new Schema<IItem>(
         size: { type: Number, required: true },
         itemType: { type: String, required: true },
         active: { type: Boolean },
+        inactiveTurnsRemaining: { type: Number },
         isCarried: { type: Boolean },
     },
     { _id: false },

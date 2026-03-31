@@ -41,6 +41,8 @@ const PLAYER_INDEX_BOB = 1;
 const TELEPORT_ROW = 2;
 const TELEPORT_COL = 3;
 const UNKNOWN_TILE_INDEX = 99;
+const INTERACTION_ROW = 2;
+const INTERACTION_COL = 3;
 
 describe('ActiveGameService', () => {
     let service: ActiveGameService;
@@ -250,6 +252,35 @@ describe('ActiveGameService', () => {
         expect(service.attackMode()).toBeFalse();
     });
 
+    it('should emit door toggle requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
+        service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
+
+        service.toggleDoor(INTERACTION_ROW, INTERACTION_COL);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.ToggleDoor, {
+            gameId: service.activeGame._id,
+            playerId: 'Alice',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
+        });
+    });
+
+    it('should emit sanctuary interaction requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
+        service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
+
+        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, 'double');
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            gameId: service.activeGame._id,
+            playerId: 'Alice',
+            choice: 'double',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
+        });
+    });
+
     it('should toggle attack mode', () => {
         expect(service.attackMode()).toBeFalse();
         service.toggleAttackMode();
@@ -363,6 +394,7 @@ describe('ActiveGameService', () => {
         service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
         service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
         service.attackPlayer('Alice');
+        service.toggleDoor(TELEPORT_ROW, TELEPORT_COL);
         service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
 
