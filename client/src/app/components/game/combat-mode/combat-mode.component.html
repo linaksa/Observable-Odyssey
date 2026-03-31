@@ -3,10 +3,18 @@
 
         <div class="flex items-center justify-between bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3">
             <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
-            <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
-                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                <span
-                    class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center"> {{ turnService.turnTimeLeftSeconds }}</span>
+            <div class="flex items-center gap-2">
+                @if (this.activeGameService.activeGame.isDebugMode) {
+                    <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
+                        <span class="text-[12px] text-[#000] font-bold uppercase tracking-wider">DEBUG MODE</span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#000] animate-pulse"></span>
+                    </div>
+                }
+                <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span
+                        class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center"> {{ turnService.turnTimeLeftSeconds }}</span>
+                </div>
             </div>
         </div>
 
@@ -315,9 +323,9 @@
 
                 <button
                     (click)="selectAction(attackPosture.Defensive)"
-                    [disabled]="confirmed"
+                    [disabled]="confirmed || !!activeGameService.roundOutcome"
                     class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
-                    [ngClass]="confirmed
+                    [ngClass]="(confirmed || !!activeGameService.roundOutcome)
                         ? (selectedMode === attackPosture.Defensive
                             ? 'bg-[#1e4a8a] border-[#6aadff] text-white opacity-60 cursor-not-allowed'
                             : 'bg-[#111e35] border-[#1e3060] text-[#3a5580] opacity-40 cursor-not-allowed')
@@ -336,9 +344,9 @@
 
                 <button
                     (click)="selectAction(attackPosture.Offensive)"
-                    [disabled]="confirmed"
+                    [disabled]="confirmed || !!activeGameService.roundOutcome"
                     class="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border-2 select-none transition-all duration-150 active:scale-95"
-                    [ngClass]="confirmed
+                    [ngClass]="(confirmed || !!activeGameService.roundOutcome)
                         ? (selectedMode === attackPosture.Offensive
                             ? 'bg-[#7a2e08] border-[#ff8833] text-white opacity-60 cursor-not-allowed'
                             : 'bg-[#1a0d00] border-[#3a1e00] text-[#6b3d10] opacity-40 cursor-not-allowed')
@@ -355,7 +363,7 @@
                     <span class="text-[10px] font-semibold opacity-70">+ATK & -DEF</span>
                 </button>
 
-                @if (selectedMode !== null && !confirmed) {
+                @if (selectedMode !== null && !confirmed && !activeGameService.roundOutcome) {
                     <button
                         (click)="confirmAction()"
                         class="col-span-2 w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"

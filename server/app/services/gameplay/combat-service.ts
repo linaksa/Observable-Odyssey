@@ -226,15 +226,26 @@ export class CombatService {
         const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
 
         const baseAttackPoints = character.attackPoints;
-        const attackDiceBonus = this.rollDice(character.attackBonusDiceType);
+        let attackDiceBonus: number;
+        if (!activeGame.isDebugMode) {
+            attackDiceBonus = this.rollDice(character.attackBonusDiceType);
+        } else {
+            attackDiceBonus = this.getMaxDice(character.attackBonusDiceType, character.name, activeGame);
+        }
+
         const attackPostureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
         const attackIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
         const baseDefensePoints = character.defensePoints;
-        const defenseDiceBonus = this.rollDice(character.defenseBonusDiceType);
+
         const defensePostureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
         const defenseIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
-
+        let defenseDiceBonus: number;
+        if (!activeGame.isDebugMode) {
+            defenseDiceBonus = this.rollDice(character.defenseBonusDiceType);
+        } else {
+            defenseDiceBonus = this.getMaxDice(character.defenseBonusDiceType, character.name, activeGame);
+        }
         const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + attackIceMalus, 0);
         const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus + defenseIceMalus, 0);
 
@@ -252,4 +263,16 @@ export class CombatService {
             totalDefensePoints,
         };
     }
+
+    private  getMaxDice(dice: DiceType, name: string, activeGame: IActiveGame): number {
+        let attackDiceBonus: number;
+        if (activeGame.currentAttack.attacker === name) {
+            attackDiceBonus = dice === DiceType.SixSided ? SIX_SIDED_DICE_MAX : FOUR_SIDED_DICE_MAX;
+        } else {
+            attackDiceBonus = 1;
+        }
+
+        return attackDiceBonus;
+    }
+
 }
