@@ -88,11 +88,7 @@ export class ActiveGameService implements OnDestroy {
     }
 
     applyDebugModeState(data: IDebugToggleState) {
-        if (!this.activeGame) {
-            return;
-        }
-
-        if (data.playerName !== this.activeGame.organizerName) {
+        if (!this.activeGame || data.playerName !== this.activeGame.organizerName) {
             return;
         }
 
@@ -151,12 +147,7 @@ export class ActiveGameService implements OnDestroy {
 
     getCurrentPlayer(): ICharacter | undefined {
         const currentPlayerName = this.activeGame?.turnOrder[this.currentPlayer()];
-
-        if (!currentPlayerName) {
-            return undefined;
-        }
-
-        return this.getPlayerByName(currentPlayerName);
+        return currentPlayerName ? this.getPlayerByName(currentPlayerName) : undefined;
     }
 
     getIndex(row: number, column: number, totalColumns: number): number {
@@ -167,7 +158,6 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerKick, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -178,7 +168,6 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -292,7 +281,6 @@ export class ActiveGameService implements OnDestroy {
         if (!this.activeGame) {
             return;
         }
-
         this.socket.emit(Namespaces.Game, SocketEvent.PlayerAbandon, {
             gameId: this.activeGame._id,
             playerId: playerName,
@@ -382,11 +370,7 @@ export class ActiveGameService implements OnDestroy {
 
     closeFlagActionRequestIfExpired(currentTurnPlayerName: string): void {
         const pendingRequest = this.pendingFlagRequest();
-        if (!pendingRequest) {
-            return;
-        }
-
-        if (pendingRequest.data.currentPlayerName === currentTurnPlayerName) {
+        if (!pendingRequest || pendingRequest.data.currentPlayerName === currentTurnPlayerName) {
             return;
         }
 
@@ -425,13 +409,11 @@ export class ActiveGameService implements OnDestroy {
         if (currentAttack && currentAttack?.defender === currentPlayerName && currentAttack.defenderPosture) {
             return;
         }
-
         const playerPosture: IAttackPostureData = {
             gameId: this.activeGame._id,
             playerName: this.localPlayer.getLocalPlayer()?.name ?? '',
             posture,
         };
-
         this.socket.emit<IAttackPostureData, void>(Namespaces.Game, SocketEvent.ChooseAttackPosture, playerPosture);
     }
 }
