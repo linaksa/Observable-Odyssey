@@ -44,7 +44,7 @@ describe('PlayerNameInputComponent', () => {
         const input = (fixture.nativeElement as HTMLElement).querySelector('input') as HTMLInputElement;
 
         expect(input.value).toBe('Alice');
-        expect(input.getAttribute('maxlength')).toBe('9');
+        expect(input.getAttribute('maxlength')).toBe('20');
     });
 
     it('should update form control when typing in the input', () => {
