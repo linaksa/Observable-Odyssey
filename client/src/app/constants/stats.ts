@@ -1,10 +1,10 @@
 export enum StatOrderArgs {
-    nCombat = 0,
-    nVictories = 1,
-    nDefeats = 2,
-    nDamageDealt = 3,
-    nDamageTaken = 4,
-    nVisitedCells = 5,
+    NCombats = 0,
+    NVictories = 1,
+    NDefeats = 2,
+    NDamageDealt = 3,
+    NDamageTaken = 4,
+    NVisitedCells = 5,
 }
 
 export enum OrderDirection {

@@ -24,8 +24,8 @@ import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
-import { SocketEvent } from '@common/socket-events';
 import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
+import { SocketEvent } from '@common/socket-events';
 import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 
@@ -271,6 +271,13 @@ function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVE
         hasAbandoned: false,
         positionDepart: { x, y },
         positionGrille: { x, y },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }
 

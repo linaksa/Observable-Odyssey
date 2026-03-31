@@ -29,6 +29,7 @@ describe('GameEndedComponent', () => {
         routerSpy.navigate.and.resolveTo(true);
         activeGameServiceStub = {
             activeGame: {
+                _id: 'active-game-1',
                 winner: 'Alice',
                 isFinished: true,
             } as unknown as IActiveGame,
@@ -78,22 +79,12 @@ describe('GameEndedComponent', () => {
         expect(component.isFinished).toBeTrue();
     });
 
-    it('should navigate home immediately when navigateHome is called', () => {
-        spyOn(window, 'setTimeout').and.returnValue(0);
-        fixture = TestBed.createComponent(GameEndedComponent);
-        component = fixture.componentInstance;
-
-        component.navigateHome();
-
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
-    });
-
     it('should schedule automatic redirect after end-screen delay', fakeAsync(() => {
         fixture = TestBed.createComponent(GameEndedComponent);
         component = fixture.componentInstance;
         tick(TEMPS_ECRAN_FIN_PARTIE);
 
         expect(component).toBeTruthy();
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+        expect(routerSpy.navigate).toHaveBeenCalledWith([`/end/${activeGameServiceStub.activeGame._id}`]);
     }));
 });

@@ -231,7 +231,6 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
         context.socket.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe((roundCombatOutcome) => {
             context.setRoundOutcome(roundCombatOutcome);
-            console.log(roundCombatOutcome);
         }),
 
         context.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {

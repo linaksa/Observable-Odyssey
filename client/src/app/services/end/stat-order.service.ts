@@ -16,20 +16,17 @@ export class StatOrderService {
             this.direction = OrderDirection.Descending;
         }
 
-        console.log('players before sorting:', players);
-        console.log(`Ordering players by ${StatOrderArgs[orderArg]} in ${OrderDirection[this.direction]} order.`);
-
         this.currentOrderArg = orderArg;
 
         players = players.sort((a, b) => {
             switch (orderArg) {
-                case StatOrderArgs.nCombat:
+                case StatOrderArgs.NCombats:
                     return b.nCombats - a.nCombats;
-                case StatOrderArgs.nDamageDealt:
+                case StatOrderArgs.NDamageDealt:
                     return b.totalDamageDealt - a.totalDamageDealt;
-                case StatOrderArgs.nDamageTaken:
+                case StatOrderArgs.NDamageTaken:
                     return b.totalDamageReceived - a.totalDamageReceived;
-                case StatOrderArgs.nVisitedCells:
+                case StatOrderArgs.NVisitedCells:
                     return b.visitedCells.length - a.visitedCells.length;
                 default:
                     return 0;
