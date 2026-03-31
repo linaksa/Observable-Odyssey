@@ -32,6 +32,13 @@ export class ActiveGameService {
             positionGrille: { x: 0, y: 0 },
             positionDepart: { x: 0, y: 0 },
             hasAbandoned: false,
+
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [] as string[],
             ...sanctuaryState,
         };
 
@@ -48,6 +55,7 @@ export class ActiveGameService {
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
             turnIsInPreparation: false,
         };
+
         return await activeGameModel.create(newActiveGame);
     }
 
@@ -87,6 +95,14 @@ export class ActiveGameService {
             positionDepart: { x: 0, y: 0 },
             positionGrille: { x: 0, y: 0 },
             virtualPlayerProfile: characterForm.virtualPlayerProfile ?? undefined,
+
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [],
+
             ...sanctuaryState,
         };
         activeGameToUpdate.players.push(newPlayerCharacter);

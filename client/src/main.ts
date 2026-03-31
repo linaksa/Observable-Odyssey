@@ -12,6 +12,7 @@ import { AppComponent } from '@app/pages/core/app/app.component';
 import { ErrorPageComponent } from '@app/pages/core/error-page/error-page.component';
 import { MainPageComponent } from '@app/pages/core/main-page/main-page.component';
 import { FormPageComponent } from '@app/pages/gameplay/form-page/form-page.component';
+import { GameEndComponent } from '@app/pages/gameplay/game-end/game-end.component';
 import { GamePageComponent } from '@app/pages/gameplay/game-page/game-page.component';
 import { CreatePageComponent } from '@app/pages/lobby/create-page/create-page.component';
 import { JoinFormPageComponent } from '@app/pages/lobby/join-form-page/join-form-page.component';
@@ -34,6 +35,7 @@ const routes: Routes = [
     { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
     { path: 'join', component: JoinPageComponent },
     { path: 'join/:activeGameId', component: JoinFormPageComponent },
+    { path: 'end/:activeGameId', component: GameEndComponent },
     { path: 'error', component: ErrorPageComponent },
     { path: '**', redirectTo: '/home' },
 ];

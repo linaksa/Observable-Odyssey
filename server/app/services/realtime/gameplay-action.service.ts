@@ -15,6 +15,7 @@ import {
     ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
+import { Error } from 'mongoose';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -33,6 +34,7 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
+            console.log('error', error);
             socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
         }
     }

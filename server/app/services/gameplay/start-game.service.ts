@@ -1,8 +1,8 @@
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, Position } from '@common/character';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
 
 @Service()
 export class StartGameService {
@@ -22,6 +22,8 @@ export class StartGameService {
             const tile = spawnTiles.splice(randomIndex, 1)[0];
             player.positionGrille = tile;
             player.positionDepart = tile;
+
+            player.visitedCells.push(`${tile.x},${tile.y}`);
         }
     }
     // Logic to determine the turn order
