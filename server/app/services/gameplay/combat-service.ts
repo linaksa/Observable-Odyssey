@@ -2,7 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
-import { AttackPosture, CombatOutcome } from '@common/attackResult';
+import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { DiceType, FOUR_SIDED_DICE_MAX, ICE_CELL_MALUS, POSTURE_BONUS, SIX_SIDED_DICE_MAX, TEMPS_COMBAT } from '@common/constants';
@@ -78,17 +78,14 @@ export class CombatService {
         const attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);
         const defender = currentActiveGame.players.find((p) => p.name === currentAttack.defender);
 
-        const attackerDamage = this.computeAttackDamage(currentActiveGame, attacker, currentAttack.attackerPosture);
-        const defenderDamage = this.computeAttackDamage(currentActiveGame, defender, currentAttack.defenderPosture);
+        const attackerStats = this.getAttackStatsForPlayer(currentActiveGame, attacker, currentAttack.attackerPosture);
+        const defenderStats = this.getAttackStatsForPlayer(currentActiveGame, defender, currentAttack.defenderPosture);
 
-        const attackerDefensePoints = this.computeDefensePoints(currentActiveGame, attacker, currentAttack.attackerPosture);
-        const defenderDefensePoints = this.computeDefensePoints(currentActiveGame, defender, currentAttack.defenderPosture);
+        const attackerNetReceivedDamage = Math.max(defenderStats.totalAttackPoints - attackerStats.totalDefensePoints, 0);
+        const defenderNetReceivedDamage = Math.max(attackerStats.totalAttackPoints - defenderStats.totalDefensePoints, 0);
 
-        const attackerNetDamage = Math.max(defenderDamage - attackerDefensePoints, 0);
-        const defenderNetDamage = Math.max(attackerDamage - defenderDefensePoints, 0);
-
-        attacker.currentHealth = Math.max(attacker.currentHealth - attackerNetDamage, 0);
-        defender.currentHealth = Math.max(defender.currentHealth - defenderNetDamage, 0);
+        attacker.currentHealth = Math.max(attacker.currentHealth - attackerNetReceivedDamage, 0);
+        defender.currentHealth = Math.max(defender.currentHealth - defenderNetReceivedDamage, 0);
 
         currentActiveGame.currentAttack.turnCount++;
         currentActiveGame.currentAttack.attackerPosture = null;
@@ -97,15 +94,28 @@ export class CombatService {
         const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         const namespace = this.socketService.getNamespace(Namespaces.Game);
 
-        if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
-            const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
-            namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
-            return true;
-        }
+        const turnResult: CombatTurnOutcome = {
+            updatedActiveGame: updatedGame,
+            attackerStats,
+            defenderStats,
+        };
+        namespace.to(activeGameId).emit(SocketEvent.CombatTurnApplied, turnResult);
 
-        namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
-        this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
-        return false;
+        const combatIsDone = attacker.currentHealth === 0 || defender.currentHealth === 0;
+
+        return new Promise((resolve) => {
+            setTimeout(async () => {
+                if (combatIsDone) {
+                    const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
+                    namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
+                    resolve(true);
+                }
+
+                namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
+                this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
+                resolve(false);
+            }, 5000);
+        });
     }
 
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
@@ -192,28 +202,39 @@ export class CombatService {
         return spawn;
     }
 
-    private computeAttackDamage(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): number {
-        const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
-
-        const diceBonus = this.rollDice(character.attackBonusDiceType);
-        const postureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
-        const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
-
-        return Math.max(character.attackPoints + diceBonus + postureBonus - iceMalus, 0);
-    }
-
-    private computeDefensePoints(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): number {
-        const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
-
-        const diceBonus = this.rollDice(character.defenseBonusDiceType);
-        const postureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
-        const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
-
-        return Math.max(diceBonus + postureBonus - iceMalus, 0);
-    }
-
     private rollDice(diceType: DiceType): number {
         const interval = diceType === DiceType.SixSided ? SIX_SIDED_DICE_MAX : FOUR_SIDED_DICE_MAX;
         return Math.floor(Math.random() * interval) + 1;
+    }
+
+    private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {
+        const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
+
+        const baseAttackPoints = character.attackPoints;
+        const attackDiceBonus = this.rollDice(character.attackBonusDiceType);
+        const postureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
+        const iceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
+
+        const baseDefensePoints = character.defensePoints;
+        const defenseDiceBonus = this.rollDice(character.defenseBonusDiceType);
+        const defensePostureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
+        const defenseIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
+
+        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + postureBonus - iceMalus, 0);
+        const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus - defenseIceMalus, 0);
+
+        return {
+            baseAttackPoints,
+            attackDiceBonus,
+            postureAttackBonus: postureBonus,
+            attackIceMalus: iceMalus,
+            totalAttackPoints,
+
+            baseDefensePoints,
+            defenseDiceBonus,
+            postureDefenseBonus: defensePostureBonus,
+            defenseIceMalus: defenseIceMalus,
+            totalDefensePoints,
+        };
     }
 }
