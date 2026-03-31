@@ -137,6 +137,20 @@ describe('GameGridComponent', () => {
         expect(emittedEvent.cellType).toBe(CellType.Empty);
     });
 
+    it('should emit cell click events', () => {
+        const cellClickSpy = jasmine.createSpy('cellClick');
+        component.cellClick.subscribe(cellClickSpy);
+
+        const cell = fixture.nativeElement.querySelector('[data-testid="game-grid-cell"]') as HTMLElement;
+        cell.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+        expect(cellClickSpy).toHaveBeenCalled();
+        const emittedEvent = cellClickSpy.calls.mostRecent().args[0] as GameGridCellEvent;
+        expect(emittedEvent.rowIndex).toBe(0);
+        expect(emittedEvent.colIndex).toBe(0);
+        expect(emittedEvent.cellType).toBe(CellType.Empty);
+    });
+
     it('should render players when provided and emit player clicks', () => {
         const player = createCharacter('Alice');
         const clickSpy = jasmine.createSpy('playerClick');
@@ -189,6 +203,31 @@ describe('GameGridComponent', () => {
         expect(highlight.className).toContain('bg-blue-600/30');
         expect(highlight.className).toContain('z-20');
         expect(highlight.previousElementSibling).toBe(itemBackground);
+    });
+
+    it('should apply inactive styling to sanctuary items', () => {
+        const inactiveSanctuary: IItem = {
+            itemType: ItemType.LifeSanctuary,
+            x: 0,
+            y: 0,
+            size: SMALL_ITEM_SIZE,
+            active: false,
+        };
+
+        expect(component.isInactiveSanctuary(inactiveSanctuary)).toBeTrue();
+        expect(component.itemBackgroundClass(inactiveSanctuary)).toContain('opacity-50');
+    });
+
+    it('should not mark non-sanctuary items as inactive', () => {
+        const flagItem: IItem = {
+            itemType: ItemType.Flag,
+            x: 0,
+            y: 1,
+            size: SMALL_ITEM_SIZE,
+        };
+
+        expect(component.isInactiveSanctuary(flagItem)).toBeFalse();
+        expect(component.itemBackgroundClass(flagItem)).not.toContain('opacity-50');
     });
 });
 

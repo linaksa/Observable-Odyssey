@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+// recheck this file after refactor to see if some functions can be moved to other services to take out some lines
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService } from '@app/services/admin/game.service';
@@ -7,6 +9,7 @@ import { ToastService } from '@app/services/ui/toast.service';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
+import { SanctuaryChoice } from '@common/info';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import {
@@ -14,9 +17,11 @@ import {
     IAttackPostureData,
     IDebugTeleportData,
     IDebugToggleState,
+    IDoorToggleData,
     IFlagActionData,
     IFlagDecisionData,
     IPlayerMoveData,
+    ISanctuaryInteractionData,
 } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -275,6 +280,39 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.socket.emit<IPlayerMoveData, void>('game', SocketEvent.PlayerMove, moveData);
+    }
+
+    toggleDoor(row: number, col: number): void {
+        const player = this.getCurrentPlayer();
+        if (!player || !this.activeGame) {
+            return;
+        }
+
+        this.socket.emit<IDoorToggleData, void>(Namespaces.Game, SocketEvent.ToggleDoor, {
+            gameId: this.activeGame._id,
+            playerId: player.name,
+            position: {
+                x: col,
+                y: row,
+            },
+        });
+    }
+
+    interactSanctuary(row: number, col: number, choice: SanctuaryChoice): void {
+        const player = this.getCurrentPlayer();
+        if (!player || !this.activeGame) {
+            return;
+        }
+
+        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            gameId: this.activeGame._id,
+            playerId: player.name,
+            choice,
+            position: {
+                x: col,
+                y: row,
+            },
+        });
     }
 
     abandonGame(playerName: string): void {

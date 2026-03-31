@@ -14,6 +14,7 @@ export interface IItem {
     size: number;
     itemType: ItemType;
     active?: boolean;
+    inactiveTurnsRemaining?: number;
     isCarried?: boolean;
 }
 

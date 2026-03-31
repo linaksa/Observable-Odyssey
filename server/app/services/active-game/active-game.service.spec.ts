@@ -139,6 +139,9 @@ describe('ActiveGameService', () => {
             await activeGameService.createActiveGame('dummyGameId', dummyCharacterForm);
 
             expect(activeGameCreateStub.calledOnce).to.equal(true);
+            expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryUsed).to.equal(false);
+            expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryTurnsRemaining).to.equal(0);
+            expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryBonus).to.equal(0);
         });
     });
 
@@ -266,6 +269,9 @@ describe('ActiveGameService', () => {
 
         expect(addedPlayer.name).to.equal(testName);
         expect(addedPlayer.avatar).to.equal(avatar);
+        expect(addedPlayer.fightSanctuaryUsed).to.equal(false);
+        expect(addedPlayer.fightSanctuaryTurnsRemaining).to.equal(0);
+        expect(addedPlayer.fightSanctuaryBonus).to.equal(0);
     });
 
     describe('test fetching an IActiveGame by ID', () => {

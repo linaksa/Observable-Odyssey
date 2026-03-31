@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal, output } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
-import { Avatar, buildAvatarAssetPath } from '@common/constants';
+import { Avatar } from '@common/constants';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 @Component({
     selector: 'app-wait-player-list',

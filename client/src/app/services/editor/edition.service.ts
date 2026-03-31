@@ -27,7 +27,7 @@ export class BoardEditorService {
     private readonly selectedMaterialState = signal<CellType>(CellType.Empty);
     private readonly selectedObjectState = signal<ItemType | null>(null);
 
-    availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.OpenDoor];
+    availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.ClosedDoor];
     readonly cellTypesInfo = TILE_INFO_BY_TYPE;
     readonly itemTypesInfo = ITEM_INFO_BY_TYPE;
 
@@ -149,12 +149,23 @@ export class BoardEditorService {
         if (this.activeTool !== ToolOption.Placement) return;
 
         const selectedMaterial = this.selectedMaterial;
-        const nextGameCells = this.cloneGameCells();
+        const updatedGameCells = this.cloneGameCells();
 
-        if (selectedMaterial === CellType.OpenDoor) {
-            this.eraseObject(rowIndex, colIndex);
-            nextGameCells[rowIndex][colIndex] = this.gameCells[rowIndex][colIndex] === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
-            this.gameCells = nextGameCells;
+        if (this.isDoorMaterial(selectedMaterial)) {
+            const currentCell = this.gameCells[rowIndex][colIndex];
+
+            if (this.isDoorCell(currentCell)) {
+                updatedGameCells[rowIndex][colIndex] = this.toggleDoorState(currentCell);
+                this.gameCells = updatedGameCells;
+                return;
+            }
+
+            if (this.isCellOccupied(rowIndex, colIndex)) {
+                this.eraseObject(rowIndex, colIndex);
+            }
+
+            updatedGameCells[rowIndex][colIndex] = CellType.ClosedDoor;
+            this.gameCells = updatedGameCells;
             return;
         }
 
@@ -162,8 +173,8 @@ export class BoardEditorService {
             this.eraseObject(rowIndex, colIndex);
         }
 
-        nextGameCells[rowIndex][colIndex] = selectedMaterial;
-        this.gameCells = nextGameCells;
+        updatedGameCells[rowIndex][colIndex] = selectedMaterial;
+        this.gameCells = updatedGameCells;
     }
 
     applyObject(rowIndex: number, colIndex: number): void {
@@ -215,10 +226,7 @@ export class BoardEditorService {
 
         if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
 
-        this.objects = [
-            ...this.objects,
-            { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE },
-        ];
+        this.objects = [...this.objects, { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE }];
     }
 
     eraseTile(row: number, col: number): void {
@@ -256,5 +264,17 @@ export class BoardEditorService {
 
     private cloneGameCells(): CellType[][] {
         return this.gameCells.map((row) => [...row]);
+    }
+
+    private isDoorMaterial(material: CellType): boolean {
+        return material === CellType.OpenDoor || material === CellType.ClosedDoor;
+    }
+
+    private isDoorCell(cellType: CellType): boolean {
+        return this.isDoorMaterial(cellType);
+    }
+
+    private toggleDoorState(currentCell: CellType): CellType {
+        return currentCell === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
     }
 }

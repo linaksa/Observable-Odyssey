@@ -70,6 +70,18 @@ export const characterSchema = new Schema<ICharacter>(
             enum: Object.values(Team),
             default: null,
         },
+        fightSanctuaryUsed: {
+            type: Boolean,
+            default: false,
+        },
+        fightSanctuaryTurnsRemaining: {
+            type: Number,
+            default: 0,
+        },
+        fightSanctuaryBonus: {
+            type: Number,
+            default: 0,
+        },
         virtualPlayerProfile: {
             type: String,
             required: false,

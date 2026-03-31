@@ -41,6 +41,8 @@ const PLAYER_INDEX_BOB = 1;
 const TELEPORT_ROW = 2;
 const TELEPORT_COL = 3;
 const UNKNOWN_TILE_INDEX = 99;
+const INTERACTION_ROW = 2;
+const INTERACTION_COL = 3;
 
 describe('ActiveGameService', () => {
     let service: ActiveGameService;
@@ -258,289 +260,319 @@ describe('ActiveGameService', () => {
         expect(service.actionMode()).toBeFalse();
     });
 
-    it('should synchronize turn order and index when players are updated', () => {
-        const alice = createCharacter('Alice');
-        const bob = createCharacter('Bob');
-        const carol = createCharacter('Carol');
-        service.activeGame = createActiveGame([alice, bob, carol], 'Carol');
-        service.activeGame.currentPlayerIndex = 2;
-        service.currentPlayer.set(2);
-
-        service.updatePlayers([alice, bob]);
-
-        expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
-        expect(service.activeGame.currentPlayerIndex).toBe(PLAYER_INDEX_BOB);
-        expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
-
-        service.updatePlayers([]);
-
-        expect(service.activeGame.turnOrder).toEqual([]);
-        expect(service.activeGame.currentPlayerIndex).toBe(0);
-        expect(service.currentPlayer()).toBe(0);
-    });
-
-    it('should keep current turn index when current player remains in updated turn order', () => {
-        const alice = createCharacter('Alice');
-        const bob = createCharacter('Bob');
-        const carol = createCharacter('Carol');
-        service.activeGame = createActiveGame([alice, bob, carol], 'Bob');
-        service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
-        service.activeGame.currentPlayerIndex = 1;
-        service.currentPlayer.set(1);
-
-        service.updatePlayers([alice, bob]);
-
-        expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
-        expect(service.activeGame.currentPlayerIndex).toBe(1);
-        expect(service.currentPlayer()).toBe(1);
-    });
-
-    it('should do nothing when updating players without an active game', () => {
-        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
-
-        expect(() => service.updatePlayers([createCharacter('Alice')])).not.toThrow();
-    });
-
-    it('should fallback to bounded index when current turn player leaves turn order', () => {
-        const alice = createCharacter('Alice');
-        const bob = createCharacter('Bob');
-        const carol = createCharacter('Carol');
-        service.activeGame = createActiveGame([alice, bob, carol], 'Carol');
-        service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
-        service.activeGame.currentPlayerIndex = 2;
-        service.currentPlayer.set(2);
-
-        service.updatePlayers([alice, bob]);
-
-        expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
-        expect(service.activeGame.currentPlayerIndex).toBe(1);
-        expect(service.currentPlayer()).toBe(1);
-    });
-
-    it('should guard private turn-order sync when activeGame is missing', () => {
-        Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
-
-        expect(() => (service as unknown as { syncTurnOrderWithPlayers: () => void }).syncTurnOrderWithPlayers()).not.toThrow();
-    });
-
-    it('should compute reachable tiles based on movement range', () => {
-        service.activeGame = createActiveGame([createCharacter('Alice', 0, 0, PLAYER_INDEX_BOB)], 'Alice');
+    it('should emit door toggle requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
         service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
 
-        const graph: [number, number][][] = [
-            [
-                [PLAYER_INDEX_BOB, PLAYER_INDEX_BOB],
-                [2, PLAYER_INDEX_BOB],
-            ],
-            [
-                [0, PLAYER_INDEX_BOB],
-                [LAST_GRAPH_NODE_INDEX, PLAYER_INDEX_BOB],
-            ],
-            [
-                [0, PLAYER_INDEX_BOB],
-                [LAST_GRAPH_NODE_INDEX, PLAYER_INDEX_BOB],
-            ],
-            [
-                [PLAYER_INDEX_BOB, PLAYER_INDEX_BOB],
-                [2, PLAYER_INDEX_BOB],
-            ],
-        ];
+        service.toggleDoor(INTERACTION_ROW, INTERACTION_COL);
 
-        const previousReachableTiles = service.reachableTiles;
-        service.updateMovementRange(2, graph);
-
-        expect(service.reachableTiles).not.toBe(previousReachableTiles);
-        expect([...service.reachableTiles].sort((a, b) => a - b)).toEqual([0, PLAYER_INDEX_BOB, 2]);
-    });
-
-    // Edge case: When movement or attack preconditions fail, the service should guard and avoid emitting invalid actions.
-    it('should guard movement, movement range, attack and teleport edge cases', () => {
-        service.reachableTiles = new Set([UNKNOWN_TILE_INDEX]);
-        service.updateMovementRange(0, []);
-        expect([...service.reachableTiles]).toEqual([UNKNOWN_TILE_INDEX]);
-
-        spyOn(service, 'getCurrentPlayer').and.returnValue(undefined);
-        service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
-        service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
-        service.actionOnPlayer('Alice');
-        service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
-        expect(socketServiceSpy.emit).not.toHaveBeenCalled();
-
-        (service.getCurrentPlayer as jasmine.Spy).and.returnValue(createCharacter('Alice'));
-        service.actionOnPlayer('Ghost');
-        expect(socketServiceSpy.emit).not.toHaveBeenCalled();
-
-        service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.DebugTeleport, {
-            gameId: service.activeGame._id,
-            playerName: 'Alice',
-            target: { x: TELEPORT_COL, y: TELEPORT_ROW },
-        });
-    });
-
-    it('should remove kicked local player and redirect to home', () => {
-        const alice = createCharacter('Alice');
-        const bob = createCharacter('Bob');
-        localPlayerServiceSpy.getLocalPlayer.and.returnValue(alice);
-        service.activeGame = createActiveGame([alice, bob], 'Alice');
-
-        getEventStream<{ playerId: string }>(SocketEvent.PlayerKicked).next({ playerId: 'Alice' });
-
-        expect(service.activeGame.players.map((player) => player.name)).toEqual(['Bob']);
-        expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
-        expect(toastServiceSpy.show).toHaveBeenCalledWith('Vous avez été expulsé de la partie');
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
-    });
-
-    it('should emit socket wrappers for kick, leave waiting room and abandon', () => {
-        service.kickPlayer('Bob');
-        service.leaveWaitingRoom('Bob');
-        service.abandonGame('Alice');
-
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.PlayerKick, {
-            gameId: service.activeGame._id,
-            playerId: 'Bob',
-        });
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
-            gameId: service.activeGame._id,
-            playerId: 'Bob',
-        });
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.PlayerAbandon, {
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.ToggleDoor, {
             gameId: service.activeGame._id,
             playerId: 'Alice',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
         });
     });
 
-    it('should send unload request and cleanup every subscription', () => {
-        const fetchSpy = spyOn(window, 'fetch').and.returnValue(Promise.resolve({ ok: true } as Response));
-        service.leaveActiveGameOnUnload('Alice', 'active-game-1');
-        expect(fetchSpy).toHaveBeenCalledWith(
-            `${environment.apiUrl}/activeGame/leave`,
-            jasmine.objectContaining({ method: 'PATCH', keepalive: true }),
-        );
+    it('should emit sanctuary interaction requests for the current player', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice', 1, 1)], 'Alice');
+        service.currentPlayer.set(0);
+        socketServiceSpy.emit.calls.reset();
 
-        Object.assign(service as unknown as Record<string, unknown>, {
-            socketSubscriptions: [
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-                createUnsubscribeSpy(),
-            ],
-            setActiveGameSubscription: createUnsubscribeSpy(),
+        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, 'double');
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            gameId: service.activeGame._id,
+            playerId: 'Alice',
+            choice: 'double',
+            position: { x: INTERACTION_COL, y: INTERACTION_ROW },
         });
 
-        service.ngOnDestroy();
+        it('should synchronize turn order and index when players are updated', () => {
+            const alice = createCharacter('Alice');
+            const bob = createCharacter('Bob');
+            const carol = createCharacter('Carol');
+            service.activeGame = createActiveGame([alice, bob, carol], 'Carol');
+            service.activeGame.currentPlayerIndex = 2;
+            service.currentPlayer.set(2);
 
-        const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy } | { unsubscribe?: jasmine.Spy }[]>;
-        for (const subscription of subscriptions.socketSubscriptions as { unsubscribe?: jasmine.Spy }[]) {
-            expect(subscription.unsubscribe).toHaveBeenCalled();
-        }
-        expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
+            service.updatePlayers([alice, bob]);
+
+            expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
+            expect(service.activeGame.currentPlayerIndex).toBe(PLAYER_INDEX_BOB);
+            expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
+
+            service.updatePlayers([]);
+
+            expect(service.activeGame.turnOrder).toEqual([]);
+            expect(service.activeGame.currentPlayerIndex).toBe(0);
+            expect(service.currentPlayer()).toBe(0);
+        });
+
+        it('should keep current turn index when current player remains in updated turn order', () => {
+            const alice = createCharacter('Alice');
+            const bob = createCharacter('Bob');
+            const carol = createCharacter('Carol');
+            service.activeGame = createActiveGame([alice, bob, carol], 'Bob');
+            service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
+            service.activeGame.currentPlayerIndex = 1;
+            service.currentPlayer.set(1);
+
+            service.updatePlayers([alice, bob]);
+
+            expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
+            expect(service.activeGame.currentPlayerIndex).toBe(1);
+            expect(service.currentPlayer()).toBe(1);
+        });
+
+        it('should do nothing when updating players without an active game', () => {
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+            expect(() => service.updatePlayers([createCharacter('Alice')])).not.toThrow();
+        });
+
+        it('should fallback to bounded index when current turn player leaves turn order', () => {
+            const alice = createCharacter('Alice');
+            const bob = createCharacter('Bob');
+            const carol = createCharacter('Carol');
+            service.activeGame = createActiveGame([alice, bob, carol], 'Carol');
+            service.activeGame.turnOrder = ['Alice', 'Bob', 'Carol'];
+            service.activeGame.currentPlayerIndex = 2;
+            service.currentPlayer.set(2);
+
+            service.updatePlayers([alice, bob]);
+
+            expect(service.activeGame.turnOrder).toEqual(['Alice', 'Bob']);
+            expect(service.activeGame.currentPlayerIndex).toBe(1);
+            expect(service.currentPlayer()).toBe(1);
+        });
+
+        it('should guard private turn-order sync when activeGame is missing', () => {
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+            expect(() => (service as unknown as { syncTurnOrderWithPlayers: () => void }).syncTurnOrderWithPlayers()).not.toThrow();
+        });
+
+        it('should compute reachable tiles based on movement range', () => {
+            service.activeGame = createActiveGame([createCharacter('Alice', 0, 0, PLAYER_INDEX_BOB)], 'Alice');
+            service.currentPlayer.set(0);
+
+            const graph: [number, number][][] = [
+                [
+                    [PLAYER_INDEX_BOB, PLAYER_INDEX_BOB],
+                    [2, PLAYER_INDEX_BOB],
+                ],
+                [
+                    [0, PLAYER_INDEX_BOB],
+                    [LAST_GRAPH_NODE_INDEX, PLAYER_INDEX_BOB],
+                ],
+                [
+                    [0, PLAYER_INDEX_BOB],
+                    [LAST_GRAPH_NODE_INDEX, PLAYER_INDEX_BOB],
+                ],
+                [
+                    [PLAYER_INDEX_BOB, PLAYER_INDEX_BOB],
+                    [2, PLAYER_INDEX_BOB],
+                ],
+            ];
+
+            const previousReachableTiles = service.reachableTiles;
+            service.updateMovementRange(2, graph);
+
+            expect(service.reachableTiles).not.toBe(previousReachableTiles);
+            expect([...service.reachableTiles].sort((a, b) => a - b)).toEqual([0, PLAYER_INDEX_BOB, 2]);
+        });
+
+        // Edge case: When movement or attack preconditions fail, the service should guard and avoid emitting invalid actions.
+        it('should guard movement, movement range, attack and teleport edge cases', () => {
+            service.reachableTiles = new Set([UNKNOWN_TILE_INDEX]);
+            service.updateMovementRange(0, []);
+            expect([...service.reachableTiles]).toEqual([UNKNOWN_TILE_INDEX]);
+
+            spyOn(service, 'getCurrentPlayer').and.returnValue(undefined);
+            service.updateMovementRange(2, [[[]] as unknown as [number, number][]]);
+            service.tryMove(PLAYER_INDEX_BOB, 0, MOVE_TOTAL_COLUMNS);
+            service.actionOnPlayer('Alice');
+            service.toggleDoor(TELEPORT_ROW, TELEPORT_COL);
+            service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+
+            (service.getCurrentPlayer as jasmine.Spy).and.returnValue(createCharacter('Alice'));
+            service.actionOnPlayer('Ghost');
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+
+            service.debugTeleport(TELEPORT_ROW, TELEPORT_COL);
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.DebugTeleport, {
+                gameId: service.activeGame._id,
+                playerName: 'Alice',
+                target: { x: TELEPORT_COL, y: TELEPORT_ROW },
+            });
+        });
+
+        it('should remove kicked local player and redirect to home', () => {
+            const alice = createCharacter('Alice');
+            const bob = createCharacter('Bob');
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(alice);
+            service.activeGame = createActiveGame([alice, bob], 'Alice');
+
+            getEventStream<{ playerId: string }>(SocketEvent.PlayerKicked).next({ playerId: 'Alice' });
+
+            expect(service.activeGame.players.map((player) => player.name)).toEqual(['Bob']);
+            expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
+            expect(toastServiceSpy.show).toHaveBeenCalledWith('Vous avez été expulsé de la partie');
+            expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
+        });
+
+        it('should emit socket wrappers for kick, leave waiting room and abandon', () => {
+            service.kickPlayer('Bob');
+            service.leaveWaitingRoom('Bob');
+            service.abandonGame('Alice');
+
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.PlayerKick, {
+                gameId: service.activeGame._id,
+                playerId: 'Bob',
+            });
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.LeaveWaitingRoom, {
+                gameId: service.activeGame._id,
+                playerId: 'Bob',
+            });
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.PlayerAbandon, {
+                gameId: service.activeGame._id,
+                playerId: 'Alice',
+            });
+        });
+
+        it('should send unload request and cleanup every subscription', () => {
+            const fetchSpy = spyOn(window, 'fetch').and.returnValue(Promise.resolve({ ok: true } as Response));
+            service.leaveActiveGameOnUnload('Alice', 'active-game-1');
+            expect(fetchSpy).toHaveBeenCalledWith(
+                `${environment.apiUrl}/activeGame/leave`,
+                jasmine.objectContaining({ method: 'PATCH', keepalive: true }),
+            );
+
+            Object.assign(service as unknown as Record<string, unknown>, {
+                socketSubscriptions: [
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                    createUnsubscribeSpy(),
+                ],
+                setActiveGameSubscription: createUnsubscribeSpy(),
+            });
+
+            service.ngOnDestroy();
+
+            const subscriptions = service as unknown as Record<string, { unsubscribe?: jasmine.Spy } | { unsubscribe?: jasmine.Spy }[]>;
+            for (const subscription of subscriptions.socketSubscriptions as { unsubscribe?: jasmine.Spy }[]) {
+                expect(subscription.unsubscribe).toHaveBeenCalled();
+            }
+            expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
+        });
+
+        it('should keep non-starting items and only remove unused spawn points', () => {
+            const alice = createCharacter('Alice', 0, 0);
+            service.activeGame = createActiveGame([alice], 'Alice');
+            service.activeGame.game.board.items = [
+                createItem(ItemType.StartingPosition, 0, 0),
+                createItem(ItemType.StartingPosition, PLAYER_INDEX_BOB, PLAYER_INDEX_BOB),
+                createItem(ItemType.Flag, 0, PLAYER_INDEX_BOB),
+            ];
+
+            service.removeUnusedSpawnPoints();
+
+            expect(service.activeGame.game.board.items).toEqual([
+                createItem(ItemType.StartingPosition, 0, 0),
+                createItem(ItemType.Flag, 0, PLAYER_INDEX_BOB),
+            ]);
+        });
+
+        it('should keep board items unchanged when turn order is empty', () => {
+            service.activeGame = createActiveGame([createCharacter('Alice')], 'Alice');
+            service.activeGame.turnOrder = [];
+            const itemsBefore = [createItem(ItemType.StartingPosition, 0, 0), createItem(ItemType.Flag, 0, 1)];
+            service.activeGame.game.board.items = itemsBefore;
+
+            service.removeUnusedSpawnPoints();
+
+            expect(service.activeGame.game.board.items).toEqual(itemsBefore);
+        });
     });
 
-    it('should keep non-starting items and only remove unused spawn points', () => {
-        const alice = createCharacter('Alice', 0, 0);
-        service.activeGame = createActiveGame([alice], 'Alice');
-        service.activeGame.game.board.items = [
-            createItem(ItemType.StartingPosition, 0, 0),
-            createItem(ItemType.StartingPosition, PLAYER_INDEX_BOB, PLAYER_INDEX_BOB),
-            createItem(ItemType.Flag, 0, PLAYER_INDEX_BOB),
-        ];
+    function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
+        const turnOrder = players.map((player) => player.name);
+        const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
+        const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
 
-        service.removeUnusedSpawnPoints();
+        const game: IGame = {
+            gameTitle: 'Arena',
+            description: '',
+            gameMode: GameType.Classic,
+            dateCreated: new Date('2026-01-01T00:00:00.000Z'),
+            lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
+            visibility: Visibility.Hidden,
+            board: {
+                cells: [
+                    [CellType.Empty, CellType.Empty],
+                    [CellType.Empty, CellType.Empty],
+                ],
+                items: [],
+            },
+        };
 
-        expect(service.activeGame.game.board.items).toEqual([
-            createItem(ItemType.StartingPosition, 0, 0),
-            createItem(ItemType.Flag, 0, PLAYER_INDEX_BOB),
-        ]);
-    });
+        return {
+            _id: id,
+            game,
+            players,
+            currentPlayerIndex,
+            turnOrder,
+            isFinished: false,
+            winner: null,
+            messages: [],
+            isDebugMode: false,
+            organizerName: 'Organizer',
+            maxPlayerCount: MAX_PLAYER_COUNT,
+            turnIsInPreparation: false,
+            hasFlagId: '',
 
-    it('should keep board items unchanged when turn order is empty', () => {
-        service.activeGame = createActiveGame([createCharacter('Alice')], 'Alice');
-        service.activeGame.turnOrder = [];
-        const itemsBefore = [createItem(ItemType.StartingPosition, 0, 0), createItem(ItemType.Flag, 0, 1)];
-        service.activeGame.game.board.items = itemsBefore;
+            turnStartTimeStamp: 0,
+            currentAttack: null,
+        };
+    }
 
-        service.removeUnusedSpawnPoints();
+    function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVEMENT_LEFT): ICharacter {
+        return {
+            name,
+            avatar: Avatar.Avatar1,
+            initialHealth: 10,
+            currentHealth: 10,
+            attackBonusDiceType: DiceType.FourSided,
+            defenseBonusDiceType: DiceType.SixSided,
+            rapidityPoints: 4,
+            attackPoints: 4,
+            defensePoints: 4,
+            actionsLeft: 1,
+            movementLeft,
+            victories: 0,
+            hasAbandoned: false,
+            positionDepart: { x, y },
+            positionGrille: { x, y },
+        };
+    }
 
-        expect(service.activeGame.game.board.items).toEqual(itemsBefore);
-    });
+    function createItem(itemType: ItemType, x: number, y: number): IItem {
+        return {
+            itemType,
+            x,
+            y,
+            size: itemType === ItemType.StartingPosition || itemType === ItemType.Flag ? 1 : SANCTUARY_ITEM_SIZE,
+        };
+    }
+
+    function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
+        return { unsubscribe: jasmine.createSpy('unsubscribe') };
+    }
 });
-
-function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
-    const turnOrder = players.map((player) => player.name);
-    const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
-    const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
-
-    const game: IGame = {
-        gameTitle: 'Arena',
-        description: '',
-        gameMode: GameType.Classic,
-        dateCreated: new Date('2026-01-01T00:00:00.000Z'),
-        lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
-        visibility: Visibility.Hidden,
-        board: {
-            cells: [
-                [CellType.Empty, CellType.Empty],
-                [CellType.Empty, CellType.Empty],
-            ],
-            items: [],
-        },
-    };
-
-    return {
-        _id: id,
-        game,
-        players,
-        currentPlayerIndex,
-        turnOrder,
-        isFinished: false,
-        winner: null,
-        messages: [],
-        isDebugMode: false,
-        organizerName: 'Organizer',
-        maxPlayerCount: MAX_PLAYER_COUNT,
-        turnIsInPreparation: false,
-        hasFlagId: '',
-
-        turnStartTimeStamp: 0,
-        currentAttack: null,
-    };
-}
-
-function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVEMENT_LEFT): ICharacter {
-    return {
-        name,
-        avatar: Avatar.Avatar1,
-        initialHealth: 10,
-        currentHealth: 10,
-        attackBonusDiceType: DiceType.FourSided,
-        defenseBonusDiceType: DiceType.SixSided,
-        rapidityPoints: 4,
-        attackPoints: 4,
-        defensePoints: 4,
-        actionsLeft: 1,
-        movementLeft,
-        victories: 0,
-        hasAbandoned: false,
-        positionDepart: { x, y },
-        positionGrille: { x, y },
-    };
-}
-
-function createItem(itemType: ItemType, x: number, y: number): IItem {
-    return {
-        itemType,
-        x,
-        y,
-        size: itemType === ItemType.StartingPosition || itemType === ItemType.Flag ? 1 : SANCTUARY_ITEM_SIZE,
-    };
-}
-
-function createUnsubscribeSpy(): { unsubscribe: jasmine.Spy } {
-    return { unsubscribe: jasmine.createSpy('unsubscribe') };
-}

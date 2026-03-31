@@ -22,9 +22,11 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
+import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { ITurnStartedPayload } from '@common/socket-payloads';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
+import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
@@ -140,6 +142,7 @@ describe('registerActiveGameSocketListeners', () => {
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Bob' });
         expect(activeGame?.players.map((player) => player.name)).toEqual(['Alice']);
+        expect(hasChangedLocation()).toBeTrue();
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Alice' });
         expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
@@ -152,6 +155,38 @@ describe('registerActiveGameSocketListeners', () => {
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
     });
 
+    it('should keep sanctuary cooldown state synchronized from the socket events', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        activeGame.game.board.items = [createSanctuaryItem(false, SANCTUARY_COOLDOWN_TURN_STEPS)];
+        registerActiveGameSocketListeners(context());
+
+        emitEvent<ISanctuaryInteractedResult>(SocketEvent.SanctuaryInteracted, {
+            playerId: 'Alice',
+            position: { x: 1, y: 1 },
+            itemType: ItemType.LifeSanctuary,
+            choice: 'standard',
+            succeeded: true,
+            actionsLeft: 0,
+            currentHealth: 6,
+            attackPoints: 4,
+            defensePoints: 4,
+            sanctuaryActive: false,
+            sanctuaryInactiveTurnsRemaining: 3,
+            fightSanctuaryUsed: false,
+            fightSanctuaryTurnsRemaining: 0,
+            fightSanctuaryBonus: 0,
+        });
+
+        const sanctuary = activeGame.game.board.items[0];
+        expect(sanctuary.active).toBeFalse();
+        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS);
+
+        emitEvent<{ player: string }>(SocketEvent.TurnPreparing, { player: 'Bob' });
+
+        expect(sanctuary.active).toBeFalse();
+        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
+    });
+
     it('should ignore listener events when no active game is loaded', () => {
         registerActiveGameSocketListeners(context());
         activeGame = undefined;
@@ -162,7 +197,6 @@ describe('registerActiveGameSocketListeners', () => {
             movementLeft: 1,
         });
         emitEvent<{ player: string }>(SocketEvent.TurnPreparing, { player: 'Bob' });
-
         emitEvent<{ playerId: string }>(SocketEvent.PlayerAbandoned, { playerId: 'Bob' });
         emitEvent<{ playerId: string }>(SocketEvent.LeftWaitingRoom, { playerId: 'Carol' });
         emitEvent<{ winner: string }>(SocketEvent.GameEnded, { winner: 'Alice' });
@@ -234,5 +268,16 @@ function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVE
         hasAbandoned: false,
         positionDepart: { x, y },
         positionGrille: { x, y },
+    };
+}
+
+function createSanctuaryItem(active: boolean, inactiveTurnsRemaining?: number) {
+    return {
+        itemType: ItemType.LifeSanctuary,
+        x: 1,
+        y: 1,
+        size: 4,
+        active,
+        inactiveTurnsRemaining,
     };
 }

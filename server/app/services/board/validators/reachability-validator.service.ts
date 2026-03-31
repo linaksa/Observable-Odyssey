@@ -1,4 +1,5 @@
 import { CellType, IBoard } from '@common/board';
+import { sanctuaryCoversCell } from '@common/sanctuary';
 import { Service } from 'typedi';
 import { IBoardValidator } from './board-validator.interface';
 
@@ -35,11 +36,13 @@ export class ReachabilityValidator implements IBoardValidator {
             return false;
         }
 
-        this.floodFill(board, visited, startRow, startCol);
+        const blockedCells = this.getBlockedCells(board);
+
+        this.floodFill(board, visited, startRow, startCol, blockedCells);
 
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < cols; j++) {
-                if (board.cells[i][j] !== CellType.Wall && !visited[i][j]) {
+                if (board.cells[i][j] !== CellType.Wall && !blockedCells.has(`${i},${j}`) && !visited[i][j]) {
                     return false;
                 }
             }
@@ -48,7 +51,7 @@ export class ReachabilityValidator implements IBoardValidator {
         return true;
     }
 
-    private floodFill(board: IBoard, visited: boolean[][], startRow: number, startCol: number): void {
+    private floodFill(board: IBoard, visited: boolean[][], startRow: number, startCol: number, blockedCells: Set<string>): void {
         const queue: [number, number][] = [[startRow, startCol]];
         visited[startRow][startCol] = true;
 
@@ -67,7 +70,7 @@ export class ReachabilityValidator implements IBoardValidator {
                 const newRow = row + dRow;
                 const newCol = col + dCol;
 
-                if (this.isVisitableCell(board, visited, newRow, newCol)) {
+                if (this.isVisitableCell(board, visited, newRow, newCol, blockedCells)) {
                     visited[newRow][newCol] = true;
                     queue.push([newRow, newCol]);
                 }
@@ -75,9 +78,37 @@ export class ReachabilityValidator implements IBoardValidator {
         }
     }
 
-    private isVisitableCell(board: IBoard, visited: boolean[][], row: number, col: number): boolean {
+    private isVisitableCell(board: IBoard, visited: boolean[][], row: number, col: number, blockedCells: Set<string>): boolean {
         const rows = board.cells.length;
         const cols = board.cells[0].length;
-        return row >= 0 && row < rows && col >= 0 && col < cols && !visited[row][col] && board.cells[row][col] !== CellType.Wall;
+        return (
+            row >= 0 &&
+            row < rows &&
+            col >= 0 &&
+            col < cols &&
+            !visited[row][col] &&
+            board.cells[row][col] !== CellType.Wall &&
+            !blockedCells.has(`${row},${col}`)
+        );
+    }
+
+    private getBlockedCells(board: IBoard): Set<string> {
+        const blockedCells = new Set<string>();
+
+        for (const item of board.items ?? []) {
+            if (!item) {
+                continue;
+            }
+
+            for (let row = item.x; row <= item.x + 1; row++) {
+                for (let col = item.y; col <= item.y + 1; col++) {
+                    if (sanctuaryCoversCell(item, row, col)) {
+                        blockedCells.add(`${row},${col}`);
+                    }
+                }
+            }
+        }
+
+        return blockedCells;
     }
 }

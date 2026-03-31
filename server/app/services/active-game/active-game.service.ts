@@ -15,6 +15,7 @@ export class ActiveGameService {
             throw new Error('GAME_NOT_FOUND');
         }
 
+        const sanctuaryState = this.createDefaultSanctuaryState();
         const playerCharacter = {
             name: characterForm.name,
             avatar: characterForm.avatar,
@@ -30,8 +31,8 @@ export class ActiveGameService {
             victories: 0,
             positionGrille: { x: 0, y: 0 },
             positionDepart: { x: 0, y: 0 },
-            wonCombatCount: 0,
             hasAbandoned: false,
+            ...sanctuaryState,
         };
 
         const newActiveGame = {
@@ -68,6 +69,7 @@ export class ActiveGameService {
         }
 
         const uniquePlayerName = this.generateUniquePlayerName(characterForm.name, activeGameToUpdate.players);
+        const sanctuaryState = this.createDefaultSanctuaryState();
 
         const newPlayerCharacter: ICharacter = {
             name: uniquePlayerName,
@@ -86,6 +88,7 @@ export class ActiveGameService {
             positionDepart: { x: 0, y: 0 },
             positionGrille: { x: 0, y: 0 },
             virtualPlayerProfile: characterForm.virtualPlayerProfile ?? undefined,
+            ...sanctuaryState,
         };
         activeGameToUpdate.players.push(newPlayerCharacter);
 
@@ -159,6 +162,14 @@ export class ActiveGameService {
             return `${newPlayerName}-${uniquePlayerIdToAppend}`;
         }
         return newPlayerName;
+    }
+
+    private createDefaultSanctuaryState(): Pick<ICharacter, 'fightSanctuaryUsed' | 'fightSanctuaryTurnsRemaining' | 'fightSanctuaryBonus'> {
+        return {
+            fightSanctuaryUsed: false,
+            fightSanctuaryTurnsRemaining: 0,
+            fightSanctuaryBonus: 0,
+        };
     }
 
     async startCombat(activeGameId: string, attacker: string, defender: string): Promise<IActiveGame> {

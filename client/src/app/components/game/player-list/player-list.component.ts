@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { ICharacter, Team } from '@common/character';
-import { Avatar, buildAvatarAssetPath } from '@common/constants';
+import { Avatar } from '@common/constants';
 import { GameType } from '@common/game';
 
 @Component({
