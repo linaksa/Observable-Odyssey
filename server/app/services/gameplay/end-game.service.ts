@@ -42,6 +42,20 @@ export class EndGameService {
         const player = activeGame.players.find((p) => p.name === playerName);
         if (!player) return;
 
+        console.log(activeGame.game.board.items);
+
+        const startingPosition = player.positionDepart;
+
+        console.log(startingPosition);
+
+        activeGame.game.board.items = activeGame.game.board.items.filter(
+            (item) =>
+                item.x !== startingPosition.x ||
+                item.y !== startingPosition.y,
+        );
+
+        console.log(activeGame.game.board.items);
+
         player.hasAbandoned = true;
         await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
 

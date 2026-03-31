@@ -9,13 +9,21 @@
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
                         <span
                             class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
-                        <div
-                            role="button"
-                            tabindex="0"
-                            (click)="closeOutcome()"
-                            (keydown.enter)="closeOutcome()"
-                            class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
-                        >X
+                        <div class="flex items-center gap-2">
+                            @if (this.activeGameService.activeGame.isDebugMode) {
+                                <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
+                                    <span class="text-[12px] text-[#000] font-bold uppercase tracking-wider">DEBUG MODE</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#000] animate-pulse"></span>
+                                </div>
+                            }
+                            <div
+                                role="button"
+                                tabindex="0"
+                                (click)="closeOutcome()"
+                                (keydown.enter)="closeOutcome()"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
+                            >X
+                            </div>
                         </div>
                     </div>
 
@@ -47,14 +55,20 @@
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
                         <span
                             class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
-                        <div
-                            role="button"
-                            tabindex="0"
-                            (click)="closeOutcome()"
-                            (keydown.enter)="closeOutcome()"
-                            class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
-                        >✕
+                        <div class="flex items-center gap-2">
+                            @if (this.activeGameService.activeGame.isDebugMode) {
+                                <div class="flex items-center gap-2 bg-[#c8a800] border-[2px] border-[#ffd84d] rounded-lg px-4 py-2 shadow-lg">
+                                    <span class="text-[12px] text-[#000] font-bold uppercase tracking-wider">DEBUG MODE</span>
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#000] animate-pulse"></span>
+                                </div>
+                            }
+                            <div
+                                role="button"
+                                (click)="closeOutcome()"
+                                class="w-7 h-7 flex items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-[#6b9ed4] text-xs font-bold cursor-pointer hover:border-[#4a7fd4] hover:text-[#a8c8ff] transition-colors select-none"
+                        >X
                         </div>
+                    </div>
                     </div>
 
                     <div class="p-6 flex flex-col items-center gap-4">
@@ -88,6 +102,16 @@
                                 <div class="text-2xl font-bold text-[#ffd84d] tracking-wide mb-1">Égalité</div>
                                 <div class="text-sm text-[#a8c8ff]">Le combat s'est terminé par une égalité</div>
                             </div>
+
+                            @if (this.activeGameService.activeGame.isDebugMode) {
+                                <div class="w-full bg-[#0d1f42] border-[1.5px] border-[#c8a800] rounded-xl px-4 py-3">
+                                    <div class="text-[10px] text-[#ffd84d] uppercase tracking-[2px] mb-1 text-center">Mode débogage actif</div>
+                                    <div class="text-[9px] text-[#a8c8ff] text-center">
+                                        Dés max pour l'attaquant, dés min pour le défenseur
+                                    </div>
+                                </div>
+                            }
+
                             <div class="w-full h-1 bg-[#0d1f42] rounded-full overflow-hidden">
                                 <div
                                     class="h-full bg-[#c8a800] rounded-full animate-[timer-drain_3s_linear_forwards]"></div>
