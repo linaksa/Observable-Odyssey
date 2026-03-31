@@ -14,7 +14,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { EditionItemSelectorComponent } from '@app/components/edition/item-selector/edition-item-selector.component';
 import { ToolOption } from '@app/constants/grid-edition';
-import { TILE_INFO_BY_TYPE, ITEM_INFO_BY_TYPE } from '@app/constants/tile-info';
+import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardEditorService } from '@app/services/editor/edition.service';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';

@@ -1,10 +1,10 @@
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
 import { Service } from 'typedi';
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 
 @Service()
 export class MovementService {
@@ -43,6 +43,12 @@ export class MovementService {
 
         player.positionGrille = newPosition;
         player.movementLeft -= price;
+
+        const serializedPos = `${newPosition.x},${newPosition.y}`;
+        if (!player.visitedCells.includes(serializedPos)) {
+            player.visitedCells.push(serializedPos);
+        }
+
         await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
         return { newPosition, movementLeft: player.movementLeft };
     }

@@ -82,11 +82,20 @@ export class CombatService {
         const attackerStats = this.getAttackStatsForPlayer(currentActiveGame, attacker, currentAttack.attackerPosture);
         const defenderStats = this.getAttackStatsForPlayer(currentActiveGame, defender, currentAttack.defenderPosture);
 
-        const attackerNetReceivedDamage = Math.max(defenderStats.totalAttackPoints - attackerStats.totalDefensePoints, 0);
-        const defenderNetReceivedDamage = Math.max(attackerStats.totalAttackPoints - defenderStats.totalDefensePoints, 0);
+        const attackerNetDealtDamage = Math.max(attackerStats.totalAttackPoints - defenderStats.totalDefensePoints, 0);
+        const defenderNetDealtDamage = Math.max(defenderStats.totalAttackPoints - attackerStats.totalDefensePoints, 0);
 
-        attacker.currentHealth = Math.max(attacker.currentHealth - attackerNetReceivedDamage, 0);
-        defender.currentHealth = Math.max(defender.currentHealth - defenderNetReceivedDamage, 0);
+        const attackerDealtDamage = Math.min(attackerNetDealtDamage, defender.currentHealth);
+        const defenderDealtDamage = Math.min(defenderNetDealtDamage, attacker.currentHealth);
+
+        attacker.currentHealth = Math.max(attacker.currentHealth - defenderDealtDamage, 0);
+        defender.currentHealth = Math.max(defender.currentHealth - attackerDealtDamage, 0);
+
+        // Save stats about the combat
+        attacker.totalDamageDealt += attackerDealtDamage;
+        attacker.totalDamageReceived += defenderDealtDamage;
+        defender.totalDamageDealt += defenderDealtDamage;
+        defender.totalDamageReceived += attackerDealtDamage;
 
         currentActiveGame.currentAttack.turnCount++;
         currentActiveGame.currentAttack.attackerPosture = null;
@@ -124,6 +133,9 @@ export class CombatService {
         const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
         const defender = currentActiveGame.players.find((p) => p.name === defenderName);
 
+        attacker.nCombats++;
+        defender.nCombats++;
+
         attacker.actionsLeft--;
 
         let winner: ICharacter | null = null;
@@ -141,12 +153,14 @@ export class CombatService {
 
         if (winner) {
             winner.victories++;
+            winner.nVictories++;
         }
 
         currentActiveGame.players = currentActiveGame.players.map((player) => {
             if (player.currentHealth === 0) {
                 player.currentHealth = player.initialHealth;
                 this.relocateLoser(player, currentActiveGame);
+                player.nDefeats++;
             }
             return player;
         });
