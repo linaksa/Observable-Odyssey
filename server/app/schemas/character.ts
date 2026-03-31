@@ -65,6 +65,18 @@ export const characterSchema = new Schema<ICharacter>(
             type: Boolean,
             default: false,
         },
+        fightSanctuaryUsed: {
+            type: Boolean,
+            default: false,
+        },
+        fightSanctuaryTurnsRemaining: {
+            type: Number,
+            default: 0,
+        },
+        fightSanctuaryBonus: {
+            type: Number,
+            default: 0,
+        },
         virtualPlayerProfile: {
             type: String,
             required: false,

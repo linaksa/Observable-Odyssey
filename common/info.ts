@@ -12,6 +12,15 @@ export interface ItemInfoData {
     editorTooltip: string;
 }
 
+export type SanctuaryChoice = 'standard' | 'double';
+
+export interface SanctuaryPopupData {
+    visible: boolean;
+    title: string;
+    description: string;
+    effectLabel: string;
+}
+
 export interface PlayerInfoData {
     name: string;
     avatarUrl: string;

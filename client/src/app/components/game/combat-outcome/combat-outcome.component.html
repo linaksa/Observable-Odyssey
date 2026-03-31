@@ -3,13 +3,7 @@
         @if (outcome.winner && outcome.winner === player.name) {
             <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70">
                 <div class="bg-green-600 text-white p-6 rounded-xl border-4 border-black shadow-2xl w-[320px] text-center relative">
-
-                    <button
-                        class="absolute top-2 right-2 bg-black text-white px-2 border border-white"
-                        (click)="closeOutcome()"
-                    >
-                        X
-                    </button>
+                    <button class="absolute top-2 right-2 bg-black text-white px-2 border border-white" (click)="closeOutcome()">X</button>
 
                     <h2 class="text-2xl font-bold mb-2">Victory</h2>
                     <p>Vous avez gagnez le combat</p>
@@ -19,24 +13,19 @@
         @if (outcome.losers.includes(player.name)) {
             <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70">
                 <div class="bg-red-700 text-white p-6 rounded-xl border-4 border-black shadow-2xl w-[320px] text-center relative">
-
-                    <button
-                        class="absolute top-2 right-2 bg-black text-white px-2 border border-white"
-                        (click)="closeOutcome()"
-                    >
-                        X
-                    </button>
+                    <button class="absolute top-2 right-2 bg-black text-white px-2 border border-white" (click)="closeOutcome()">X</button>
 
                     <h2 class="text-2xl font-bold mb-2">Defeat</h2>
                     <p>Vous avez perdu le combat</p>
                     @if (outcome.winner) {
-                        <p><b>{{ outcome.winner }} a gagne le combat</b></p>
+                        <p>
+                            <b>{{ outcome.winner }} a gagne le combat</b>
+                        </p>
                     } @else {
                         <p><b>Le combat s'est termine par une egalite</b></p>
                     }
                 </div>
             </div>
         }
-
     }
 }
