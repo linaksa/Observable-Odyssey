@@ -4,9 +4,12 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { AppError } from '@app/error-types/app-error';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
 @Service()
@@ -20,29 +23,29 @@ export class MovementService {
     // Validates and applies the movement in a single DB access. Throws an error if invalid.
     async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!activeGame) throw new Error(`activeGame introuvable pour id=${activeGameId}`);
+        if (!activeGame) throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         const player = activeGame.players.find((p) => p.name === playerName);
-        if (!player) throw new Error(`joueur '${playerName}' introuvable`);
+        if (!player) throw new AppError([ErrorCode.PlayerNotFound], StatusCodes.NOT_FOUND);
 
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (playerName !== currentPlayerName) {
-            throw new Error(`Ce n'est pas le tour de '${playerName}'`);
+            throw new AppError([ErrorCode.NotYourTurn], StatusCodes.BAD_REQUEST);
         }
         if (activeGame.turnIsInPreparation) {
-            throw new Error(`Le tour de '${playerName}' n'a pas encore commencé`);
+            throw new AppError([ErrorCode.TurnNotStarted], StatusCodes.BAD_REQUEST);
         }
         if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) {
-            throw new Error('Position non marchable');
+            throw new AppError([ErrorCode.PositionNotWalkable], StatusCodes.BAD_REQUEST);
         }
         if (!this.positionValidatorService.isAdjacent(player.positionGrille, newPosition)) {
-            throw new Error(`Position non adjacente: de ${JSON.stringify(player.positionGrille)} vers ${JSON.stringify(newPosition)}`);
+            throw new AppError([ErrorCode.PositionNotAdjacent], StatusCodes.BAD_REQUEST);
         }
         if (this.positionValidatorService.isOccupiedByPlayer(newPosition, activeGame)) {
-            throw new Error('Case occupée par un autre joueur');
+            throw new AppError([ErrorCode.PlayerOccupiesTarget], StatusCodes.BAD_REQUEST);
         }
         const price = this.getPriceTile(activeGame, newPosition);
         if (player.movementLeft < price) {
-            throw new Error(`Mouvements insuffisants (restant: ${player.movementLeft}, coût: ${price})`);
+            throw new AppError([ErrorCode.InsufficientMovement], StatusCodes.BAD_REQUEST);
         }
 
         player.positionGrille = newPosition;

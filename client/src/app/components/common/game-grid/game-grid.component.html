@@ -1,75 +1,103 @@
-<div [class]="resolvedGridClass()" [style.gridTemplateColumns]="gridTemplateColumns()" data-testid="game-grid">
-    @for (row of cells(); track $index; let rowIndex = $index) {
-        @for (cell of row; track $index; let colIndex = $index) {
-            @let cellIndex = rowIndex * row.length + colIndex;
-            @let item = objectAt(rowIndex, colIndex);
-            @let players = playersAt(rowIndex, colIndex);
-            <div
-                [class]="resolvedCellClass()"
-                (click)="onCellClick(rowIndex, colIndex, cell, item, $event)"
-                (contextmenu)="onCellContextMenu(rowIndex, colIndex, cell, item, $event)"
-                (mousedown)="onCellMouseDown(rowIndex, colIndex, cell, item, $event)"
-                (mouseenter)="onCellMouseEnter(rowIndex, colIndex, cell, item, $event)"
-                tabindex="-1"
-                data-testid="game-grid-cell"
-            >
-                @if (useBackgroundRendering()) {
-                    <div
-                        [class]="cellBackgroundClass(cell)"
-                        class="absolute inset-0 bg-no-repeat bg-cover pointer-events-none [image-rendering:pixelated]"
-                        data-testid="game-grid-cell-background"
-                    ></div>
-
-                    @if (item) {
+<div #gridContainer class="relative w-full">
+    <div [class]="resolvedGridClass()" [style.gridTemplateColumns]="gridTemplateColumns()" data-testid="game-grid">
+        @for (row of cells(); track $index; let rowIndex = $index) {
+            @for (cell of row; track $index; let colIndex = $index) {
+                @let cellIndex = rowIndex * row.length + colIndex;
+                @let item = objectAt(rowIndex, colIndex);
+                @let players = playersAt(rowIndex, colIndex);
+                <div
+                    [class]="resolvedCellClass()"
+                    (click)="onCellClick(rowIndex, colIndex, cell, item, $event)"
+                    (contextmenu)="onCellContextMenu(rowIndex, colIndex, cell, item, $event)"
+                    (mousedown)="onCellMouseDown(rowIndex, colIndex, cell, item, $event)"
+                    (mouseenter)="onCellMouseEnter(rowIndex, colIndex, cell, item, $event)"
+                    (mousemove)="onCellMouseMove($event)"
+                    (mouseleave)="onCellMouseLeave()"
+                    tabindex="-1"
+                    data-testid="game-grid-cell"
+                >
+                    @if (useBackgroundRendering()) {
                         <div
-                            [class]="itemBackgroundClass(item)"
-                            class="absolute inset-0 z-10 pointer-events-none [image-rendering:pixelated]"
-                            [style.backgroundPosition]="itemBackgroundPosition(item, rowIndex, colIndex)"
-                            data-testid="game-grid-item"
+                            [class]="cellBackgroundClass(cell)"
+                            class="absolute inset-0 bg-no-repeat bg-cover pointer-events-none [image-rendering:pixelated]"
+                            data-testid="game-grid-cell-background"
+                        ></div>
+
+                        @if (item) {
+                            <div
+                                [class]="itemBackgroundClass(item)"
+                                class="absolute inset-0 z-10 pointer-events-none [image-rendering:pixelated]"
+                                [style.backgroundPosition]="itemBackgroundPosition(item, rowIndex, colIndex)"
+                                data-testid="game-grid-item"
+                            ></div>
+                        }
+                    } @else {
+                        <img
+                            [src]="cellImagePath(cell)"
+                            [alt]="cell"
+                            class="h-full w-full object-fill pointer-events-none select-none [image-rendering:pixelated]"
+                            draggable="false"
+                            data-testid="game-grid-cell-image"
+                        />
+
+                        @if (item) {
+                            <img
+                                [src]="itemImagePath(item)"
+                                [alt]="item.itemType"
+                                class="absolute pointer-events-none select-none max-w-none max-h-none [image-rendering:pixelated]"
+                                [class.opacity-50]="isInactiveSanctuary(item)"
+                                [style.top]="itemTop(item, rowIndex)"
+                                [style.left]="itemLeft(item, rowIndex, colIndex)"
+                                [style.width]="itemWidth(item)"
+                                [style.height]="itemHeight(item)"
+                                draggable="false"
+                                data-testid="game-grid-item"
+                            />
+                        }
+                    }
+
+                    @if (highlightedTiles()?.has(cellIndex)) {
+                        <div [class]="highlightedTileOverlayClass()" data-testid="game-grid-highlight"></div>
+                    }
+
+                    @if (isPreviewCell(rowIndex, colIndex)) {
+                        <div
+                            [class]="previewCellBackgroundClass()"
+                            [style.backgroundPosition]="previewCellBackgroundPosition(rowIndex, colIndex)"
+                            data-testid="game-grid-preview"
                         ></div>
                     }
-                } @else {
-                    <img
-                        [src]="cellImagePath(cell)"
-                        [alt]="cell"
-                        class="h-full w-full object-fill pointer-events-none select-none [image-rendering:pixelated]"
-                        draggable="false"
-                        data-testid="game-grid-cell-image"
-                    />
 
-                    @if (item) {
-                        <img
-                            [src]="itemImagePath(item)"
-                            [alt]="item.itemType"
-                            class="absolute pointer-events-none select-none max-w-none max-h-none [image-rendering:pixelated]"
-                            [class.opacity-50]="isInactiveSanctuary(item)"
-                            [style.top]="itemTop(item, rowIndex)"
-                            [style.left]="itemLeft(item, rowIndex, colIndex)"
-                            [style.width]="itemWidth(item)"
-                            [style.height]="itemHeight(item)"
-                            draggable="false"
-                            data-testid="game-grid-item"
-                        />
+                    @if (players.length) {
+                        @for (player of players; track player.name) {
+                            <button
+                                type="button"
+                                [class]="playerAvatarClass()"
+                                [style.background-image]="'url(' + playerAvatarUrl(player) + ')'"
+                                [attr.aria-label]="player.name"
+                                (click)="onPlayerClick(player, $event)"
+                                data-testid="game-grid-player"
+                            ></button>
+                        }
                     }
-                }
+                </div>
+            }
+        }
+    </div>
 
-                @if (highlightedTiles()?.has(cellIndex)) {
-                    <div class="absolute inset-0 z-20 bg-blue-600/30 pointer-events-none" data-testid="game-grid-highlight"></div>
-                }
-
-                @if (players.length) {
-                    @for (player of players; track player.name) {
-                        <button
-                            type="button"
-                            [class]="playerAvatarClass()"
-                            [style.background-image]="'url(' + playerAvatarUrl(player) + ')'"
-                            [attr.aria-label]="player.name"
-                            (click)="onPlayerClick(player, $event)"
-                            data-testid="game-grid-player"
-                        ></button>
-                    }
+    @if (tooltipText(); as tooltipText) {
+        <div
+            #tooltipElement
+            class="absolute z-1000 w-max min-w-max px-4 py-2 rounded-lg bg-[#0f1528] border border-white/30 shadow-xl text-white/80 text-sm tracking-widest pointer-events-none -translate-x-1/2"
+            [style.left.px]="tooltipPosition().x"
+            [style.top.px]="tooltipPosition().y"
+            data-testid="game-grid-tooltip"
+        >
+            <div class="flex flex-col gap-0.5 text-center">
+                @for (tooltipLine of tooltipLines(); track $index) {
+                    <div class="whitespace-nowrap">{{ tooltipLine }}</div>
                 }
             </div>
-        }
+        </div>
     }
 </div>

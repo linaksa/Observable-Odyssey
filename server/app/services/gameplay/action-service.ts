@@ -1,8 +1,11 @@
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { CombatOutcome } from '@common/attackResult';
+import { ErrorCode } from '@common/error-codes';
 import { IFlagActionData } from '@common/socket-payloads';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
 @Service()
@@ -18,7 +21,7 @@ export class ActionService {
         const player1 = activeGame?.players.find((p) => p.name === player1Name);
         const player2 = activeGame?.players.find((p) => p.name === player2Name);
         if (!player1 || !player2) {
-            throw new Error('Player not found');
+            throw new AppError([ErrorCode.PlayerNotFound], StatusCodes.NOT_FOUND);
         }
         return player1.team === player2.team;
     }
@@ -102,7 +105,7 @@ export class ActionService {
     async resolveCombat(gameId: string, attackerName: string, defenderName: string): Promise<CombatOutcome> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) {
-            throw new Error('Active game not found');
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
         return this.combatService.resolveCombat(activeGame, attackerName, defenderName);
     }

@@ -12,7 +12,13 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { TestBed } from '@angular/core/testing';
-import { GridSize, ToolOption } from '@app/constants/grid-edition';
+import {
+    GridSize,
+    MAX_SANCTUARY_AMOUNT_LARGE,
+    MAX_SANCTUARY_AMOUNT_MEDIUM,
+    MAX_SANCTUARY_AMOUNT_SMALL,
+    ToolOption,
+} from '@app/constants/grid-edition';
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
@@ -239,6 +245,14 @@ describe('BoardEditorService', () => {
         ]);
     });
 
+    it('should report invalid sanctuary placement when the area overlaps a blocking cell', () => {
+        service.buildGrid(GridSize.SMALL);
+        service.selectedObject = ItemType.LifeSanctuary;
+        service.gameCells[0][1] = CellType.Wall;
+
+        expect(service.isSelectedObjectPlacementPositionValid(0, 0)).toBeFalse();
+    });
+
     // Edge case: When no sanctuary object is selected, it should not place sanctuary.
     it('should not place sanctuary when no sanctuary object is selected', () => {
         service.buildGrid(GridSize.SMALL);
@@ -249,11 +263,11 @@ describe('BoardEditorService', () => {
         expect(service.objects).toEqual([]);
     });
 
-    // Edge case: When max amount is reached for life and fight sanctuaries, it should not place sanctuary.
+    // Edge case: Sanctuaries still have a maximum amount even if they are optional.
     it('should not place sanctuary when max amount is reached for life and fight sanctuaries', () => {
         service.buildGrid(GridSize.MEDIUM);
         service.selectedObject = ItemType.LifeSanctuary;
-        const maxSanctuaries = service.getRemainingObjectCount(ItemType.LifeSanctuary);
+        const maxSanctuaries = MAX_SANCTUARY_AMOUNT_MEDIUM;
 
         service.objects = Array.from({ length: maxSanctuaries }, (_, index) => createItem(ItemType.LifeSanctuary, index, index, SANCTUARY_SIZE));
         service.placeSanctuary(0, 0);
@@ -305,13 +319,15 @@ describe('BoardEditorService', () => {
         expect(service.getRemainingObjectCount(ItemType.Flag)).toBe(0);
     });
 
-    it('should compute remaining sanctuary and spawnpoint counts across all grid sizes', () => {
+    it('should keep sanctuaries optional across all grid sizes', () => {
         service.buildGrid(GridSize.SMALL);
-        expect(service.getRemainingObjectCount(ItemType.LifeSanctuary)).toBeGreaterThan(0);
+        expect(service.getRemainingObjectCount(ItemType.LifeSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_SMALL);
+        expect(service.getRemainingObjectCount(ItemType.FightSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_SMALL);
         expect(service.getRemainingObjectCount(ItemType.StartingPosition)).toBeGreaterThan(0);
 
         service.buildGrid(GridSize.LARGE);
-        expect(service.getRemainingObjectCount(ItemType.FightSanctuary)).toBeGreaterThan(0);
+        expect(service.getRemainingObjectCount(ItemType.LifeSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_LARGE);
+        expect(service.getRemainingObjectCount(ItemType.FightSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_LARGE);
         expect(service.getRemainingObjectCount(ItemType.StartingPosition)).toBeGreaterThan(0);
     });
 

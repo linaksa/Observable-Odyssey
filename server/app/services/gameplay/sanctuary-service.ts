@@ -1,7 +1,9 @@
+import { AppError } from '@app/error-types/app-error';
 import { Service } from 'typedi';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, Position } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
 import { ISanctuaryInteractionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
@@ -13,7 +15,8 @@ import {
     isSanctuaryActive,
     isSanctuaryItem,
     sanctuaryCoversCell,
-} from '@app/services/gameplay/sanctuary-helpers';
+} from './sanctuary-helpers';
+import { StatusCodes } from 'http-status-codes';
 
 const SANCTUARY_ACTION_COST = 1;
 const LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT = 2;
@@ -96,7 +99,7 @@ export class SanctuaryService {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
 
         if (!activeGame) {
-            throw new Error(`activeGame introuvable pour id=${activeGameId}`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         return activeGame;
@@ -106,7 +109,7 @@ export class SanctuaryService {
         const player = this.getPlayerOrNull(activeGame, playerName);
 
         if (!player) {
-            throw new Error(`joueur '${playerName}' introuvable`);
+            throw new AppError([ErrorCode.PlayerNotFound], StatusCodes.NOT_FOUND);
         }
 
         return player;
@@ -119,42 +122,38 @@ export class SanctuaryService {
     private assertCanInteract(activeGame: IActiveGame, player: { actionsLeft: number }, playerName: string, position: Position): void {
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
 
-        this.throwIf(playerName !== currentPlayerName, `Ce n'est pas le tour de '${playerName}'`);
-        this.throwIf(activeGame.turnIsInPreparation, `Le tour de '${playerName}' n'a pas encore commencé`);
-        this.throwIf(
-            player.actionsLeft < SANCTUARY_ACTION_COST,
-            `Actions insuffisantes (restant: ${player.actionsLeft}, coût: ${SANCTUARY_ACTION_COST})`,
-        );
-        this.throwIf(!this.isPositionWithinBounds(position, activeGame), 'La case ciblée est invalide');
+        this.throwIf(playerName !== currentPlayerName, [ErrorCode.NotYourTurn]);
+        this.throwIf(activeGame.turnIsInPreparation, [ErrorCode.TurnNotStarted]);
+        this.throwIf(player.actionsLeft < SANCTUARY_ACTION_COST, [ErrorCode.InsufficientActions]);
+        this.throwIf(!this.isPositionWithinBounds(position, activeGame), [ErrorCode.InvalidSanctuaryTarget]);
     }
 
     private getSanctuaryOrThrow(activeGame: IActiveGame, position: Position): ILifeSanctuary | IFightSanctuary {
         const sanctuary = this.getSanctuaryAtPosition(activeGame, position);
 
         if (!sanctuary) {
-            throw new Error("La case ciblée n'est pas un sanctuaire");
+            throw new AppError([ErrorCode.InvalidSanctuaryTarget], StatusCodes.BAD_REQUEST);
         }
 
         if (!isSanctuaryItem(sanctuary)) {
-            throw new Error("La case ciblée n'est pas un sanctuaire");
+            throw new AppError([ErrorCode.InvalidSanctuaryTarget], StatusCodes.BAD_REQUEST);
         }
 
         return sanctuary;
     }
 
     private assertAdjacentToSanctuary(player: { positionGrille: Position }, sanctuary: IItem): void {
-        this.throwIf(!isPositionAdjacentToSanctuary(player.positionGrille, sanctuary), 'Le joueur doit être adjacent au sanctuaire');
+        this.throwIf(!isPositionAdjacentToSanctuary(player.positionGrille, sanctuary), [ErrorCode.SanctuaryAdjacencyRequired]);
     }
 
     private assertSanctuaryIsAvailable(sanctuary: IItem): void {
-        this.throwIf(!isSanctuaryActive(sanctuary), 'Le sanctuaire ciblé est temporairement inactif');
+        this.throwIf(!isSanctuaryActive(sanctuary), [ErrorCode.SanctuaryInactive]);
     }
 
     private assertFightSanctuaryIsAvailable(player: SanctuaryFightState, sanctuary: IItem): void {
-        this.throwIf(
-            sanctuary.itemType === ItemType.FightSanctuary && this.hasFightSanctuaryAlreadyBeenUsed(player),
-            'Ce joueur a déjà utilisé un sanctuaire de combat',
-        );
+        this.throwIf(sanctuary.itemType === ItemType.FightSanctuary && this.hasFightSanctuaryAlreadyBeenUsed(player), [
+            ErrorCode.FightSanctuaryAlreadyUsed,
+        ]);
     }
 
     private createBaseResult(
@@ -265,9 +264,9 @@ export class SanctuaryService {
         return items.find((item) => sanctuaryCoversCell(item, position.y, position.x)) ?? null;
     }
 
-    private throwIf(condition: boolean, message: string): void {
+    private throwIf(condition: boolean, errorCodes: ErrorCode[]): void {
         if (condition) {
-            throw new Error(message);
+            throw new AppError(errorCodes, StatusCodes.BAD_REQUEST);
         }
     }
 }

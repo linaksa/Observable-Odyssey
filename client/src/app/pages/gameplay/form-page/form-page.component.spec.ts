@@ -18,13 +18,22 @@ import { of, throwError } from 'rxjs';
 
 import { FormPageComponent } from './form-page.component';
 
+import { FormPageHeaderComponent } from '@app/components/character-form/form-page-header/form-page-header.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { ErrorCode } from '@common/error-codes';
 
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IGame } from '@common/game';
+
+@Component({
+    selector: 'app-back-navigation',
+    standalone: true,
+    template: '',
+})
+class MockBackNavigationComponent {}
 
 @Component({
     selector: 'app-character-form',
@@ -34,13 +43,6 @@ import { IGame } from '@common/game';
 class MockCharacterFormComponent {
     @Output() submitForm = new EventEmitter<CharacterFormData>();
 }
-
-@Component({
-    selector: 'app-form-page-header',
-    standalone: true,
-    template: '',
-})
-class MockHeaderComponent {}
 
 @Component({
     selector: 'app-toast',
@@ -72,7 +74,7 @@ describe('FormPageComponent', () => {
 
         const overrideInfo: MetadataOverride<Component> = {
             set: {
-                imports: [MockHeaderComponent, MockCharacterFormComponent, MockToastComponent],
+                imports: [FormPageHeaderComponent, MockBackNavigationComponent, MockCharacterFormComponent, MockToastComponent],
             },
         };
 
@@ -173,7 +175,7 @@ describe('FormPageComponent', () => {
         const error = {
             originalError: {
                 error: {
-                    message: 'creation failed',
+                    errorCodes: [ErrorCode.GameTitleMissing],
                 },
             },
         };
@@ -185,7 +187,7 @@ describe('FormPageComponent', () => {
         component.submitCharacterForm({} as CharacterFormData);
 
         expect(characterFormServiceMock.isLoading()).toBeFalse();
-        expect(characterFormServiceMock.errors()).toBe('creation failed');
+        expect(characterFormServiceMock.errors()).toBe("Il n'y a pas de titre");
     });
 
     // Edge case: When required input data is missing, handle error with empty message.

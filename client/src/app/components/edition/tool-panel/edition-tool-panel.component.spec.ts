@@ -10,13 +10,16 @@
  * - Both available tools should remain clickable and emit the correct enum value.
  * - Nested selector output bubbling should not depend on the active tool choice.
  */
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { EditionItemSelectorComponent } from '@app/components/edition/item-selector/edition-item-selector.component';
 import { ToolOption } from '@app/constants/grid-edition';
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardEditorService } from '@app/services/editor/edition.service';
+import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { CellType } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { EditionToolPanelComponent } from './edition-tool-panel.component';
 
@@ -24,6 +27,7 @@ describe('EditionToolPanelComponent', () => {
     let component: EditionToolPanelComponent;
     let fixture: ComponentFixture<EditionToolPanelComponent>;
     let boardEditorServiceStub: BoardEditorService;
+    let gameEditFormServiceStub: GameEditFormService;
 
     beforeEach(async () => {
         boardEditorServiceStub = {
@@ -37,10 +41,16 @@ describe('EditionToolPanelComponent', () => {
             selectedObject: ItemType.Flag,
             availableTools: [ToolOption.Placement, ToolOption.Objects],
         } as unknown as BoardEditorService;
+        gameEditFormServiceStub = {
+            validationErrorCodes: signal<readonly ErrorCode[]>([]),
+        } as unknown as GameEditFormService;
 
         await TestBed.configureTestingModule({
             imports: [EditionToolPanelComponent],
-            providers: [{ provide: BoardEditorService, useValue: boardEditorServiceStub }],
+            providers: [
+                { provide: BoardEditorService, useValue: boardEditorServiceStub },
+                { provide: GameEditFormService, useValue: gameEditFormServiceStub },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(EditionToolPanelComponent);

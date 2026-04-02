@@ -1,4 +1,5 @@
 import { CellType, IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import { ReachabilityValidator } from './reachability-validator.service';
@@ -8,7 +9,7 @@ describe('ReachabilityValidator', () => {
         const validator = new ReachabilityValidator();
 
         expect(validator.validate(createBridgeBoard(false))).to.deep.equal([]);
-        expect(validator.validate(createBridgeBoard(true))).to.include('Toutes les cellules de la carte ne sont pas accessibles.');
+        expect(validator.validate(createBridgeBoard(true))).to.include(ErrorCode.BoardInaccessibleCells);
     });
 
     it('should ignore sanctuary-covered corner cells when choosing the flood-fill start', () => {

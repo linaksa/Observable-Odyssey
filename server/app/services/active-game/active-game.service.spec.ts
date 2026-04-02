@@ -19,6 +19,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
 import { INewMessage } from '@common/message';
 import { expect } from 'chai';
@@ -134,7 +135,7 @@ describe('ActiveGameService', () => {
                 await activeGameService.createActiveGame('nonExistentActiveGameId', {} as CharacterFormData);
                 throw new Error('Expected method to reject.');
             } catch (err) {
-                expect(err.message).to.equal('GAME_NOT_FOUND');
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameNotFound]);
             }
         });
 
@@ -163,7 +164,7 @@ describe('ActiveGameService', () => {
                 await activeGameService.addPlayerToActiveGame('nonExistentActiveGameId', {} as CharacterFormData);
                 throw new Error('Expected method to reject.');
             } catch (err) {
-                expect(err.message).to.equal('ACTIVE_GAME_NOT_FOUND');
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameNotFound]);
             }
         });
 

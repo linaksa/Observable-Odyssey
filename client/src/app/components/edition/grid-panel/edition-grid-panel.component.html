@@ -5,8 +5,15 @@
         #grid
         [cells]="boardEditorService.gameCells"
         [getObjectAt]="boardEditorService.getObjectAt"
+        [objects]="boardEditorService.objects"
         [editable]="true"
+        [highlightedTiles]="highlightedTiles()"
+        [highlightedTileClass]="highlightedTileClass"
+        [showTooltip]="true"
+        [getTooltipText]="getTooltipText"
+        [placementPreview]="placementPreview()"
         (cellMouseDown)="cellMouseDown.emit($event)"
-        (cellMouseEnter)="cellMouseEnter.emit($event)"
+        (cellMouseEnter)="onCellMouseEnter($event)"
+        (cellMouseLeave)="onCellMouseLeave()"
     />
 </div>

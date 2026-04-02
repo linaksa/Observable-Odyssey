@@ -31,6 +31,7 @@ describe('SanctuaryPopupComponent', () => {
         fixture.detectChanges();
 
         expect(component.data()).toEqual(data);
+        expect((fixture.nativeElement.querySelector('h4') as HTMLElement).textContent?.trim()).toBe('Sanctuaire :');
 
         fixture.nativeElement.querySelector('[data-testid="sanctuary-standard-choice"]').click();
         fixture.nativeElement.querySelector('[data-testid="sanctuary-double-choice"]').click();

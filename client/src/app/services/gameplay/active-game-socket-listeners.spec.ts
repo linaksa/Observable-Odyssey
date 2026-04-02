@@ -24,10 +24,10 @@ import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
 import { SocketEvent } from '@common/socket-events';
 import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/utils/sanctuary';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
 const MAX_PLAYER_COUNT = 4;

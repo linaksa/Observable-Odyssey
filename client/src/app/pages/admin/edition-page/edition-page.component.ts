@@ -144,6 +144,7 @@ export class EditionPageComponent implements OnInit, OnDestroy {
 
     submitGameForm(): void {
         if (!this.editedGame) {
+            this.gameEditFormService.formErrors.set(['La sauvegarde du jeu est impossible tant que la page n’est pas complètement chargée.']);
             return;
         }
 
@@ -153,7 +154,9 @@ export class EditionPageComponent implements OnInit, OnDestroy {
                 return this.router.navigate(['/admin']);
             })
             .catch(() => {
-                // The form service already updates validation state and error messages.
+                if (this.gameEditFormService.formErrors().length === 0 && this.gameEditFormService.validationErrorCodes().length === 0) {
+                    this.gameEditFormService.formErrors.set(['La sauvegarde du jeu a échoué. Veuillez corriger les erreurs et réessayer.']);
+                }
             });
     }
 
@@ -163,7 +166,8 @@ export class EditionPageComponent implements OnInit, OnDestroy {
         this.boardEditorService.selectedMaterial = CellType.Empty;
         this.boardEditorService.selectedObject = null;
         this.gameEditFormService.init(this.previousVersion);
-        this.gameEditFormService.formErrors = [];
+        this.gameEditFormService.formErrors.set([]);
+        this.gameEditFormService.validationErrorCodes.set([]);
     }
 
     private handleCreation(): void {
@@ -236,7 +240,8 @@ export class EditionPageComponent implements OnInit, OnDestroy {
         this.boardEditorService.selectedMaterial = CellType.Empty;
         this.boardEditorService.selectedObject = null;
         this.gameEditFormService.init(game);
-        this.gameEditFormService.formErrors = [];
+        this.gameEditFormService.formErrors.set([]);
+        this.gameEditFormService.validationErrorCodes.set([]);
     }
 
     private createDefaultGame(): IExistingGame {

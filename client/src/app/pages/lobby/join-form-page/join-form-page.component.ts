@@ -2,11 +2,12 @@ import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
-import { GameService } from '@app/services/admin/game.service';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
+import { GameService } from '@app/services/admin/game.service';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData } from '@common/character';
 import { Namespaces } from '@common/namespaces';
@@ -91,7 +92,9 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
             error: (error) => {
                 this.characterFormService.isLoading.set(false);
                 this.toastService.show('Erreur lors de la tentative de rejoindre la partie.');
-                this.characterFormService.errors.set(error.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.');
+                this.characterFormService.errors.set(
+                    mapErrorCodesToMessage(extractErrorCodes(error), 'Il y a eu un problème lors de la création du personnage.'),
+                );
             },
         });
     }

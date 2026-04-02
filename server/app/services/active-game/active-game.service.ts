@@ -1,10 +1,13 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
+import { AppError } from '@app/error-types/app-error';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import { IMessage, INewMessage } from '@common/message';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
 @Service()
@@ -12,7 +15,7 @@ export class ActiveGameService {
     async createActiveGame(gameId: string, characterForm: CharacterFormData): Promise<IActiveGame> {
         const gameChosen = await game.findById(gameId);
         if (!gameChosen) {
-            throw new Error('GAME_NOT_FOUND');
+            throw new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const sanctuaryState = this.createDefaultSanctuaryState();
@@ -63,17 +66,17 @@ export class ActiveGameService {
     async addPlayerToActiveGame(activeGameId: string, characterForm: CharacterFormData): Promise<IActiveGame | null> {
         const activeGameToUpdate = await activeGameModel.findById(activeGameId);
         if (!activeGameToUpdate) {
-            throw new Error('ACTIVE_GAME_NOT_FOUND');
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const maxPlayers = activeGameToUpdate.maxPlayerCount;
         if (activeGameToUpdate.players.length >= maxPlayers) {
-            throw new Error('Nombre maximum de joueurs atteint pour cette partie');
+            throw new AppError([ErrorCode.ActiveGameFull], StatusCodes.BAD_REQUEST);
         }
 
         const newPlayerAvatar = characterForm.avatar;
         if (activeGameToUpdate.players.some((player) => player.avatar === newPlayerAvatar)) {
-            throw new Error('Avatar déjà utilisé par un autre joueur dans cette partie');
+            throw new AppError([ErrorCode.AvatarAlreadyUsed], StatusCodes.BAD_REQUEST);
         }
 
         const uniquePlayerName = this.generateUniquePlayerName(characterForm.name, activeGameToUpdate.players);
@@ -191,7 +194,7 @@ export class ActiveGameService {
     async startCombat(activeGameId: string, attacker: string, defender: string): Promise<IActiveGame> {
         const activeGame = await activeGameModel.findById(activeGameId);
         if (!activeGame) {
-            throw new Error(`Active game with id ${activeGameId} not found`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const currentAttack: ICurrentAttack = {
@@ -210,12 +213,12 @@ export class ActiveGameService {
     async choosePosture(activeGameId: string, playerName: string, posture: AttackPosture): Promise<IActiveGame> {
         const activeGame = await activeGameModel.findById(activeGameId);
         if (!activeGame) {
-            throw new Error(`Active game with id ${activeGameId} not found`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const currentAttack = activeGame.currentAttack;
         if (!currentAttack) {
-            throw new Error(`No ongoing attack in active game with id ${activeGameId}`);
+            throw new AppError([ErrorCode.NoOngoingAttack], StatusCodes.BAD_REQUEST);
         }
 
         if (currentAttack.attacker === playerName) {

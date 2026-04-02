@@ -1,6 +1,9 @@
 import { ValidationError } from '@app/error-types/validation-error';
+import { toErrorResponse } from '@app/error-types/error-response';
+import { AppError } from '@app/error-types/app-error';
 import { AdminSocketsService } from '@app/services/admin/admin-sockets.service';
 import { GameService } from '@app/services/game/game.service';
+import { ErrorCode } from '@common/error-codes';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -74,7 +77,7 @@ export class GameController {
                 const games = await this.gameService.getAllGames();
                 res.status(StatusCodes.OK).json(games);
             } catch {
-                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorCodes: [ErrorCode.InternalServerError] });
             }
         });
         /**
@@ -132,11 +135,14 @@ export class GameController {
             try {
                 const existingGame = await this.gameService.getGame(gameId);
                 if (!existingGame) {
-                    return res.status(StatusCodes.NOT_FOUND).json({ message: 'Jeu introuvable' });
+                    return res.status(StatusCodes.NOT_FOUND).json({ errorCodes: [ErrorCode.GameNotFound] });
                 }
                 return res.json(existingGame);
-            } catch {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: 'Erreur interne du serveur' });
+            } catch (error) {
+                if (error instanceof AppError) {
+                    return res.status(error.status).json(toErrorResponse(error));
+                }
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ errorCodes: [ErrorCode.InternalServerError] });
             }
         });
 
@@ -192,9 +198,9 @@ export class GameController {
                 return res.status(StatusCodes.CREATED).json(newGame);
             } catch (error) {
                 if (error instanceof ValidationError) {
-                    return res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
+                    return res.status(StatusCodes.BAD_REQUEST).json(toErrorResponse(error));
                 }
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(toErrorResponse(error));
             }
         });
         /**
@@ -229,10 +235,13 @@ export class GameController {
                 this.adminSocketService.emitNewData();
                 return res.sendStatus(StatusCodes.NO_CONTENT);
             } catch (error) {
-                if (error.message === 'Jeu déjà supprimé') {
-                    return res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
+                if (error instanceof ValidationError) {
+                    return res.status(StatusCodes.BAD_REQUEST).json(toErrorResponse(error));
                 }
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+                if (error instanceof AppError) {
+                    return res.status(error.status).json(toErrorResponse(error));
+                }
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(toErrorResponse(error));
             }
         });
         /**
@@ -296,10 +305,12 @@ export class GameController {
                 }
             } catch (error) {
                 if (error instanceof ValidationError) {
-                    return res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
-                } else {
-                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+                    return res.status(StatusCodes.BAD_REQUEST).json(toErrorResponse(error));
                 }
+                if (error instanceof AppError) {
+                    return res.status(error.status).json(toErrorResponse(error));
+                }
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(toErrorResponse(error));
             }
         });
         /**
@@ -350,12 +361,12 @@ export class GameController {
                 return res.json(updatedGame);
             } catch (error) {
                 if (error instanceof ValidationError) {
-                    return res.status(StatusCodes.BAD_REQUEST).json({ error: error.message });
+                    return res.status(StatusCodes.BAD_REQUEST).json(toErrorResponse(error));
                 }
-                if (error.message === 'Jeu introuvable') {
-                    return res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
+                if (error instanceof AppError) {
+                    return res.status(error.status).json(toErrorResponse(error));
                 }
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Erreur interne du serveur' });
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(toErrorResponse(error));
             }
         });
     }

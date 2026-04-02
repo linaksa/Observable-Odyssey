@@ -5,10 +5,15 @@
  * - Render the shared grid with a deterministic board and item lookup.
  * - Verify the component draws the expected tile and item sprites.
  * - Verify edit-mode output events are emitted only when the grid is editable.
+ * - Test tooltip functionality: show, position, and hide based on hover events.
+ * - Test placement preview overlay rendering and opacity.
  *
  * Edge cases covered:
  * - Sanctuary items should span 2x2 cells with shifted offsets.
  * - Read-only mode should not emit edit events.
+ * - Tooltip should only show when showTooltip is true and getTooltipText returns non-null.
+ * - Tooltip should hide on mouseleave.
+ * - Placement preview should only render for the currently hovered cell.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CELL_TYPE_BACKGROUNDS, CELL_TYPE_PATHS, ITEM_TYPE_PATHS, OBJECT_IMAGES, OBJECT_SPECIFIC_CLASSES } from '@app/constants/backgrounds-mapping';
@@ -16,7 +21,8 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
-import { GameGridCellEvent, GameGridComponent } from './game-grid.component';
+import { buildItemBackgroundClass, isInactiveSanctuary } from './game-grid-layout';
+import { GameGridCellEvent, GameGridComponent, PlacementPreview } from './game-grid.component';
 
 describe('GameGridComponent', () => {
     let fixture: ComponentFixture<GameGridComponent>;
@@ -214,8 +220,8 @@ describe('GameGridComponent', () => {
             active: false,
         };
 
-        expect(component.isInactiveSanctuary(inactiveSanctuary)).toBeTrue();
-        expect(component.itemBackgroundClass(inactiveSanctuary)).toContain('opacity-50');
+        expect(isInactiveSanctuary(inactiveSanctuary)).toBeTrue();
+        expect(buildItemBackgroundClass(inactiveSanctuary)).toContain('opacity-50');
     });
 
     it('should not mark non-sanctuary items as inactive', () => {
@@ -226,8 +232,91 @@ describe('GameGridComponent', () => {
             size: SMALL_ITEM_SIZE,
         };
 
-        expect(component.isInactiveSanctuary(flagItem)).toBeFalse();
-        expect(component.itemBackgroundClass(flagItem)).not.toContain('opacity-50');
+        expect(isInactiveSanctuary(flagItem)).toBeFalse();
+        expect(buildItemBackgroundClass(flagItem)).not.toContain('opacity-50');
+    });
+
+    describe('Placement preview overlay', () => {
+        it('should render placement preview for cellType', () => {
+            const preview: PlacementPreview = {
+                rowIndex: 0,
+                colIndex: 0,
+                cellType: CellType.Water,
+            };
+
+            fixture.componentRef.setInput('placementPreview', preview);
+            fixture.detectChanges();
+
+            const previewOverlay = fixture.nativeElement.querySelector('[data-testid="game-grid-preview"]') as HTMLElement;
+
+            expect(previewOverlay).toBeTruthy();
+            expect(previewOverlay.className).toContain('opacity-50');
+            expect(previewOverlay.className).toContain(CELL_TYPE_BACKGROUNDS[CellType.Water]);
+        });
+
+        it('should render placement preview for itemType', () => {
+            const preview: PlacementPreview = {
+                rowIndex: 0,
+                colIndex: 1,
+                itemType: ItemType.Flag,
+            };
+
+            fixture.componentRef.setInput('placementPreview', preview);
+            fixture.detectChanges();
+
+            const cellElements = fixture.nativeElement.querySelectorAll('[data-testid="game-grid-cell"]');
+            const targetCell = cellElements[1] as HTMLElement;
+            const previewOverlay = targetCell.querySelector('[data-testid="game-grid-preview"]') as HTMLElement;
+
+            expect(previewOverlay).toBeTruthy();
+            expect(previewOverlay.className).toContain('opacity-50');
+            expect(previewOverlay.className).toContain(OBJECT_IMAGES[ItemType.Flag]);
+        });
+
+        it('should not render preview for non-matching cells', () => {
+            const preview: PlacementPreview = {
+                rowIndex: 0,
+                colIndex: 0,
+                cellType: CellType.Water,
+            };
+
+            fixture.componentRef.setInput('placementPreview', preview);
+            fixture.detectChanges();
+
+            const cellElements = fixture.nativeElement.querySelectorAll('[data-testid="game-grid-cell"]');
+            const nonPreviewCell = cellElements[1] as HTMLElement;
+            const previewOverlay = nonPreviewCell.querySelector('[data-testid="game-grid-preview"]');
+
+            expect(previewOverlay).toBeFalsy();
+        });
+
+        // Edge case: Preview should not render when placementPreview is null.
+        it('should not render preview when placementPreview is null', () => {
+            fixture.componentRef.setInput('placementPreview', null);
+            fixture.detectChanges();
+
+            const previewOverlay = fixture.nativeElement.querySelector('[data-testid="game-grid-preview"]');
+            expect(previewOverlay).toBeFalsy();
+        });
+
+        it('should render sanctuary preview across all covered cells', () => {
+            const preview: PlacementPreview = {
+                rowIndex: 0,
+                colIndex: 0,
+                itemType: ItemType.LifeSanctuary,
+            };
+
+            fixture.componentRef.setInput('placementPreview', preview);
+            fixture.detectChanges();
+
+            const previewOverlays = fixture.nativeElement.querySelectorAll('[data-testid="game-grid-preview"]') as NodeListOf<HTMLElement>;
+            const expectedSanctuaryPreviewCount = 2 * 2;
+
+            expect(previewOverlays.length).toBe(expectedSanctuaryPreviewCount);
+            expect(previewOverlays[0].className).toContain(OBJECT_IMAGES[ItemType.LifeSanctuary]);
+            expect(previewOverlays[0].style.backgroundPosition).toBe('0% 0%');
+            expect(previewOverlays[3].style.backgroundPosition).toBe('100% 100%');
+        });
     });
 });
 

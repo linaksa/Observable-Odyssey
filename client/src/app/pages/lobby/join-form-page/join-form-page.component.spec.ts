@@ -26,6 +26,7 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame, IActiveGameWithPlayer } from '@common/activeGame';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -267,11 +268,9 @@ describe('JoinFormPageComponent', () => {
     it('should handle joinGameAsCharacter error', () => {
         // Error case
         // Validate that the app doesnt crash and shows an error toast when the join game request fails
-        const errorText = 'join failed';
-
         const error = {
             originalError: {
-                error: { message: errorText },
+                error: { errorCodes: [ErrorCode.AvatarAlreadyUsed] },
             },
         };
 
@@ -282,7 +281,7 @@ describe('JoinFormPageComponent', () => {
         component.joinGameAsCharacter({} as CharacterFormData);
 
         expect(toastServiceMock.show).toHaveBeenCalled();
-        expect(characterFormServiceMock.errors()).toBe(errorText);
+        expect(characterFormServiceMock.errors()).toBe('Avatar déjà utilisé par un autre joueur dans cette partie');
     });
 
     // Edge case: When required input data is missing, handle joinGameAsCharacter empty error.

@@ -17,6 +17,7 @@ export interface HttpError {
     message: string;
     timestamp: Date;
     originalError?: unknown;
+    errorCodes?: readonly number[];
 }
 export function isHttpError(error: unknown): error is HttpError {
     if (typeof error !== 'object' || error === null) {

@@ -27,6 +27,8 @@ export class BoardEditorService {
     private readonly selectedMaterialState = signal<CellType>(CellType.Empty);
     private readonly selectedObjectState = signal<ItemType | null>(null);
 
+    readonly gameCellsSignal = computed(() => this.gameCellsState());
+    readonly objectsSignal = computed(() => this.objectsState());
     availableCellTypes = [CellType.Empty, CellType.Ice, CellType.Water, CellType.Wall, CellType.ClosedDoor];
     readonly cellTypesInfo = TILE_INFO_BY_TYPE;
     readonly itemTypesInfo = ITEM_INFO_BY_TYPE;
@@ -178,14 +180,12 @@ export class BoardEditorService {
 
         const selectedObject = this.selectedObject;
 
-        if (this.blockingCells.has(this.gameCells[rowIndex][colIndex])) return;
-
         if (selectedObject === ItemType.LifeSanctuary || selectedObject === ItemType.FightSanctuary) {
             this.placeSanctuary(rowIndex, colIndex);
             return;
         }
 
-        if (this.isCellOccupied(rowIndex, colIndex)) return;
+        if (!this.isSelectedObjectPlacementPositionValid(rowIndex, colIndex)) return;
 
         if (selectedObject === ItemType.Flag && this.getObjectCount(ItemType.Flag) >= this.flagMaxAmount) return;
 
@@ -205,24 +205,23 @@ export class BoardEditorService {
     placeSanctuary(rowIndex: number, colIndex: number): void {
         if (this.selectedObject === null) return;
 
+        if (!this.isSelectedObjectPlacementPositionValid(rowIndex, colIndex)) return;
+
         if (this.selectedObject === ItemType.LifeSanctuary && this.getObjectCount(ItemType.LifeSanctuary) >= this.sanctuaryMaxAmount) return;
 
         if (this.selectedObject === ItemType.FightSanctuary && this.getObjectCount(ItemType.FightSanctuary) >= this.sanctuaryMaxAmount) return;
 
-        if (rowIndex + 1 >= this.gameCells.length || colIndex + 1 >= this.gameCells.length) return;
+        this.objects = [...this.objects, { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE }];
+    }
 
-        const cells: [number, number][] = [
-            [rowIndex, colIndex],
-            [rowIndex + 1, colIndex],
-            [rowIndex, colIndex + 1],
-            [rowIndex + 1, colIndex + 1],
-        ];
+    isSelectedObjectPlacementPositionValid(rowIndex: number, colIndex: number): boolean {
+        const selectedObject = this.selectedObject;
 
-        if (cells.some(([row, col]) => this.isCellOccupied(row, col))) return;
+        if (selectedObject === null) {
+            return false;
+        }
 
-        if (cells.some(([row, col]) => this.blockingCells.has(this.gameCells[row][col]))) return;
-
-        this.objects = [...this.objects, { itemType: this.selectedObject, x: colIndex, y: rowIndex, size: SANCTUARY_SIZE }];
+        return this.isObjectPlacementPositionValid(selectedObject, rowIndex, colIndex);
     }
 
     eraseTile(row: number, col: number): void {
@@ -262,6 +261,44 @@ export class BoardEditorService {
         return this.gameCells.map((row) => [...row]);
     }
 
+    private isObjectPlacementPositionValid(itemType: ItemType, rowIndex: number, colIndex: number): boolean {
+        if (this.isSanctuaryItemType(itemType)) {
+            return this.isSanctuaryPlacementPositionValid(rowIndex, colIndex);
+        }
+
+        return this.isSingleCellObjectPlacementPositionValid(rowIndex, colIndex);
+    }
+
+    private isSingleCellObjectPlacementPositionValid(rowIndex: number, colIndex: number): boolean {
+        if (!this.isInBounds(rowIndex, colIndex)) {
+            return false;
+        }
+
+        return !this.blockingCells.has(this.gameCells[rowIndex][colIndex]) && !this.isCellOccupied(rowIndex, colIndex);
+    }
+
+    private isSanctuaryPlacementPositionValid(rowIndex: number, colIndex: number): boolean {
+        const rows = this.gameCells.length;
+        const cols = this.gameCells[0]?.length ?? 0;
+
+        if (rows === 0 || cols === 0 || rowIndex < 0 || colIndex < 0 || rowIndex + 1 >= rows || colIndex + 1 >= cols) {
+            return false;
+        }
+
+        const cells: [number, number][] = [
+            [rowIndex, colIndex],
+            [rowIndex + 1, colIndex],
+            [rowIndex, colIndex + 1],
+            [rowIndex + 1, colIndex + 1],
+        ];
+
+        return !cells.some(([row, col]) => this.isCellOccupied(row, col) || this.blockingCells.has(this.gameCells[row][col]));
+    }
+
+    private isInBounds(rowIndex: number, colIndex: number): boolean {
+        return rowIndex >= 0 && rowIndex < this.gameCells.length && colIndex >= 0 && colIndex < (this.gameCells[0]?.length ?? 0);
+    }
+
     private isDoorMaterial(material: CellType): boolean {
         return material === CellType.OpenDoor || material === CellType.ClosedDoor;
     }
@@ -272,5 +309,9 @@ export class BoardEditorService {
 
     private toggleDoorState(currentCell: CellType): CellType {
         return currentCell === CellType.OpenDoor ? CellType.ClosedDoor : CellType.OpenDoor;
+    }
+
+    private isSanctuaryItemType(itemType: ItemType): boolean {
+        return itemType === ItemType.LifeSanctuary || itemType === ItemType.FightSanctuary;
     }
 }

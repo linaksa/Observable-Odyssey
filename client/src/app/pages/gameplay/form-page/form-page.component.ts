@@ -7,6 +7,7 @@ import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { CharacterFormData } from '@common/character';
 import { Subscription } from 'rxjs';
 
@@ -52,7 +53,7 @@ export class FormPageComponent implements OnInit, OnDestroy {
             error: (response) => {
                 this.characterFormService.isLoading.set(false);
                 this.characterFormService.errors.set(
-                    response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.',
+                    mapErrorCodesToMessage(extractErrorCodes(response), 'Il y a eu un problème lors de la création du personnage.'),
                 );
             },
         });
