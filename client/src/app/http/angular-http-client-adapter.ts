@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 
 interface MappedHttpOptions {
     headers?: Record<string, string>;
@@ -62,12 +63,14 @@ export class AngularHttpClientAdapter implements HttpClientPort {
     }
 
     private handleError(error: HttpErrorResponse, url: string): Observable<never> {
+        const errorCodes = extractErrorCodes(error.error);
         const httpError: HttpError = {
             status: error.status,
-            message: error.message || 'Unknown error',
+            message: mapErrorCodesToMessage(errorCodes, error.message || 'Unknown error'),
             url,
             timestamp: new Date(),
             originalError: error,
+            errorCodes,
         };
         return throwError(() => httpError);
     }

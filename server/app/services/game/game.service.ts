@@ -1,9 +1,12 @@
+import { AppError } from '@app/error-types/app-error';
 import { ValidationError } from '@app/error-types/validation-error';
 import { game } from '@app/schemas/game';
 import { BoardService } from '@app/services/board/board.service';
 import { UpdatedGame } from '@app/services/interfaces/updated-game';
+import { ErrorCode } from '@common/error-codes';
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
 @Service()
@@ -23,7 +26,7 @@ export class GameService {
 
         const existingGame = await game.findOne({ gameTitle: gameData.gameTitle });
         if (existingGame) {
-            throw new ValidationError('Un jeu avec ce nom existe déjà');
+            throw new ValidationError(ErrorCode.GameAlreadyExists);
         }
 
         gameData.visibility = Visibility.Hidden;
@@ -34,33 +37,52 @@ export class GameService {
     }
 
     private validateGameData(gameData: IGame): void {
-        this.validateTitle(gameData.gameTitle);
-        this.validateDescription(gameData.description);
-        this.validateGameMode(gameData.gameMode);
-        this.validateBoard(gameData);
+        const errors: ErrorCode[] = [];
+        const titleError = this.validateTitle(gameData.gameTitle);
+        if (titleError) {
+            errors.push(titleError);
+        }
+
+        const descriptionError = this.validateDescription(gameData.description);
+        if (descriptionError) {
+            errors.push(descriptionError);
+        }
+
+        const gameModeError = this.validateGameMode(gameData.gameMode);
+        if (gameModeError) {
+            errors.push(gameModeError);
+        }
+
+        errors.push(...this.validateBoard(gameData));
+
+        if (errors.length > 0) {
+            throw new ValidationError(errors);
+        }
     }
 
-    private validateTitle(title: string): void {
+    private validateTitle(title: string): ErrorCode | undefined {
         const trimmed = title?.trim();
-        if (!trimmed?.length) throw new ValidationError("Il n'y a pas de titre");
-        if (trimmed.length > MAX_TITLE_LENGTH) throw new ValidationError('Le titre ne peut pas dépasser 50 caractères');
+        if (!trimmed?.length) return ErrorCode.GameTitleMissing;
+        if (trimmed.length > MAX_TITLE_LENGTH) return ErrorCode.GameTitleTooLong;
+        return undefined;
     }
 
-    private validateDescription(description: string): void {
+    private validateDescription(description: string): ErrorCode | undefined {
         const trimmed = description?.trim();
-        if (!trimmed?.length) throw new ValidationError("Il n'y a pas de description");
-        if (trimmed.length > MAX_DESCRIPTION_LENGTH) throw new ValidationError('La description ne peut pas dépasser 200 caractères');
+        if (!trimmed?.length) return ErrorCode.GameDescriptionMissing;
+        if (trimmed.length > MAX_DESCRIPTION_LENGTH) return ErrorCode.GameDescriptionTooLong;
+        return undefined;
     }
 
-    private validateGameMode(gameMode: GameType): void {
-        if (!Object.values(GameType).includes(gameMode)) throw new ValidationError('Mode de jeu invalide');
+    private validateGameMode(gameMode: GameType): ErrorCode | undefined {
+        if (!Object.values(GameType).includes(gameMode)) return ErrorCode.GameModeInvalid;
+        return undefined;
     }
 
-    private validateBoard(gameData: IGame): void {
-        if (!gameData.board) throw new ValidationError("Il n'y a pas de carte");
+    private validateBoard(gameData: IGame): ErrorCode[] {
+        if (!gameData.board) return [ErrorCode.GameBoardMissing];
 
-        const boardErrors = this.boardService.validateBoard(gameData.board, gameData.gameMode);
-        if (boardErrors.length > 0) throw new ValidationError(boardErrors.join(' '));
+        return this.boardService.validateBoard(gameData.board, gameData.gameMode);
     }
 
     async updateGame(id: string, gameData: IGame): Promise<UpdatedGame> {
@@ -79,7 +101,7 @@ export class GameService {
             _id: { $ne: id },
         });
         if (duplicateGame) {
-            throw new ValidationError('Un jeu avec ce nom existe déjà');
+            throw new ValidationError(ErrorCode.GameAlreadyExists);
         }
 
         const updatedGame = await game.findByIdAndUpdate(
@@ -102,18 +124,18 @@ export class GameService {
     async deleteGame(gameId: string): Promise<void> {
         const deletedGame = await game.findByIdAndDelete(gameId);
         if (!deletedGame) {
-            throw new Error('Jeu déjà supprimé');
+            throw new AppError([ErrorCode.GameAlreadyDeleted], StatusCodes.NOT_FOUND);
         }
     }
 
     async changeVisibility(id: string, visibility: Visibility): Promise<IGame> {
         const existingGame = await game.findById(id);
         if (!existingGame) {
-            throw new Error('Jeu introuvable');
+            throw new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND);
         }
         const validVisibilities = [Visibility.Viewable, Visibility.Hidden];
         if (!validVisibilities.includes(visibility)) {
-            throw new ValidationError('Visibilité invalide');
+            throw new ValidationError(ErrorCode.GameVisibilityInvalid);
         }
         existingGame.visibility = visibility;
         existingGame.lastModifiedDate = new Date();

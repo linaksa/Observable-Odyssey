@@ -3,13 +3,11 @@ export interface TileInfoData {
     title: string;
     description: string;
     movementCost: string;
-    editorTooltip: string;
 }
 
 export interface ItemInfoData {
     title: string;
     description: string;
-    editorTooltip: string;
 }
 
 export type SanctuaryChoice = 'standard' | 'double';

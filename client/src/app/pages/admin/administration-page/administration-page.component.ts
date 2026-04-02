@@ -13,6 +13,7 @@ import { AdministrationService } from '@app/services/admin/administration.servic
 import { GameTableService } from '@app/services/tables/game-table.service';
 import { GameService } from '@app/services/admin/game.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { IExistingGame, Visibility } from '@common/game';
 import { finalize } from 'rxjs';
 
@@ -94,9 +95,9 @@ export class AdministrationPageComponent implements OnInit {
             )
             .subscribe({
                 next: () => this.gameTableService.fetchGames(false),
-                error: () => {
+                error: (error: HttpErrorResponse) => {
                     input.checked = !input.checked;
-                    this.toastService.show('Il y a eu un problème lors du changement de visibilité.');
+                    this.toastService.show(this.getServerMessage(error, 'Il y a eu un problème lors du changement de visibilité.'));
                 },
             });
     }
@@ -112,7 +113,7 @@ export class AdministrationPageComponent implements OnInit {
     }
 
     private getServerMessage(error: HttpErrorResponse, fallback: string): string {
-        return error?.error?.error || fallback;
+        return mapErrorCodesToMessage(extractErrorCodes(error), fallback);
     }
 
     private updateVisibilityTogglePending(gameId: string, isPending: boolean): void {

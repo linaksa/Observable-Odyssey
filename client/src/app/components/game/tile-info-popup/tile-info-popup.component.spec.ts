@@ -46,5 +46,6 @@ describe('TileInfoPopupComponent', () => {
 
         expect(component).toBeTruthy();
         expect(component.data()).toEqual(data);
+        expect((fixture.nativeElement.querySelector('h4') as HTMLElement).textContent?.trim()).toBe('Tile title :');
     });
 });

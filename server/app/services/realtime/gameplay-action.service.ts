@@ -1,7 +1,9 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { AppError } from '@app/error-types/app-error';
 import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { TEMPS_COMBAT } from '@common/constants';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -18,7 +20,6 @@ import {
     ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
-import { Error } from 'mongoose';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { GameSessionService } from './game-session.service';
@@ -72,7 +73,7 @@ export class GameplayActionService {
                 await this.activeGameService.deleteGameById(gameId);
             }
         } catch (error) {
-            socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
+            socket.emit(SocketEvent.PlayerMoveError, this.toSocketError(error, ErrorCode.PositionNotWalkable));
         }
     }
 
@@ -90,7 +91,7 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.DoorToggleError, { message: (error as Error).message ?? 'Action sur la porte non autorisée' });
+            socket.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
         }
     }
 
@@ -112,9 +113,7 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.SanctuaryInteractionError, {
-                message: (error as Error).message ?? 'Interaction avec le sanctuaire non autorisée',
-            });
+            socket.emit(SocketEvent.SanctuaryInteractionError, this.toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
         }
     }
 
@@ -176,13 +175,13 @@ export class GameplayActionService {
         const { gameId, currentPlayerName, targetName } = data;
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) {
-            socket.emit(SocketEvent.ActionError, { message: 'Partie introuvable' });
+            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
             return;
         }
 
         const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
         if (!allowed) {
-            socket.emit(SocketEvent.ActionError, { message: 'Action non autorisée' });
+            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
             return;
         }
 
@@ -208,7 +207,7 @@ export class GameplayActionService {
         const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
 
         if (!allowed) {
-            socket.emit(SocketEvent.ActionError, { message: 'Action non autorisée' });
+            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
             return;
         }
 
@@ -293,15 +292,11 @@ export class GameplayActionService {
             return false;
         }
         if (activeGame.game.gameMode === 'ctf' && activeGame.players.length % 2 !== 0) {
-            socket.emit(SocketEvent.StartGameError, {
-                message: 'Le mode CTF nécessite un nombre pair de joueurs.',
-            });
+            socket.emit(SocketEvent.StartGameError, { errorCodes: [ErrorCode.CtfRequiresEvenPlayerCount] });
             return false;
         }
         if (activeGame.players.length < 2) {
-            socket.emit(SocketEvent.StartGameError, {
-                message: 'Il faut au moins 2 joueurs pour démarrer la partie.',
-            });
+            socket.emit(SocketEvent.StartGameError, { errorCodes: [ErrorCode.StartGameRequiresAtLeastTwoPlayers] });
             return false;
         }
 
@@ -350,5 +345,13 @@ export class GameplayActionService {
 
             //await this.activeGameService.deleteGameById(gameId);
         }
+    }
+
+    private toSocketError(error: unknown, fallbackCode: ErrorCode): { errorCodes: ErrorCode[] } {
+        if (error instanceof AppError) {
+            return { errorCodes: error.errorCodes };
+        }
+
+        return { errorCodes: [fallbackCode] };
     }
 }

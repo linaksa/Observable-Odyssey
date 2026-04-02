@@ -2,10 +2,12 @@ import { Router } from '@angular/router';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
 import { CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
+import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
@@ -142,11 +144,13 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ message: string }>(Namespaces.Game, SocketEvent.DoorToggleError).subscribe((data) => {
-            context.toastService.show(data.message);
+        context.socket.on<IErrorResponse>(Namespaces.Game, SocketEvent.DoorToggleError).subscribe((data) => {
+            context.toastService.show(mapErrorCodesToMessage(data.errorCodes, mapErrorCodeToMessage(ErrorCode.InvalidDoorTarget, 'Erreur inconnue')));
         }),
-        context.socket.on<{ message: string }>(Namespaces.Game, SocketEvent.SanctuaryInteractionError).subscribe((data) => {
-            context.toastService.show(data.message);
+        context.socket.on<IErrorResponse>(Namespaces.Game, SocketEvent.SanctuaryInteractionError).subscribe((data) => {
+            context.toastService.show(
+                mapErrorCodesToMessage(data.errorCodes, mapErrorCodeToMessage(ErrorCode.InvalidSanctuaryTarget, 'Erreur inconnue')),
+            );
         }),
 
         context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {

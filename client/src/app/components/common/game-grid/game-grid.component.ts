@@ -1,17 +1,26 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { CELL_TYPE_BACKGROUNDS, CELL_TYPE_PATHS, ITEM_TYPE_PATHS, OBJECT_IMAGES, OBJECT_SPECIFIC_CLASSES } from '@app/constants/backgrounds-mapping';
+import { afterEveryRender, ChangeDetectionStrategy, Component, computed, ElementRef, input, output, ViewChild } from '@angular/core';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { IItem, ItemType } from '@common/items';
-
-export interface GameGridCellEvent {
-    rowIndex: number;
-    colIndex: number;
-    cellType: CellType;
-    item: IItem | null;
-    event: MouseEvent;
-}
+import { IItem } from '@common/items';
+import {
+    buildCellBackgroundClass,
+    buildCellImagePath,
+    buildItemBackgroundClass,
+    buildItemBackgroundPosition,
+    buildItemHeight,
+    buildItemImagePath,
+    buildItemLeft,
+    buildItemTop,
+    buildItemWidth,
+    isInactiveSanctuary,
+    isPreviewCell,
+    previewCellBackgroundClass,
+    previewCellBackgroundPosition,
+} from './game-grid-layout';
+import { GameGridTooltipController } from './game-grid-tooltip.controller';
+import type { GameGridCellEvent, PlacementPreview } from './game-grid-types';
+export type { GameGridCellEvent, PlacementPreview, TooltipPosition } from './game-grid-types';
 
 @Component({
     selector: 'app-game-grid',
@@ -25,18 +34,66 @@ export interface GameGridCellEvent {
 export class GameGridComponent {
     readonly cells = input.required<CellType[][]>();
     readonly getObjectAt = input.required<(rowIndex: number, colIndex: number) => IItem | null>();
+    readonly objects = input<readonly IItem[] | null>(null);
     readonly editable = input(false);
     readonly useBackgroundRendering = input(false);
     readonly players = input<readonly ICharacter[] | null>(null);
     readonly playerAvatarPortrait = input(true);
     readonly highlightedTiles = input<ReadonlySet<number> | null>(null);
+    readonly highlightedTileClass = input('bg-blue-600/30');
     readonly gridClass = input('');
+    readonly showTooltip = input(false);
+    readonly getTooltipText = input<((rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null) => string | null) | null>(null);
+    readonly placementPreview = input<PlacementPreview | null>(null);
 
     readonly cellMouseDown = output<GameGridCellEvent>();
     readonly cellMouseEnter = output<GameGridCellEvent>();
+    readonly cellMouseLeave = output<void>();
     readonly cellContextMenu = output<GameGridCellEvent>();
     readonly cellClick = output<GameGridCellEvent>();
     readonly playerClicked = output<ICharacter>();
+
+    private readonly tooltipController = new GameGridTooltipController({
+        cells: () => this.cells(),
+        objects: () => this.objects(),
+        getObjectAt: () => this.getObjectAt(),
+        showTooltip: () => this.showTooltip(),
+        getTooltipText: () => this.getTooltipText(),
+        getGridContainer: () => this.gridContainerRef?.nativeElement ?? null,
+        getTooltipElement: () => this.tooltipRef?.nativeElement ?? null,
+    });
+
+    protected readonly hoveredCell = this.tooltipController.hoveredCell;
+    protected readonly tooltipPointer = this.tooltipController.tooltipPointer;
+    protected readonly tooltipText = this.tooltipController.tooltipText;
+    protected readonly tooltipLines = this.tooltipController.tooltipLines;
+    protected readonly tooltipPosition = this.tooltipController.tooltipPosition;
+    protected readonly cellImagePath = buildCellImagePath;
+    protected readonly cellBackgroundClass = buildCellBackgroundClass;
+    protected readonly itemImagePath = buildItemImagePath;
+    protected readonly itemBackgroundClass = buildItemBackgroundClass;
+    protected readonly itemBackgroundPosition = buildItemBackgroundPosition;
+    protected readonly itemTop = buildItemTop;
+    protected readonly itemLeft = (item: IItem, rowIndex: number, colIndex: number): string => buildItemLeft(item, colIndex);
+    protected readonly itemWidth = buildItemWidth;
+    protected readonly itemHeight = buildItemHeight;
+    protected readonly isInactiveSanctuary = isInactiveSanctuary;
+    protected readonly isPreviewCell = (rowIndex: number, colIndex: number): boolean => isPreviewCell(this.placementPreview(), rowIndex, colIndex);
+    protected readonly previewCellBackgroundClass = (): string => previewCellBackgroundClass(this.placementPreview());
+    protected readonly previewCellBackgroundPosition = (rowIndex: number, colIndex: number): string =>
+        previewCellBackgroundPosition(this.placementPreview(), rowIndex, colIndex);
+
+    @ViewChild('gridContainer', { read: ElementRef })
+    private gridContainerRef?: ElementRef<HTMLDivElement>;
+
+    @ViewChild('tooltipElement', { read: ElementRef })
+    private tooltipRef?: ElementRef<HTMLDivElement>;
+
+    constructor() {
+        afterEveryRender({
+            read: () => this.tooltipController.syncTooltipPosition(),
+        });
+    }
 
     readonly gridTemplateColumns = computed(() => {
         const size = this.cells()[0]?.length ?? this.cells().length;
@@ -85,29 +142,9 @@ export class GameGridComponent {
         ),
     );
 
-    objectAt(rowIndex: number, colIndex: number): IItem | null {
-        return this.getObjectAt()(rowIndex, colIndex);
-    }
+    readonly highlightedTileOverlayClass = computed(() => this.joinClasses('absolute inset-0 z-20 pointer-events-none', this.highlightedTileClass()));
 
-    cellImagePath(cellType: CellType): string {
-        return CELL_TYPE_PATHS[cellType];
-    }
-
-    cellBackgroundClass(cellType: CellType): string {
-        return CELL_TYPE_BACKGROUNDS[cellType];
-    }
-
-    itemImagePath(item: IItem): string {
-        return ITEM_TYPE_PATHS[item.itemType];
-    }
-
-    itemBackgroundClass(item: IItem): string {
-        return this.joinClasses(
-            OBJECT_IMAGES[item.itemType],
-            OBJECT_SPECIFIC_CLASSES[item.itemType],
-            this.isInactiveSanctuary(item) ? 'opacity-50' : '',
-        );
-    }
+    readonly objectAt = (rowIndex: number, colIndex: number): IItem | null => this.getObjectAt()(rowIndex, colIndex);
 
     playerAvatarUrl(player: ICharacter): string {
         return buildAvatarAssetPath(player.avatar, this.playerAvatarPortrait());
@@ -132,6 +169,24 @@ export class GameGridComponent {
         }
 
         this.cellMouseEnter.emit({ rowIndex, colIndex, cellType, item, event });
+
+        if (this.showTooltip()) {
+            this.tooltipController.showCellTooltip(event, rowIndex, colIndex);
+        }
+    }
+
+    onCellMouseMove(event: MouseEvent): void {
+        if (this.showTooltip() && this.hoveredCell()) {
+            this.tooltipController.onCellMouseMove(event);
+        }
+    }
+
+    onCellMouseLeave(): void {
+        this.cellMouseLeave.emit();
+
+        if (this.showTooltip()) {
+            this.tooltipController.clearTooltip();
+        }
     }
 
     onCellContextMenu(rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null, event: MouseEvent): void {
@@ -149,69 +204,8 @@ export class GameGridComponent {
         this.playerClicked.emit(player);
     }
 
-    itemTop(item: IItem, rowIndex: number): string {
-        if (!this.isSanctuaryItem(item)) {
-            return '0';
-        }
-
-        const relativeRow = rowIndex - item.y;
-        return relativeRow === 0 ? '0' : '-100%';
-    }
-
-    itemLeft(item: IItem, rowIndex: number, colIndex: number): string {
-        if (!this.isSanctuaryItem(item)) {
-            return '0';
-        }
-
-        const relativeCol = colIndex - item.x;
-        return relativeCol === 0 ? '0' : '-100%';
-    }
-
-    itemWidth(item: IItem): string {
-        return this.isSanctuaryItem(item) ? '200%' : '100%';
-    }
-
-    itemHeight(item: IItem): string {
-        return this.isSanctuaryItem(item) ? '200%' : '100%';
-    }
-
-    private isSanctuaryItem(item: IItem): boolean {
-        return item.itemType === ItemType.LifeSanctuary || item.itemType === ItemType.FightSanctuary;
-    }
-
-    isInactiveSanctuary(item: IItem): boolean {
-        return this.isSanctuaryItem(item) && item.active === false;
-    }
-
     private getCellKey(rowIndex: number, colIndex: number): string {
         return `${rowIndex}:${colIndex}`;
-    }
-
-    itemBackgroundPosition(item: IItem, rowIndex: number, colIndex: number): string {
-        if (!this.isSanctuaryItem(item)) {
-            return '';
-        }
-
-        const relativeRow = rowIndex - item.y;
-        const relativeCol = colIndex - item.x;
-
-        if (relativeRow === 0 && relativeCol === 0) {
-            return '0% 0%';
-        }
-
-        if (relativeRow === 0 && relativeCol === 1) {
-            return '100% 0%';
-        }
-
-        if (relativeRow === 1 && relativeCol === 0) {
-            return '0% 100%';
-        }
-
-        if (relativeRow === 1 && relativeCol === 1) {
-            return '100% 100%';
-        }
-
-        return '';
     }
 
     private joinClasses(...classes: (string | false | null | undefined)[]): string {

@@ -1,15 +1,16 @@
 import { CellType, IBoard } from '@common/board';
-import { sanctuaryCoversCell } from '@common/sanctuary';
+import { ErrorCode } from '@common/error-codes';
 import { Service } from 'typedi';
 import { IBoardValidator } from './board-validator.interface';
+import { sanctuaryCoversCell } from '@app/services/gameplay/sanctuary-helpers';
 
 @Service()
 export class ReachabilityValidator implements IBoardValidator {
-    validate(board: IBoard): string[] {
-        const errors: string[] = [];
+    validate(board: IBoard): ErrorCode[] {
+        const errors: ErrorCode[] = [];
 
         if (!this.areAllCellsReachable(board)) {
-            errors.push('Toutes les cellules de la carte ne sont pas accessibles.');
+            errors.push(ErrorCode.BoardInaccessibleCells);
         }
 
         return errors;

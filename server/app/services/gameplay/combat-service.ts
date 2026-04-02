@@ -1,3 +1,4 @@
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -5,6 +6,7 @@ import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import {
     COMBAT_TURN_FEEDBACK_DURATION_MS,
     DiceType,
@@ -17,6 +19,7 @@ import {
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 import { TurnService } from './turn-service';
 
@@ -39,12 +42,12 @@ export class CombatService {
     async applyCombatTurn(activeGameId: string): Promise<boolean> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {
-            throw new Error(`Active game with id ${activeGameId} not found`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const currentAttack = currentActiveGame.currentAttack;
         if (!currentAttack) {
-            throw new Error(`No current attack found for active game with id ${activeGameId}`);
+            throw new AppError([ErrorCode.NoOngoingAttack], StatusCodes.BAD_REQUEST);
         }
 
         const attacker = currentActiveGame.players.find((p) => p.name === currentAttack.attacker);

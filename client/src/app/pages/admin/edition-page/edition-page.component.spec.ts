@@ -24,6 +24,7 @@ import { GameService } from '@app/services/admin/game.service';
 import { BoardEditorService } from '@app/services/editor/edition.service';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { CellType } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { Subject, of, Subscription } from 'rxjs';
@@ -54,8 +55,9 @@ describe('EditionPageComponent', () => {
         gameEditFormServiceStub = {
             init: jasmine.createSpy('init'),
             submitForm: jasmine.createSpy('submitForm').and.returnValue(Promise.resolve()),
-            formErrors: [],
+            formErrors: signal([]),
             formValid: true,
+            validationErrorCodes: signal([]),
             isSubmitting: signal(false),
         } as unknown as GameEditFormServiceStub;
 
@@ -290,18 +292,24 @@ describe('EditionPageComponent', () => {
 
         expect(submitFormSpy).not.toHaveBeenCalled();
         expect(routerSpy.navigate).not.toHaveBeenCalled();
+        expect(gameEditFormServiceStub.formErrors()).toEqual([
+            'La sauvegarde du jeu est impossible tant que la page n’est pas complètement chargée.',
+        ]);
     });
 
-    it('should swallow submission failures without navigating', fakeAsync(() => {
+    it('should show a generic save error and avoid navigation when submit fails without surfaced errors', fakeAsync(() => {
         const submitFormSpy = gameEditFormServiceStub.submitForm as jasmine.Spy;
 
         submitFormSpy.and.returnValue(Promise.reject(new Error('boom')));
+        gameEditFormServiceStub.formErrors.set([]);
+        gameEditFormServiceStub.validationErrorCodes.set([]);
         component.editedGame = randomGame;
 
         component.submitGameForm();
         flushMicrotasks();
 
         expect(routerSpy.navigate).not.toHaveBeenCalled();
+        expect(gameEditFormServiceStub.formErrors()).toEqual(['La sauvegarde du jeu a échoué. Veuillez corriger les erreurs et réessayer.']);
     }));
 
     it('should revert the board and reset the editor state', () => {
@@ -318,7 +326,8 @@ describe('EditionPageComponent', () => {
         boardEditorService.selectedMaterial = CellType.Water;
         boardEditorService.selectedObject = ItemType.Flag;
         componentApi.previousVersion = createGame(GameType.Classic);
-        gameEditFormServiceStub.formErrors = ['Erreur'];
+        gameEditFormServiceStub.formErrors.set(['Erreur']);
+        gameEditFormServiceStub.validationErrorCodes.set([ErrorCode.GameTitleMissing]);
 
         component.revertToOriginal();
 
@@ -329,7 +338,8 @@ describe('EditionPageComponent', () => {
         expect(boardEditorService.selectedMaterial).toBe(CellType.Empty);
         expect(boardEditorService.selectedObject).toBeNull();
         expect(gameEditFormServiceStub.init).toHaveBeenCalledWith(componentApi.previousVersion);
-        expect(gameEditFormServiceStub.formErrors).toEqual([]);
+        expect(gameEditFormServiceStub.formErrors()).toEqual([]);
+        expect(gameEditFormServiceStub.validationErrorCodes()).toEqual([]);
     });
 
     it('should clear subscriptions and pending timeout on destroy', () => {
@@ -426,7 +436,8 @@ type EditionPageApi = {
 type GameEditFormServiceStub = {
     init: jasmine.Spy;
     submitForm: jasmine.Spy;
-    formErrors: string[];
+    formErrors: WritableSignal<readonly string[]>;
     formValid: boolean;
+    validationErrorCodes: WritableSignal<readonly ErrorCode[]>;
     isSubmitting: WritableSignal<boolean>;
 };

@@ -12,7 +12,7 @@ export function sanctuaryCoversCell(item: IItem, row: number, col: number): bool
         return false;
     }
 
-    return row >= item.y && row <= item.y + 1 && col >= item.x && col <= item.x + 1;
+    return row >= item.x && row <= item.x + 1 && col >= item.y && col <= item.y + 1;
 }
 
 export function isPositionAdjacentToSanctuary(position: Position, sanctuary: IItem): boolean {
@@ -20,14 +20,14 @@ export function isPositionAdjacentToSanctuary(position: Position, sanctuary: IIt
         return false;
     }
 
-    const isWithinSanctuaryRows = position.y >= sanctuary.y && position.y <= sanctuary.y + 1;
-    const isWithinSanctuaryColumns = position.x >= sanctuary.x && position.x <= sanctuary.x + 1;
+    const isWithinSanctuaryRows = position.y >= sanctuary.x && position.y <= sanctuary.x + 1;
+    const isWithinSanctuaryColumns = position.x >= sanctuary.y && position.x <= sanctuary.y + 1;
 
     return (
-        (position.x === sanctuary.x - 1 && isWithinSanctuaryRows) ||
-        (position.x === sanctuary.x + 2 && isWithinSanctuaryRows) ||
-        (position.y === sanctuary.y - 1 && isWithinSanctuaryColumns) ||
-        (position.y === sanctuary.y + 2 && isWithinSanctuaryColumns)
+        (position.x === sanctuary.y - 1 && isWithinSanctuaryRows) ||
+        (position.x === sanctuary.y + 2 && isWithinSanctuaryRows) ||
+        (position.y === sanctuary.x - 1 && isWithinSanctuaryColumns) ||
+        (position.y === sanctuary.x + 2 && isWithinSanctuaryColumns)
     );
 }
 

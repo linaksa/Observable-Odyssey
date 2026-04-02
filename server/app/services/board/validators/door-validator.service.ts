@@ -1,17 +1,18 @@
 import { CellType, IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { Service } from 'typedi';
 import { IBoardValidator } from './board-validator.interface';
 
 @Service()
 export class DoorValidator implements IBoardValidator {
-    validate(board: IBoard): string[] {
-        const errors: string[] = [];
+    validate(board: IBoard): ErrorCode[] {
+        const errors: ErrorCode[] = [];
 
         for (const [i, row] of board.cells.entries()) {
             for (const [j, cell] of row.entries()) {
                 if (cell === CellType.OpenDoor || cell === CellType.ClosedDoor) {
                     if (!this.isDoorPlacementValid(board, i, j)) {
-                        errors.push("Chaque porte doit être entre deux murs sur un axe et avoir du terrain sur l'autre axe.");
+                        errors.push(ErrorCode.BoardInvalidDoorPlacement);
                         return errors;
                     }
                 }

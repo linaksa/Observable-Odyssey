@@ -8,7 +8,12 @@
             placeholder="Entrez un titre"
             formControlName="gameTitle"
             class="input w-full"
+            [class.field-error]="titleHasError()"
+            [attr.aria-invalid]="titleHasError() ? 'true' : null"
         />
+        @if (titleHasError()) {
+            <p class="text-red-500 text-sm mt-1">{{ titleErrorMessage() }}</p>
+        }
     </div>
 
     <div class="w-full">
@@ -18,20 +23,27 @@
             [attr.maxlength]="maxDescriptionLength"
             placeholder="Entrez une description"
             formControlName="description"
-            class="input w-full h-64 min-h-12"
+            class="textarea w-full"
+            [class.field-error]="descriptionHasError()"
+            [attr.aria-invalid]="descriptionHasError() ? 'true' : null"
         ></textarea>
+        @if (descriptionHasError()) {
+            <p class="text-red-500 text-sm mt-1">{{ descriptionErrorMessage() }}</p>
+        }
     </div>
 </form>
 
 <div class="border-t border-white"></div>
 
-<div class="flex shrink flex-col gap-2 mt-4">
-    @if (!gameEditFormService.formValid) {
-        @for (log of gameEditFormService.formErrors; track $index) {
-            <div class="text-xs text-red-600">{{ log }}</div>
+@if (gameEditFormService.formErrors().length > 0) {
+    <div class="bg-red-900/30 border border-red-500 text-red-500 text-sm p-2 text-center">
+        @for (error of gameEditFormService.formErrors(); track $index) {
+            <p>{{ error }}</p>
         }
-    }
+    </div>
+}
 
+<div class="flex shrink flex-col justify-center gap-2">
     <button type="button" class="btn btn-red" (click)="revertRequested.emit()">Rétablir</button>
 
     <button

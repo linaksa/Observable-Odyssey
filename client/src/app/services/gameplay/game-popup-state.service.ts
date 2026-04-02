@@ -65,7 +65,7 @@ export class GamePopupStateService {
     openSanctuaryPopup(item: IItem, rowIndex: number, colIndex: number): void {
         const itemInfo = this.tileInfoService.getItemInfo(item);
         this.closeTileInfo();
-        this.sanctuaryPopupTitle = itemInfo?.title ?? 'Sanctuaire :';
+        this.sanctuaryPopupTitle = itemInfo?.title ?? 'Sanctuaire';
         this.sanctuaryPopupDescription = itemInfo?.description ?? 'Choisissez un bonus.';
         this.sanctuaryPopupEffectLabel = this.getSanctuaryEffectLabel(item);
         this.sanctuaryPopupPosition = { x: colIndex, y: rowIndex };

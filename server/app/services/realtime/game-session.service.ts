@@ -120,7 +120,7 @@ export class GameSessionService {
         const updatedGame = await this.activeGameService.getActiveGameById(gameId);
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame, namespace, emitGameLog);
 
-        const playerAbandonned : IPlayerAbandonnedGame = {
+        const playerAbandonned: IPlayerAbandonnedGame = {
             playerName: playerId,
             activeGame: updatedGame,
         };

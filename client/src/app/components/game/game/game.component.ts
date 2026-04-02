@@ -21,7 +21,6 @@ const GAME_HOST_BINDINGS = {
 @Component({
     selector: 'app-game',
     imports: [GameGridComponent, SanctuaryPopupComponent, TileInfoPopupComponent],
-    styleUrl: '../../../styles/game-cell.scss',
     templateUrl: './game.component.html',
     host: GAME_HOST_BINDINGS,
 })

@@ -8,10 +8,10 @@ import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
 
 const SANCTUARY_BUFFED_STAT = 5;
 

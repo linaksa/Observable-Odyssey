@@ -36,7 +36,7 @@ describe('BoardSharedService', () => {
     });
 
     it('should detect sanctuary occupancy on each covered tile', () => {
-        const sanctuary = createItem(ItemType.LifeSanctuary, SANCTUARY_COLUMN, SANCTUARY_ROW);
+        const sanctuary = createItem(ItemType.LifeSanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN);
 
         expect(service.cellBelongsToObject(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN)).toBeTrue();
         expect(service.cellBelongsToObject(sanctuary, SANCTUARY_BOTTOM_ROW, SANCTUARY_RIGHT_COLUMN)).toBeTrue();
@@ -52,7 +52,7 @@ describe('BoardSharedService', () => {
     });
 
     it('should detect adjacency to sanctuary and regular items', () => {
-        const sanctuary = createItem(ItemType.FightSanctuary, SANCTUARY_COLUMN, SANCTUARY_ROW);
+        const sanctuary = createItem(ItemType.FightSanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN);
         const flag = createItem(ItemType.Flag, REGULAR_ITEM_COLUMN, REGULAR_ITEM_ROW);
 
         expect(service.isAdjacentToObject(sanctuary, SANCTUARY_ROW, SANCTUARY_COLUMN - 1)).toBeTrue();

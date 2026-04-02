@@ -30,6 +30,7 @@ import { GameController } from '@app/controllers/game.controller';
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
 import { BAD_DESCRIPTION_LENGTH, BAD_TITLE_LENGTH } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
@@ -354,7 +355,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de description");
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameDescriptionMissing]);
         }
     });
 
@@ -372,7 +373,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('La description ne peut pas dépasser 200 caractères');
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameDescriptionTooLong]);
         }
     });
     // Edge case: the route parameter is an array (Express can return an array
@@ -453,7 +454,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown');
         } catch (error) {
-            expect(error.message).to.equal("Il n'y a pas de titre");
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameTitleMissing]);
         }
     });
 
@@ -471,7 +472,7 @@ describe('Game Service', () => {
             await gameService.createGame(mockGameData as unknown as IGame);
             throw new Error('Should have thrown an error');
         } catch (error) {
-            expect(error.message).to.equal('Le titre ne peut pas dépasser 50 caractères');
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameTitleTooLong]);
         }
     });
     // Edge case: game mode outside the enumeration (arbitrary value) — should be rejected.
@@ -507,7 +508,7 @@ describe('Game Service', () => {
     });
 
     it('should throw an error when board is invalid', async () => {
-        mockBoardService.validateBoard.returns(['Moins de 50% de la surface totale de la carte est couverte par des tuiles.']);
+        mockBoardService.validateBoard.returns([ErrorCode.BoardLowTerrainCoverage]);
         const mockGameData = {
             gameTitle: 'Test Game',
             description: 'Test Description',
@@ -520,6 +521,29 @@ describe('Game Service', () => {
             throw new Error('Should have thrown an error');
         } catch (error) {
             expect((error as Error).message).to.include('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
+        }
+    });
+
+    it('should throw all validation errors when multiple fields are invalid', async () => {
+        mockBoardService.validateBoard.returns([ErrorCode.BoardLowTerrainCoverage, ErrorCode.BoardInvalidDoorPlacement]);
+        const mockGameData = {
+            gameTitle: '',
+            description: '',
+            gameMode: 'invalidMode',
+            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
+        };
+
+        try {
+            await gameService.createGame(mockGameData as unknown as IGame);
+            throw new Error('Should have thrown an error');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([
+                ErrorCode.GameTitleMissing,
+                ErrorCode.GameDescriptionMissing,
+                ErrorCode.GameModeInvalid,
+                ErrorCode.BoardLowTerrainCoverage,
+                ErrorCode.BoardInvalidDoorPlacement,
+            ]);
         }
     });
 

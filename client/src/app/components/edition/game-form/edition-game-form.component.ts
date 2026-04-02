@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, output } from '@angular/cor
 import { ReactiveFormsModule } from '@angular/forms';
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
+import { ErrorCode, getErrorMessage } from '@app/utils/error-codes';
 
 @Component({
     selector: 'app-edition-game-form',
@@ -19,4 +20,65 @@ export class EditionGameFormComponent {
 
     readonly submitRequested = output<void>();
     readonly revertRequested = output<void>();
+
+    protected titleHasError(): boolean {
+        return this.hasValidationError(
+            this.gameEditFormService.form.get('gameTitle')?.value,
+            ErrorCode.GameTitleMissing,
+            ErrorCode.GameTitleTooLong,
+            this.maxTitleLength,
+        );
+    }
+
+    protected descriptionHasError(): boolean {
+        return this.hasValidationError(
+            this.gameEditFormService.form.get('description')?.value,
+            ErrorCode.GameDescriptionMissing,
+            ErrorCode.GameDescriptionTooLong,
+            this.maxDescriptionLength,
+        );
+    }
+
+    protected titleErrorMessage(): string {
+        return this.getFieldErrorMessage(
+            this.gameEditFormService.form.get('gameTitle')?.value,
+            ErrorCode.GameTitleMissing,
+            ErrorCode.GameTitleTooLong,
+            this.maxTitleLength,
+        );
+    }
+
+    protected descriptionErrorMessage(): string {
+        return this.getFieldErrorMessage(
+            this.gameEditFormService.form.get('description')?.value,
+            ErrorCode.GameDescriptionMissing,
+            ErrorCode.GameDescriptionTooLong,
+            this.maxDescriptionLength,
+        );
+    }
+
+    private hasValidationError(value: unknown, missingCode: ErrorCode, tooLongCode: ErrorCode, maxLength: number): boolean {
+        const validationErrorCodes = this.gameEditFormService.validationErrorCodes();
+        const text = typeof value === 'string' ? value.trim() : '';
+
+        return (
+            (validationErrorCodes.includes(missingCode) && text.length === 0) ||
+            (validationErrorCodes.includes(tooLongCode) && text.length > maxLength)
+        );
+    }
+
+    private getFieldErrorMessage(value: unknown, missingCode: ErrorCode, tooLongCode: ErrorCode, maxLength: number): string {
+        const validationErrorCodes = this.gameEditFormService.validationErrorCodes();
+        const text = typeof value === 'string' ? value.trim() : '';
+
+        if (validationErrorCodes.includes(missingCode) && text.length === 0) {
+            return getErrorMessage(missingCode);
+        }
+
+        if (validationErrorCodes.includes(tooLongCode) && text.length > maxLength) {
+            return getErrorMessage(tooLongCode);
+        }
+
+        return '';
+    }
 }

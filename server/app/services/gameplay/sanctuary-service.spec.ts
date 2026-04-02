@@ -5,9 +5,9 @@ import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
 
 const SANCTUARY_X = 1;
 const SANCTUARY_Y = 1;

@@ -17,6 +17,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
 import { IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { EditGameFormData, GameType, IExistingGame, Visibility } from '@common/game';
 import { GameService } from '@app/services/admin/game.service';
 import { GameEditFormService } from './game-edit-form.service';
@@ -102,22 +103,40 @@ describe('GameEditFormService', () => {
     });
 
     it('should record save errors and stop submitting', async () => {
-        gameServiceSpy.saveGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: { error: 'Save error' } })));
+        gameServiceSpy.saveGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: {} })));
 
         await expectAsync(service.submitForm(randomGame._id, randomGame.gameMode, randomGame.board.cells, randomGame.board.items)).toBeRejected();
 
         expect(service.formValid).toBeFalse();
-        expect(service.formErrors[0]).toBe('Une erreur est survenue lors de la sauvegarde du jeu.');
+        expect(service.formErrors()[0]).toBe('Erreur inconnue, veuillez réessayer plus tard');
         expect(service.isSubmitting()).toBeFalse();
     });
 
     it('should record create errors and stop submitting', async () => {
-        gameServiceSpy.createGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: { error: 'Create error' } })));
+        gameServiceSpy.createGame.and.returnValue(throwError(() => new HttpErrorResponse({ status: 500, error: {} })));
 
         await expectAsync(service.submitForm('', GameType.Classic, randomGame.board.cells, randomGame.board.items)).toBeRejected();
 
         expect(service.formValid).toBeFalse();
-        expect(service.formErrors[0]).toBe('Une erreur est survenue lors de la sauvegarde du jeu.');
+        expect(service.formErrors()[0]).toBe('Erreur inconnue, veuillez réessayer plus tard');
+        expect(service.isSubmitting()).toBeFalse();
+    });
+
+    it('should show all validation messages when the server returns multiple error codes', async () => {
+        gameServiceSpy.createGame.and.returnValue(
+            throwError(
+                () =>
+                    new HttpErrorResponse({
+                        status: 400,
+                        error: { errorCodes: [ErrorCode.GameTitleMissing, ErrorCode.BoardInvalidLifeSanctuaryCount] },
+                    }),
+            ),
+        );
+
+        await expectAsync(service.submitForm('', GameType.Classic, randomGame.board.cells, randomGame.board.items)).toBeRejected();
+
+        expect(service.formValid).toBeFalse();
+        expect(service.formErrors()).toEqual(['Le nombre de sanctuaires de vie est invalide.']);
         expect(service.isSubmitting()).toBeFalse();
     });
 
