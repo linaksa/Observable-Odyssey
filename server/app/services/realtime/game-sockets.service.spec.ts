@@ -1,6 +1,12 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
+import { ActionService } from '@app/services/gameplay/action-service';
+import { DoorService } from '@app/services/gameplay/door-service';
+import { EndGameService } from '@app/services/gameplay/end-game.service';
+import { MovementService } from '@app/services/gameplay/movement-service';
+import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
+import { StartGameService } from '@app/services/gameplay/start-game.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
 import { ChatService } from '@app/services/realtime/chat.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
@@ -26,7 +32,13 @@ describe('GameSocketsService', () => {
     let roomEmitSpy: sinon.SinonSpy;
     let socketHandlers: Map<string, (...args: unknown[]) => Promise<void> | void>;
     let activeGameService: Record<string, never>;
-    let gameplayServices: GameplayServices;
+    let turnService: Partial<TurnService>;
+    let startGameService: Partial<StartGameService>;
+    let movementService: Partial<MovementService>;
+    let actionService: Partial<ActionService>;
+    let doorService: Partial<DoorService>;
+    let sanctuaryService: Partial<SanctuaryService>;
+    let endGameService: Partial<EndGameService>;
     let chatService: {
         register: sinon.SinonStub;
     };
@@ -66,58 +78,56 @@ describe('GameSocketsService', () => {
 
         activeGameService = {};
 
-        gameplayServices = {
-            endGameService: {
-                checkIfOrganizer: sinon.stub().resolves(false),
-                checkEndGame: sinon.stub().resolves(false),
-                handlePlayerAbandon: sinon.stub().resolves(),
-            },
-            startGameService: {
-                initializeGame: sinon.stub().resolves(),
-            },
-            movementService: {
-                movePlayer: sinon.stub().resolves({ newPosition: { x: 0, y: 0 }, movementLeft: 1 }),
-                getReachablePositions: sinon.stub().resolves([{ x: 0, y: 0 }]),
-            },
-            actionService: {
-                canUseActionAnyPlayer: sinon.stub().resolves(true),
-                canUseAction: sinon.stub().resolves(true),
-                applyCombatTurn: sinon.stub().resolves(false),
-            },
-            doorService: {
-                toggleDoor: sinon.stub().resolves({
-                    playerId: 'Alice',
-                    position: { x: 1, y: 1 },
-                    cellType: CellType.OpenDoor,
-                    actionsLeft: 0,
-                }),
-            },
-            sanctuaryService: {
-                interactSanctuary: sinon.stub().resolves({
-                    playerId: 'Alice',
-                    position: { x: 1, y: 1 },
-                    itemType: ItemType.LifeSanctuary,
-                    choice: 'standard',
-                    succeeded: true,
-                    actionsLeft: 0,
-                    currentHealth: 6,
-                    attackPoints: 4,
-                    defensePoints: 4,
-                    sanctuaryActive: false,
-                    sanctuaryInactiveTurnsRemaining: 3,
-                    fightSanctuaryUsed: false,
-                    fightSanctuaryTurnsRemaining: 0,
-                    fightSanctuaryBonus: 0,
-                }),
-            },
-            turnService: {
-                startTurn: sinon.stub().resolves(),
-                endTurn: sinon.stub().resolves(),
-                suspendTurn: sinon.stub().resolves(),
-                startCombatTimer: sinon.stub(),
-                clearCombatTimer: sinon.stub(),
-            },
-        } as unknown as GameplayServices;
+        endGameService = {
+            checkIfOrganizer: sinon.stub().resolves(false),
+            checkEndGame: sinon.stub().resolves(false),
+            handlePlayerAbandon: sinon.stub().resolves(),
+        };
+        startGameService = {
+            initializeGame: sinon.stub().resolves(),
+        };
+        movementService = {
+            movePlayer: sinon.stub().resolves({ newPosition: { x: 0, y: 0 }, movementLeft: 1 }),
+            getReachablePositions: sinon.stub().resolves([{ x: 0, y: 0 }]),
+        };
+        actionService = {
+            canUseActionAnyPlayer: sinon.stub().resolves(true),
+            canUseAction: sinon.stub().resolves(true),
+            applyCombatTurn: sinon.stub().resolves(false),
+        };
+        doorService = {
+            toggleDoor: sinon.stub().resolves({
+                playerId: 'Alice',
+                position: { x: 1, y: 1 },
+                cellType: CellType.OpenDoor,
+                actionsLeft: 0,
+            }),
+        };
+        sanctuaryService = {
+            interactSanctuary: sinon.stub().resolves({
+                playerId: 'Alice',
+                position: { x: 1, y: 1 },
+                itemType: ItemType.LifeSanctuary,
+                choice: 'standard',
+                succeeded: true,
+                actionsLeft: 0,
+                currentHealth: 6,
+                attackPoints: 4,
+                defensePoints: 4,
+                sanctuaryActive: false,
+                sanctuaryInactiveTurnsRemaining: 3,
+                fightSanctuaryUsed: false,
+                fightSanctuaryTurnsRemaining: 0,
+                fightSanctuaryBonus: 0,
+            }),
+        };
+        turnService = {
+            startTurn: sinon.stub().resolves(),
+            endTurn: sinon.stub().resolves(),
+            suspendTurn: sinon.stub().resolves(),
+            startCombatTimer: sinon.stub(),
+            clearCombatTimer: sinon.stub(),
+        };
 
         chatService = {
             register: sinon.stub(),
@@ -131,11 +141,22 @@ describe('GameSocketsService', () => {
 
         gameSessionService = new GameSessionService(
             activeGameService as unknown as ActiveGameService,
-            gameplayServices,
+            endGameService as unknown as EndGameService,
+            turnService as unknown as TurnService,
             activeGameListSocketService as unknown as ActiveGameListSocketsService,
         );
 
-        gameplayActionService = new GameplayActionService(gameplayServices, gameSessionService, activeGameService as unknown as ActiveGameService);
+        gameplayActionService = new GameplayActionService(
+            turnService as TurnService,
+            startGameService as StartGameService,
+            movementService as MovementService,
+            doorService as DoorService,
+            sanctuaryService as SanctuaryService,
+            endGameService as EndGameService,
+            gameSessionService,
+            activeGameService as unknown as ActiveGameService,
+            actionService as ActionService,
+        );
 
         fakeSocket = {
             on: sinon.stub().callsFake((event: string, handler: (...args: unknown[]) => Promise<void> | void) => {

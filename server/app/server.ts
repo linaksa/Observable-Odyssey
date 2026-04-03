@@ -4,8 +4,10 @@ import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
 import { ActiveGameListSocketsService } from './services/active-game/active-game-list-sockets.service';
 import { AdminSocketsService } from './services/admin/admin-sockets.service';
+import { TurnService } from './services/gameplay/turn-service';
 import { GameSocketsService } from './services/realtime/game-sockets.service';
 import { SocketService } from './services/realtime/socket.service';
+import { VirtualPlayerService } from './services/virtual-player/virtual-player.service';
 
 @Service()
 export class Server {
@@ -35,6 +37,11 @@ export class Server {
         gameSocketsService.initialize();
         const activeGameListSocketsService = Container.get(ActiveGameListSocketsService);
         activeGameListSocketsService.initialize();
+
+        // Wire up virtual player turn handler to break circular dependency
+        const turnService = Container.get(TurnService);
+        const virtualPlayerService = Container.get(VirtualPlayerService);
+        turnService.setVirtualPlayerTurnHandler((player, game) => virtualPlayerService.startTurn(player, game));
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

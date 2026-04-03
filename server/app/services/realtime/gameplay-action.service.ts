@@ -1,10 +1,18 @@
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { AppError } from '@app/error-types/app-error';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { ActionService } from '@app/services/gameplay/action-service';
+import { DoorService } from '@app/services/gameplay/door-service';
+import { EndGameService } from '@app/services/gameplay/end-game.service';
+import { MovementService } from '@app/services/gameplay/movement-service';
+import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
+import { StartGameService } from '@app/services/gameplay/start-game.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
+import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
-import { ErrorCode } from '@common/error-codes';
+import { ICharacter, VirtualPlayerProfile } from '@common/character';
 import { TEMPS_COMBAT } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
@@ -30,15 +38,22 @@ interface PendingFlagRequest {
 }
 @Service()
 export class GameplayActionService {
+    /* eslint-disable max-params */
     private pendingFlagRequestsByGameId: Map<string, PendingFlagRequest> = new Map();
     constructor(
-        private readonly gameplayService: GameplayServices,
+        private readonly turnService: TurnService,
+        private readonly startGameService: StartGameService,
+        private readonly movementService: MovementService,
+        private readonly doorService: DoorService,
+        private readonly sanctuaryService: SanctuaryService,
+        private readonly endGameService: EndGameService,
         private readonly gameSessionService: GameSessionService,
         private readonly activeGameService: ActiveGameService,
+        private readonly actionService: ActionService,
     ) {}
     async handleEndTurn(gameId: string): Promise<void> {
         this.pendingFlagRequestsByGameId.delete(gameId);
-        await this.gameplayService.turnService.endTurn(gameId);
+        await this.turnService.endTurn(gameId);
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
 
@@ -49,7 +64,7 @@ export class GameplayActionService {
         if (!activeGame) {
             return;
         }
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             this.pendingFlagRequestsByGameId.delete(gameId);
         }
@@ -58,15 +73,15 @@ export class GameplayActionService {
     async handlePlayerMove(data: IPlayerMoveData, socket: Socket, namespace: Namespace): Promise<void> {
         const { gameId, playerId, direction } = data;
         try {
-            const { newPosition, movementLeft } = await this.gameplayService.movementService.movePlayer(playerId, gameId, direction);
+            const { newPosition, movementLeft } = await this.movementService.movePlayer(playerId, gameId, direction);
             namespace.to(gameId).emit(SocketEvent.PlayerMoved, { playerId, newPosition, movementLeft } as PlayerMovedResult);
 
-            const reachable = await this.gameplayService.movementService.getReachablePositions(playerId, gameId);
-            const canAttackAnyPlayer = await this.gameplayService.actionService.canUseActionAnyPlayer(gameId, playerId);
+            const reachable = await this.movementService.getReachablePositions(playerId, gameId);
+            const canAttackAnyPlayer = await this.actionService.canUseActionAnyPlayer(gameId, playerId);
             if (reachable.length === 0 && !canAttackAnyPlayer) {
-                await this.gameplayService.turnService.endTurn(gameId);
+                await this.turnService.endTurn(gameId);
             }
-            const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+            const gameEnded = await this.endGameService.checkEndGame(gameId);
             if (gameEnded) {
                 const endedGame = await this.activeGameService.getActiveGameById(gameId);
                 namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
@@ -85,7 +100,7 @@ export class GameplayActionService {
     ): Promise<void> {
         const { gameId, playerId, position } = data;
         try {
-            const result: IDoorToggledResult = await this.gameplayService.doorService.toggleDoor(playerId, gameId, position);
+            const result: IDoorToggledResult = await this.doorService.toggleDoor(playerId, gameId, position);
             namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
             emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
 
@@ -103,7 +118,7 @@ export class GameplayActionService {
     ): Promise<void> {
         const { gameId, playerId, position, choice } = data;
         try {
-            const result: ISanctuaryInteractedResult = await this.gameplayService.sanctuaryService.interactSanctuary(playerId, gameId, {
+            const result: ISanctuaryInteractedResult = await this.sanctuaryService.interactSanctuary(playerId, gameId, {
                 position,
                 choice,
             });
@@ -120,12 +135,12 @@ export class GameplayActionService {
     private async combatManager(gameId: string, attackerName: string, defenderName: string, namespace: Namespace): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
-        this.gameplayService.turnService.suspendTurn(gameId);
+        this.turnService.suspendTurn(gameId);
 
         this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
 
-        this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
-            const combatResolved = await this.gameplayService.actionService.applyCombatTurn(gameId);
+        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+            const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
                 await this.handleTurnAndGameEndCase(attackerName, gameId, namespace);
             }
@@ -133,6 +148,7 @@ export class GameplayActionService {
 
         namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
         namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);
+        await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
     private async handleCtfFlagAction(activeGame: IActiveGame, data: IActionData, namespace: Namespace): Promise<boolean> {
@@ -142,22 +158,22 @@ export class GameplayActionService {
             return false;
         }
 
-        const areOnSameTeam = await this.gameplayService.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
+        const areOnSameTeam = await this.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
         if (!areOnSameTeam) {
             return false;
         }
 
-        const canGiveFlag = await this.gameplayService.actionService.canGiveFlag(currentPlayerName, gameId);
+        const canGiveFlag = await this.actionService.canGiveFlag(currentPlayerName, gameId);
         if (canGiveFlag) {
-            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
+            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
             this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
             namespace?.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
             return true;
         }
 
-        const canTakeFlag = await this.gameplayService.actionService.canTakeFlag(targetName, gameId);
+        const canTakeFlag = await this.actionService.canTakeFlag(targetName, gameId);
         if (canTakeFlag) {
-            const flagActionData = await this.gameplayService.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
+            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
             this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
             namespace?.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
             return true;
@@ -179,19 +195,19 @@ export class GameplayActionService {
             return;
         }
 
-        const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
+        const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
         if (!allowed) {
             socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
             return;
         }
 
         const result = await this.activeGameService.startCombat(gameId, currentPlayerName, targetName);
-        this.gameplayService.turnService.suspendTurn(gameId);
+        this.turnService.suspendTurn(gameId);
 
         emitGameLog(gameId, `Debut du combat entre ${currentPlayerName} et ${targetName}.`);
 
-        this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
-            const combatResolved = await this.gameplayService.actionService.applyCombatTurn(gameId);
+        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+            const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
                 await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
             }
@@ -199,12 +215,13 @@ export class GameplayActionService {
 
         namespace.to(gameId).emit(SocketEvent.CombatStarted, result);
         namespace.to(gameId).emit(SocketEvent.CombatTurnStart, result);
+        await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
     async handleAction(data: IActionData, socket: Socket, namespace: Namespace): Promise<void> {
         const { gameId, currentPlayerName, targetName } = data;
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        const allowed = await this.gameplayService.actionService.canUseAction(gameId, currentPlayerName, targetName);
+        const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
 
         if (!allowed) {
             socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
@@ -235,7 +252,7 @@ export class GameplayActionService {
             return;
         }
 
-        await this.gameplayService.actionService.takeFlag(gameId, newFlagCarrierName);
+        await this.actionService.takeFlag(gameId, newFlagCarrierName);
         namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
@@ -256,7 +273,7 @@ export class GameplayActionService {
             return;
         }
 
-        await this.gameplayService.actionService.giveFlag(gameId, newFlagCarrierName);
+        await this.actionService.giveFlag(gameId, newFlagCarrierName);
         namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
@@ -271,14 +288,17 @@ export class GameplayActionService {
             return;
         }
 
-        this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
+        this.turnService.clearCombatTimer(updatedActiveGame);
 
-        const combatResolved = await this.gameplayService.actionService.applyCombatTurn(gameId);
+        const combatResolved = await this.actionService.applyCombatTurn(gameId);
 
         const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
         if (combatResolved && currentPlayerName) {
             await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
+            return;
         }
+
+        await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
     async handleStartGame(activeGameId: string, socket: Socket, namespace: Namespace): Promise<boolean> {
@@ -300,13 +320,13 @@ export class GameplayActionService {
             return false;
         }
 
-        await this.gameplayService.startGameService.initializeGame(activeGameId);
+        await this.startGameService.initializeGame(activeGameId);
 
         const updatedGame = await this.activeGameService.getActiveGameById(activeGameId);
         namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
         namespace.to(activeGameId).emit(SocketEvent.GameStarted, activeGameId);
 
-        this.gameplayService.turnService.startTurn(activeGameId);
+        this.turnService.startTurn(activeGameId);
         return true;
     }
 
@@ -314,44 +334,69 @@ export class GameplayActionService {
         if (!namespace || !gameId || !message.trim()) {
             return;
         }
-
         namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
     }
 
     private createGameLogPayload(message: string): IGameLogPayload {
-        return {
-            message,
-            postedAt: new Date().toISOString(),
-        };
+        return { message, postedAt: new Date().toISOString() };
     }
 
     private async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
-        const reachable = await this.gameplayService.movementService.getReachablePositions(playerId, gameId);
-        const canAttackAnyPlayer = await this.gameplayService.actionService.canUseActionAnyPlayer(gameId, playerId);
+        const reachable = await this.movementService.getReachablePositions(playerId, gameId);
+        const canAttackAnyPlayer = await this.actionService.canUseActionAnyPlayer(gameId, playerId);
         if (reachable.length === 0 && !canAttackAnyPlayer) {
-            await this.gameplayService.turnService.endTurn(gameId);
+            await this.turnService.endTurn(gameId);
         }
     }
 
-    private async handleTurnAndGameEndCase(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
-        const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
-        if (reachable.length === 0) {
-            await this.gameplayService.turnService.endTurn(gameId);
+    private async autoChooseVirtualPostures(gameId: string, namespace: Namespace): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const currentAttack = activeGame?.currentAttack;
+        if (!activeGame || !currentAttack) return;
+        const attacker = activeGame.players.find((player) => player.name === currentAttack.attacker);
+        if (attacker && !currentAttack.attackerPosture && attacker.virtualPlayerProfile) {
+            await this.handleChooseAttackPosture(
+                {
+                    gameId,
+                    playerName: attacker.name,
+                    posture: this.getVirtualPosture(attacker),
+                },
+                namespace,
+            );
         }
+        const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
+        const refreshedAttack = refreshedGame?.currentAttack;
+        if (!refreshedGame || !refreshedAttack) return;
+        const refreshedDefender = refreshedGame.players.find((player) => player.name === refreshedAttack.defender);
+        if (refreshedDefender && !refreshedAttack.defenderPosture && refreshedDefender.virtualPlayerProfile) {
+            await this.handleChooseAttackPosture(
+                {
+                    gameId,
+                    playerName: refreshedDefender.name,
+                    posture: this.getVirtualPosture(refreshedDefender),
+                },
+                namespace,
+            );
+        }
+    }
+    private getVirtualPosture(player: ICharacter): AttackPosture {
+        return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
+    }
 
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+    private async handleTurnAndGameEndCase(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
+        const reachable = await this.movementService.getReachablePositions(attackerName, gameId);
+        if (reachable.length === 0) {
+            await this.turnService.endTurn(gameId);
+        }
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-
             //await this.activeGameService.deleteGameById(gameId);
         }
     }
 
     private toSocketError(error: unknown, fallbackCode: ErrorCode): { errorCodes: ErrorCode[] } {
-        if (error instanceof AppError) {
-            return { errorCodes: error.errorCodes };
-        }
-
+        if (error instanceof AppError) return { errorCodes: error.errorCodes };
         return { errorCodes: [fallbackCode] };
     }
 }

@@ -9,17 +9,24 @@ import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 import { SanctuaryService } from './sanctuary-service';
 
+export type VirtualPlayerTurnHandler = (player: ICharacter, activeGame: IActiveGame) => Promise<void>;
+
 @Service()
 export class TurnService {
     private preparationTimers: Map<string, NodeJS.Timeout> = new Map();
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
     private combatTimers: Map<string, NodeJS.Timeout> = new Map();
+    private virtualPlayerTurnHandler?: VirtualPlayerTurnHandler;
 
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
         private readonly sanctuaryService: SanctuaryService,
     ) {}
+
+    setVirtualPlayerTurnHandler(handler: VirtualPlayerTurnHandler): void {
+        this.virtualPlayerTurnHandler = handler;
+    }
 
     // logic for the 3-second delay before the start of a turn
     async startTurn(gameId: string) {
@@ -98,6 +105,9 @@ export class TurnService {
         }, TEMPS_TOUR);
 
         this.turnTimers.set(gameId, timer);
+        if (player.virtualPlayerProfile && this.virtualPlayerTurnHandler) {
+            await this.virtualPlayerTurnHandler(player, activeGame);
+        }
     }
 
     // end the turn and move to the next player

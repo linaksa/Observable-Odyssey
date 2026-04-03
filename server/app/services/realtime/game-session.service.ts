@@ -1,6 +1,7 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
+import { EndGameService } from '@app/services/gameplay/end-game.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
@@ -11,7 +12,8 @@ import { Service } from 'typedi';
 export class GameSessionService {
     constructor(
         private readonly activeGameService: ActiveGameService,
-        private readonly gameplayService: GameplayServices,
+        private readonly endGameService: EndGameService,
+        private readonly turnService: TurnService,
         private readonly activeGameListSocketService: ActiveGameListSocketsService,
     ) {}
 
@@ -48,7 +50,7 @@ export class GameSessionService {
     }
 
     async handleWaitingRoomDisconnect(gameId: string, playerId: string, namespace: Namespace): Promise<void> {
-        const isOrganizer = await this.gameplayService.endGameService.checkIfOrganizer(gameId, playerId);
+        const isOrganizer = await this.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {
             namespace.to(gameId).emit(SocketEvent.GameCanceled, { playerId });
             await this.activeGameService.deleteGameById(gameId);
@@ -65,7 +67,7 @@ export class GameSessionService {
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
-        await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+        await this.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
@@ -75,14 +77,14 @@ export class GameSessionService {
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, refreshedGame, namespace, emitGameLog);
 
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
             emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
             // await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
-            await this.gameplayService.turnService.endTurn(gameId);
+            await this.turnService.endTurn(gameId);
         }
     }
 
@@ -95,7 +97,7 @@ export class GameSessionService {
 
     async handleLeaveWaitingRoom(data: IAbandonData, namespace: Namespace, socket: Socket): Promise<void> {
         const { gameId, playerId } = data;
-        const isOrganizer = await this.gameplayService.endGameService.checkIfOrganizer(gameId, playerId);
+        const isOrganizer = await this.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {
             socket.to(gameId).emit(SocketEvent.GameCanceled);
             await this.activeGameService.deleteGameById(gameId);
@@ -114,7 +116,7 @@ export class GameSessionService {
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, playerId } = data;
-        await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
+        await this.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
 
         const updatedGame = await this.activeGameService.getActiveGameById(gameId);
@@ -126,7 +128,7 @@ export class GameSessionService {
         };
 
         namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonned);
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
             emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');

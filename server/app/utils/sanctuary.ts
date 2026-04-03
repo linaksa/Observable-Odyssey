@@ -1,5 +1,5 @@
-import { Position } from './character';
-import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from './items';
+import { Position } from '@common/character';
+import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
 
 export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;
 

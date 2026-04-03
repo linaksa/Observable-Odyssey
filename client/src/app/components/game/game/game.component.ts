@@ -146,6 +146,6 @@ export class GameComponent implements OnInit {
             return;
         }
 
-        this.graph = buildGraph(board, activeGame.game.board.items, activeGame.players);
+        this.graph = buildGraph(board, this.activeGameService.getCurrentPlayer()?.actionsLeft, activeGame.game.board.items, activeGame.players);
     }
 }
