@@ -128,6 +128,7 @@ describe('GameComponent', () => {
 
         expect(component.graph[0].some(([index]) => index === 1)).toBeTrue();
 
+        activeGameServiceStub.activeGame.players[0].actionsLeft = 0;
         activeGameServiceStub.activeGame.game.board.cells[0][1] = CellType.ClosedDoor;
         activeGameServiceStub.hasChangedLocation.set(true);
         fixture.detectChanges();

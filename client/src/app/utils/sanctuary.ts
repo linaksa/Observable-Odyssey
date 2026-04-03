@@ -1,8 +1,7 @@
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
 import { Position } from '@common/character';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
 
-export { SANCTUARY_COOLDOWN_TURN_STEPS };
+export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;
 
 export function isSanctuaryItem(item: IItem | null | undefined): item is ILifeSanctuary | IFightSanctuary {
     return item?.itemType === ItemType.LifeSanctuary || item?.itemType === ItemType.FightSanctuary;
