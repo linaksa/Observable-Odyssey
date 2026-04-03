@@ -13,7 +13,12 @@ export class EndGameService {
 
     async checkEndGame(gameId: string): Promise<boolean> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        const winnerByCombat = activeGame.players.find((p) => p.victories === VICTORIES_TO_WIN);
+        const winnerByCombat =
+            activeGame.game.gameMode !== 'ctf'
+                ? activeGame.players.find((player) => {
+                      return this.getCombatWins(player) >= VICTORIES_TO_WIN;
+                  })
+                : undefined;
         const ctfWinner = this.checkCTFWinCondition(activeGame);
         // if a player in ctf mode has the flag and is on their starting tile, they win
         if (ctfWinner) {
@@ -38,6 +43,11 @@ export class EndGameService {
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
+
+        const hasOneRealPlayer = activePlayers.find((player) => !player.virtualPlayerProfile);
+        if (!hasOneRealPlayer) {
+            return true;
+        }
         // si une des 2 équipes n'a plus de joueurs actifs, l'autre équipe gagne (mode ctf)
         if (activeGame.game.gameMode === 'ctf') {
             const redPlayers = activeGame.players.filter((p) => p.team === 'red' && !p.hasAbandoned);
@@ -56,6 +66,12 @@ export class EndGameService {
             }
         }
         return false;
+    }
+
+    private getCombatWins(player: IActiveGame['players'][number]): number {
+        const victories = Number.isFinite(player.victories) ? player.victories : 0;
+        const countedVictories = Number.isFinite(player.nVictories) ? player.nVictories : 0;
+        return Math.max(victories, countedVictories);
     }
 
     checkCTFWinCondition(activeGame: IActiveGame): boolean {
@@ -83,7 +99,7 @@ export class EndGameService {
     // handles a player's abandonment
     async handlePlayerAbandon(playerName: string, gameId: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        const player = activeGame.players.find((p) => p.name === playerName);
+        const player = activeGame?.players.find((p) => p.name === playerName);
         if (!player) return;
 
         const startingPosition = player.positionDepart;
