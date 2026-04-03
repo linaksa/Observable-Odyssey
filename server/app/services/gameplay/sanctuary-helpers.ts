@@ -1,4 +1,4 @@
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/utils/sanctuary';
 import { Position } from '@common/character';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
 

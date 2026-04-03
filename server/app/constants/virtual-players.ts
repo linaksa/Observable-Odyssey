@@ -1,0 +1,1 @@
+export const DELAY_BETWEEN_ACTIONS = 250;

@@ -2,8 +2,8 @@ import { AfterViewChecked, Component, effect, ElementRef, inject, signal, ViewCh
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TextMessageComponent } from '@app/components/chat/text-message/text-message.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { ChatService } from '@app/services/realtime/chat.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { ChatService } from '@app/services/realtime/chat.service';
 
 @Component({
     selector: 'app-chat-panel',

@@ -12,6 +12,7 @@ import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+
 import {
     IActionData,
     IAttackPostureData,
@@ -247,11 +248,11 @@ export class ActiveGameService implements OnDestroy {
         }
 
         const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
-        const distances = dijkstra(graph, startIndex);
+        const dijkstraRes = dijkstra(graph, startIndex);
         const reachableTiles = new Set<number>();
 
-        for (let i = 0; i < distances.length; i++) {
-            if (distances[i] <= player.movementLeft) {
+        for (let i = 0; i < dijkstraRes.distances.length; i++) {
+            if (dijkstraRes.distances[i] <= player.movementLeft) {
                 reachableTiles.add(i);
             }
         }
