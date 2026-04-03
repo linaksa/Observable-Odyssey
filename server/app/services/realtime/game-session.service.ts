@@ -65,12 +65,26 @@ export class GameSessionService {
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const currentAttack = activeGame.currentAttack;
+        if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
+            const combatOutcome = await this.gameplayService.combatService.cancelCombat(activeGame, playerId);
+            if (combatOutcome) {
+                namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            }
+        }
+
         await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         namespace.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
-        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
+
+        const playerAbandonnedData: IPlayerAbandonnedGame = {
+            playerName: playerId,
+            activeGame: refreshedGame,
+        };
+        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonnedData);
 
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, refreshedGame, namespace, emitGameLog);
 
@@ -114,10 +128,11 @@ export class GameSessionService {
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, playerId } = data;
+        const updatedGame = await this.activeGameService.getActiveGameById(gameId);
+
         await this.gameplayService.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
 
-        const updatedGame = await this.activeGameService.getActiveGameById(gameId);
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame, namespace, emitGameLog);
 
         const playerAbandonned: IPlayerAbandonnedGame = {

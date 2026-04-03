@@ -6,6 +6,7 @@ import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { Container, Service } from 'typedi';
+import { CombatService } from './combat-service';
 
 @Service()
 export class GameplayServices {
@@ -35,5 +36,9 @@ export class GameplayServices {
 
     get endGameService(): EndGameService {
         return Container.get(EndGameService);
+    }
+
+    get combatService(): CombatService {
+        return Container.get(CombatService);
     }
 }
