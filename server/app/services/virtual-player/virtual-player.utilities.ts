@@ -1,4 +1,4 @@
-import { DELAY_BETWEEN_ACTIONS } from '@app/constants/virtual-players';
+import { DELAY_BETWEEN_ACTIONS_FACTOR, MIN_DELAY_BETWEEN_ACTIONS } from '@app/constants/virtual-players';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { ClosestPlayerResult } from '@app/services/interfaces/closest-player-result';
@@ -16,7 +16,8 @@ import { SocketEvent } from '@common/socket-events';
 import { IDoorToggleData } from '@common/socket-payloads';
 import { Service } from 'typedi';
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, Math.random() * DELAY_BETWEEN_ACTIONS_FACTOR + MIN_DELAY_BETWEEN_ACTIONS));
 
 @Service()
 export class VirtualPlayerUtilitiesService {
@@ -76,21 +77,118 @@ export class VirtualPlayerUtilitiesService {
         return closest;
     }
 
-    async moveToPlayer(from: ICharacter, activeGame: IActiveGame, bestAdjacentIndex: number): Promise<void> {
+    async moveToPlayer(from: ICharacter, activeGame: IActiveGame, bestAdjacentIndex: number): Promise<boolean> {
+        return await this.moveToIndex(from, activeGame, bestAdjacentIndex);
+    }
+
+    async moveToPosition(from: ICharacter, activeGame: IActiveGame, position: Position): Promise<boolean> {
+        const board = activeGame.game.board.cells;
+        if (!this.isWithinBounds(position, board)) {
+            return false;
+        }
+
+        const totalColumns = board[0].length;
+        const targetIndex = position.y * totalColumns + position.x;
+        return await this.moveToIndex(from, activeGame, targetIndex);
+    }
+
+    async moveToPositionOrNearest(from: ICharacter, activeGame: IActiveGame, position: Position): Promise<boolean> {
+        const board = activeGame.game.board.cells;
+        if (!this.isWithinBounds(position, board)) {
+            return false;
+        }
+
+        const totalColumns = board[0].length;
+        const targetIndex = position.y * totalColumns + position.x;
+
+        const graph = buildGraph(board, from.actionsLeft, activeGame.game.board.items, activeGame.players);
+        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const { distances } = dijkstra(graph, srcIndex);
+
+        if (isFinite(distances[targetIndex])) {
+            return await this.moveToIndex(from, activeGame, targetIndex);
+        }
+
+        const closestReachableIndex = this.findClosestReachableIndexToTarget(
+            distances,
+            totalColumns,
+            position,
+            from.movementLeft,
+            srcIndex,
+        );
+        if (closestReachableIndex === srcIndex) {
+            return false;
+        }
+
+        await this.moveToIndex(from, activeGame, closestReachableIndex);
+        return false;
+    }
+
+    async moveAwayFromPlayers(from: ICharacter, activeGame: IActiveGame, adversePlayers: ICharacter[]): Promise<void> {
+        if (adversePlayers.length === 0 || from.movementLeft <= 0) {
+            return;
+        }
+
+        const totalColumns = activeGame.game.board.cells[0].length;
+        const graph = buildGraph(activeGame.game.board.cells, from.actionsLeft, activeGame.game.board.items, activeGame.players);
+        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const { distances } = dijkstra(graph, srcIndex);
+
+        let bestIndex = srcIndex;
+        let bestThreatDistance = this.getMinimumThreatDistance(srcIndex, totalColumns, adversePlayers);
+        let bestPathCost = 0;
+
+        for (let index = 0; index < distances.length; index++) {
+            const pathCost = distances[index];
+            if (!isFinite(pathCost) || pathCost === 0 || pathCost > from.movementLeft) {
+                continue;
+            }
+
+            const threatDistance = this.getMinimumThreatDistance(index, totalColumns, adversePlayers);
+            if (threatDistance > bestThreatDistance || (threatDistance === bestThreatDistance && pathCost > bestPathCost)) {
+                bestIndex = index;
+                bestThreatDistance = threatDistance;
+                bestPathCost = pathCost;
+            }
+        }
+
+        if (bestIndex === srcIndex) {
+            return;
+        }
+
+        await this.moveToIndex(from, activeGame, bestIndex);
+    }
+
+    private getMinimumThreatDistance(index: number, totalColumns: number, adversePlayers: ICharacter[]): number {
+        const x = index % totalColumns;
+        const y = Math.floor(index / totalColumns);
+
+        let minimumDistance = Infinity;
+        for (const adversePlayer of adversePlayers) {
+            const distance = Math.abs(adversePlayer.positionGrille.x - x) + Math.abs(adversePlayer.positionGrille.y - y);
+            if (distance < minimumDistance) {
+                minimumDistance = distance;
+            }
+        }
+
+        return minimumDistance;
+    }
+
+    private async moveToIndex(from: ICharacter, activeGame: IActiveGame, targetIndex: number): Promise<boolean> {
         const namespace = this.socketService.getNamespace(Namespaces.Game);
         const totalColumns = activeGame.game.board.cells[0].length;
 
         const graph = buildGraph(activeGame.game.board.cells, from.actionsLeft, activeGame.game.board.items, activeGame.players);
         const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
-        if (srcIndex === bestAdjacentIndex) return;
+        if (srcIndex === targetIndex) return true;
         const { distances, predecessors } = dijkstra(graph, srcIndex);
 
-        if (!isFinite(distances[bestAdjacentIndex])) {
-            return;
+        if (!isFinite(distances[targetIndex])) {
+            return false;
         }
 
-        const path = reconstructPath(predecessors, srcIndex, bestAdjacentIndex);
-        path.push(bestAdjacentIndex);
+        const path = reconstructPath(predecessors, srcIndex, targetIndex);
+        path.push(targetIndex);
 
         let currentIndex = srcIndex;
         let movementLeft = from.movementLeft;
@@ -130,14 +228,14 @@ export class VirtualPlayerUtilitiesService {
                     this.gameplayActionService.emitGameLogToRoom.bind(this.gameplayActionService),
                 );
                 activeGame = await this.activeGameService.getActiveGameById(activeGame._id);
-                await sleep(DELAY_BETWEEN_ACTIONS);
+                await sleep();
             }
 
             let result;
             try {
                 result = await this.movementService.movePlayer(from.name, activeGame._id, newPosition);
             } catch {
-                return; // return if an error happens, be it from turn ending early, illegal move etc, we just want to stop
+                return false;
             }
 
             const stringGameId = activeGame._id.toString();
@@ -149,7 +247,47 @@ export class VirtualPlayerUtilitiesService {
 
             movementLeft = result.movementLeft;
             currentIndex = nextIndex;
-            await sleep(DELAY_BETWEEN_ACTIONS);
+            await sleep();
         }
+
+        return currentIndex === targetIndex;
+    }
+
+    private findClosestReachableIndexToTarget(
+        distances: number[],
+        totalColumns: number,
+        targetPosition: Position,
+        movementLeft: number,
+        srcIndex: number,
+    ): number {
+        let bestIndex = srcIndex;
+        let bestDistanceToTarget = this.getManhattanDistanceFromIndex(srcIndex, totalColumns, targetPosition);
+        let bestPathCost = 0;
+
+        for (let index = 0; index < distances.length; index++) {
+            const pathCost = distances[index];
+            if (!isFinite(pathCost) || pathCost === 0 || pathCost > movementLeft) {
+                continue;
+            }
+
+            const distanceToTarget = this.getManhattanDistanceFromIndex(index, totalColumns, targetPosition);
+            if (distanceToTarget < bestDistanceToTarget || (distanceToTarget === bestDistanceToTarget && pathCost > bestPathCost)) {
+                bestIndex = index;
+                bestDistanceToTarget = distanceToTarget;
+                bestPathCost = pathCost;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private getManhattanDistanceFromIndex(index: number, totalColumns: number, targetPosition: Position): number {
+        const x = index % totalColumns;
+        const y = Math.floor(index / totalColumns);
+        return Math.abs(x - targetPosition.x) + Math.abs(y - targetPosition.y);
+    }
+
+    private isWithinBounds(position: Position, board: CellType[][]): boolean {
+        return position.y >= 0 && position.y < board.length && position.x >= 0 && position.x < board[0].length;
     }
 }

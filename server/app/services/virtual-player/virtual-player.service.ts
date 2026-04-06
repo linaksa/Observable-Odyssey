@@ -1,35 +1,33 @@
-import { EndGameService } from '@app/services/gameplay/end-game.service';
-import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, VirtualPlayerProfile } from '@common/character';
 import { Service } from 'typedi';
 import { AgressivePlayerService } from './agressive-player.service';
+import { CtfObjectiveService } from './ctf-objective.service';
 import { DefensivePlayerService } from './defensive-player.service';
+import { VirtualPlayerTurnFinalizerService } from './virtual-player-turn-finalizer.service';
 
 @Service()
 export class VirtualPlayerService {
     constructor(
         private readonly aggressivePlayerService: AgressivePlayerService,
         private readonly defensivePlayerService: DefensivePlayerService,
-        private readonly endGameService: EndGameService,
-        private readonly turnService: TurnService,
+        private readonly ctfObjectiveService: CtfObjectiveService,
+        private readonly turnFinalizerService: VirtualPlayerTurnFinalizerService,
     ) {}
 
     async startTurn(character: ICharacter, game: IActiveGame) {
         const gameId = game._id.toString();
 
-        if (character.virtualPlayerProfile === VirtualPlayerProfile.Agressive) {
-            await this.agressiveTurn(character, game);
-        } else if (character.virtualPlayerProfile === VirtualPlayerProfile.Defensive) {
-            await this.defensiveTurn(character, game);
+        const ctfObjectiveHandled = await this.ctfObjectiveService.handleTurnObjective(character, game);
+        if (!ctfObjectiveHandled) {
+            if (character.virtualPlayerProfile === VirtualPlayerProfile.Agressive) {
+                await this.agressiveTurn(character, game);
+            } else if (character.virtualPlayerProfile === VirtualPlayerProfile.Defensive) {
+                await this.defensiveTurn(character, game);
+            }
         }
 
-        const gameEnded = await this.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            return;
-        }
-
-        await this.turnService.endTurn(gameId);
+        await this.turnFinalizerService.finalizeTurn(gameId);
     }
 
     private async agressiveTurn(character: ICharacter, game: IActiveGame) {
