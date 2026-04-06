@@ -30,12 +30,9 @@ import {
 } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
+import { CtfFlagActionService, PendingFlagRequest } from './ctf-flag-action.service';
 import { GameSessionService } from './game-session.service';
 
-interface PendingFlagRequest {
-    requesterName: string;
-    targetPlayerName: string;
-}
 @Service()
 export class GameplayActionService {
     /* eslint-disable max-params */
@@ -50,6 +47,7 @@ export class GameplayActionService {
         private readonly gameSessionService: GameSessionService,
         private readonly activeGameService: ActiveGameService,
         private readonly actionService: ActionService,
+        private readonly ctfFlagActionService: CtfFlagActionService,
     ) {}
     async handleEndTurn(gameId: string): Promise<void> {
         this.pendingFlagRequestsByGameId.delete(gameId);
@@ -94,7 +92,7 @@ export class GameplayActionService {
 
     async handleToggleDoor(
         data: IDoorToggleData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
@@ -106,13 +104,13 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
+            socket?.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
         }
     }
 
     async handleSanctuaryInteraction(
         data: ISanctuaryInteractionData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
@@ -128,7 +126,7 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.SanctuaryInteractionError, this.toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
+            socket?.emit(SocketEvent.SanctuaryInteractionError, this.toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
         }
     }
 
@@ -151,53 +149,22 @@ export class GameplayActionService {
         await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
-    private async handleCtfFlagAction(activeGame: IActiveGame, data: IActionData, namespace: Namespace): Promise<boolean> {
-        const { gameId, currentPlayerName, targetName } = data;
-
-        if (activeGame.game.gameMode !== 'ctf') {
-            return false;
-        }
-
-        const areOnSameTeam = await this.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
-        if (!areOnSameTeam) {
-            return false;
-        }
-
-        const canGiveFlag = await this.actionService.canGiveFlag(currentPlayerName, gameId);
-        if (canGiveFlag) {
-            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
-            namespace?.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
-            return true;
-        }
-
-        const canTakeFlag = await this.actionService.canTakeFlag(targetName, gameId);
-        if (canTakeFlag) {
-            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
-            namespace?.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
-            return true;
-        }
-
-        return true;
-    }
-
     async handleAttack(
         data: IActionData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, currentPlayerName, targetName } = data;
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) {
-            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
+            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
             return;
         }
 
         const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
         if (!allowed) {
-            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
+            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
             return;
         }
 
@@ -228,7 +195,9 @@ export class GameplayActionService {
             return;
         }
 
-        const handledAsFlagAction = await this.handleCtfFlagAction(activeGame, data, namespace);
+        const handledAsFlagAction = await this.ctfFlagActionService.handleFlagAction(activeGame, data, namespace, (targetGameId, request) => {
+            this.pendingFlagRequestsByGameId.set(targetGameId, request);
+        });
         if (handledAsFlagAction) {
             return;
         }
@@ -280,7 +249,15 @@ export class GameplayActionService {
 
     async handleChooseAttackPosture(data: IAttackPostureData, namespace: Namespace): Promise<void> {
         const { gameId, playerName, posture } = data;
-        const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+        let updatedActiveGame: IActiveGame;
+        try {
+            updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+        } catch (error) {
+            if (this.isNoOngoingAttackError(error)) {
+                return;
+            }
+            throw error;
+        }
 
         const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
         if (!combatReady) {
@@ -290,7 +267,15 @@ export class GameplayActionService {
 
         this.turnService.clearCombatTimer(updatedActiveGame);
 
-        const combatResolved = await this.actionService.applyCombatTurn(gameId);
+        let combatResolved: boolean;
+        try {
+            combatResolved = await this.actionService.applyCombatTurn(gameId);
+        } catch (error) {
+            if (this.isNoOngoingAttackError(error)) {
+                return;
+            }
+            throw error;
+        }
 
         const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
         if (combatResolved && currentPlayerName) {
@@ -398,5 +383,9 @@ export class GameplayActionService {
     private toSocketError(error: unknown, fallbackCode: ErrorCode): { errorCodes: ErrorCode[] } {
         if (error instanceof AppError) return { errorCodes: error.errorCodes };
         return { errorCodes: [fallbackCode] };
+    }
+
+    private isNoOngoingAttackError(error: unknown): boolean {
+        return error instanceof AppError && error.errorCodes.includes(ErrorCode.NoOngoingAttack);
     }
 }

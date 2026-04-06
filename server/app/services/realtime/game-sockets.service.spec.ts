@@ -8,6 +8,7 @@ import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { ChatService } from '@app/services/realtime/chat.service';
+import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
@@ -156,6 +157,7 @@ describe('GameSocketsService', () => {
             gameSessionService,
             activeGameService as unknown as ActiveGameService,
             actionService as ActionService,
+            new CtfFlagActionService(actionService as ActionService),
         );
 
         fakeSocket = {
