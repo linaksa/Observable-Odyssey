@@ -25,6 +25,7 @@ export class EndGameService {
             const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
             activeGame.isFinished = true;
             activeGame.winner = flagHolder?.team ? `${flagHolder.team} team` : null;
+            activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
@@ -32,6 +33,7 @@ export class EndGameService {
         if (winnerByCombat) {
             activeGame.isFinished = true;
             activeGame.winner = winnerByCombat.name;
+            activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
@@ -40,6 +42,7 @@ export class EndGameService {
         if (activePlayers.length === ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
             activeGame.isFinished = true;
             activeGame.winner = null; // No clear winner, all other players have abandoned
+            activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
@@ -55,12 +58,14 @@ export class EndGameService {
             if (redPlayers.length === 0) {
                 activeGame.isFinished = true;
                 activeGame.winner = 'blue team';
+                activeGame.endedAt = new Date();
                 await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
                 return true;
             }
             if (bluePlayers.length === 0) {
                 activeGame.isFinished = true;
                 activeGame.winner = 'red team';
+                activeGame.endedAt = new Date();
                 await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
                 return true;
             }

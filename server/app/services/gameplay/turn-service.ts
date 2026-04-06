@@ -78,6 +78,7 @@ export class TurnService {
 
         activeGame.turnIsInPreparation = false;
         activeGame.turnStartTimeStamp = Date.now();
+        activeGame.totalTurnCount = (activeGame.totalTurnCount ?? 0) + 1;
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
 

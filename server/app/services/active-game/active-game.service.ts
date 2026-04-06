@@ -1,6 +1,6 @@
+import { AppError } from '@app/error-types/app-error';
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
-import { AppError } from '@app/error-types/app-error';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
@@ -47,6 +47,8 @@ export class ActiveGameService {
 
         const newActiveGame = {
             game: gameChosen,
+            createdAt: new Date(),
+            endedAt: null as Date | null,
             players: [playerCharacter],
             turnOrder: [] as string[],
             currentPlayerIndex: 0,
@@ -58,6 +60,10 @@ export class ActiveGameService {
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
             turnIsInPreparation: false,
             hasFlagId: '',
+            totalTurnCount: 0,
+            usedSanctuaries: [] as string[],
+            manipulatedDoors: [] as string[],
+            flagHolderHistory: [] as string[],
         };
 
         return await activeGameModel.create(newActiveGame);
