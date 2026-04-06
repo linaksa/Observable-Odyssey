@@ -2,28 +2,60 @@ import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
+import { AgressivePlayerService } from './agressive-player.service';
 import { VirtualPlayer } from './virtual-player.interface';
+import { VirtualPlayerSanctuaryService } from './virtual-player-sanctuary.service';
 import { VirtualPlayerUtilitiesService } from './virtual-player.utilities';
 
 @Service()
 export class DefensivePlayerService implements VirtualPlayer {
-    constructor(private readonly virtualPlayerUtilities: VirtualPlayerUtilitiesService) {}
+    constructor(
+        private readonly virtualPlayerUtilities: VirtualPlayerUtilitiesService,
+        private readonly aggressivePlayerService: AgressivePlayerService,
+        private readonly sanctuaryService: VirtualPlayerSanctuaryService,
+    ) {}
 
     async play(character: ICharacter, game: IActiveGame): Promise<void> {
-        let adverserPlayers = game.players;
-        if (game.game.gameMode === GameType.Ctf) {
-            adverserPlayers = game.players; // TODO: add CTF team filtering logic here
+        const enemyCarrier = this.getEnemyFlagCarrier(character, game);
+        if (enemyCarrier) {
+            await this.tryBlockEnemyFlagCarrier(character, game, enemyCarrier);
+            return;
         }
-        const closestAdversePlayer = this.virtualPlayerUtilities.findClosestReachablePlayer(
-            character,
-            adverserPlayers,
-            game.game.board.cells,
-            game.game.board.items,
+
+        const adversePlayers = game.players.filter((player) => {
+            if (player.name === character.name || player.hasAbandoned) {
+                return false;
+            }
+
+            if (game.game.gameMode !== GameType.Ctf) {
+                return true;
+            }
+
+            return player.team !== character.team;
+        });
+
+        if (adversePlayers.length === 0) {
+            if (game.game.gameMode !== GameType.Ctf) {
+                await this.sanctuaryService.tryFallbackObjective(character, game);
+            }
+            return;
+        }
+
+        await this.virtualPlayerUtilities.moveAwayFromPlayers(character, game, adversePlayers);
+    }
+
+    private getEnemyFlagCarrier(character: ICharacter, game: IActiveGame): ICharacter | undefined {
+        if (game.game.gameMode !== GameType.Ctf || !game.hasFlagId) {
+            return undefined;
+        }
+
+        return game.players.find(
+            (player) => player.name === game.hasFlagId && player.team !== character.team && !player.hasAbandoned,
         );
-        if (closestAdversePlayer) {
-            await this.virtualPlayerUtilities.moveToPlayer(character, game, closestAdversePlayer.bestAdjacentIndex);
-        } else {
-            // No reachable player! Implement fallback behavior here
-        }
+    }
+
+    private async tryBlockEnemyFlagCarrier(character: ICharacter, game: IActiveGame, enemyCarrier: ICharacter): Promise<void> {
+        await this.virtualPlayerUtilities.moveToPositionOrNearest(character, game, enemyCarrier.positionDepart);
+        await this.aggressivePlayerService.attackTargetIfPossible(character, game, enemyCarrier.name);
     }
 }
