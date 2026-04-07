@@ -9,10 +9,12 @@ import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { ChatService } from '@app/services/realtime/chat.service';
+import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
 import { DebugSocketService } from '@app/services/realtime/debug-socket.service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
@@ -32,7 +34,10 @@ describe('GameSocketsService', () => {
     let connectionHandler: ((socket: unknown) => void) | undefined;
     let roomEmitSpy: sinon.SinonSpy;
     let socketHandlers: Map<string, (...args: unknown[]) => Promise<void> | void>;
-    let activeGameService: Record<string, never>;
+    let activeGameService: {
+        getActiveGameById: sinon.SinonStub;
+        saveActiveGameById: sinon.SinonStub;
+    };
     let turnService: Partial<TurnService>;
     let startGameService: Partial<StartGameService>;
     let movementService: Partial<MovementService>;
@@ -78,7 +83,36 @@ describe('GameSocketsService', () => {
             createNamespace: sinon.stub().returns(namespace),
         };
 
-        activeGameService = {};
+        const activeGame: Partial<IActiveGame> = {
+            _id: 'game-1',
+            game: {
+                board: {
+                    cells: [[CellType.Empty]],
+                    items: [{ itemType: ItemType.LifeSanctuary, x: 1, y: 1, size: 4, active: true }],
+                },
+            } as IActiveGame['game'],
+            players: [],
+            turnOrder: [],
+            currentPlayerIndex: 0,
+            isFinished: false,
+            winner: null,
+            messages: [],
+            isDebugMode: false,
+            organizerName: 'Alice',
+            maxPlayerCount: 2,
+            turnIsInPreparation: false,
+            hasFlagId: null,
+            turnStartTimeStamp: 0,
+            currentAttack: null,
+            manipulatedDoors: [],
+            usedSanctuaries: [],
+            flagHolderHistory: [],
+        };
+
+        activeGameService = {
+            getActiveGameById: sinon.stub().resolves(activeGame),
+            saveActiveGameById: sinon.stub().resolves(activeGame),
+        };
 
         combatService = {
             cancelCombat: sinon.stub().resolves(null),
@@ -162,6 +196,7 @@ describe('GameSocketsService', () => {
             gameSessionService,
             activeGameService as unknown as ActiveGameService,
             actionService as ActionService,
+            new CtfFlagActionService(actionService as ActionService),
         );
 
         fakeSocket = {

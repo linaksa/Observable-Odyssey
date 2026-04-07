@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+// necessary to avoid circular dependencies
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
@@ -7,6 +9,7 @@ import { MovementService } from '@app/services/gameplay/movement-service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -30,12 +33,9 @@ import {
 } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
+import { CtfFlagActionService, PendingFlagRequest } from './ctf-flag-action.service';
 import { GameSessionService } from './game-session.service';
 
-interface PendingFlagRequest {
-    requesterName: string;
-    targetPlayerName: string;
-}
 @Service()
 export class GameplayActionService {
     /* eslint-disable max-params */
@@ -50,6 +50,7 @@ export class GameplayActionService {
         private readonly gameSessionService: GameSessionService,
         private readonly activeGameService: ActiveGameService,
         private readonly actionService: ActionService,
+        private readonly ctfFlagActionService: CtfFlagActionService,
     ) {}
     async handleEndTurn(gameId: string): Promise<void> {
         this.pendingFlagRequestsByGameId.delete(gameId);
@@ -85,7 +86,7 @@ export class GameplayActionService {
             if (gameEnded) {
                 const endedGame = await this.activeGameService.getActiveGameById(gameId);
                 namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
-                await this.activeGameService.deleteGameById(gameId);
+                //await this.activeGameService.deleteGameById(gameId);
             }
         } catch (error) {
             socket.emit(SocketEvent.PlayerMoveError, this.toSocketError(error, ErrorCode.PositionNotWalkable));
@@ -94,25 +95,26 @@ export class GameplayActionService {
 
     async handleToggleDoor(
         data: IDoorToggleData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, playerId, position } = data;
         try {
             const result: IDoorToggledResult = await this.doorService.toggleDoor(playerId, gameId, position);
+            await this.trackManipulatedDoor(gameId, result.position.x, result.position.y);
             namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
             emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
+            socket?.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
         }
     }
 
     async handleSanctuaryInteraction(
         data: ISanctuaryInteractionData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
@@ -122,13 +124,14 @@ export class GameplayActionService {
                 position,
                 choice,
             });
+            await this.trackUsedSanctuary(gameId, position.x, position.y);
             namespace.to(gameId).emit(SocketEvent.SanctuaryInteracted, result);
             const sanctuaryKind = result.itemType === ItemType.LifeSanctuary ? 'vie' : 'combat';
             emitGameLog(gameId, `${playerId} a utilisé un sanctuaire de ${sanctuaryKind}.`);
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            socket.emit(SocketEvent.SanctuaryInteractionError, this.toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
+            socket?.emit(SocketEvent.SanctuaryInteractionError, this.toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
         }
     }
 
@@ -151,53 +154,22 @@ export class GameplayActionService {
         await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
-    private async handleCtfFlagAction(activeGame: IActiveGame, data: IActionData, namespace: Namespace): Promise<boolean> {
-        const { gameId, currentPlayerName, targetName } = data;
-
-        if (activeGame.game.gameMode !== 'ctf') {
-            return false;
-        }
-
-        const areOnSameTeam = await this.actionService.isOnSameTeam(currentPlayerName, targetName, gameId);
-        if (!areOnSameTeam) {
-            return false;
-        }
-
-        const canGiveFlag = await this.actionService.canGiveFlag(currentPlayerName, gameId);
-        if (canGiveFlag) {
-            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
-            namespace?.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
-            return true;
-        }
-
-        const canTakeFlag = await this.actionService.canTakeFlag(targetName, gameId);
-        if (canTakeFlag) {
-            const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
-            this.pendingFlagRequestsByGameId.set(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
-            namespace?.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
-            return true;
-        }
-
-        return true;
-    }
-
     async handleAttack(
         data: IActionData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, currentPlayerName, targetName } = data;
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) {
-            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
+            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
             return;
         }
 
         const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
         if (!allowed) {
-            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
+            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
             return;
         }
 
@@ -228,7 +200,9 @@ export class GameplayActionService {
             return;
         }
 
-        const handledAsFlagAction = await this.handleCtfFlagAction(activeGame, data, namespace);
+        const handledAsFlagAction = await this.ctfFlagActionService.handleFlagAction(activeGame, data, namespace, (targetGameId, request) => {
+            this.pendingFlagRequestsByGameId.set(targetGameId, request);
+        });
         if (handledAsFlagAction) {
             return;
         }
@@ -280,7 +254,15 @@ export class GameplayActionService {
 
     async handleChooseAttackPosture(data: IAttackPostureData, namespace: Namespace): Promise<void> {
         const { gameId, playerName, posture } = data;
-        const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+        let updatedActiveGame: IActiveGame;
+        try {
+            updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
+        } catch (error) {
+            if (this.isNoOngoingAttackError(error)) {
+                return;
+            }
+            throw error;
+        }
 
         const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
         if (!combatReady) {
@@ -290,7 +272,15 @@ export class GameplayActionService {
 
         this.turnService.clearCombatTimer(updatedActiveGame);
 
-        const combatResolved = await this.actionService.applyCombatTurn(gameId);
+        let combatResolved: boolean;
+        try {
+            combatResolved = await this.actionService.applyCombatTurn(gameId);
+        } catch (error) {
+            if (this.isNoOngoingAttackError(error)) {
+                return;
+            }
+            throw error;
+        }
 
         const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
         if (combatResolved && currentPlayerName) {
@@ -379,6 +369,37 @@ export class GameplayActionService {
             );
         }
     }
+
+    private async trackManipulatedDoor(gameId: string, x: number, y: number): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const doorKey = `${x},${y}`;
+        if (!activeGame.manipulatedDoors.includes(doorKey)) {
+            activeGame.manipulatedDoors.push(doorKey);
+            await this.activeGameService.saveActiveGameById(gameId, activeGame);
+        }
+    }
+
+    private async trackUsedSanctuary(gameId: string, x: number, y: number): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const sanctuaryItem = activeGame.game.board.items.find((item) => sanctuaryCoversCell(item, y, x));
+        if (!sanctuaryItem || (sanctuaryItem.itemType !== ItemType.LifeSanctuary && sanctuaryItem.itemType !== ItemType.FightSanctuary)) {
+            return;
+        }
+
+        const sanctuaryKey = `${sanctuaryItem.itemType}:${sanctuaryItem.x},${sanctuaryItem.y}`;
+        if (!activeGame.usedSanctuaries.includes(sanctuaryKey)) {
+            activeGame.usedSanctuaries.push(sanctuaryKey);
+            await this.activeGameService.saveActiveGameById(gameId, activeGame);
+        }
+    }
     private getVirtualPosture(player: ICharacter): AttackPosture {
         return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
     }
@@ -398,5 +419,9 @@ export class GameplayActionService {
     private toSocketError(error: unknown, fallbackCode: ErrorCode): { errorCodes: ErrorCode[] } {
         if (error instanceof AppError) return { errorCodes: error.errorCodes };
         return { errorCodes: [fallbackCode] };
+    }
+
+    private isNoOngoingAttackError(error: unknown): boolean {
+        return error instanceof AppError && error.errorCodes.includes(ErrorCode.NoOngoingAttack);
     }
 }
