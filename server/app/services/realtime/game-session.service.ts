@@ -8,6 +8,7 @@ import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
+import { GameplayActionService } from './gameplay-action.service';
 
 @Service()
 export class GameSessionService {
@@ -17,6 +18,7 @@ export class GameSessionService {
         private readonly endGameService: EndGameService,
         private readonly turnService: TurnService,
         private readonly activeGameListSocketService: ActiveGameListSocketsService,
+        private readonly gameplayActionService: GameplayActionService,
     ) {}
 
     parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
@@ -74,6 +76,7 @@ export class GameSessionService {
         if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
             const combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
             if (combatOutcome) {
+                this.gameplayActionService.checkEndTurnIfNoMovesLeft(gameId, currentAttack.attacker);
                 namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
             }
         }
