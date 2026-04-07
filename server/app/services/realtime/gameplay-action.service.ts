@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+// necessary to avoid circular dependencies
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
@@ -7,6 +9,7 @@ import { MovementService } from '@app/services/gameplay/movement-service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -83,7 +86,7 @@ export class GameplayActionService {
             if (gameEnded) {
                 const endedGame = await this.activeGameService.getActiveGameById(gameId);
                 namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
-                await this.activeGameService.deleteGameById(gameId);
+                //await this.activeGameService.deleteGameById(gameId);
             }
         } catch (error) {
             socket.emit(SocketEvent.PlayerMoveError, this.toSocketError(error, ErrorCode.PositionNotWalkable));
@@ -99,6 +102,7 @@ export class GameplayActionService {
         const { gameId, playerId, position } = data;
         try {
             const result: IDoorToggledResult = await this.doorService.toggleDoor(playerId, gameId, position);
+            await this.trackManipulatedDoor(gameId, result.position.x, result.position.y);
             namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
             emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
 
@@ -120,6 +124,7 @@ export class GameplayActionService {
                 position,
                 choice,
             });
+            await this.trackUsedSanctuary(gameId, position.x, position.y);
             namespace.to(gameId).emit(SocketEvent.SanctuaryInteracted, result);
             const sanctuaryKind = result.itemType === ItemType.LifeSanctuary ? 'vie' : 'combat';
             emitGameLog(gameId, `${playerId} a utilisé un sanctuaire de ${sanctuaryKind}.`);
@@ -362,6 +367,37 @@ export class GameplayActionService {
                 },
                 namespace,
             );
+        }
+    }
+
+    private async trackManipulatedDoor(gameId: string, x: number, y: number): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const doorKey = `${x},${y}`;
+        if (!activeGame.manipulatedDoors.includes(doorKey)) {
+            activeGame.manipulatedDoors.push(doorKey);
+            await this.activeGameService.saveActiveGameById(gameId, activeGame);
+        }
+    }
+
+    private async trackUsedSanctuary(gameId: string, x: number, y: number): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const sanctuaryItem = activeGame.game.board.items.find((item) => sanctuaryCoversCell(item, y, x));
+        if (!sanctuaryItem || (sanctuaryItem.itemType !== ItemType.LifeSanctuary && sanctuaryItem.itemType !== ItemType.FightSanctuary)) {
+            return;
+        }
+
+        const sanctuaryKey = `${sanctuaryItem.itemType}:${sanctuaryItem.x},${sanctuaryItem.y}`;
+        if (!activeGame.usedSanctuaries.includes(sanctuaryKey)) {
+            activeGame.usedSanctuaries.push(sanctuaryKey);
+            await this.activeGameService.saveActiveGameById(gameId, activeGame);
         }
     }
     private getVirtualPosture(player: ICharacter): AttackPosture {

@@ -37,11 +37,17 @@ export class ActionService {
     async giveFlag(gameId: string, player2Name: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         activeGame.hasFlagId = player2Name;
+        if (!activeGame.flagHolderHistory.includes(player2Name)) {
+            activeGame.flagHolderHistory.push(player2Name);
+        }
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
     async takeFlag(gameId: string, player1Name: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         activeGame.hasFlagId = player1Name;
+        if (!activeGame.flagHolderHistory.includes(player1Name)) {
+            activeGame.flagHolderHistory.push(player1Name);
+        }
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
     async flagActionRequest(player1Name: string, player2Name: string, gameId: string): Promise<IFlagActionData> {

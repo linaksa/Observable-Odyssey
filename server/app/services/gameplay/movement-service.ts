@@ -1,14 +1,14 @@
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
-import { ErrorCode } from '@common/error-codes';
 import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { AppError } from '@app/error-types/app-error';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
@@ -115,6 +115,9 @@ export class MovementService {
         const flagIsOnGround = !activeGame.hasFlagId;
         if (flagIsOnGround && player.positionGrille.x === flag.x && player.positionGrille.y === flag.y) {
             activeGame.hasFlagId = player.name;
+            if (!activeGame.flagHolderHistory.includes(player.name)) {
+                activeGame.flagHolderHistory.push(player.name);
+            }
             flag.isCarried = true;
             flag.x = player.positionGrille.x;
             flag.y = player.positionGrille.y;

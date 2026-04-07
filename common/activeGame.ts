@@ -7,6 +7,7 @@ export interface IActiveGame {
     _id: string;
     game: IGame;
     createdAt?: Date;
+    endedAt?: Date | null;
     players: ICharacter[];
     currentPlayerIndex: number;
     turnOrder: string[]; // List of player names in turn order
@@ -19,6 +20,11 @@ export interface IActiveGame {
     turnIsInPreparation: boolean;
     hasFlagId: string | null;
     turnStartTimeStamp: number;
+
+    totalTurnCount?: number;
+    usedSanctuaries?: string[];
+    manipulatedDoors?: string[];
+    flagHolderHistory?: string[];
 
     currentAttack: ICurrentAttack | null;
 }

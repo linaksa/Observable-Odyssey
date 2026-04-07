@@ -14,6 +14,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Date,
         default: Date.now,
     },
+    endedAt: {
+        type: Date,
+        default: null,
+    },
     game: gameSchema,
     players: [characterSchema],
     turnOrder: {
@@ -56,6 +60,22 @@ const activeGameSchema = new Schema<IActiveGame>({
     turnStartTimeStamp: {
         type: Number,
         default: 0,
+    },
+    totalTurnCount: {
+        type: Number,
+        default: 0,
+    },
+    usedSanctuaries: {
+        type: [String],
+        default: [],
+    },
+    manipulatedDoors: {
+        type: [String],
+        default: [],
+    },
+    flagHolderHistory: {
+        type: [String],
+        default: [],
     },
 
     currentAttack: currentAttackSchema,
