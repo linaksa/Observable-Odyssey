@@ -2,6 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
 import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/constants';
+import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 
 @Service()
@@ -107,6 +108,8 @@ export class EndGameService {
         const player = activeGame?.players.find((p) => p.name === playerName);
         if (!player) return;
 
+        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.positionGrille.x, player.positionGrille.y);
+
         const startingPosition = player.positionDepart;
 
         activeGame.game.board.items = activeGame.game.board.items.filter((item) => item.x !== startingPosition.x || item.y !== startingPosition.y);
@@ -125,5 +128,21 @@ export class EndGameService {
         if (playerName === currentPlayerName) {
             await this.turnService.endTurn(gameId);
         }
+    }
+
+    private dropFlagIfCarrierAbandons(activeGame: IActiveGame, playerName: string, x: number, y: number): void {
+        if (activeGame.game.gameMode !== 'ctf' || activeGame.hasFlagId !== playerName) {
+            return;
+        }
+
+        const flag = activeGame.game.board.items.find((item) => item.itemType === ItemType.Flag);
+        if (!flag) {
+            return;
+        }
+
+        activeGame.hasFlagId = '';
+        flag.isCarried = false;
+        flag.x = x;
+        flag.y = y;
     }
 }
