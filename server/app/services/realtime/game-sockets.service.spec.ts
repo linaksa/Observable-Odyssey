@@ -184,6 +184,7 @@ describe('GameSocketsService', () => {
             endGameService as unknown as EndGameService,
             turnService as unknown as TurnService,
             activeGameListSocketService as unknown as ActiveGameListSocketsService,
+            {} as GameplayActionService,
         );
 
         gameplayActionService = new GameplayActionService(
