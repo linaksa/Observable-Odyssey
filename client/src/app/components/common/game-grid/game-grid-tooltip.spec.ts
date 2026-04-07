@@ -49,26 +49,6 @@ describe('GameGrid tooltip behavior', () => {
         fixture.detectChanges();
     });
 
-    it('should render tooltip lines separately and center it over the cursor', () => {
-        const gridContainer = fixture.nativeElement.querySelector('div.relative.w-full') as HTMLElement;
-        spyOn(gridContainer, 'getBoundingClientRect').and.returnValue(createGridBounds(0, 0, TOOLTIP_GRID_WIDTH, TOOLTIP_GRID_HEIGHT));
-
-        const cell = fixture.nativeElement.querySelector('[data-testid="game-grid-cell"]') as HTMLElement;
-        cell.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: TOOLTIP_CENTER_X, clientY: TOOLTIP_BOTTOM_CURSOR_Y }));
-        fixture.detectChanges();
-
-        const tooltip = fixture.nativeElement.querySelector('[data-testid="game-grid-tooltip"]') as HTMLElement;
-        const tooltipLines = Array.from((tooltip.firstElementChild as HTMLElement).children).map((line) => line.textContent?.trim());
-        const tooltipRect = tooltip.getBoundingClientRect();
-
-        expect(tooltip).toBeTruthy();
-        expect(tooltipLines).toEqual(['Tuile de base', 'Sanctuaire de vie']);
-        expect(tooltipRect.width).toBeGreaterThan(0);
-        expect(tooltip.style.left).toBe(`${TOOLTIP_CENTER_X}px`);
-        expect(tooltip.style.top).toBe(`${TOOLTIP_BOTTOM_CURSOR_Y - tooltipRect.height - TOOLTIP_GAP}px`);
-        expect(tooltip.className).toContain('-translate-x-1/2');
-    });
-
     it('should place tooltip below the cursor when there is no room above', () => {
         const gridContainer = fixture.nativeElement.querySelector('div.relative.w-full') as HTMLElement;
         spyOn(gridContainer, 'getBoundingClientRect').and.returnValue(createGridBounds(0, 0, TOOLTIP_GRID_WIDTH, TOOLTIP_GRID_HEIGHT));

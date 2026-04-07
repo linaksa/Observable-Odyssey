@@ -1,5 +1,6 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
@@ -7,14 +8,18 @@ import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
+import { GameplayActionService } from './gameplay-action.service';
 
 @Service()
 export class GameSessionService {
+    /* eslint-disable max-params */
     constructor(
         private readonly activeGameService: ActiveGameService,
+        private readonly combatService: CombatService,
         private readonly endGameService: EndGameService,
         private readonly turnService: TurnService,
         private readonly activeGameListSocketService: ActiveGameListSocketsService,
+        private readonly gameplayActionService: GameplayActionService,
     ) {}
 
     parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
@@ -67,12 +72,27 @@ export class GameSessionService {
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const currentAttack = activeGame.currentAttack;
+        if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
+            const combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
+            if (combatOutcome) {
+                this.gameplayActionService.checkEndTurnIfNoMovesLeft(gameId, currentAttack.attacker);
+                namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            }
+        }
+
         await this.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
 
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         namespace.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
-        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, { playerId });
+
+        const playerAbandonnedData: IPlayerAbandonnedGame = {
+            playerName: playerId,
+            activeGame: refreshedGame,
+        };
+        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonnedData);
 
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, refreshedGame, namespace, emitGameLog);
 

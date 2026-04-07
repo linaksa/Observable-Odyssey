@@ -17,6 +17,7 @@ export interface CombatOutcome {
     updatedActiveGame: IActiveGame;
     winner: string | null;
     losers: string[];
+    cancelled: boolean;
 }
 
 export interface CombatTurnOutcome {

@@ -331,7 +331,7 @@ export class GameplayActionService {
         return { message, postedAt: new Date().toISOString() };
     }
 
-    private async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
+    async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
         const reachable = await this.movementService.getReachablePositions(playerId, gameId);
         const canAttackAnyPlayer = await this.actionService.canUseActionAnyPlayer(gameId, playerId);
         if (reachable.length === 0 && !canAttackAnyPlayer) {
@@ -405,10 +405,8 @@ export class GameplayActionService {
     }
 
     private async handleTurnAndGameEndCase(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
-        const reachable = await this.movementService.getReachablePositions(attackerName, gameId);
-        if (reachable.length === 0) {
-            await this.turnService.endTurn(gameId);
-        }
+        await this.checkEndTurnIfNoMovesLeft(gameId, attackerName);
+
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });

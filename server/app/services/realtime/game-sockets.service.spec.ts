@@ -1,6 +1,7 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
+import { CombatService } from '@app/services/gameplay/combat-service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
@@ -41,6 +42,7 @@ describe('GameSocketsService', () => {
     let startGameService: Partial<StartGameService>;
     let movementService: Partial<MovementService>;
     let actionService: Partial<ActionService>;
+    let combatService: Partial<CombatService>;
     let doorService: Partial<DoorService>;
     let sanctuaryService: Partial<SanctuaryService>;
     let endGameService: Partial<EndGameService>;
@@ -112,6 +114,9 @@ describe('GameSocketsService', () => {
             saveActiveGameById: sinon.stub().resolves(activeGame),
         };
 
+        combatService = {
+            cancelCombat: sinon.stub().resolves(null),
+        };
         endGameService = {
             checkIfOrganizer: sinon.stub().resolves(false),
             checkEndGame: sinon.stub().resolves(false),
@@ -175,9 +180,11 @@ describe('GameSocketsService', () => {
 
         gameSessionService = new GameSessionService(
             activeGameService as unknown as ActiveGameService,
+            combatService as unknown as CombatService,
             endGameService as unknown as EndGameService,
             turnService as unknown as TurnService,
             activeGameListSocketService as unknown as ActiveGameListSocketsService,
+            {} as GameplayActionService,
         );
 
         gameplayActionService = new GameplayActionService(

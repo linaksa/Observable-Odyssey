@@ -32,6 +32,10 @@
                         <div class="text-center">
                             <div class="text-2xl font-bold text-[#80ef74] tracking-wide mb-1">Victoire !</div>
                             <div class="text-sm text-[#a8c8ff]">Vous avez remporté le combat</div>
+
+                            @if (outcome.cancelled) {
+                                <div class="text-sm text-[#a8c8ff]">Votre adversaire a abandonné</div>
+                            }
                         </div>
 
                         <div class="w-full h-1 bg-[#0d1f42] rounded-full overflow-hidden">
@@ -40,9 +44,7 @@
                     </div>
                 </div>
             </div>
-        }
-
-        @if (outcome.losers.includes(player.name)) {
+        } @else if (outcome.losers.includes(player.name)) {
             <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
                 <div class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">

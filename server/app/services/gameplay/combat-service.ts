@@ -6,7 +6,6 @@ import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
-import { ErrorCode } from '@common/error-codes';
 import {
     COMBAT_TURN_FEEDBACK_DURATION_MS,
     DiceType,
@@ -16,6 +15,7 @@ import {
     SIX_SIDED_DICE_MAX,
     TEMPS_COMBAT,
 } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -109,12 +109,6 @@ export class CombatService {
     async resolveCombat(currentActiveGame: IActiveGame, attackerName: string, defenderName: string): Promise<CombatOutcome> {
         const attacker = currentActiveGame.players.find((p) => p.name === attackerName);
         const defender = currentActiveGame.players.find((p) => p.name === defenderName);
-        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(currentActiveGame);
-
-        attacker.nCombats++;
-        defender.nCombats++;
-
-        attacker.actionsLeft--;
 
         let winner: ICharacter | null = null;
         let losers: ICharacter[] = [];
@@ -129,34 +123,51 @@ export class CombatService {
             losers = [attacker, defender];
         }
 
+        return this.endAndCleanupCombat(currentActiveGame, winner, losers, false);
+    }
+
+    private async endAndCleanupCombat(
+        activeGame: IActiveGame,
+        winner: ICharacter | null,
+        losers: ICharacter[],
+        cancelled: boolean,
+    ): Promise<CombatOutcome> {
+        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(activeGame);
+
+        const attacker = activeGame.players.find((p) => p.name === activeGame.currentAttack.attacker);
+        attacker.actionsLeft--;
+
         if (winner) {
             winner.victories++;
             winner.nVictories++;
+            winner.nCombats++;
         }
 
-        currentActiveGame.players = currentActiveGame.players.map((player) => {
+        activeGame.players = activeGame.players.map((player) => {
             if (player.currentHealth === 0) {
                 player.currentHealth = player.initialHealth;
-                this.relocateLoser(player, currentActiveGame);
+                this.relocateLoser(player, activeGame);
                 player.nDefeats++;
+                player.nCombats++;
             }
             return player;
         });
 
-        this.dropFlagAtPositionIfCarrierDefeated(currentActiveGame, carrierDefeatPosition);
+        this.dropFlagAtPositionIfCarrierDefeated(activeGame, carrierDefeatPosition);
 
-        const turnRemainingTime = currentActiveGame.currentAttack.suspendedTurnTimer;
+        const turnRemainingTime = activeGame.currentAttack.suspendedTurnTimer;
 
-        currentActiveGame.currentAttack = null; // reset current attack after resolving combat
-        const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
+        activeGame.currentAttack = null; // reset current attack after resolving combat
+        const updatedGame = await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
 
         const combatResult: CombatOutcome = {
             updatedActiveGame: updatedGame,
             winner: winner?.name || null,
             losers: losers.map((l) => l.name),
+            cancelled,
         };
 
-        this.turnService.continueTurn(currentActiveGame._id.toString(), turnRemainingTime);
+        this.turnService.continueTurn(activeGame._id.toString(), turnRemainingTime);
 
         return combatResult;
     }
@@ -282,5 +293,23 @@ export class CombatService {
         }
 
         return attackDiceBonus;
+    }
+
+    async cancelCombat(activeGame: IActiveGame, abandonedPlayerId: string): Promise<CombatOutcome | null> {
+        if (!activeGame.currentAttack) {
+            return null;
+        }
+
+        this.turnService.clearCombatTimer(activeGame);
+
+        const attacker = activeGame.currentAttack?.attacker;
+        const defender = activeGame.currentAttack?.defender;
+
+        const winner = attacker === abandonedPlayerId ? defender : attacker;
+        const winnerCharacter = activeGame.players.find((p) => p.name === winner);
+
+        const loser = activeGame.players.find((p) => p.name === abandonedPlayerId) as ICharacter;
+
+        return this.endAndCleanupCombat(activeGame, winnerCharacter || null, [loser], true);
     }
 }

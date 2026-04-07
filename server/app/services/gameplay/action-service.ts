@@ -115,7 +115,8 @@ export class ActionService {
         }
         return this.combatService.resolveCombat(activeGame, attackerName, defenderName);
     }
+
     async applyCombatTurn(gameId: string): Promise<boolean> {
-        return this.combatService.applyCombatTurn(gameId);
+        return await this.combatService.applyCombatTurn(gameId);
     }
 }
