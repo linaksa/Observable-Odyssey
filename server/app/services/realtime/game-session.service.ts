@@ -12,6 +12,7 @@ import { GameplayActionService } from './gameplay-action.service';
 
 @Service()
 export class GameSessionService {
+    /* eslint-disable max-params */
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly combatService: CombatService,
