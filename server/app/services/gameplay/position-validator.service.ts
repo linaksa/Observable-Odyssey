@@ -88,8 +88,10 @@ export class PositionValidatorService {
         const visited = new Set<string>([`${origin.x},${origin.y}`]);
 
         while (queue.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const current = queue.shift()!;
+            const current = queue.shift();
+            if (!current) {
+                continue;
+            }
 
             if (
                 (current.x !== origin.x || current.y !== origin.y) &&
