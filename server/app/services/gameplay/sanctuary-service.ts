@@ -1,12 +1,13 @@
 import { AppError } from '@app/error-types/app-error';
-import { Service } from 'typedi';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, Position } from '@common/character';
 import { ErrorCode } from '@common/error-codes';
 import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
-import { ISanctuaryInteractionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
+import { ISanctuaryInteractedResult, ISanctuaryInteractionData } from '@common/socket-payloads';
+import { StatusCodes } from 'http-status-codes';
+import { Service } from 'typedi';
 import {
     SANCTUARY_COOLDOWN_TURN_STEPS,
     advanceSanctuaryCooldowns,
@@ -16,7 +17,6 @@ import {
     isSanctuaryItem,
     sanctuaryCoversCell,
 } from './sanctuary-helpers';
-import { StatusCodes } from 'http-status-codes';
 
 const SANCTUARY_ACTION_COST = 1;
 const LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT = 2;
@@ -25,12 +25,6 @@ const FIGHT_SANCTUARY_STANDARD_BONUS = 1;
 const FIGHT_SANCTUARY_DOUBLE_BONUS = 2;
 const FIGHT_SANCTUARY_BUFF_TURNS = 2;
 const SANCTUARY_DOUBLE_CHANCE = 0.5;
-
-type SanctuaryFightState = {
-    fightSanctuaryUsed?: boolean;
-    fightSanctuaryTurnsRemaining?: number;
-    fightSanctuaryBonus?: number;
-};
 
 @Service()
 export class SanctuaryService {
@@ -89,8 +83,6 @@ export class SanctuaryService {
         player.fightSanctuaryTurnsRemaining = remainingTurns - 1;
 
         if (player.fightSanctuaryTurnsRemaining === 0) {
-            player.attackPoints = Math.max(0, player.attackPoints - bonus);
-            player.defensePoints = Math.max(0, player.defensePoints - bonus);
             player.fightSanctuaryBonus = 0;
         }
     }
@@ -150,7 +142,7 @@ export class SanctuaryService {
         this.throwIf(!isSanctuaryActive(sanctuary), [ErrorCode.SanctuaryInactive]);
     }
 
-    private assertFightSanctuaryIsAvailable(player: SanctuaryFightState, sanctuary: IItem): void {
+    private assertFightSanctuaryIsAvailable(player: ICharacter, sanctuary: IItem): void {
         this.throwIf(sanctuary.itemType === ItemType.FightSanctuary && this.hasFightSanctuaryAlreadyBeenUsed(player), [
             ErrorCode.FightSanctuaryAlreadyUsed,
         ]);
@@ -204,26 +196,13 @@ export class SanctuaryService {
         result.currentHealth = player.currentHealth;
     }
 
-    private applyFightSanctuary(
-        player: {
-            attackPoints: number;
-            defensePoints: number;
-            fightSanctuaryUsed?: boolean;
-            fightSanctuaryTurnsRemaining?: number;
-            fightSanctuaryBonus?: number;
-        },
-        choice: SanctuaryChoice,
-        result: ISanctuaryInteractedResult,
-    ): void {
+    private applyFightSanctuary(player: ICharacter, choice: SanctuaryChoice, result: ISanctuaryInteractedResult): void {
         const bonus = this.resolveSanctuaryEffect(choice, FIGHT_SANCTUARY_STANDARD_BONUS, FIGHT_SANCTUARY_DOUBLE_BONUS);
-
         player.fightSanctuaryUsed = true;
         player.fightSanctuaryTurnsRemaining = bonus > 0 ? FIGHT_SANCTUARY_BUFF_TURNS : 0;
         player.fightSanctuaryBonus = bonus;
 
         if (bonus > 0) {
-            player.attackPoints += bonus;
-            player.defensePoints += bonus;
             result.succeeded = true;
         }
 
@@ -246,7 +225,7 @@ export class SanctuaryService {
         return Math.random() < SANCTUARY_DOUBLE_CHANCE ? amount : 0;
     }
 
-    private hasFightSanctuaryAlreadyBeenUsed(player: SanctuaryFightState): boolean {
+    private hasFightSanctuaryAlreadyBeenUsed(player: ICharacter): boolean {
         return (player.fightSanctuaryUsed ?? false) || (player.fightSanctuaryTurnsRemaining ?? 0) > 0 || (player.fightSanctuaryBonus ?? 0) > 0;
     }
 

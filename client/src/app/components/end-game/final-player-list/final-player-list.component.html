@@ -8,32 +8,38 @@
                 <th></th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NCombats)">
-                        Combats <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NCombats)" />
+                        <span class="tracking-wider">Combats</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NCombats)" />
                     </button>
                 </th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NVictories)">
-                        Victoires <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVictories)" />
+                        <span class="tracking-wider">Victoires</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVictories)" />
                     </button>
                 </th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDefeats)">
-                        Défaites <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDefeats)" />
+                        <span class="tracking-wider">Défaites</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDefeats)" />
                     </button>
                 </th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDamageTaken)">
-                        PDV perdus <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageTaken)" />
+                        <span class="tracking-wider">PDV perdus</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageTaken)" />
                     </button>
                 </th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDamageDealt)">
-                        Dommages totaux <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageDealt)" />
+                        <span class="tracking-wider">Dommages totaux</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageDealt)" />
                     </button>
                 </th>
                 <th>
                     <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NVisitedCells)">
-                        % tuiles visitées <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVisitedCells)" />
+                        <span class="tracking-wider">% tuiles visitées</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVisitedCells)" />
                     </button>
                 </th>
             </tr>

@@ -3,33 +3,33 @@
 
     <div class="flex flex-col gap-3 text-sm">
         <div class="flex flex-row justify-between gap-4">
-            <p class="font-semibold">Durée de la partie</p>
+            <p class="tracking-widest">Durée de la partie</p>
             <p>{{ gameDurationFormatted }}</p>
         </div>
 
         <div class="flex flex-row justify-between gap-4">
-            <p class="font-semibold">Nombre total de tours</p>
+            <p class="tracking-widest">Nombre total de tours</p>
             <p>{{ totalTurnCount }}</p>
         </div>
 
         <div class="flex flex-row justify-between gap-4">
-            <p class="font-semibold">Sanctuaires utilisés au moins 1 fois</p>
+            <p class="tracking-widest">Sanctuaires utilisés au moins 1 fois</p>
             <p>{{ sanctuaryUsageFormatted }}</p>
         </div>
 
         <div class="flex flex-row justify-between gap-4">
-            <p class="font-semibold">Tuiles de terrain visitées</p>
+            <p class="tracking-widest">Tuiles de terrain visitées</p>
             <p>{{ visitedTerrainFormatted }}</p>
         </div>
 
         <div class="flex flex-row justify-between gap-4">
-            <p class="font-semibold">Portes manipulées au moins 1 fois</p>
+            <p class="tracking-widest">Portes manipulées au moins 1 fois</p>
             <p>{{ doorManipulationFormatted }}</p>
         </div>
 
         @if (activeGame.game.gameMode === 'ctf') {
             <div class="flex flex-row justify-between gap-4">
-                <p class="font-semibold">Joueurs ayant détenu le drapeau</p>
+                <p class="tracking-widest">Joueurs ayant détenu le drapeau</p>
                 <p>{{ flagHolderCount ?? 'N/A' }}</p>
             </div>
         }

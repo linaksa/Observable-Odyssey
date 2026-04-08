@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DoCheck, inject, OnInit } from '@angular/core';
+import { CombatTurnResultComponent } from '@app/components/game/combat-turn-result/combat-turn-result.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
@@ -12,7 +13,7 @@ const HUNDRED_PERCENT = 100;
 
 @Component({
     selector: 'app-combat-mode',
-    imports: [CommonModule],
+    imports: [CommonModule, CombatTurnResultComponent],
     templateUrl: './combat-mode.component.html',
 })
 export class CombatModeComponent implements DoCheck, OnInit {

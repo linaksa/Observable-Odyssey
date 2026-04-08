@@ -3,6 +3,7 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
+import { CombatTurnOutcome } from '@common/attackResult';
 import {
     COUNTDOWN_MIN_REMAINING_MS,
     COUNTDOWN_TICK_INTERVAL_MS,
@@ -28,6 +29,7 @@ export class GameTurnService {
     private turnStartedSubscription?: Subscription;
     private turnStopSubscription?: Subscription;
     private combatTurnStartedSubscription?: Subscription;
+    private combatTurnEndedSubscription?: Subscription;
 
     // Local timer used only for countdown display
     private countdownInterval?: ReturnType<typeof setInterval>;
@@ -116,6 +118,12 @@ export class GameTurnService {
                 }
             },
         });
+
+        this.combatTurnEndedSubscription = this.socketService.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe({
+            next: () => {
+                this.stopCountdown();
+            },
+        });
     }
 
     // Requests the server to end the current turn (server is authoritative)
@@ -134,10 +142,12 @@ export class GameTurnService {
         this.turnStartedSubscription?.unsubscribe();
         this.turnStopSubscription?.unsubscribe();
         this.combatTurnStartedSubscription?.unsubscribe();
+        this.combatTurnEndedSubscription?.unsubscribe();
         this.turnPreparingSubscription = undefined;
         this.turnStartedSubscription = undefined;
         this.turnStopSubscription = undefined;
         this.combatTurnStartedSubscription = undefined;
+        this.combatTurnEndedSubscription = undefined;
         this.stopCountdown();
     }
 
