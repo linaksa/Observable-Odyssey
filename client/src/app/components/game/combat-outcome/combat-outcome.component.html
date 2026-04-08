@@ -1,7 +1,7 @@
 @if (getCombatOutcome(); as outcome) {
     @if (localPlayerService.getLocalPlayer(); as player) {
         @if (outcome.winner && outcome.winner === player.name) {
-            <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div class="w-full flex justify-center">
                 <div class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
                         <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>
@@ -45,7 +45,7 @@
                 </div>
             </div>
         } @else if (outcome.losers.includes(player.name)) {
-            <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div class="w-full flex justify-center">
                 <div class="relative w-[340px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
                     <div class="bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3 flex items-center justify-between">
                         <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">Résultat du combat</span>

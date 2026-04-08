@@ -21,6 +21,7 @@ export const DIRECTION_DELTA: Record<Direction, Position> = {
     [Direction.Right]: { x: 1, y: 0 },
 };
 
+//Code from https://www.geeksforgeeks.org/dsa/dijkstras-shortest-path-algorithm-greedy-algo-7/ adapted to our grid-based graph representation
 export function dijkstra(adj: [number, number][][], src: number): DijkstraResult {
     const V = adj.length;
     const pq = new MinimumHeap<[number, number]>();
