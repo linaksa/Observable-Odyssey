@@ -1,3 +1,4 @@
+import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
@@ -17,11 +18,12 @@ describe('AgressivePlayerService', () => {
         moveToPlayer: sinon.SinonStub;
     };
     let gameplayActionService: {
-        handleAttack: sinon.SinonStub;
+        combatManager: sinon.SinonStub;
         emitGameLogToRoom: sinon.SinonStub;
     };
     let socketService: { getNamespace: sinon.SinonStub };
     let sanctuaryService: { tryFallbackObjective: sinon.SinonStub };
+    let positionValidatorService: { isAdjacent: sinon.SinonStub };
 
     let service: AgressivePlayerService;
 
@@ -31,17 +33,19 @@ describe('AgressivePlayerService', () => {
             moveToPlayer: sinon.stub().resolves(true),
         };
         gameplayActionService = {
-            handleAttack: sinon.stub().resolves(),
+            combatManager: sinon.stub().resolves(),
             emitGameLogToRoom: sinon.stub(),
         };
         socketService = { getNamespace: sinon.stub().returns({ to: sinon.stub().returns({ emit: sinon.stub() }) }) };
         sanctuaryService = { tryFallbackObjective: sinon.stub().resolves(false) };
+        positionValidatorService = { isAdjacent: sinon.stub().returns(true) };
 
         service = new AgressivePlayerService(
             virtualPlayerUtilities as unknown as VirtualPlayerUtilitiesService,
             gameplayActionService as unknown as GameplayActionService,
             socketService as unknown as SocketService,
             sanctuaryService as unknown as VirtualPlayerSanctuaryService,
+            positionValidatorService as unknown as PositionValidatorService,
         );
     });
 
@@ -82,7 +86,10 @@ function createGame(players: ICharacter[]): IActiveGame {
             lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
             visibility: Visibility.Hidden,
             board: {
-                cells: [[CellType.Empty, CellType.Empty], [CellType.Empty, CellType.Empty]],
+                cells: [
+                    [CellType.Empty, CellType.Empty],
+                    [CellType.Empty, CellType.Empty],
+                ],
                 items: [],
             },
         },

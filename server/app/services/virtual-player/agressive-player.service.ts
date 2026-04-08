@@ -1,13 +1,13 @@
+import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Namespaces } from '@common/namespaces';
-import { IActionData } from '@common/socket-payloads';
 import { Service } from 'typedi';
-import { VirtualPlayer } from './virtual-player.interface';
 import { VirtualPlayerSanctuaryService } from './virtual-player-sanctuary.service';
+import { VirtualPlayer } from './virtual-player.interface';
 import { sleep, VirtualPlayerUtilitiesService } from './virtual-player.utilities';
 
 @Service()
@@ -17,6 +17,7 @@ export class AgressivePlayerService implements VirtualPlayer {
         private readonly gameplayActionService: GameplayActionService,
         private readonly socketService: SocketService,
         private readonly sanctuaryService: VirtualPlayerSanctuaryService,
+        private readonly positionValidatorService: PositionValidatorService,
     ) {}
 
     async play(character: ICharacter, game: IActiveGame, forcedTargetName?: string): Promise<void> {
@@ -32,17 +33,17 @@ export class AgressivePlayerService implements VirtualPlayer {
         const adverserPlayers = forcedTarget
             ? [forcedTarget]
             : enemyFlagCarrier
-            ? [enemyFlagCarrier]
-            : game.players.filter((player) => {
-                  if (player.name === character.name || player.hasAbandoned) {
-                      return false;
-                  }
-                  if (game.game.gameMode !== GameType.Ctf) {
-                      return true;
-                  }
+              ? [enemyFlagCarrier]
+              : game.players.filter((player) => {
+                    if (player.name === character.name || player.hasAbandoned) {
+                        return false;
+                    }
+                    if (game.game.gameMode !== GameType.Ctf) {
+                        return true;
+                    }
 
-                  return player.team !== character.team;
-              });
+                    return player.team !== character.team;
+                });
 
         const closestAdversePlayer = this.virtualPlayerUtilities.findClosestReachablePlayer(
             character,
@@ -59,7 +60,12 @@ export class AgressivePlayerService implements VirtualPlayer {
 
         await this.virtualPlayerUtilities.moveToPlayer(character, game, closestAdversePlayer.bestAdjacentIndex);
 
-        await this.attackTargetIfPossible(character, game, closestAdversePlayer.player.name);
+        const refreshedPlayer = game.players.find((player) => player.name === character.name);
+        if (!refreshedPlayer) {
+            return;
+        }
+
+        await this.attackTargetIfPossible(refreshedPlayer, game, closestAdversePlayer.player.name);
     }
 
     async attackTargetIfPossible(character: ICharacter, game: IActiveGame, targetName: string): Promise<void> {
@@ -68,16 +74,13 @@ export class AgressivePlayerService implements VirtualPlayer {
             return;
         }
 
+        if (!this.positionValidatorService.isAdjacent(target.positionGrille, character.positionGrille)) {
+            return;
+        }
+
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-        const attackData: IActionData = {
-            gameId: game._id.toString(),
-            currentPlayerName: character.name,
-            targetName,
-        };
 
         await sleep();
-        await this.gameplayActionService.handleAttack(attackData, null, namespace, (gameId: string, message: string) =>
-            this.gameplayActionService.emitGameLogToRoom(gameId, message, namespace),
-        );
+        await this.gameplayActionService.combatManager(game._id.toString(), character.name, targetName, namespace);
     }
 }

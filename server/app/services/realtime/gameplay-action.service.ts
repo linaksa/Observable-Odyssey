@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-// necessary to avoid circular dependencies
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
@@ -135,7 +133,7 @@ export class GameplayActionService {
         }
     }
 
-    private async combatManager(gameId: string, attackerName: string, defenderName: string, namespace: Namespace): Promise<void> {
+    async combatManager(gameId: string, attackerName: string, defenderName: string, namespace: Namespace): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
         this.turnService.suspendTurn(gameId);
@@ -145,48 +143,12 @@ export class GameplayActionService {
         this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
             const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
-                await this.handleTurnAndGameEndCase(attackerName, gameId, namespace);
+                await this.handlePostCombatEndScenario(attackerName, gameId, namespace);
             }
         });
 
         namespace?.to(gameId).emit(SocketEvent.CombatStarted, result);
         namespace?.to(gameId).emit(SocketEvent.CombatTurnStart, result);
-        await this.autoChooseVirtualPostures(gameId, namespace);
-    }
-
-    async handleAttack(
-        data: IActionData,
-        socket: Socket | null,
-        namespace: Namespace,
-        emitGameLog: (gameId: string, message: string) => void,
-    ): Promise<void> {
-        const { gameId, currentPlayerName, targetName } = data;
-        const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) {
-            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
-            return;
-        }
-
-        const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
-        if (!allowed) {
-            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
-            return;
-        }
-
-        const result = await this.activeGameService.startCombat(gameId, currentPlayerName, targetName);
-        this.turnService.suspendTurn(gameId);
-
-        emitGameLog(gameId, `Debut du combat entre ${currentPlayerName} et ${targetName}.`);
-
-        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
-            const combatResolved = await this.actionService.applyCombatTurn(gameId);
-            if (combatResolved) {
-                await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
-            }
-        });
-
-        namespace.to(gameId).emit(SocketEvent.CombatStarted, result);
-        namespace.to(gameId).emit(SocketEvent.CombatTurnStart, result);
         await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
@@ -284,7 +246,7 @@ export class GameplayActionService {
 
         const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
         if (combatResolved && currentPlayerName) {
-            await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
+            await this.handlePostCombatEndScenario(currentPlayerName, gameId, namespace);
             return;
         }
 
@@ -404,7 +366,18 @@ export class GameplayActionService {
         return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
     }
 
-    private async handleTurnAndGameEndCase(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
+    private async handlePostCombatEndScenario(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const attackerIsVirtual = activeGame.players.find((player) => player.name === attackerName)?.virtualPlayerProfile;
+        if (attackerIsVirtual) {
+            await this.turnService.endTurn(gameId);
+            return;
+        }
+
         await this.checkEndTurnIfNoMovesLeft(gameId, attackerName);
 
         const gameEnded = await this.endGameService.checkEndGame(gameId);

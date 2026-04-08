@@ -24,6 +24,11 @@ export class VirtualPlayerTurnFinalizerService {
             }
         }
 
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (activeGame && activeGame.currentAttack) {
+            return;
+        }
+
         await this.turnService.endTurn(gameId);
     }
 }
