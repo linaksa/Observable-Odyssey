@@ -123,6 +123,13 @@
                                 </span>
                             </div>
 
+                            <div class="flex justify-between">
+                                <span>Sanctuaire</span>
+                                <span>
+                                    {{ outcome.defenderStats.fightSanctuaryBonus || 0 }}
+                                </span>
+                            </div>
+
                             <div class="flex justify-between text-white">
                                 <span>Glace</span>
                                 <span> {{ outcome.defenderStats.attackIceMalus }}</span>
@@ -215,6 +222,13 @@
                                 <span>Posture</span>
                                 <span>
                                     {{ outcome.attackerStats.postureAttackBonus }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between">
+                                <span>Sanctuaire</span>
+                                <span>
+                                    {{ outcome.attackerStats.fightSanctuaryBonus || 0 }}
                                 </span>
                             </div>
 

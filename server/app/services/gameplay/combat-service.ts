@@ -253,6 +253,8 @@ export class CombatService {
             attackDiceBonus = this.getMaxDice(character.attackBonusDiceType, character.name, activeGame);
         }
 
+        const fightSanctuaryBonus = character.fightSanctuaryUsed ? character.fightSanctuaryBonus || 0 : 0;
+
         const attackPostureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
         const attackIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
 
@@ -266,12 +268,13 @@ export class CombatService {
         } else {
             defenseDiceBonus = this.getMaxDice(character.defenseBonusDiceType, character.name, activeGame);
         }
-        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + attackIceMalus, 0);
+        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + fightSanctuaryBonus + attackIceMalus, 0);
         const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus + defenseIceMalus, 0);
 
         return {
             baseAttackPoints,
             attackDiceBonus,
+            fightSanctuaryBonus,
             postureAttackBonus: attackPostureBonus,
             attackIceMalus,
             totalAttackPoints,
