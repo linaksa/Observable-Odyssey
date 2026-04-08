@@ -24,7 +24,8 @@
 </div>
 @if (
     isGameFinished ||
-    activeGameService.combatOutcome() ||
+    activeGameService.combatOutcome()?.winner === localPlayer?.name ||
+    activeGameService.combatOutcome()?.losers?.includes(localPlayer?.name ?? '') ||
     (currentAttack && (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name))
 ) {
     <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -38,9 +39,7 @@
             }
 
             @if (currentAttack) {
-                @if (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name) {
-                    <app-combat-mode></app-combat-mode>
-                }
+                <app-combat-mode></app-combat-mode>
             }
         </div>
     </div>

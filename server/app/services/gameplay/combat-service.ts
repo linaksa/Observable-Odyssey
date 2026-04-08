@@ -8,13 +8,13 @@ import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@c
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import {
+    COMBAT_TIME_MS,
     COMBAT_TURN_FEEDBACK_DURATION_MS,
     DiceType,
     FOUR_SIDED_DICE_MAX,
     ICE_CELL_MALUS,
     POSTURE_BONUS,
     SIX_SIDED_DICE_MAX,
-    COMBAT_TIME_MS,
 } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
@@ -91,6 +91,10 @@ export class CombatService {
 
         const combatIsDone = attacker.currentHealth === 0 || defender.currentHealth === 0;
 
+        const attackerIsVirtual = attacker.virtualPlayerProfile;
+        const defenderIsVirtual = defender.virtualPlayerProfile;
+        const turnFeedbackDuration = attackerIsVirtual && defenderIsVirtual ? 0 : COMBAT_TURN_FEEDBACK_DURATION_MS;
+
         return new Promise((resolve) => {
             setTimeout(async () => {
                 if (combatIsDone) {
@@ -102,7 +106,7 @@ export class CombatService {
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
                 this.turnService.startCombatTimer(COMBAT_TIME_MS, currentActiveGame, () => this.applyCombatTurn(activeGameId));
                 return resolve(false);
-            }, COMBAT_TURN_FEEDBACK_DURATION_MS);
+            }, turnFeedbackDuration);
         });
     }
 

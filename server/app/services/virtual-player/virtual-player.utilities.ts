@@ -119,7 +119,7 @@ export class VirtualPlayerUtilitiesService {
     }
 
     async moveAwayFromPlayers(from: ICharacter, activeGame: IActiveGame, adversePlayers: ICharacter[]): Promise<void> {
-        if (adversePlayers.length === 0 || from.movementLeft <= 0) {
+        if (adversePlayers.length === 0) {
             return;
         }
 
@@ -134,7 +134,7 @@ export class VirtualPlayerUtilitiesService {
 
         for (let index = 0; index < distances.length; index++) {
             const pathCost = distances[index];
-            if (!isFinite(pathCost) || pathCost === 0 || pathCost > from.movementLeft) {
+            if (!isFinite(pathCost) || index === srcIndex || pathCost > from.movementLeft) {
                 continue;
             }
 
@@ -185,14 +185,9 @@ export class VirtualPlayerUtilitiesService {
         path.push(targetIndex);
 
         let currentIndex = srcIndex;
-        let movementLeft = from.movementLeft;
 
         for (const step of path) {
             const nextIndex = step;
-
-            if (movementLeft <= 0) {
-                break;
-            }
 
             // Derive current position from currentIndex, not from.currentPosition
             const currentX = currentIndex % totalColumns;
@@ -240,7 +235,7 @@ export class VirtualPlayerUtilitiesService {
                 movementLeft: result.movementLeft,
             } as PlayerMovedResult);
 
-            movementLeft = result.movementLeft;
+            from.movementLeft = result.movementLeft;
             currentIndex = nextIndex;
             await sleep();
         }
@@ -261,7 +256,7 @@ export class VirtualPlayerUtilitiesService {
 
         for (let index = 0; index < distances.length; index++) {
             const pathCost = distances[index];
-            if (!isFinite(pathCost) || pathCost === 0 || pathCost > movementLeft) {
+            if (!isFinite(pathCost) || index === srcIndex || pathCost > movementLeft) {
                 continue;
             }
 
