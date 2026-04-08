@@ -132,7 +132,7 @@ export class CombatService {
         losers: ICharacter[],
         cancelled: boolean,
     ): Promise<CombatOutcome> {
-        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(activeGame);
+        const carrierDefeat = this.getFlagCarrierDefeat(activeGame);
 
         const attacker = activeGame.players.find((p) => p.name === activeGame.currentAttack.attacker);
         attacker.actionsLeft--;
@@ -153,7 +153,7 @@ export class CombatService {
             return player;
         });
 
-        this.dropFlagAtPositionIfCarrierDefeated(activeGame, carrierDefeatPosition);
+        this.dropFlagAtPositionIfCarrierDefeated(activeGame, carrierDefeat);
 
         const turnRemainingTime = activeGame.currentAttack.suspendedTurnTimer;
 
@@ -172,7 +172,7 @@ export class CombatService {
         return combatResult;
     }
 
-    private getFlagCarrierDefeatPosition(activeGame: IActiveGame): Position | null {
+    private getFlagCarrierDefeat(activeGame: IActiveGame): { carrierStart: Position; position: Position } | null {
         if (activeGame.game.gameMode !== 'ctf' || !activeGame.hasFlagId) {
             return null;
         }
@@ -182,11 +182,11 @@ export class CombatService {
             return null;
         }
 
-        return carrier.positionGrille;
+        return { carrierStart: carrier.positionDepart, position: carrier.positionGrille };
     }
 
-    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, position: Position | null): void {
-        if (!position) {
+    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, carrierDefeat: { carrierStart: Position; position: Position } | null): void {
+        if (!carrierDefeat) {
             return;
         }
 
@@ -195,10 +195,16 @@ export class CombatService {
             return;
         }
 
+        const dropPosition = this.getFlagDropPosition(activeGame, carrierDefeat.carrierStart, carrierDefeat.position);
+
         activeGame.hasFlagId = '';
         flag.isCarried = false;
-        flag.x = position.x;
-        flag.y = position.y;
+        flag.x = dropPosition.x;
+        flag.y = dropPosition.y;
+    }
+
+    private getFlagDropPosition(activeGame: IActiveGame, carrierStart: Position, desiredPosition: Position): Position {
+        return this.positionValidatorService.resolveFlagDropPosition(desiredPosition, carrierStart, activeGame);
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {
