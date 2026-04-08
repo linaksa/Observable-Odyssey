@@ -109,13 +109,7 @@ export class VirtualPlayerUtilitiesService {
             return await this.moveToIndex(from, activeGame, targetIndex);
         }
 
-        const closestReachableIndex = this.findClosestReachableIndexToTarget(
-            distances,
-            totalColumns,
-            position,
-            from.movementLeft,
-            srcIndex,
-        );
+        const closestReachableIndex = this.findClosestReachableIndexToTarget(distances, totalColumns, position, from.movementLeft, srcIndex);
         if (closestReachableIndex === srcIndex) {
             return false;
         }
@@ -234,6 +228,7 @@ export class VirtualPlayerUtilitiesService {
             let result;
             try {
                 result = await this.movementService.movePlayer(from.name, activeGame._id, newPosition);
+                from.positionGrille = newPosition;
             } catch {
                 return false;
             }
