@@ -6,13 +6,14 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
+import { CombatTurnResultComponent } from '../combat-turn-result/combat-turn-result.component';
 
 const COMBAT_DURATION = 10;
 const HUNDRED_PERCENT = 100;
 
 @Component({
     selector: 'app-combat-mode',
-    imports: [CommonModule],
+    imports: [CommonModule, CombatTurnResultComponent],
     templateUrl: './combat-mode.component.html',
 })
 export class CombatModeComponent implements DoCheck, OnInit {
