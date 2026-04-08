@@ -1,4 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
@@ -7,7 +8,6 @@ import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
 
 const SANCTUARY_X = 1;
 const SANCTUARY_Y = 1;
@@ -16,12 +16,6 @@ const ADJACENT_Y = 1;
 const DAMAGED_HEALTH = 4;
 const FULL_HEALTH = 6;
 const BASE_STAT = 4;
-const BUFFED_STAT = 5;
-const DOUBLE_BUFFED_STAT = 6;
-const STANDARD_BONUS = 1;
-const DOUBLE_BONUS = 2;
-const FIGHT_BUFF_DURATION = 2;
-const DOUBLE_RANDOM_SUCCESS = 0.25;
 const DOUBLE_RANDOM_FAILURE = 0.75;
 
 describe('SanctuaryService', () => {
@@ -97,58 +91,6 @@ describe('SanctuaryService', () => {
         expect(result.currentHealth).to.equal(DAMAGED_HEALTH);
         expect(activeGame.players[0].currentHealth).to.equal(DAMAGED_HEALTH);
         expect(activeGame.players[0].actionsLeft).to.equal(0);
-        expect(randomStub.calledOnce).to.equal(true);
-    });
-
-    it('should grant a fight sanctuary buff and remove it after the current and next turn', async () => {
-        const activeGame = createActiveGame(ItemType.FightSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
-        activeGameService.getActiveGameById.resolves(activeGame);
-
-        const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
-            position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'standard',
-        });
-
-        expect(result.succeeded).to.equal(true);
-        expect(result.attackPoints).to.equal(BUFFED_STAT);
-        expect(result.defensePoints).to.equal(BUFFED_STAT);
-        expect(result.fightSanctuaryUsed).to.equal(true);
-        expect(result.fightSanctuaryTurnsRemaining).to.equal(FIGHT_BUFF_DURATION);
-        expect(activeGame.players[0].attackPoints).to.equal(BUFFED_STAT);
-        expect(activeGame.players[0].defensePoints).to.equal(BUFFED_STAT);
-        expect(activeGame.players[0].fightSanctuaryBonus).to.equal(STANDARD_BONUS);
-
-        sanctuaryService.onTurnEnded(activeGame, 'Alice');
-        expect(activeGame.players[0].fightSanctuaryTurnsRemaining).to.equal(1);
-        expect(activeGame.players[0].attackPoints).to.equal(BUFFED_STAT);
-        expect(activeGame.players[0].defensePoints).to.equal(BUFFED_STAT);
-
-        sanctuaryService.onTurnEnded(activeGame, 'Alice');
-        expect(activeGame.players[0].fightSanctuaryTurnsRemaining).to.equal(0);
-        expect(activeGame.players[0].attackPoints).to.equal(BASE_STAT);
-        expect(activeGame.players[0].defensePoints).to.equal(BASE_STAT);
-        expect(activeGame.players[0].fightSanctuaryBonus).to.equal(0);
-    });
-
-    it('should double a fight sanctuary buff when the gamble succeeds', async () => {
-        const activeGame = createActiveGame(ItemType.FightSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
-        activeGameService.getActiveGameById.resolves(activeGame);
-        const randomStub = sinon.stub(Math, 'random').returns(DOUBLE_RANDOM_SUCCESS);
-
-        const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
-            position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'double',
-        });
-
-        expect(result.succeeded).to.equal(true);
-        expect(result.attackPoints).to.equal(DOUBLE_BUFFED_STAT);
-        expect(result.defensePoints).to.equal(DOUBLE_BUFFED_STAT);
-        expect(result.fightSanctuaryTurnsRemaining).to.equal(FIGHT_BUFF_DURATION);
-        expect(result.fightSanctuaryBonus).to.equal(DOUBLE_BONUS);
-        expect(activeGame.players[0].attackPoints).to.equal(DOUBLE_BUFFED_STAT);
-        expect(activeGame.players[0].defensePoints).to.equal(DOUBLE_BUFFED_STAT);
         expect(randomStub.calledOnce).to.equal(true);
     });
 

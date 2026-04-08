@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, DoCheck, inject, OnInit } from '@angular/core';
+import { CombatTurnResultComponent } from '@app/components/game/combat-turn-result/combat-turn-result.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
-import { CombatTurnResultComponent } from '../combat-turn-result/combat-turn-result.component';
 
 const COMBAT_DURATION = 10;
 const HUNDRED_PERCENT = 100;

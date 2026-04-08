@@ -121,7 +121,7 @@ export class GameTurnService {
         });
 
         this.combatTurnEndedSubscription = this.socketService.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe({
-            next: (turnOutcome) => {
+            next: () => {
                 this.stopCountdown();
             },
         });

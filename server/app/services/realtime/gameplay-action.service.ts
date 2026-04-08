@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
