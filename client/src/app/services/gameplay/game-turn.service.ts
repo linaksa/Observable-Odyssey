@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -8,9 +8,9 @@ import {
     COUNTDOWN_MIN_REMAINING_MS,
     COUNTDOWN_TICK_INTERVAL_MS,
     MILLISECONDS_PER_SECOND,
-    TEMPS_COMBAT,
-    TEMPS_PREPA_TOUR,
-    TEMPS_TOUR,
+    COMBAT_TIME_MS,
+    TURN_PREPARATION_TIME_MS,
+    TURN_TIME_MS,
 } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -19,6 +19,11 @@ import { Subscription } from 'rxjs';
 
 @Injectable()
 export class GameTurnService {
+    // Services
+    private readonly socketService = inject(SocketService);
+    private readonly activeGameService = inject(ActiveGameService);
+    private readonly localPlayerService = inject(LocalPlayerService);
+
     // Socket subscriptions for turn events
     private turnPreparingSubscription?: Subscription;
     private turnStartedSubscription?: Subscription;
@@ -33,12 +38,6 @@ export class GameTurnService {
     private activeTurnPlayerName: string | null = null;
     private _turnTimeLeftSeconds: number | null = null;
     private _isTurnPreparing = false;
-
-    constructor(
-        private readonly socketService: SocketService,
-        private readonly activeGameService: ActiveGameService,
-        private readonly localPlayerService: LocalPlayerService,
-    ) {}
 
     get turnTimeLeftSeconds(): number | null {
         return this._turnTimeLeftSeconds;
@@ -88,7 +87,7 @@ export class GameTurnService {
                 this.activeTurnPlayerName = player;
                 this.syncActiveGameTurnState(player);
                 this._isTurnPreparing = true;
-                this.startCountdown(TEMPS_PREPA_TOUR);
+                this.startCountdown(TURN_PREPARATION_TIME_MS);
             },
         });
 
@@ -99,7 +98,7 @@ export class GameTurnService {
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this._isTurnPreparing = false;
 
-                const countdownDuration = timeLeft ? timeLeft : TEMPS_TOUR;
+                const countdownDuration = timeLeft ? timeLeft : TURN_TIME_MS;
                 this.startCountdown(countdownDuration);
             },
         });
@@ -115,7 +114,7 @@ export class GameTurnService {
                 // Only start the combat turn timer if the local player is involved in the attack
                 this.stopCountdown();
                 if (currentAttack.attacker === localPlayer.name || currentAttack.defender === localPlayer.name) {
-                    this.startCountdown(TEMPS_COMBAT);
+                    this.startCountdown(COMBAT_TIME_MS);
                 }
             },
         });

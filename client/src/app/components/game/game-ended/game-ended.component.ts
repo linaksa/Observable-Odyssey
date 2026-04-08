@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { TEMPS_ECRAN_FIN_PARTIE } from '@common/constants';
+import { END_GAME_SCREEN_DURATION_MS } from '@common/constants';
 
 @Component({
     selector: 'app-game-ended',
@@ -16,7 +16,7 @@ export class GameEndedComponent {
     constructor() {
         setTimeout(() => {
             this.router.navigate([`/end/${this.activeGameService.activeGame._id}`]);
-        }, TEMPS_ECRAN_FIN_PARTIE);
+        }, END_GAME_SCREEN_DURATION_MS);
     }
 
     get isFinished() {

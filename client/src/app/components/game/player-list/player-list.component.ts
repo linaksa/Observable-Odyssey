@@ -12,7 +12,7 @@ import { GameType } from '@common/game';
     templateUrl: './player-list.component.html',
 })
 export class PlayerListComponent {
-    protected readonly activeGameService = inject(ActiveGameService);
+    private readonly activeGameService = inject(ActiveGameService);
 
     get orderedPlayers(): ICharacter[] {
         const { players, turnOrder } = this.activeGameService.activeGame;

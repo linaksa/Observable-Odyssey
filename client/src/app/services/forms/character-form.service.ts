@@ -7,6 +7,8 @@ import {
     BonusType,
     DiceSelectionType,
     PLAYER_NAME_PATTERN,
+    RANDOM_NUMBER_SCALE,
+    RANDOM_PLAYER_NAME_PREFIX,
     RandomCharacterData,
 } from '@app/constants/character-form';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
@@ -25,9 +27,6 @@ import {
 } from '@common/constants';
 import { Observable } from 'rxjs/internal/Observable';
 import { environment } from 'src/environments/environment';
-
-const RANDOM_NUMBER_SCALE = 1000;
-const RANDOM_PLAYER_NAME_PREFIX = 'Player';
 
 @Injectable({
     providedIn: 'root',
@@ -94,20 +93,12 @@ export class CharacterFormService {
 
     get attackDiceType(): DiceType {
         const diceType = this.characterForm.get('diceType')?.value;
-        if (diceType === DiceSelectionType.D4AttackAndD6Defense) {
-            return DiceType.FourSided;
-        } else {
-            return DiceType.SixSided;
-        }
+        return diceType === DiceSelectionType.D4AttackAndD6Defense ? DiceType.FourSided : DiceType.SixSided;
     }
 
     get defenseDiceType(): DiceType {
         const diceType = this.characterForm.get('diceType')?.value;
-        if (diceType === DiceSelectionType.D4AttackAndD6Defense) {
-            return DiceType.SixSided;
-        } else {
-            return DiceType.FourSided;
-        }
+        return diceType === DiceSelectionType.D4AttackAndD6Defense ? DiceType.SixSided : DiceType.FourSided;
     }
 
     createActiveGameWithCharacter(gameId: string, characterData: CharacterFormData): Observable<IActiveGameWithPlayer> {

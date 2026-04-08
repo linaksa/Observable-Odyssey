@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { getImageForAvatar } from '@app/utils/avatar-path';
 import { Avatar } from '@common/constants';
-import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 @Component({
     selector: 'app-avatar-grid',
@@ -12,6 +12,8 @@ import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 export class AvatarGridComponent {
     @Input() form: FormGroup;
     @Input() unavailableAvatars: Avatar[] = [];
+
+    readonly getImageForAvatar = getImageForAvatar;
 
     availableAvatars: Avatar[] = [
         Avatar.Avatar1,
@@ -36,9 +38,5 @@ export class AvatarGridComponent {
 
     get selectedAvatar(): Avatar | null {
         return this.form.controls.avatar.value;
-    }
-
-    getImageForAvatar(avatar: Avatar): string {
-        return buildAvatarAssetPath(avatar, true);
     }
 }

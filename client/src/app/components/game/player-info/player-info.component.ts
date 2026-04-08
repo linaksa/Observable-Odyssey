@@ -1,14 +1,9 @@
 import { Component, inject } from '@angular/core';
+import { DICE_ICON_MAPPING } from '@app/constants/player-info';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { ICharacter } from '@common/character';
-import { DiceType } from '@common/constants';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
-
-const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
-    [DiceType.FourSided]: './assets/form-page/4_sided_dice.svg',
-    [DiceType.SixSided]: './assets/form-page/6_sided_dice.svg',
-};
+import { ICharacter } from '@common/character';
 
 @Component({
     selector: 'app-player-info',
@@ -16,8 +11,8 @@ const DICE_ICON_MAPPING: { [key in DiceType]: string } = {
     templateUrl: './player-info.component.html',
 })
 export class PlayerInfoComponent {
-    protected readonly activeGameService = inject(ActiveGameService);
-    localPlayerService = inject(LocalPlayerService);
+    private readonly activeGameService = inject(ActiveGameService);
+    private localPlayerService = inject(LocalPlayerService);
 
     get player(): ICharacter | undefined {
         const localPlayer = this.localPlayerService.getLocalPlayer();

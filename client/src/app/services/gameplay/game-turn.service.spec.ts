@@ -19,7 +19,7 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { Avatar, DiceType, MILLISECONDS_PER_SECOND, TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
+import { Avatar, DiceType, MILLISECONDS_PER_SECOND, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -114,7 +114,7 @@ describe('GameTurnService', () => {
 
         expect(service.currentPlayerName).toBe('Bob');
         expect(service.isTurnPreparing).toBeTrue();
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TEMPS_PREPA_TOUR / MILLISECONDS_PER_SECOND));
+        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
 
         getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
             player: 'Alice',
@@ -124,7 +124,7 @@ describe('GameTurnService', () => {
 
         expect(service.currentPlayerName).toBe('Alice');
         expect(service.isTurnPreparing).toBeFalse();
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TEMPS_TOUR / MILLISECONDS_PER_SECOND));
+        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_TIME_MS / MILLISECONDS_PER_SECOND));
     });
 
     it('should ignore turn sync when active game has no turn order', () => {
@@ -218,9 +218,9 @@ describe('GameTurnService', () => {
         service.initializeTurnListeners();
 
         getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Alice' });
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TEMPS_PREPA_TOUR / MILLISECONDS_PER_SECOND));
+        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
 
-        tick(TEMPS_PREPA_TOUR + MILLISECONDS_PER_SECOND);
+        tick(TURN_PREPARATION_TIME_MS + MILLISECONDS_PER_SECOND);
 
         expect(service.turnTimeLeftSeconds).toBe(0);
     }));
@@ -294,8 +294,8 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
 
         nCombats: 0,
         nVictories: 0,

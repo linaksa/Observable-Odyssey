@@ -18,10 +18,11 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { Avatar, DiceType, PRIX_PORTE_GAZON } from '@common/constants';
+import { Avatar, DiceType, GRASS_OR_DOOR_MOVEMENT_COST } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
 import { GameComponent } from './game.component';
@@ -117,7 +118,8 @@ describe('GameComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.totalRows).toBe(BOARD_SIDE_SIZE);
+        const gameCells = (component as unknown as { gameCells: CellType[][] }).gameCells;
+        expect(gameCells.length).toBe(BOARD_SIDE_SIZE);
         expect(component.totalColumns).toBe(BOARD_SIDE_SIZE);
         expect(component.graph.length).toBe(BOARD_NODE_COUNT);
         expect(activeGameServiceStub.updateMovementRange).toHaveBeenCalledWith(BOARD_SIDE_SIZE, component.graph);
@@ -139,7 +141,7 @@ describe('GameComponent', () => {
         activeGameServiceStub.hasChangedLocation.set(false);
         fixture.detectChanges();
 
-        expect(component.graph[0].some(([index, weight]) => index === 1 && weight === PRIX_PORTE_GAZON)).toBeTrue();
+        expect(component.graph[0].some(([index, weight]) => index === 1 && weight === GRASS_OR_DOOR_MOVEMENT_COST)).toBeTrue();
     });
 
     it('should block sanctuary tiles in the movement graph', () => {
@@ -163,7 +165,7 @@ describe('GameComponent', () => {
             [CellType.Empty, CellType.Empty],
             [CellType.Empty, CellType.Empty],
         ];
-        activeGameServiceStub.activeGame.players[1].positionGrille = { x: 1, y: 0 };
+        activeGameServiceStub.activeGame.players[1].currentPosition = { x: 1, y: 0 };
 
         component.ngOnInit();
 
@@ -236,7 +238,7 @@ describe('GameComponent', () => {
     });
 
     it('should toggle a door on right click during the local turn', () => {
-        popupStateService.isTileInfoVisible = true;
+        popupStateService.openTileInfo(CellType.Empty, null, null);
         activeGameServiceStub.isDebugMode.and.returnValue(false);
         boardSharedServiceSpy.getObjectAt.and.returnValue(null);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -244,7 +246,7 @@ describe('GameComponent', () => {
         component.onCellRightClick(createContextMenuEvent(), 1, 1, CellType.ClosedDoor);
 
         expect(activeGameServiceStub.toggleDoor).toHaveBeenCalledWith(1, 1);
-        expect(popupStateService.isTileInfoVisible).toBeFalse();
+        expect(popupStateService.tileInfoPopupData.visible).toBeFalse();
         expect(activeGameServiceStub.debugTeleport).not.toHaveBeenCalled();
     });
 
@@ -274,7 +276,7 @@ describe('GameComponent', () => {
     it('should open a sanctuary popup from attack mode when the player is adjacent', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
-        currentPlayer.positionGrille = { x: 0, y: 1 };
+        currentPlayer.currentPosition = { x: 0, y: 1 };
         activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -291,7 +293,7 @@ describe('GameComponent', () => {
     it('should keep the sanctuary popup open after a grid click', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
-        currentPlayer.positionGrille = { x: 0, y: 1 };
+        currentPlayer.currentPosition = { x: 0, y: 1 };
         activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -313,7 +315,7 @@ describe('GameComponent', () => {
     it('should close the sanctuary popup when the turn changes', () => {
         const sanctuary = createSanctuaryItem(1, 1);
         const currentPlayer = createCharacter('Alice');
-        currentPlayer.positionGrille = { x: 0, y: 1 };
+        currentPlayer.currentPosition = { x: 0, y: 1 };
         activeGameServiceStub.actionMode.set(true);
         activeGameServiceStub.getCurrentPlayer.and.returnValue(currentPlayer);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([]);
@@ -351,7 +353,7 @@ describe('GameComponent', () => {
         component.onCellRightClick(createContextMenuEvent(), 1, 1, CellType.OpenDoor);
 
         expect(activeGameServiceStub.toggleDoor).not.toHaveBeenCalled();
-        expect(popupStateService.isTileInfoVisible).toBeTrue();
+        expect(popupStateService.tileInfoPopupData.visible).toBeTrue();
 
         boardSharedServiceSpy.getObjectAt.and.returnValue(null);
         activeGameServiceStub.getPlayersAtPosition.and.returnValue([createCharacter('Bob')]);
@@ -362,45 +364,53 @@ describe('GameComponent', () => {
     });
 
     it('should expose tile info popup data from current component state', () => {
-        popupStateService.isTileInfoVisible = true;
-        popupStateService.tileInfoTitle = 'Tile';
-        popupStateService.tileInfoDescription = 'Desc';
-        popupStateService.tileInfoMovementCost = '1';
-        popupStateService.tileInfoItemTitle = 'Item';
-        popupStateService.tileInfoItemDescription = 'Item desc';
-        popupStateService.tileInfoPlayerName = 'Alice';
-        popupStateService.tileInfoPlayerAvatarUrl = '/avatar.png';
+        const player = createCharacter('Alice');
+        popupStateService.openTileInfo(
+            CellType.Empty,
+            {
+                itemType: ItemType.Flag,
+                x: 0,
+                y: 0,
+                size: 1,
+            },
+            player,
+        );
 
         const popupData = (component as unknown as { tileInfoPopupData: unknown }).tileInfoPopupData as Record<string, unknown>;
 
         expect(popupData).toEqual({
             visible: true,
-            title: 'Tile',
-            description: 'Desc',
-            movementCost: '1',
-            itemTitle: 'Item',
-            itemDescription: 'Item desc',
+            title: 'Tuile de base',
+            description: 'Terrain libre et traversable.',
+            movementCost: `${GRASS_OR_DOOR_MOVEMENT_COST} point de mouvement.`,
+            itemTitle: 'Drapeau',
+            itemDescription: 'Objectif principal du mode CTF.',
             playerName: 'Alice',
-            playerAvatarUrl: '/avatar.png',
+            playerAvatarUrl: buildAvatarAssetPath(player.avatar, true),
         });
     });
 
     it('should close tile info on document click', () => {
-        popupStateService.isTileInfoVisible = true;
-        popupStateService.tileInfoItemTitle = 'Item';
-        popupStateService.tileInfoItemDescription = 'Desc';
-        popupStateService.tileInfoPlayerName = 'Alice';
-        popupStateService.tileInfoPlayerAvatarUrl = '/avatar.png';
+        popupStateService.openTileInfo(
+            CellType.Empty,
+            {
+                itemType: ItemType.Flag,
+                x: 0,
+                y: 0,
+                size: 1,
+            },
+            createCharacter('Alice'),
+        );
         popupStateService.isSanctuaryPopupVisible = true;
         popupStateService.sanctuaryPopupTitle = 'Sanctuaire';
 
         component.onDocumentClick(createDocumentClickEvent());
 
-        expect(popupStateService.isTileInfoVisible).toBeFalse();
-        expect(popupStateService.tileInfoItemTitle).toBeNull();
-        expect(popupStateService.tileInfoItemDescription).toBeNull();
-        expect(popupStateService.tileInfoPlayerName).toBeNull();
-        expect(popupStateService.tileInfoPlayerAvatarUrl).toBeNull();
+        expect(popupStateService.tileInfoPopupData.visible).toBeFalse();
+        expect(popupStateService.tileInfoPopupData.itemTitle).toBeNull();
+        expect(popupStateService.tileInfoPopupData.itemDescription).toBeNull();
+        expect(popupStateService.tileInfoPopupData.playerName).toBeNull();
+        expect(popupStateService.tileInfoPopupData.playerAvatarUrl).toBeNull();
         expect(popupStateService.isSanctuaryPopupVisible).toBeFalse();
         expect(popupStateService.sanctuaryPopupTitle).toBe('');
         expect(activeGameServiceStub.interactSanctuary).not.toHaveBeenCalled();
@@ -525,8 +535,8 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
 
         nCombats: 0,
         nVictories: 0,

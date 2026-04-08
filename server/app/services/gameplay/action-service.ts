@@ -89,7 +89,7 @@ export class ActionService {
         const activePlayerName = currentActiveGame.turnOrder[currentActiveGame.currentPlayerIndex];
         if (activePlayerName !== currentPlayer.name) return false;
         if (currentPlayer.actionsLeft === 0) return false;
-        if (!this.positionValidatorService.isAdjacent(currentPlayer.positionGrille, target.positionGrille)) return false;
+        if (!this.positionValidatorService.isAdjacent(currentPlayer.currentPosition, target.currentPosition)) return false;
         return true;
     }
     // calls canUseAction for each opponent to check if the attacker can use an action at least one of them

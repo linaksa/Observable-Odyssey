@@ -15,6 +15,7 @@ export class StartGameService {
         }
         await this.assignRandomStartPositions(activeGame);
         this.initializeTurnOrder(activeGame);
+        activeGame.startedAt = new Date();
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
     // Logic to assign teams for CTF mode
@@ -35,8 +36,8 @@ export class StartGameService {
         for (const player of activeGame.players) {
             const randomIndex = Math.floor(Math.random() * spawnTiles.length);
             const tile = spawnTiles.splice(randomIndex, 1)[0];
-            player.positionGrille = tile;
-            player.positionDepart = tile;
+            player.currentPosition = tile;
+            player.startingPosition = tile;
 
             player.visitedCells.push(`${tile.x},${tile.y}`);
         }

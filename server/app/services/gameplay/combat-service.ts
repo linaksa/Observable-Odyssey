@@ -1,6 +1,7 @@
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { FlagCarrierDefeat } from '@app/services/interfaces/flag-carrier-defeat';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
@@ -13,7 +14,7 @@ import {
     ICE_CELL_MALUS,
     POSTURE_BONUS,
     SIX_SIDED_DICE_MAX,
-    TEMPS_COMBAT,
+    COMBAT_TIME_MS,
 } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
@@ -99,7 +100,7 @@ export class CombatService {
                 }
 
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
-                this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
+                this.turnService.startCombatTimer(COMBAT_TIME_MS, currentActiveGame, () => this.applyCombatTurn(activeGameId));
                 return resolve(false);
             }, COMBAT_TURN_FEEDBACK_DURATION_MS);
         });
@@ -132,7 +133,7 @@ export class CombatService {
         losers: ICharacter[],
         cancelled: boolean,
     ): Promise<CombatOutcome> {
-        const carrierDefeatPosition = this.getFlagCarrierDefeatPosition(activeGame);
+        const carrierDefeat = this.getFlagCarrierDefeat(activeGame);
 
         const attacker = activeGame.players.find((p) => p.name === activeGame.currentAttack.attacker);
         attacker.actionsLeft--;
@@ -153,7 +154,7 @@ export class CombatService {
             return player;
         });
 
-        this.dropFlagAtPositionIfCarrierDefeated(activeGame, carrierDefeatPosition);
+        this.dropFlagAtPositionIfCarrierDefeated(activeGame, carrierDefeat);
 
         const turnRemainingTime = activeGame.currentAttack.suspendedTurnTimer;
 
@@ -172,7 +173,7 @@ export class CombatService {
         return combatResult;
     }
 
-    private getFlagCarrierDefeatPosition(activeGame: IActiveGame): Position | null {
+    private getFlagCarrierDefeat(activeGame: IActiveGame): FlagCarrierDefeat | null {
         if (activeGame.game.gameMode !== 'ctf' || !activeGame.hasFlagId) {
             return null;
         }
@@ -181,12 +182,16 @@ export class CombatService {
         if (!carrier || carrier.currentHealth > 0) {
             return null;
         }
+        const flagCarrierDefeat = {
+            carrierStart: carrier.startingPosition,
+            position: carrier.currentPosition,
+        };
 
-        return carrier.positionGrille;
+        return flagCarrierDefeat;
     }
 
-    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, position: Position | null): void {
-        if (!position) {
+    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, carrierDefeat: FlagCarrierDefeat | null): void {
+        if (!carrierDefeat) {
             return;
         }
 
@@ -195,20 +200,26 @@ export class CombatService {
             return;
         }
 
+        const dropPosition = this.getFlagDropPosition(activeGame, carrierDefeat.carrierStart, carrierDefeat.position);
+
         activeGame.hasFlagId = '';
         flag.isCarried = false;
-        flag.x = position.x;
-        flag.y = position.y;
+        flag.x = dropPosition.x;
+        flag.y = dropPosition.y;
+    }
+
+    private getFlagDropPosition(activeGame: IActiveGame, carrierStart: Position, desiredPosition: Position): Position {
+        return this.positionValidatorService.resolveFlagDropPosition(desiredPosition, carrierStart, activeGame);
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {
-        const positionGrille = player.positionGrille;
-        const positionDepart = player.positionDepart;
+        const currentPosition = player.currentPosition;
+        const startingPosition = player.startingPosition;
 
-        if (positionGrille.x === positionDepart.x && positionGrille.y === positionDepart.y) {
+        if (currentPosition.x === startingPosition.x && currentPosition.y === startingPosition.y) {
             return;
         }
-        player.positionGrille = this.findNearestAvailableSpawn(positionDepart, activeGame);
+        player.currentPosition = this.findNearestAvailableSpawn(startingPosition, activeGame);
     }
 
     // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)
@@ -243,7 +254,7 @@ export class CombatService {
     }
 
     private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {
-        const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
+        const cell = activeGame.game.board.cells[character.currentPosition.x][character.currentPosition.y];
 
         const baseAttackPoints = character.attackPoints;
         let attackDiceBonus: number;

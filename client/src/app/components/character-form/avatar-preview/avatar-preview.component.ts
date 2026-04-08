@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { getImageForAvatar } from '@app/utils/avatar-path';
 import { Avatar } from '@common/constants';
-import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 @Component({
     selector: 'app-avatar-preview',
@@ -11,7 +11,5 @@ import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 export class AvatarPreviewComponent {
     @Input() avatar: Avatar | null = null;
 
-    getImageForAvatar(avatar: Avatar): string {
-        return buildAvatarAssetPath(avatar);
-    }
+    readonly getImageForAvatar = getImageForAvatar;
 }

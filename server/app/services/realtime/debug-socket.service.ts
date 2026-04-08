@@ -65,8 +65,8 @@ export class DebugSocketService {
                 if (this.cellHasItem(activeGame.game.board.items, targetRow, targetCol)) return;
                 if (this.cellHasPlayer(activeGame.players, playerName, targetRow, targetCol)) return;
 
-                player.positionGrille.x = targetCol;
-                player.positionGrille.y = targetRow;
+                player.currentPosition.x = targetCol;
+                player.currentPosition.y = targetRow;
                 await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
                 const movedResult = { playerId: playerName, newPosition: target, movementLeft: player.movementLeft };
@@ -97,11 +97,11 @@ export class DebugSocketService {
     }
 
     private cellHasPlayer(
-        players: { name: string; hasAbandoned: boolean; positionGrille: Position }[],
+        players: { name: string; hasAbandoned: boolean; currentPosition: Position }[],
         excludeName: string,
         row: number,
         col: number,
     ): boolean {
-        return players.some((p) => !p.hasAbandoned && p.name !== excludeName && p.positionGrille.y === row && p.positionGrille.x === col);
+        return players.some((p) => !p.hasAbandoned && p.name !== excludeName && p.currentPosition.y === row && p.currentPosition.x === col);
     }
 }

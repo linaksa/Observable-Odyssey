@@ -14,6 +14,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Date,
         default: Date.now,
     },
+    startedAt: {
+        type: Date,
+        default: null,
+    },
     endedAt: {
         type: Date,
         default: null,

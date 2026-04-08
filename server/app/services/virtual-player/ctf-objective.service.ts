@@ -19,14 +19,14 @@ export class CtfObjectiveService {
         }
 
         if (game.hasFlagId === character.name) {
-            const reachedSpawn = await this.virtualPlayerUtilities.moveToPosition(character, game, character.positionDepart);
+            const reachedSpawn = await this.virtualPlayerUtilities.moveToPosition(character, game, character.startingPosition);
             if (!reachedSpawn) {
                 const enemyOnSpawn = game.players.find(
                     (player) =>
                         !player.hasAbandoned &&
                         player.team !== character.team &&
-                        player.positionGrille.x === character.positionDepart.x &&
-                        player.positionGrille.y === character.positionDepart.y,
+                        player.currentPosition.x === character.startingPosition.x &&
+                        player.currentPosition.y === character.startingPosition.y,
                 );
                 await this.aggressivePlayerService.play(character, game, enemyOnSpawn?.name);
             }

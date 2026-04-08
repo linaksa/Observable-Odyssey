@@ -33,7 +33,6 @@ export class GameComponent implements OnInit {
 
     graph: [number, number][][] = [];
 
-    totalRows = 0;
     totalColumns = 0;
 
     protected get isLocalPlayerTurn(): boolean {
@@ -98,7 +97,6 @@ export class GameComponent implements OnInit {
     ngOnInit(): void {
         this.popupStateService.closeAllPopups();
         const board = this.activeGameService.activeGame.game.board.cells;
-        this.totalRows = board.length;
         this.totalColumns = board[0].length;
         this.refreshGraphFromBoard();
         this.activeGameService.updateMovementRange(this.totalColumns, this.graph);

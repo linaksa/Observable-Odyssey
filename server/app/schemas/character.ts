@@ -49,11 +49,11 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
-        positionGrille: {
+        currentPosition: {
             type: positionSchema,
             required: true,
         },
-        positionDepart: {
+        startingPosition: {
             type: positionSchema,
             default: { x: 0, y: 0 },
         },

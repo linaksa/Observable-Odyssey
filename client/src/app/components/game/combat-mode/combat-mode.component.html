@@ -183,18 +183,31 @@
                 [style.width.%]="timerPercent"
             ></div>
         </div>
-    </div>
 
-    <div>
-        @if (activeGameService.roundOutcome; as outcome) {
-            <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
-                <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
+        <div>
+            @if (activeGameService.roundOutcome; as outcome) {
+                <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
+                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
 
-                <app-combat-turn-result
-                    [turnStats]="outcome.attackerStats"
-                    [receivedDamage]="outcome.attackerReceivedDamage"
-                ></app-combat-turn-result>
-            </div>
-        }
+                    <app-combat-turn-result
+                        [turnStats]="outcome.attackerStats"
+                        [receivedDamage]="outcome.attackerReceivedDamage"
+                    ></app-combat-turn-result>
+                </div>
+            }
+        </div>
+
+        <div>
+            @if (activeGameService.roundOutcome; as outcome) {
+                <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
+                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
+
+                    <app-combat-turn-result
+                        [turnStats]="outcome.attackerStats"
+                        [receivedDamage]="outcome.attackerReceivedDamage"
+                    ></app-combat-turn-result>
+                </div>
+            }
+        </div>
     </div>
 </div>

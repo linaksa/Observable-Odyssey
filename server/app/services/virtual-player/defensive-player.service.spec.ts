@@ -54,7 +54,7 @@ describe('DefensivePlayerService', () => {
 
         await service.play(defender, game);
 
-        expect(virtualPlayerUtilities.moveToPositionOrNearest.calledOnceWithExactly(defender, game, enemyCarrier.positionDepart)).to.equal(true);
+        expect(virtualPlayerUtilities.moveToPositionOrNearest.calledOnceWithExactly(defender, game, enemyCarrier.startingPosition)).to.equal(true);
         expect(aggressivePlayerService.attackTargetIfPossible.calledOnceWithExactly(defender, game, enemyCarrier.name)).to.equal(true);
     });
 
@@ -67,7 +67,7 @@ describe('DefensivePlayerService', () => {
 
         await service.play(defender, game);
 
-        expect(virtualPlayerUtilities.moveToPositionOrNearest.calledOnceWithExactly(defender, game, enemyCarrier.positionDepart)).to.equal(true);
+        expect(virtualPlayerUtilities.moveToPositionOrNearest.calledOnceWithExactly(defender, game, enemyCarrier.startingPosition)).to.equal(true);
         expect(aggressivePlayerService.attackTargetIfPossible.calledOnceWithExactly(defender, game, enemyCarrier.name)).to.equal(true);
     });
 });
@@ -118,8 +118,8 @@ function createCharacter(name: string, team: Team, virtualPlayerProfile?: Virtua
         movementLeft: 1,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
         team,
         virtualPlayerProfile,
         nCombats: 0,

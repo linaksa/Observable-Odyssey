@@ -125,7 +125,7 @@ export class GameGridComponent {
                 continue;
             }
 
-            const cellKey = this.getCellKey(player.positionGrille.y, player.positionGrille.x);
+            const cellKey = this.getCellKey(player.currentPosition.y, player.currentPosition.x);
             const playersAtCell = playersByCell.get(cellKey) ?? [];
             playersAtCell.push(player);
             playersByCell.set(cellKey, playersAtCell);

@@ -55,7 +55,7 @@ export class DefensivePlayerService implements VirtualPlayer {
     }
 
     private async tryBlockEnemyFlagCarrier(character: ICharacter, game: IActiveGame, enemyCarrier: ICharacter): Promise<void> {
-        await this.virtualPlayerUtilities.moveToPositionOrNearest(character, game, enemyCarrier.positionDepart);
+        await this.virtualPlayerUtilities.moveToPositionOrNearest(character, game, enemyCarrier.startingPosition);
         await this.aggressivePlayerService.attackTargetIfPossible(character, game, enemyCarrier.name);
     }
 }
