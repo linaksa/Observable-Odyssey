@@ -372,6 +372,13 @@ export class GameplayActionService {
             return;
         }
 
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
+        if (gameEnded) {
+            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
+            console.log(`Game ended. Winner: ${attackerName}`);
+            //await this.activeGameService.deleteGameById(gameId);
+        }
+
         const attackerIsVirtual = activeGame.players.find((player) => player.name === attackerName)?.virtualPlayerProfile;
         if (attackerIsVirtual) {
             await this.turnService.endTurn(gameId);
@@ -379,12 +386,6 @@ export class GameplayActionService {
         }
 
         await this.checkEndTurnIfNoMovesLeft(gameId, attackerName);
-
-        const gameEnded = await this.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-            //await this.activeGameService.deleteGameById(gameId);
-        }
     }
 
     private toSocketError(error: unknown, fallbackCode: ErrorCode): { errorCodes: ErrorCode[] } {
