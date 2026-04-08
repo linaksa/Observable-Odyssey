@@ -84,6 +84,46 @@ describe('CtfObjectiveService', () => {
         expect(moveToPositionStub.calledOnceWithExactly(character, game, { x: 2, y: 2 })).to.equal(true);
     });
 
+    it('should continue toward spawn after picking the free flag with movement left', async () => {
+        const character = createCharacter('Bot');
+        character.movementLeft = 2;
+        const game = createActiveGame(GameType.Ctf);
+        game.hasFlagId = '';
+        game.game.board.items = [{ itemType: ItemType.Flag, x: 2, y: 2, size: 1, isCarried: false }];
+
+        moveToPositionStub.onFirstCall().callsFake(async () => {
+            game.hasFlagId = character.name;
+            character.movementLeft = 1;
+            return true;
+        });
+        moveToPositionStub.onSecondCall().resolves(true);
+
+        const handled = await ctfObjectiveService.handleTurnObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(moveToPositionStub.firstCall.calledWithExactly(character, game, { x: 2, y: 2 })).to.equal(true);
+        expect(moveToPositionStub.secondCall.calledWithExactly(character, game, character.startingPosition)).to.equal(true);
+    });
+
+    it('should not continue toward spawn after picking the free flag without movement left', async () => {
+        const character = createCharacter('Bot');
+        character.movementLeft = 1;
+        const game = createActiveGame(GameType.Ctf);
+        game.hasFlagId = '';
+        game.game.board.items = [{ itemType: ItemType.Flag, x: 2, y: 2, size: 1, isCarried: false }];
+
+        moveToPositionStub.callsFake(async () => {
+            game.hasFlagId = character.name;
+            character.movementLeft = 0;
+            return true;
+        });
+
+        const handled = await ctfObjectiveService.handleTurnObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(moveToPositionStub.calledOnceWithExactly(character, game, { x: 2, y: 2 })).to.equal(true);
+    });
+
     it('should ignore the flag objective when another player carries it', async () => {
         const character = createCharacter('Bot');
         const game = createActiveGame(GameType.Ctf);

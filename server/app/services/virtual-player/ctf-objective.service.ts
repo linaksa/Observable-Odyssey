@@ -40,6 +40,12 @@ export class CtfObjectiveService {
         }
 
         await this.virtualPlayerUtilities.moveToPosition(character, game, { x: flag.x, y: flag.y });
+
+        const pickedFlagThisTurn = game.hasFlagId === character.name;
+        if (pickedFlagThisTurn && character.movementLeft > 0) {
+            await this.virtualPlayerUtilities.moveToPosition(character, game, character.startingPosition);
+        }
+
         return true;
     }
 }
