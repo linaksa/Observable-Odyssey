@@ -7,6 +7,7 @@ export interface IActiveGame {
     _id: string;
     game: IGame;
     createdAt?: Date;
+    startedAt?: Date | null;
     endedAt?: Date | null;
     players: ICharacter[];
     currentPlayerIndex: number;

@@ -48,6 +48,7 @@ export class ActiveGameService {
         const newActiveGame = {
             game: gameChosen,
             createdAt: new Date(),
+            startedAt: null as Date | null,
             endedAt: null as Date | null,
             players: [playerCharacter],
             turnOrder: [] as string[],
