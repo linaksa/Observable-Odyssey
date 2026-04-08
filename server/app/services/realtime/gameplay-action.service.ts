@@ -152,42 +152,6 @@ export class GameplayActionService {
         await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
-    async handleAttack(
-        data: IActionData,
-        socket: Socket | null,
-        namespace: Namespace,
-        emitGameLog: (gameId: string, message: string) => void,
-    ): Promise<void> {
-        const { gameId, currentPlayerName, targetName } = data;
-        const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) {
-            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActiveGameNotFound] });
-            return;
-        }
-
-        const allowed = await this.actionService.canUseAction(gameId, currentPlayerName, targetName);
-        if (!allowed) {
-            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
-            return;
-        }
-
-        const result = await this.activeGameService.startCombat(gameId, currentPlayerName, targetName);
-        this.turnService.suspendTurn(gameId);
-
-        emitGameLog(gameId, `Debut du combat entre ${currentPlayerName} et ${targetName}.`);
-
-        this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
-            const combatResolved = await this.actionService.applyCombatTurn(gameId);
-            if (combatResolved) {
-                await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
-            }
-        });
-
-        namespace.to(gameId).emit(SocketEvent.CombatStarted, result);
-        namespace.to(gameId).emit(SocketEvent.CombatTurnStart, result);
-        await this.autoChooseVirtualPostures(gameId, namespace);
-    }
-
     async handleAction(data: IActionData, socket: Socket, namespace: Namespace): Promise<void> {
         const { gameId, currentPlayerName, targetName } = data;
         const activeGame = await this.activeGameService.getActiveGameById(gameId);

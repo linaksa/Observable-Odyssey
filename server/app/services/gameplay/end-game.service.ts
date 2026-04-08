@@ -2,6 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
+import { Position } from '@common/character';
 import { MIN_PLAYER_COUNT, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
@@ -110,7 +111,7 @@ export class EndGameService {
         const player = activeGame?.players.find((p) => p.name === playerName);
         if (!player) return;
 
-        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.positionGrille);
+        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.currentPosition);
 
         player.hasAbandoned = true;
         await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
@@ -143,7 +144,7 @@ export class EndGameService {
             return;
         }
 
-        const dropPosition = this.positionValidatorService.resolveFlagDropPosition(position, carrier.positionDepart, activeGame);
+        const dropPosition = this.positionValidatorService.resolveFlagDropPosition(position, carrier.startingPosition, activeGame);
 
         activeGame.hasFlagId = '';
         flag.isCarried = false;

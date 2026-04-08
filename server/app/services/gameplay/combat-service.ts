@@ -183,8 +183,8 @@ export class CombatService {
             return null;
         }
         const flagCarrierDefeat = {
-            carrierStart: carrier.positionDepart,
-            position: carrier.positionGrille,
+            carrierStart: carrier.startingPosition,
+            position: carrier.currentPosition,
         };
 
         return flagCarrierDefeat;

@@ -228,7 +228,7 @@ export class VirtualPlayerUtilitiesService {
             let result;
             try {
                 result = await this.movementService.movePlayer(from.name, activeGame._id, newPosition);
-                from.positionGrille = newPosition;
+                from.currentPosition = newPosition;
             } catch {
                 return false;
             }
