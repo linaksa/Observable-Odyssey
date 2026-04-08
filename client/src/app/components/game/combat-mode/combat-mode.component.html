@@ -11,6 +11,7 @@
             </div>
         }
     </div>
+
     <div class="w-full max-w-[480px] mx-4 bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
         <div class="flex items-center justify-between bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3">
             <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
@@ -183,31 +184,18 @@
                 [style.width.%]="timerPercent"
             ></div>
         </div>
+    </div>
 
-        <div>
-            @if (activeGameService.roundOutcome; as outcome) {
-                <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
-                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
+    <div>
+        @if (activeGameService.roundOutcome; as outcome) {
+            <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
+                <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
 
-                    <app-combat-turn-result
-                        [turnStats]="outcome.attackerStats"
-                        [receivedDamage]="outcome.attackerReceivedDamage"
-                    ></app-combat-turn-result>
-                </div>
-            }
-        </div>
-
-        <div>
-            @if (activeGameService.roundOutcome; as outcome) {
-                <div class="bg-[#1a1000] border-[1.5px] border-[#e8a832] rounded-lg p-3">
-                    <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-center">Attaquant</div>
-
-                    <app-combat-turn-result
-                        [turnStats]="outcome.attackerStats"
-                        [receivedDamage]="outcome.attackerReceivedDamage"
-                    ></app-combat-turn-result>
-                </div>
-            }
-        </div>
+                <app-combat-turn-result
+                    [turnStats]="outcome.attackerStats"
+                    [receivedDamage]="outcome.attackerReceivedDamage"
+                ></app-combat-turn-result>
+            </div>
+        }
     </div>
 </div>
