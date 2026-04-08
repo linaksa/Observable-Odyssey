@@ -1,6 +1,7 @@
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { FlagCarrierDefeat } from '@app/services/interfaces/flag-carrier-defeat';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
@@ -172,7 +173,7 @@ export class CombatService {
         return combatResult;
     }
 
-    private getFlagCarrierDefeat(activeGame: IActiveGame): { carrierStart: Position; position: Position } | null {
+    private getFlagCarrierDefeat(activeGame: IActiveGame): FlagCarrierDefeat | null {
         if (activeGame.game.gameMode !== 'ctf' || !activeGame.hasFlagId) {
             return null;
         }
@@ -181,11 +182,15 @@ export class CombatService {
         if (!carrier || carrier.currentHealth > 0) {
             return null;
         }
+        const flagCarrierDefeat = {
+            carrierStart: carrier.positionDepart,
+            position: carrier.positionGrille,
+        };
 
-        return { carrierStart: carrier.positionDepart, position: carrier.positionGrille };
+        return flagCarrierDefeat;
     }
 
-    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, carrierDefeat: { carrierStart: Position; position: Position } | null): void {
+    private dropFlagAtPositionIfCarrierDefeated(activeGame: IActiveGame, carrierDefeat: FlagCarrierDefeat | null): void {
         if (!carrierDefeat) {
             return;
         }
