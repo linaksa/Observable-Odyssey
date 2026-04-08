@@ -16,12 +16,12 @@ export class GlobalStatsComponent {
 
     get gameDurationFormatted(): string {
         const endedAt = this.parseDate(this.activeGame?.endedAt);
-        const createdAt = this.parseDate(this.activeGame?.createdAt);
-        if (!endedAt || !createdAt) {
+        const startedAt = this.parseDate(this.activeGame?.startedAt) ?? this.parseDate(this.activeGame?.createdAt);
+        if (!endedAt || !startedAt) {
             return this.formatDuration(0);
         }
 
-        const durationMs = endedAt.getTime() - createdAt.getTime();
+        const durationMs = endedAt.getTime() - startedAt.getTime();
         return this.formatDuration(durationMs);
     }
 

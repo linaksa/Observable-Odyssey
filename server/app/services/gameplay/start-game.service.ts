@@ -15,6 +15,7 @@ export class StartGameService {
         }
         await this.assignRandomStartPositions(activeGame);
         this.initializeTurnOrder(activeGame);
+        activeGame.startedAt = new Date();
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
     // Logic to assign teams for CTF mode
