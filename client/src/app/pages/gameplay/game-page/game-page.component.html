@@ -22,18 +22,28 @@
         </div>
     </div>
 </div>
-@if (isGameFinished) {
-    <app-game-ended></app-game-ended>
-}
+@if (
+    isGameFinished ||
+    activeGameService.combatOutcome() ||
+    (currentAttack && (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name))
+) {
+    <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="w-full max-w-[520px] max-h-full overflow-y-auto flex flex-col items-center gap-4">
+            @if (isGameFinished) {
+                <app-game-ended></app-game-ended>
+            }
 
-@if (activeGameService.combatOutcome()) {
-    <app-combat-outcome></app-combat-outcome>
-}
+            @if (activeGameService.combatOutcome()) {
+                <app-combat-outcome></app-combat-outcome>
+            }
 
-@if (currentAttack) {
-    @if (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name) {
-        <app-combat-mode></app-combat-mode>
-    }
+            @if (currentAttack) {
+                @if (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name) {
+                    <app-combat-mode></app-combat-mode>
+                }
+            }
+        </div>
+    </div>
 }
 
 <div class="fixed bottom-6 left-6">
