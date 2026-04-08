@@ -64,8 +64,8 @@ function createActiveGame(): IActiveGame {
                 movementLeft: 4,
                 victories: 0,
                 hasAbandoned: false,
-                positionDepart: { x: 0, y: 0 },
-                positionGrille: { x: 0, y: 0 },
+                startingPosition: { x: 0, y: 0 },
+                currentPosition: { x: 0, y: 0 },
 
                 nCombats: 0,
                 nVictories: 0,

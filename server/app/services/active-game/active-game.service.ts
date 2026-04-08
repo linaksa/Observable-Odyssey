@@ -32,8 +32,8 @@ export class ActiveGameService {
             actionsLeft: 1,
             movementLeft: characterForm.rapidityPoints,
             victories: 0,
-            positionGrille: { x: 0, y: 0 },
-            positionDepart: { x: 0, y: 0 },
+            currentPosition: { x: 0, y: 0 },
+            startingPosition: { x: 0, y: 0 },
             hasAbandoned: false,
 
             nCombats: 0,
@@ -102,8 +102,8 @@ export class ActiveGameService {
             movementLeft: characterForm.rapidityPoints,
             victories: 0,
             hasAbandoned: false,
-            positionDepart: { x: 0, y: 0 },
-            positionGrille: { x: 0, y: 0 },
+            startingPosition: { x: 0, y: 0 },
+            currentPosition: { x: 0, y: 0 },
             virtualPlayerProfile: characterForm.virtualPlayerProfile ?? undefined,
 
             nCombats: 0,
@@ -165,7 +165,7 @@ export class ActiveGameService {
         // remove any existing -{number} suffix from malicious players
         newPlayerName = newPlayerName.trim().replace(/-\d+$/, '');
         const basis = 10;
-        const regex = /^(.*)-(\d+)$/; // match "PlayerName - 1234" et capture "PlayerName" et "1234"
+        const regex = /^(.*)-(\d+)$/; // match "PlayerName-1234" and capture "PlayerName" and "1234"
         let uniquePlayerIdToAppend = 1;
 
         existingPlayers.forEach((player) => {

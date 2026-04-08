@@ -45,9 +45,9 @@ export class BoardEditorService {
 
     availableTools = Object.values(ToolOption);
 
-    boardSharedService: BoardSharedService = inject(BoardSharedService);
+    private readonly boardSharedService: BoardSharedService = inject(BoardSharedService);
 
-    objectSizesMap = {
+    private objectSizesMap = {
         [ItemType.LifeSanctuary]: SANCTUARY_SIZE,
         [ItemType.FightSanctuary]: SANCTUARY_SIZE,
         [ItemType.StartingPosition]: SMALL_ITEM_SIZE,
@@ -203,7 +203,7 @@ export class BoardEditorService {
     }
 
     placeSanctuary(rowIndex: number, colIndex: number): void {
-        if (this.selectedObject === null) return;
+        if (!this.selectedObject) return;
 
         if (!this.isSelectedObjectPlacementPositionValid(rowIndex, colIndex)) return;
 

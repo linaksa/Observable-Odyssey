@@ -53,14 +53,14 @@ describe('CtfObjectiveService', () => {
         const handled = await ctfObjectiveService.handleTurnObjective(character, game);
 
         expect(handled).to.equal(true);
-        expect(moveToPositionStub.calledOnceWithExactly(character, game, character.positionDepart)).to.equal(true);
+        expect(moveToPositionStub.calledOnceWithExactly(character, game, character.startingPosition)).to.equal(true);
         expect(aggressivePlayStub.called).to.equal(false);
     });
 
     it('should start fighting when carrier cannot reach spawn', async () => {
         const carrier = createCharacter('Bot', Team.RED);
         const blocker = createCharacter('Enemy', Team.BLUE);
-        blocker.positionGrille = { ...carrier.positionDepart };
+        blocker.currentPosition = { ...carrier.startingPosition };
         const game = createActiveGame(GameType.Ctf);
         game.players = [carrier, blocker];
         game.hasFlagId = 'Bot';
@@ -112,8 +112,8 @@ function createCharacter(name: string, team: Team = Team.RED): ICharacter {
         movementLeft: 1,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 1, y: 1 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 1, y: 1 },
         team,
         nCombats: 0,
         nVictories: 0,

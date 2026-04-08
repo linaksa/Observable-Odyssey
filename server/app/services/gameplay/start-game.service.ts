@@ -35,8 +35,8 @@ export class StartGameService {
         for (const player of activeGame.players) {
             const randomIndex = Math.floor(Math.random() * spawnTiles.length);
             const tile = spawnTiles.splice(randomIndex, 1)[0];
-            player.positionGrille = tile;
-            player.positionDepart = tile;
+            player.currentPosition = tile;
+            player.startingPosition = tile;
 
             player.visitedCells.push(`${tile.x},${tile.y}`);
         }

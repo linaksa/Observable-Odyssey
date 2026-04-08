@@ -7,14 +7,8 @@ import { VirtualPlayerDialogComponent } from '@app/components/wait/virtual-playe
 import { WaitChatSidebarComponent } from '@app/components/wait/wait-chat-sidebar/wait-chat-sidebar.component';
 import { WaitGameGridComponent } from '@app/components/wait/wait-game-grid/wait-game-grid.component';
 import { WaitPlayerListComponent } from '@app/components/wait/wait-player-list/wait-player-list.component';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { WaitGridService } from '@app/services/lobby/wait-grid.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { SocketService } from '@app/services/realtime/socket.service';
+import { WaitPageFacadeService } from '@app/services/lobby/wait-page.facade.service';
 import { ICharacter } from '@common/character';
-import { Namespaces } from '@common/namespaces';
-import { SocketEvent } from '@common/socket-events';
-import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -33,10 +27,9 @@ import { Subscription } from 'rxjs';
 })
 export class WaitPageComponent implements OnInit, OnDestroy {
     isVirtualPlayerDialogOpen = signal<boolean>(false);
-    private readonly socketService = inject(SocketService);
+    private readonly facade = inject(WaitPageFacadeService);
     private readonly router = inject(Router);
     private readonly route: ActivatedRoute = inject(ActivatedRoute);
-    private readonly localPlayerService: LocalPlayerService = inject(LocalPlayerService);
     private readonly timeout: number = 3000;
 
     private playersUpdatedSubscription?: Subscription;
@@ -47,8 +40,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     private gameStarted: boolean = false;
     private hasLeftWaitingRoom: boolean = false;
 
-    protected readonly activeGameService: ActiveGameService = inject(ActiveGameService);
-    protected readonly waitGridService: WaitGridService = inject(WaitGridService);
+    protected readonly activeGameService = this.facade.activeGameService;
 
     localPlayer?: ICharacter;
     showButton: boolean = false;
@@ -85,12 +77,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     }
 
     private initializeWaitingRoom(activeGameId: string): void {
-        this.socketService.connect(Namespaces.Game);
-        this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
-            activeGameId,
-            playerName: this.localPlayerService.getLocalPlayer()?.name,
-        });
-        this.activeGameService.setActiveGame(activeGameId);
+        this.facade.connectAndJoinWaitingRoom(activeGameId);
         this.subscribeToPlayersUpdated();
         this.subscribeToGameStarted();
         this.subscribeToGameEnded();
@@ -98,9 +85,9 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     private subscribeToPlayersUpdated(): void {
         this.playersUpdatedSubscription?.unsubscribe();
-        this.playersUpdatedSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({
+        this.playersUpdatedSubscription = this.facade.onPlayersUpdated().subscribe({
             next: (players) => {
-                this.activeGameService.updatePlayers(players);
+                this.facade.updatePlayers(players);
                 this.initializeActiveGameData();
             },
         });
@@ -108,7 +95,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     private subscribeToGameStarted(): void {
         this.startGameSubscription?.unsubscribe();
-        this.startGameSubscription = this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted).subscribe({
+        this.startGameSubscription = this.facade.onGameStarted().subscribe({
             next: (startedGameId) => {
                 if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
                     return;
@@ -121,9 +108,9 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
     private subscribeToGameEnded(): void {
         this.gameEndedSubscription?.unsubscribe();
-        this.gameEndedSubscription = this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded).subscribe({
+        this.gameEndedSubscription = this.facade.onGameEnded().subscribe({
             next: () => {
-                this.localPlayerService.clear();
+                this.facade.clearLocalPlayer();
                 this.router.navigate(['/home']);
             },
         });
@@ -158,19 +145,19 @@ export class WaitPageComponent implements OnInit, OnDestroy {
 
         for (const player of activeGame.players) {
             if (player.name !== localPlayerName) {
-                this.activeGameService.kickPlayer(player.name);
+                this.facade.kickPlayer(player.name);
             }
         }
     }
 
     private getLocalPlayerName(): string | undefined {
-        return this.localPlayer?.name ?? this.localPlayerService.getLocalPlayer()?.name;
+        return this.localPlayer?.name ?? this.facade.getLocalPlayer()?.name;
     }
 
     private leaveWaitingRoomAndCleanup(localPlayerName: string): void {
         this.hasLeftWaitingRoom = true;
-        this.activeGameService.leaveWaitingRoom(localPlayerName);
-        this.localPlayerService.clear();
+        this.facade.leaveWaitingRoom(localPlayerName);
+        this.facade.clearLocalPlayer();
     }
 
     private initializeActiveGameData(): void {
@@ -178,10 +165,9 @@ export class WaitPageComponent implements OnInit, OnDestroy {
             return;
         }
 
-        this.waitGridService.buildGrid(this.activeGameService.activeGame.game.board.cells.length);
-        this.waitGridService.initFromExistingBoard(structuredClone(this.activeGameService.activeGame));
+        this.facade.initializeGridFromActiveGame();
 
-        this.localPlayer = this.localPlayerService.getLocalPlayer();
+        this.localPlayer = this.facade.getLocalPlayer();
 
         if (!this.localPlayer) {
             this.router.navigate(['/error']);

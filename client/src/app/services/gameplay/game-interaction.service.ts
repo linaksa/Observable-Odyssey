@@ -71,7 +71,7 @@ export class GameInteractionService {
             boardItem &&
             isSanctuaryItem(boardItem) &&
             boardItem.active !== false &&
-            isPositionAdjacentToSanctuary(currentPlayer.positionGrille, boardItem)
+            isPositionAdjacentToSanctuary(currentPlayer.currentPosition, boardItem)
         ) {
             this.popupStateService.openSanctuaryPopup(boardItem, rowIndex, colIndex);
         }

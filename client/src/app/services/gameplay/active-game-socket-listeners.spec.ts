@@ -108,7 +108,7 @@ describe('registerActiveGameSocketListeners', () => {
             movementLeft: 1,
         });
 
-        expect(activeGame?.players[0].positionGrille).toEqual({ x: 1, y: 2 });
+        expect(activeGame?.players[0].currentPosition).toEqual({ x: 1, y: 2 });
         expect(activeGame?.players[0].movementLeft).toBe(1);
         expect(hasChangedLocation()).toBeTrue();
 
@@ -269,8 +269,8 @@ function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVE
         movementLeft,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x, y },
-        positionGrille: { x, y },
+        startingPosition: { x, y },
+        currentPosition: { x, y },
 
         nCombats: 0,
         nVictories: 0,

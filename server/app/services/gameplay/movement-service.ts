@@ -1,3 +1,4 @@
+import { MovementStep } from '@app/constants/movement';
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
@@ -5,9 +6,10 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
-import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { GRASS_OR_DOOR_MOVEMENT_COST, ICE_MOVEMENT_COST, WATER_MOVEMENT_COST } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
+import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
@@ -21,7 +23,7 @@ export class MovementService {
     ) {}
 
     // Validates and applies the movement in a single DB access. Throws an error if invalid.
-    async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
+    async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<PlayerMovedResult> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         const player = activeGame.players.find((p) => p.name === playerName);
@@ -37,7 +39,7 @@ export class MovementService {
         if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) {
             throw new AppError([ErrorCode.PositionNotWalkable], StatusCodes.BAD_REQUEST);
         }
-        if (!this.positionValidatorService.isAdjacent(player.positionGrille, newPosition)) {
+        if (!this.positionValidatorService.isAdjacent(player.currentPosition, newPosition)) {
             throw new AppError([ErrorCode.PositionNotAdjacent], StatusCodes.BAD_REQUEST);
         }
         if (this.positionValidatorService.isOccupiedByPlayer(newPosition, activeGame)) {
@@ -48,7 +50,7 @@ export class MovementService {
             throw new AppError([ErrorCode.InsufficientMovement], StatusCodes.BAD_REQUEST);
         }
 
-        player.positionGrille = newPosition;
+        player.currentPosition = newPosition;
         player.movementLeft -= price;
 
         const serializedPos = `${newPosition.x},${newPosition.y}`;
@@ -58,7 +60,7 @@ export class MovementService {
 
         this.updateFlagPosition(activeGame, player);
         await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
-        return { newPosition, movementLeft: player.movementLeft };
+        return { playerId: player.name, newPosition, movementLeft: player.movementLeft };
     }
 
     // Returns all tiles reachable from the player's current position (budgeted BFS).
@@ -70,8 +72,8 @@ export class MovementService {
 
         const reachable: Position[] = [];
         const visited = new Set<string>();
-        const queue: { pos: Position; costSoFar: number }[] = [{ pos: player.positionGrille, costSoFar: 0 }];
-        visited.add(`${player.positionGrille.x},${player.positionGrille.y}`);
+        const queue: MovementStep[] = [{ pos: player.currentPosition, costSoFar: 0 }];
+        visited.add(`${player.currentPosition.x},${player.currentPosition.y}`);
 
         while (queue.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -107,20 +109,20 @@ export class MovementService {
         const playerCarriesFlag = activeGame.hasFlagId === player.name;
         // if player has the flag, it moves with them
         if (playerCarriesFlag) {
-            flag.x = player.positionGrille.x;
-            flag.y = player.positionGrille.y;
+            flag.x = player.currentPosition.x;
+            flag.y = player.currentPosition.y;
             return;
         }
         // if player doesn't have the flag, check if they can pick it up
         const flagIsOnGround = !activeGame.hasFlagId;
-        if (flagIsOnGround && player.positionGrille.x === flag.x && player.positionGrille.y === flag.y) {
+        if (flagIsOnGround && player.currentPosition.x === flag.x && player.currentPosition.y === flag.y) {
             activeGame.hasFlagId = player.name;
             if (!activeGame.flagHolderHistory.includes(player.name)) {
                 activeGame.flagHolderHistory.push(player.name);
             }
             flag.isCarried = true;
-            flag.x = player.positionGrille.x;
-            flag.y = player.positionGrille.y;
+            flag.x = player.currentPosition.x;
+            flag.y = player.currentPosition.y;
             const namespace = this.socketService.getNamespace(Namespaces.Game);
             namespace.to(activeGame._id.toString()).emit(SocketEvent.FlagPickedUp, {
                 playerName: player.name,
@@ -136,18 +138,18 @@ export class MovementService {
         switch (cell) {
             case CellType.OpenDoor:
             case CellType.Empty:
-                return PRIX_PORTE_GAZON;
+                return GRASS_OR_DOOR_MOVEMENT_COST;
             case CellType.Ice:
-                return PRIX_GLACE;
+                return ICE_MOVEMENT_COST;
             case CellType.Water:
-                return PRIX_EAU;
+                return WATER_MOVEMENT_COST;
             default:
                 return Infinity;
         }
     }
 
     private isPositionWithinBounds(pos: Position, activeGame: IActiveGame): boolean {
-        if (!activeGame || !activeGame.game || !activeGame.game.board || !Array.isArray(activeGame.game.board.cells)) return false;
+        if (!activeGame?.game?.board) return false;
         const rows = activeGame.game.board.cells.length;
         if (pos.y < 0 || pos.y >= rows) return false;
         const cols = activeGame.game.board.cells[pos.y].length;

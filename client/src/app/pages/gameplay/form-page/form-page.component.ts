@@ -17,13 +17,13 @@ import { Subscription } from 'rxjs';
     templateUrl: './form-page.component.html',
 })
 export class FormPageComponent implements OnInit, OnDestroy {
-    characterFormService = inject(CharacterFormService);
-    toastService = inject(ToastService);
-    localPlayerService = inject(LocalPlayerService);
+    private readonly characterFormService = inject(CharacterFormService);
+    private readonly toastService = inject(ToastService);
+    private readonly localPlayerService = inject(LocalPlayerService);
 
-    router = inject(ActivatedRoute);
-    navigator = inject(Router);
-    gameId: string | null = null;
+    private readonly router = inject(ActivatedRoute);
+    private readonly navigator = inject(Router);
+    private gameId: string | null = null;
     private routeSubscription?: Subscription;
 
     ngOnInit(): void {

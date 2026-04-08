@@ -27,8 +27,8 @@ export interface ICharacter {
     movementLeft: number;
     victories: number;
     hasAbandoned: boolean;
-    positionDepart: Position;
-    positionGrille: Position;
+    startingPosition: Position;
+    currentPosition: Position;
     team?: Team | null;
     virtualPlayerProfile?: VirtualPlayerProfile;
     fightSanctuaryUsed?: boolean;

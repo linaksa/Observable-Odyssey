@@ -14,7 +14,7 @@ import { IActiveGame } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
 import { ICharacter, VirtualPlayerProfile } from '@common/character';
-import { TEMPS_COMBAT } from '@common/constants';
+import { COMBAT_TIME_MS } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
@@ -142,7 +142,7 @@ export class GameplayActionService {
 
         this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
 
-        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+        this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
             const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
                 await this.handleTurnAndGameEndCase(attackerName, gameId, namespace);
@@ -178,7 +178,7 @@ export class GameplayActionService {
 
         emitGameLog(gameId, `Debut du combat entre ${currentPlayerName} et ${targetName}.`);
 
-        this.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
+        this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
             const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
                 await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);

@@ -557,8 +557,8 @@ describe('ActiveGameService', () => {
             movementLeft,
             victories: 0,
             hasAbandoned: false,
-            positionDepart: { x, y },
-            positionGrille: { x, y },
+            startingPosition: { x, y },
+            currentPosition: { x, y },
 
             nCombats: 0,
             nVictories: 0,

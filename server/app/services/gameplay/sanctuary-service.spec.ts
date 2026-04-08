@@ -46,7 +46,7 @@ describe('SanctuaryService', () => {
 
     it('should heal the player with a standard life sanctuary interaction', async () => {
         const activeGame = createActiveGame(ItemType.LifeSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGame.players[0].currentHealth = DAMAGED_HEALTH;
         activeGameService.getActiveGameById.resolves(activeGame);
 
@@ -64,7 +64,7 @@ describe('SanctuaryService', () => {
 
     it('should deactivate the sanctuary and expose its cooldown after use', async () => {
         const activeGame = createActiveGame(ItemType.LifeSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGame.players[0].currentHealth = DAMAGED_HEALTH;
         activeGameService.getActiveGameById.resolves(activeGame);
 
@@ -83,7 +83,7 @@ describe('SanctuaryService', () => {
 
     it('should fail a double life sanctuary gamble without healing', async () => {
         const activeGame = createActiveGame(ItemType.LifeSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGame.players[0].currentHealth = DAMAGED_HEALTH;
         activeGameService.getActiveGameById.resolves(activeGame);
         const randomStub = sinon.stub(Math, 'random').returns(DOUBLE_RANDOM_FAILURE);
@@ -102,7 +102,7 @@ describe('SanctuaryService', () => {
 
     it('should grant a fight sanctuary buff and remove it after the current and next turn', async () => {
         const activeGame = createActiveGame(ItemType.FightSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGameService.getActiveGameById.resolves(activeGame);
 
         const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
@@ -133,7 +133,7 @@ describe('SanctuaryService', () => {
 
     it('should double a fight sanctuary buff when the gamble succeeds', async () => {
         const activeGame = createActiveGame(ItemType.FightSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGameService.getActiveGameById.resolves(activeGame);
         const randomStub = sinon.stub(Math, 'random').returns(DOUBLE_RANDOM_SUCCESS);
 
@@ -154,7 +154,7 @@ describe('SanctuaryService', () => {
 
     it('should consume the once-only fight sanctuary use even when the double gamble fails', async () => {
         const activeGame = createActiveGame(ItemType.FightSanctuary);
-        activeGame.players[0].positionGrille = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
         activeGameService.getActiveGameById.resolves(activeGame);
         const randomStub = sinon.stub(Math, 'random').returns(DOUBLE_RANDOM_FAILURE);
 
@@ -241,8 +241,8 @@ function createCharacter(name: string) {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
         fightSanctuaryUsed: false,
         fightSanctuaryTurnsRemaining: 0,
         fightSanctuaryBonus: 0,
