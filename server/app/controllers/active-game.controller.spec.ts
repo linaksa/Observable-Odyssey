@@ -75,11 +75,11 @@ describe('ActiveGameController', () => {
         movementLeft: 1,
         hasAbandoned: false,
         victories: 0,
-        positionDepart: {
+        startingPosition: {
             x: 1,
             y: 1,
         },
-        positionGrille: {
+        currentPosition: {
             x: 1,
             y: 1,
         },

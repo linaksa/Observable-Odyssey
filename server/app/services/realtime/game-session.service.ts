@@ -168,10 +168,10 @@ export class GameSessionService {
             if (!updatedGame) continue;
 
             const gameHasStarted = updatedGame.turnOrder.length > 0;
-            if (!gameHasStarted) {
-                await this.handleWaitingRoomDisconnect(gameId, playerId, namespace);
-            } else {
+            if (gameHasStarted) {
                 await this.handleActiveGameDisconnect(gameId, playerId, namespace, emitGameLog);
+            } else {
+                await this.handleWaitingRoomDisconnect(gameId, playerId, namespace);
             }
         }
     }

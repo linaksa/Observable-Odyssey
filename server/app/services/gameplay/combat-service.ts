@@ -14,7 +14,7 @@ import {
     ICE_CELL_MALUS,
     POSTURE_BONUS,
     SIX_SIDED_DICE_MAX,
-    TEMPS_COMBAT,
+    COMBAT_TIME_MS,
 } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
@@ -100,7 +100,7 @@ export class CombatService {
                 }
 
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
-                this.turnService.startCombatTimer(TEMPS_COMBAT, currentActiveGame, () => this.applyCombatTurn(activeGameId));
+                this.turnService.startCombatTimer(COMBAT_TIME_MS, currentActiveGame, () => this.applyCombatTurn(activeGameId));
                 return resolve(false);
             }, COMBAT_TURN_FEEDBACK_DURATION_MS);
         });
@@ -183,8 +183,8 @@ export class CombatService {
             return null;
         }
         const flagCarrierDefeat = {
-            carrierStart: carrier.positionDepart,
-            position: carrier.positionGrille,
+            carrierStart: carrier.startingPosition,
+            position: carrier.currentPosition,
         };
 
         return flagCarrierDefeat;
@@ -213,13 +213,13 @@ export class CombatService {
     }
 
     private relocateLoser(player: ICharacter, activeGame: IActiveGame): void {
-        const positionGrille = player.positionGrille;
-        const positionDepart = player.positionDepart;
+        const currentPosition = player.currentPosition;
+        const startingPosition = player.startingPosition;
 
-        if (positionGrille.x === positionDepart.x && positionGrille.y === positionDepart.y) {
+        if (currentPosition.x === startingPosition.x && currentPosition.y === startingPosition.y) {
             return;
         }
-        player.positionGrille = this.findNearestAvailableSpawn(positionDepart, activeGame);
+        player.currentPosition = this.findNearestAvailableSpawn(startingPosition, activeGame);
     }
 
     // finds the nearest available respawn position for the dead defender using breadth-first search (BFS)
@@ -254,7 +254,7 @@ export class CombatService {
     }
 
     private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {
-        const cell = activeGame.game.board.cells[character.positionGrille.x][character.positionGrille.y];
+        const cell = activeGame.game.board.cells[character.currentPosition.x][character.currentPosition.y];
 
         const baseAttackPoints = character.attackPoints;
         let attackDiceBonus: number;

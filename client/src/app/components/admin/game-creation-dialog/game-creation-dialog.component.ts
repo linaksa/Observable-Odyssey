@@ -7,25 +7,7 @@ import { GameService } from '@app/services/admin/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { Subject, takeUntil } from 'rxjs';
-
-enum DimensionSize {
-    Small = 'small',
-    Medium = 'medium',
-    Large = 'large',
-}
-
-interface DimensionConfig {
-    label: string;
-    displaySize: string;
-    numberOfPlayers: string;
-    size: number;
-}
-
-interface DimensionOption {
-    value: DimensionSize;
-    label: string;
-    displaySize: string;
-}
+import { DimensionConfig, DimensionOption, DimensionSize } from './game-creation-dialog.types';
 
 @Component({
     selector: 'app-game-creation-dialog',

@@ -15,6 +15,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
@@ -75,7 +76,7 @@ describe('GamePageComponent', () => {
             set: {
                 template: '',
                 imports: [],
-                providers: [{ provide: GameTurnService, useValue: gameTurnServiceMock }],
+                providers: [{ provide: GameTurnService, useValue: gameTurnServiceMock }, GamePageFacadeService],
             },
         };
         TestBed.overrideComponent(GamePageComponent, overrideInfo);
@@ -88,6 +89,8 @@ describe('GamePageComponent', () => {
                 { provide: SocketService, useValue: socketServiceSpy },
                 { provide: DebugSocketService, useValue: debugSocketServiceSpy },
                 { provide: LocalPlayerService, useValue: localPlayerServiceSpy },
+                { provide: GameTurnService, useValue: gameTurnServiceMock },
+                GamePageFacadeService,
             ],
         }).compileComponents();
 
@@ -287,8 +290,8 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
 
         nCombats: 0,
         nVictories: 0,

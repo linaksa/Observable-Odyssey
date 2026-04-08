@@ -1,7 +1,7 @@
 import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { WATER_MOVEMENT_COST, ICE_MOVEMENT_COST, GRASS_OR_DOOR_MOVEMENT_COST } from '@common/constants';
 import { IItem } from '@common/items';
 
 export function buildGraph(board: CellType[][], actionPoints: number = 0, items: IItem[] = [], players: ICharacter[] = []): [number, number][][] {
@@ -34,7 +34,7 @@ function addSanctuaryBlockedCells(blockedCells: Set<string>, items: IItem[]): vo
 
 function addPlayerBlockedCells(blockedCells: Set<string>, players: ICharacter[]): void {
     for (const player of players) {
-        blockedCells.add(`${player.positionGrille.y},${player.positionGrille.x}`);
+        blockedCells.add(`${player.currentPosition.y},${player.currentPosition.x}`);
     }
 }
 
@@ -88,23 +88,23 @@ function getTileCost(tileType: CellType, row: number, col: number, blockedCells:
 
     switch (tileType) {
         case CellType.Empty:
-            return PRIX_PORTE_GAZON;
+            return GRASS_OR_DOOR_MOVEMENT_COST;
 
         case CellType.Ice:
-            return PRIX_GLACE;
+            return ICE_MOVEMENT_COST;
 
         case CellType.OpenDoor:
-            return PRIX_PORTE_GAZON;
+            return GRASS_OR_DOOR_MOVEMENT_COST;
         case CellType.ClosedDoor:
-            return actionPoints > 0 ? PRIX_PORTE_GAZON : Infinity;
+            return actionPoints > 0 ? GRASS_OR_DOOR_MOVEMENT_COST : Infinity;
 
         case CellType.Water:
-            return PRIX_EAU;
+            return WATER_MOVEMENT_COST;
 
         case CellType.Wall:
             return Infinity;
 
         default:
-            return PRIX_PORTE_GAZON;
+            return GRASS_OR_DOOR_MOVEMENT_COST;
     }
 }

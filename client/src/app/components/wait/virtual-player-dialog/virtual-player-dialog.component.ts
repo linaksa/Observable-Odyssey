@@ -4,12 +4,7 @@ import { CharacterFormService } from '@app/services/forms/character-form.service
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { VirtualPlayerProfile } from '@common/character';
 import { Subscription } from 'rxjs';
-
-interface VirtualPlayerOption {
-    value: VirtualPlayerProfile;
-    label: string;
-    description: string;
-}
+import { VirtualPlayerOption } from './virtual-player-dialog.types';
 
 @Component({
     selector: 'app-virtual-player-dialog',

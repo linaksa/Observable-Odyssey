@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal, output } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { ICharacter } from '@common/character';
 import { Avatar } from '@common/constants';
-import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 
 @Component({
     selector: 'app-wait-player-list',
@@ -11,7 +11,7 @@ import { buildAvatarAssetPath } from '@app/utils/avatar-path';
     templateUrl: './wait-player-list.component.html',
 })
 export class WaitPlayerListComponent {
-    activeGameService = inject(ActiveGameService);
+    private readonly activeGameService = inject(ActiveGameService);
     players: InputSignal<ICharacter[]> = input.required<ICharacter[]>();
     localPlayer: InputSignal<ICharacter | undefined> = input<ICharacter | undefined>();
     organizerName: InputSignal<string> = input.required<string>();

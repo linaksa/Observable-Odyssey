@@ -1,9 +1,8 @@
+import { EXPECTED_TERRAIN_USE } from '@app/constants/terrain-validator';
 import { CellType, IBoard } from '@common/board';
 import { ErrorCode } from '@common/error-codes';
 import { Service } from 'typedi';
 import { IBoardValidator } from './board-validator.interface';
-
-const EXPECTED_TERRAIN_USE = 0.5;
 
 @Service()
 export class TerrainValidator implements IBoardValidator {

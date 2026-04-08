@@ -74,7 +74,7 @@ export class AgressivePlayerService implements VirtualPlayer {
             return;
         }
 
-        if (!this.positionValidatorService.isAdjacent(target.positionGrille, character.positionGrille)) {
+        if (!this.positionValidatorService.isAdjacent(target.currentPosition, character.currentPosition)) {
             return;
         }
 

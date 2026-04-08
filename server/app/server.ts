@@ -12,13 +12,13 @@ import { VirtualPlayerService } from './services/virtual-player/virtual-player.s
 @Service()
 export class Server {
     private static readonly appPort: string | number | boolean = Server.normalizePort(process.env.PORT || '3000');
-    private static readonly baseDix: number = 10;
+    private static readonly decimalBase: number = 10;
     private server?: http.Server;
 
     constructor(private readonly application: Application) {}
 
     private static normalizePort(val: number | string): number | string | boolean {
-        const port: number = typeof val === 'string' ? parseInt(val, this.baseDix) : val;
+        const port: number = typeof val === 'string' ? parseInt(val, this.decimalBase) : val;
         return isNaN(port) ? val : port >= 0 ? port : false;
     }
 

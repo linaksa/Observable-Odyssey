@@ -2,7 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
-import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
+import { TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
@@ -62,7 +62,7 @@ export class TurnService {
         const preparationTimer = setTimeout(() => {
             this.preparationTimers.delete(gameId);
             this.beginTurn(gameId);
-        }, TEMPS_PREPA_TOUR);
+        }, TURN_PREPARATION_TIME_MS);
 
         this.preparationTimers.set(gameId, preparationTimer);
     }
@@ -103,7 +103,7 @@ export class TurnService {
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
             this.endTurn(gameId); // if the player does not play within 30 seconds, move to the next turn
-        }, TEMPS_TOUR);
+        }, TURN_TIME_MS);
 
         this.turnTimers.set(gameId, timer);
         if (player.virtualPlayerProfile && this.virtualPlayerTurnHandler) {
@@ -189,7 +189,7 @@ export class TurnService {
         this.turnTimers.set(stringGameId, timer);
     }
 
-    private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {
+    private getCurrentPlayer(activeGame: IActiveGame): ICharacter | undefined {
         const playerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (!playerName) {
             return undefined;
@@ -221,7 +221,7 @@ export class TurnService {
             return 0;
         }
 
-        const secondsRemaining = TEMPS_TOUR - (Date.now() - activeGame.turnStartTimeStamp);
+        const secondsRemaining = TURN_TIME_MS - (Date.now() - activeGame.turnStartTimeStamp);
 
         clearTimeout(timer);
         map.delete(stringGameId);

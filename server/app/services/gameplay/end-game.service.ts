@@ -3,7 +3,7 @@ import { PositionValidatorService } from '@app/services/gameplay/position-valida
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
 import { Position } from '@common/character';
-import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/constants';
+import { MIN_PLAYER_COUNT, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 
@@ -43,7 +43,7 @@ export class EndGameService {
         }
         // If only one active player remains, end the game
         const activePlayers = activeGame.players.filter((p) => !p.hasAbandoned);
-        if (activePlayers.length === ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
+        if (activePlayers.length === MIN_PLAYER_COUNT) {
             activeGame.isFinished = true;
             activeGame.winner = null; // No clear winner, all other players have abandoned
             activeGame.endedAt = new Date();
@@ -92,7 +92,7 @@ export class EndGameService {
             return false;
         }
         const isOnStartTile =
-            flagHolder.positionGrille.x === flagHolder.positionDepart.x && flagHolder.positionGrille.y === flagHolder.positionDepart.y;
+            flagHolder.currentPosition.x === flagHolder.startingPosition.x && flagHolder.currentPosition.y === flagHolder.startingPosition.y;
 
         if (isOnStartTile) {
             return true;
@@ -111,13 +111,13 @@ export class EndGameService {
         const player = activeGame?.players.find((p) => p.name === playerName);
         if (!player) return;
 
-        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.positionGrille);
+        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.currentPosition);
 
         player.hasAbandoned = true;
         await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
 
         const remainingActivePlayers = activeGame.players.filter((p) => !p.hasAbandoned).length;
-        if (remainingActivePlayers <= ALL_EXCEPT_ONE_PLAYER_ABANDONED) {
+        if (remainingActivePlayers <= MIN_PLAYER_COUNT) {
             return;
         }
 
@@ -144,7 +144,7 @@ export class EndGameService {
             return;
         }
 
-        const dropPosition = this.positionValidatorService.resolveFlagDropPosition(position, carrier.positionDepart, activeGame);
+        const dropPosition = this.positionValidatorService.resolveFlagDropPosition(position, carrier.startingPosition, activeGame);
 
         activeGame.hasFlagId = '';
         flag.isCarried = false;

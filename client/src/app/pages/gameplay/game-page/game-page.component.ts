@@ -10,18 +10,10 @@ import { GameComponent } from '@app/components/game/game/game.component';
 import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
 import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
 import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
-import { SocketService } from '@app/services/realtime/socket.service';
+import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
-import { ICurrentAttack } from '@common/activeGame';
 import { ICharacter } from '@common/character';
-import { TurnStatusData } from '@common/info';
-import { Namespaces } from '@common/namespaces';
-import { SocketEvent } from '@common/socket-events';
-import { IJoinGamePayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -38,44 +30,38 @@ import { Subscription } from 'rxjs';
         CombatModeComponent,
         CombatOutcomeComponent,
     ],
-    providers: [GameTurnService],
+    providers: [GameTurnService, GamePageFacadeService],
     templateUrl: './game-page.component.html',
 })
 export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
-    private readonly debugSocketService = inject(DebugSocketService);
-    private readonly socketService = inject(SocketService);
-    protected readonly activeGameService = inject(ActiveGameService);
-    private readonly localPlayerService = inject(LocalPlayerService);
-    private readonly gameTurnService = inject(GameTurnService);
+    private readonly facade = inject(GamePageFacadeService);
+    protected readonly activeGameService = this.facade.activeGameService;
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.debugSocketService.connect();
+        this.facade.connectDebugSocket();
         this.routeSubscription = this.route.params.subscribe((params) => {
-            const activeGameId = params.activeGameId ?? this.activeGameService.activeGame?._id;
+            const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
             if (!activeGameId) {
                 return;
             }
 
-            this.activeGameService.setActiveGame(activeGameId);
+            this.facade.setActiveGame(activeGameId);
 
             if (!this.playersSubscription) {
-                this.socketService.connect(Namespaces.Game);
-                this.playersSubscription = this.socketService.on<ICharacter[]>(Namespaces.Game, SocketEvent.PlayersUpdated).subscribe({
+                this.facade.connectGameplaySocket();
+                this.playersSubscription = this.facade.onPlayersUpdated().subscribe({
                     next: (players) => {
-                        this.activeGameService.updatePlayers(players);
+                        this.facade.applyPlayersUpdate(players);
                     },
                 });
 
-                this.gameTurnService.initializeTurnListeners();
+                this.facade.initializeTurnListeners();
             }
 
-            this.socketService.emit<IJoinGamePayload, void>(Namespaces.Game, SocketEvent.JoinGame, {
-                activeGameId,
-                playerName: this.localPlayerService.getLocalPlayer()?.name,
-            });
+            this.facade.emitJoinGame(activeGameId);
         });
     }
 
@@ -83,64 +69,56 @@ export class GamePageComponent implements OnInit, OnDestroy {
     handleKeyDown(event: KeyboardEvent) {
         if (isTypingInChatMessageInput(event)) return;
         if (event.key.toLowerCase() === 'm') {
-            this.debugSocketService.emitDebugModeToggle(
-                this.localPlayerService.getLocalPlayer()?.name ?? '',
-                this.activeGameService.activeGame?._id ?? '',
-            );
+            this.facade.emitDebugToggle();
         }
     }
 
     ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
         this.playersSubscription?.unsubscribe();
-        this.gameTurnService.destroy();
+        this.facade.destroyTurnService();
     }
 
-    get currentAttack(): ICurrentAttack | null {
-        return this.activeGameService.activeGame?.currentAttack;
+    get currentAttack() {
+        return this.facade.currentAttack;
     }
 
-    get currentPlayerName(): string | null {
-        return this.gameTurnService.currentPlayerName;
+    get currentPlayerName() {
+        return this.facade.currentPlayerName;
     }
 
-    get turnTimeLeftSeconds(): number | null {
-        return this.gameTurnService.turnTimeLeftSeconds;
+    get turnTimeLeftSeconds() {
+        return this.facade.turnTimeLeftSeconds;
     }
 
-    get isTurnPreparing(): boolean {
-        return this.gameTurnService.isTurnPreparing;
+    get isTurnPreparing() {
+        return this.facade.isTurnPreparing;
     }
 
-    get canEndTurn(): boolean {
-        return this.gameTurnService.canEndTurn;
+    get canEndTurn() {
+        return this.facade.canEndTurn;
     }
 
-    get isGameFinished(): boolean {
-        return this.activeGameService.activeGame.isFinished;
+    get isGameFinished() {
+        return this.facade.isGameFinished;
     }
 
-    get turnStatusData(): TurnStatusData {
-        return {
-            currentPlayerName: this.currentPlayerName,
-            turnTimeLeftSeconds: this.turnTimeLeftSeconds,
-            isTurnPreparing: this.isTurnPreparing,
-            canEndTurn: this.canEndTurn,
-        };
+    get turnStatusData() {
+        return this.facade.turnStatusData;
     }
 
-    get pendingFlagQuestion(): string | null {
-        return this.activeGameService.pendingFlagRequest()?.question ?? null;
+    get pendingFlagQuestion() {
+        return this.facade.pendingFlagQuestion;
     }
     get localPlayer(): ICharacter | undefined {
-        return this.localPlayerService.getLocalPlayer();
+        return this.facade.getLocalPlayer();
     }
 
     endTurn(): void {
-        this.gameTurnService.endTurn();
+        this.facade.endTurn();
     }
 
     respondToFlagRequest(accepted: boolean): void {
-        this.activeGameService.respondToFlagActionRequest(accepted);
+        this.facade.respondToFlagRequest(accepted);
     }
 }

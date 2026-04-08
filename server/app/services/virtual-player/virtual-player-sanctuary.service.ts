@@ -52,7 +52,7 @@ export class VirtualPlayerSanctuaryService {
             return false;
         }
 
-        const alreadyAdjacent = isPositionAdjacentToSanctuary(character.positionGrille, target.sanctuary);
+        const alreadyAdjacent = isPositionAdjacentToSanctuary(character.currentPosition, target.sanctuary);
         if (!alreadyAdjacent) {
             const reachedTarget = await this.virtualPlayerUtilities.moveToPosition(character, game, target.targetPosition);
             if (!reachedTarget) {
@@ -94,12 +94,12 @@ export class VirtualPlayerSanctuaryService {
         let bestTarget: SanctuaryTarget | null = null;
         let bestDistance = Infinity;
         for (const sanctuary of sanctuaries) {
-            const targetPosition = this.findBestReachableAdjacentPosition(character.positionGrille, sanctuary, reachablePositions);
+            const targetPosition = this.findBestReachableAdjacentPosition(character.currentPosition, sanctuary, reachablePositions);
             if (!targetPosition) {
                 continue;
             }
 
-            const distance = this.manhattanDistance(character.positionGrille, targetPosition);
+            const distance = this.manhattanDistance(character.currentPosition, targetPosition);
             if (distance < bestDistance) {
                 bestDistance = distance;
                 bestTarget = { sanctuary, targetPosition };

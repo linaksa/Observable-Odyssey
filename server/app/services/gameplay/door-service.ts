@@ -41,7 +41,7 @@ export class DoorService {
             throw new AppError([ErrorCode.InsufficientActions], StatusCodes.BAD_REQUEST);
         }
 
-        if (!this.positionValidatorService.isAdjacent(player.positionGrille, position)) {
+        if (!this.positionValidatorService.isAdjacent(player.currentPosition, position)) {
             throw new AppError([ErrorCode.PositionNotAdjacent], StatusCodes.BAD_REQUEST);
         }
 
@@ -88,7 +88,7 @@ export class DoorService {
     private isPlayerOnPosition(position: Position, activeGame: IActiveGame): boolean {
         return activeGame.players.some(
             (currentPlayer) =>
-                !currentPlayer.hasAbandoned && currentPlayer.positionGrille.x === position.x && currentPlayer.positionGrille.y === position.y,
+                !currentPlayer.hasAbandoned && currentPlayer.currentPosition.x === position.x && currentPlayer.currentPosition.y === position.y,
         );
     }
 

@@ -36,7 +36,7 @@ export class VirtualPlayerUtilitiesService {
 
         const graph = buildGraph(board, from.actionsLeft, items, otherPlayers);
 
-        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const srcIndex = from.currentPosition.y * totalColumns + from.currentPosition.x;
         const distances = dijkstra(graph, srcIndex).distances;
 
         const adjacentOffsets = [
@@ -53,8 +53,8 @@ export class VirtualPlayerUtilitiesService {
             let bestAdjIdx = -1;
 
             for (const offset of adjacentOffsets) {
-                const adjX = player.positionGrille.x + offset.x;
-                const adjY = player.positionGrille.y + offset.y;
+                const adjX = player.currentPosition.x + offset.x;
+                const adjY = player.currentPosition.y + offset.y;
 
                 if (adjX < 0 || adjX >= totalColumns || adjY < 0 || adjY >= totalRows) continue;
 
@@ -102,7 +102,7 @@ export class VirtualPlayerUtilitiesService {
         const targetIndex = position.y * totalColumns + position.x;
 
         const graph = buildGraph(board, from.actionsLeft, activeGame.game.board.items, activeGame.players);
-        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const srcIndex = from.currentPosition.y * totalColumns + from.currentPosition.x;
         const { distances } = dijkstra(graph, srcIndex);
 
         if (isFinite(distances[targetIndex])) {
@@ -125,7 +125,7 @@ export class VirtualPlayerUtilitiesService {
 
         const totalColumns = activeGame.game.board.cells[0].length;
         const graph = buildGraph(activeGame.game.board.cells, from.actionsLeft, activeGame.game.board.items, activeGame.players);
-        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const srcIndex = from.currentPosition.y * totalColumns + from.currentPosition.x;
         const { distances } = dijkstra(graph, srcIndex);
 
         let bestIndex = srcIndex;
@@ -159,7 +159,7 @@ export class VirtualPlayerUtilitiesService {
 
         let minimumDistance = Infinity;
         for (const adversePlayer of adversePlayers) {
-            const distance = Math.abs(adversePlayer.positionGrille.x - x) + Math.abs(adversePlayer.positionGrille.y - y);
+            const distance = Math.abs(adversePlayer.currentPosition.x - x) + Math.abs(adversePlayer.currentPosition.y - y);
             if (distance < minimumDistance) {
                 minimumDistance = distance;
             }
@@ -173,7 +173,7 @@ export class VirtualPlayerUtilitiesService {
         const totalColumns = activeGame.game.board.cells[0].length;
 
         const graph = buildGraph(activeGame.game.board.cells, from.actionsLeft, activeGame.game.board.items, activeGame.players);
-        const srcIndex = from.positionGrille.y * totalColumns + from.positionGrille.x;
+        const srcIndex = from.currentPosition.y * totalColumns + from.currentPosition.x;
         if (srcIndex === targetIndex) return true;
         const { distances, predecessors } = dijkstra(graph, srcIndex);
 
@@ -194,7 +194,7 @@ export class VirtualPlayerUtilitiesService {
                 break;
             }
 
-            // Derive current position from currentIndex, not from.positionGrille
+            // Derive current position from currentIndex, not from.currentPosition
             const currentX = currentIndex % totalColumns;
             const currentY = Math.floor(currentIndex / totalColumns);
 
@@ -228,7 +228,7 @@ export class VirtualPlayerUtilitiesService {
             let result;
             try {
                 result = await this.movementService.movePlayer(from.name, activeGame._id, newPosition);
-                from.positionGrille = newPosition;
+                from.currentPosition = newPosition;
             } catch {
                 return false;
             }

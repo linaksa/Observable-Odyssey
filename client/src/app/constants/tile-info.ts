@@ -1,5 +1,5 @@
 import { CellType } from '@common/board';
-import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
+import { WATER_MOVEMENT_COST, ICE_MOVEMENT_COST, GRASS_OR_DOOR_MOVEMENT_COST } from '@common/constants';
 import { ItemInfoData, TileInfoData } from '@common/info';
 import { ItemType } from '@common/items';
 
@@ -7,22 +7,22 @@ export const TILE_INFO_BY_TYPE: Record<CellType, TileInfoData> = {
     [CellType.Empty]: {
         title: 'Tuile de base',
         description: 'Terrain libre et traversable.',
-        movementCost: `${PRIX_PORTE_GAZON} point de mouvement.`,
+        movementCost: `${GRASS_OR_DOOR_MOVEMENT_COST} point de mouvement.`,
     },
     [CellType.Ice]: {
         title: 'Glace',
         description: 'Terrain traversable, mais glissant.',
-        movementCost: `${PRIX_GLACE} point de mouvement.`,
+        movementCost: `${ICE_MOVEMENT_COST} point de mouvement.`,
     },
     [CellType.Water]: {
         title: 'Eau',
         description: 'Terrain traversable, mais lentement.',
-        movementCost: `${PRIX_EAU} points de mouvement.`,
+        movementCost: `${WATER_MOVEMENT_COST} points de mouvement.`,
     },
     [CellType.OpenDoor]: {
         title: 'Porte ouverte',
         description: 'Peut être fermée pour bloquer le passage.',
-        movementCost: `${PRIX_PORTE_GAZON} point de mouvement.`,
+        movementCost: `${GRASS_OR_DOOR_MOVEMENT_COST} point de mouvement.`,
     },
     [CellType.ClosedDoor]: {
         title: 'Porte fermée',

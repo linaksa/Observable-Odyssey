@@ -29,6 +29,7 @@ import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
+import { ItemType } from '@common/items';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 interface PendingFlagRequest {
@@ -149,8 +150,9 @@ export class ActiveGameService implements OnDestroy {
 
     getPlayersAtPosition(row: number, col: number): ICharacter[] {
         return (
-            this.activeGame?.players.filter((player) => !player.hasAbandoned && player.positionGrille.y === row && player.positionGrille.x === col) ??
-            []
+            this.activeGame?.players.filter(
+                (player) => !player.hasAbandoned && player.currentPosition.y === row && player.currentPosition.x === col,
+            ) ?? []
         );
     }
 
@@ -233,7 +235,7 @@ export class ActiveGameService implements OnDestroy {
 
         const nextIndex = this.activeGame.turnOrder.indexOf(currentPlayerName);
         this.activeGame.currentPlayerIndex =
-            nextIndex !== -1 ? nextIndex : Math.min(this.activeGame.currentPlayerIndex, this.activeGame.turnOrder.length - 1);
+            nextIndex === -1 ? Math.min(this.activeGame.currentPlayerIndex, this.activeGame.turnOrder.length - 1) : nextIndex;
         this.currentPlayer.set(this.activeGame.currentPlayerIndex);
     }
 
@@ -247,7 +249,7 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        const startIndex = this.getIndex(player.positionGrille.y, player.positionGrille.x, totalColumns);
+        const startIndex = this.getIndex(player.currentPosition.y, player.currentPosition.x, totalColumns);
         const dijkstraRes = dijkstra(graph, startIndex);
         const reachableTiles = new Set<number>();
 
@@ -266,8 +268,8 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        const newRow = player.positionGrille.y + rowOffset;
-        const newCol = player.positionGrille.x + colOffset;
+        const newRow = player.currentPosition.y + rowOffset;
+        const newCol = player.currentPosition.x + colOffset;
         const index = this.getIndex(newRow, newCol, totalColumns);
 
         if (!this.reachableTiles.has(index)) {
@@ -337,8 +339,8 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        const dx = Math.abs(currentPlayer.positionGrille.x - target.positionGrille.x);
-        const dy = Math.abs(currentPlayer.positionGrille.y - target.positionGrille.y);
+        const dx = Math.abs(currentPlayer.currentPosition.x - target.currentPosition.x);
+        const dy = Math.abs(currentPlayer.currentPosition.y - target.currentPosition.y);
 
         if (dx + dy !== 1) {
             return;
@@ -438,7 +440,7 @@ export class ActiveGameService implements OnDestroy {
         }
 
         this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
-            (item) => item.itemType !== 'startingPosition' || this.getPlayersAtPosition(item.y, item.x).length > 0,
+            (item) => item.itemType !== ItemType.StartingPosition || this.getPlayersAtPosition(item.y, item.x).length > 0,
         );
     }
 

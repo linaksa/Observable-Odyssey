@@ -45,10 +45,11 @@ describe('MovementService', () => {
         const result = await movementService.movePlayer('Alice', activeGame._id, { x: 2, y: 1 });
 
         expect(result).to.deep.equal({
+            playerId: 'Alice',
             newPosition: { x: 2, y: 1 },
             movementLeft: 0,
         });
-        expect(activeGame.players[0].positionGrille).to.deep.equal({ x: 2, y: 1 });
+        expect(activeGame.players[0].currentPosition).to.deep.equal({ x: 2, y: 1 });
         expect(activeGame.players[0].movementLeft).to.equal(0);
         expect(activeGameService.saveActiveGameById.calledOnceWithExactly(activeGame._id, activeGame)).to.equal(true);
     });
@@ -68,7 +69,7 @@ describe('MovementService', () => {
 
     it('should reject moving onto a sanctuary tile', async () => {
         const activeGame = createActiveGame();
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGame.players[0].movementLeft = 1;
         activeGame.game.board.items = [createSanctuary(1, 1)];
         activeGameService.getActiveGameById.resolves(activeGame);
@@ -142,8 +143,8 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 1,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 1, y: 1 },
-        positionGrille: { x: 1, y: 1 },
+        startingPosition: { x: 1, y: 1 },
+        currentPosition: { x: 1, y: 1 },
 
         nCombats: 0,
         nVictories: 0,

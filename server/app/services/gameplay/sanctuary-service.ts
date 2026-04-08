@@ -142,8 +142,8 @@ export class SanctuaryService {
         return sanctuary;
     }
 
-    private assertAdjacentToSanctuary(player: { positionGrille: Position }, sanctuary: IItem): void {
-        this.throwIf(!isPositionAdjacentToSanctuary(player.positionGrille, sanctuary), [ErrorCode.SanctuaryAdjacencyRequired]);
+    private assertAdjacentToSanctuary(player: { currentPosition: Position }, sanctuary: IItem): void {
+        this.throwIf(!isPositionAdjacentToSanctuary(player.currentPosition, sanctuary), [ErrorCode.SanctuaryAdjacencyRequired]);
     }
 
     private assertSanctuaryIsAvailable(sanctuary: IItem): void {

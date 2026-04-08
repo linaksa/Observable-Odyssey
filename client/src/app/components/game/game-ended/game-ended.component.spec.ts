@@ -15,7 +15,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { IActiveGame } from '@common/activeGame';
-import { TEMPS_ECRAN_FIN_PARTIE } from '@common/constants';
+import { END_GAME_SCREEN_DURATION_MS } from '@common/constants';
 import { GameEndedComponent } from './game-ended.component';
 
 describe('GameEndedComponent', () => {
@@ -82,7 +82,7 @@ describe('GameEndedComponent', () => {
     it('should schedule automatic redirect after end-screen delay', fakeAsync(() => {
         fixture = TestBed.createComponent(GameEndedComponent);
         component = fixture.componentInstance;
-        tick(TEMPS_ECRAN_FIN_PARTIE);
+        tick(END_GAME_SCREEN_DURATION_MS);
 
         expect(component).toBeTruthy();
         expect(routerSpy.navigate).toHaveBeenCalledWith([`/end/${activeGameServiceStub.activeGame._id}`]);

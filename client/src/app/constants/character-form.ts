@@ -24,3 +24,6 @@ export const AVAILABLE_BONUS_TYPES = [BonusType.Life, BonusType.Speed];
 export const AVAILABLE_DICE_TYPES = [DiceSelectionType.D4AttackAndD6Defense, DiceSelectionType.D6AttackAndD4Defense];
 
 export const BONUS_VALUE = 2;
+
+export const RANDOM_NUMBER_SCALE = 1000;
+export const RANDOM_PLAYER_NAME_PREFIX = 'Player';

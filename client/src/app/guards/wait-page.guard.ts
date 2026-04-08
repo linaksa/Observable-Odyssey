@@ -1,13 +1,16 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GameService } from '@app/services/admin/game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { IActiveGame } from '@common/activeGame';
+import { catchError, map, of } from 'rxjs';
 
 export const waitPageGuard: CanActivateFn = (route) => {
     const localPlayerService = inject(LocalPlayerService);
-    const activeGameService = inject(ActiveGameService);
+    const gameService = inject(GameService);
     const router = inject(Router);
 
+    // 1. Check synchronous conditions first
     if (!localPlayerService.getLocalPlayer()) {
         return router.createUrlTree(['/home']);
     }
@@ -17,13 +20,18 @@ export const waitPageGuard: CanActivateFn = (route) => {
         return router.createUrlTree(['/home']);
     }
 
-    const activeGame = activeGameService.activeGame;
-    const isCurrentActiveGame = activeGame?._id === activeGameId;
-    const gameHasStarted = isCurrentActiveGame && (activeGame.turnOrder?.length ?? 0) > 0;
+    // 2. Return an Observable so Angular waits for it
+    return gameService.getActiveGameById(activeGameId).pipe(
+        map((activeGame: IActiveGame) => {
+            const isCurrentActiveGame = activeGame?._id === activeGameId;
+            const gameHasStarted = isCurrentActiveGame && (activeGame?.turnOrder?.length ?? 0) > 0;
 
-    if (gameHasStarted) {
-        return router.createUrlTree(['/play', activeGameId]);
-    }
+            if (gameHasStarted) {
+                return router.createUrlTree(['/home', activeGameId]);
+            }
 
-    return true;
+            return true;
+        }),
+        catchError(() => of(router.createUrlTree(['/home']))),
+    );
 };

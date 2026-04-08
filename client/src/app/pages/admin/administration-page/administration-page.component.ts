@@ -1,21 +1,16 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AdministrationPageFacadeService } from '@app/services/admin/administration-page.facade.service';
+import { IExistingGame, Visibility } from '@common/game';
+import { finalize } from 'rxjs';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { GameCreationDialogComponent } from '@app/components/admin/game-creation-dialog/game-creation-dialog.component';
 import { GameTableComponent } from '@app/components/common/game-table/game-table.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
-import { GameCreationDialogComponent } from '@app/components/admin/game-creation-dialog/game-creation-dialog.component';
-import { AdminSocketService } from '@app/services/realtime/admin.socket.service';
-import { AdministrationService } from '@app/services/admin/administration.service';
-import { GameTableService } from '@app/services/tables/game-table.service';
-import { GameService } from '@app/services/admin/game.service';
-import { ToastService } from '@app/services/ui/toast.service';
-import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
-import { IExistingGame, Visibility } from '@common/game';
-import { finalize } from 'rxjs';
 
 @Component({
     selector: 'app-administration-page',
@@ -24,13 +19,8 @@ import { finalize } from 'rxjs';
 })
 export class AdministrationPageComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
-
-    private readonly adminService = inject(AdministrationService);
-    private readonly gameService = inject(GameService);
-    private readonly toastService = inject(ToastService);
-    private readonly adminSocketService = inject(AdminSocketService);
-
-    protected readonly gameTableService = inject(GameTableService);
+    private readonly facade = inject(AdministrationPageFacadeService);
+    protected readonly gameTableService = this.facade.gameTableService;
     private readonly pendingVisibilityToggles = signal(new Set<string>());
 
     isDialogOpen = false;
@@ -44,22 +34,17 @@ export class AdministrationPageComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.gameTableService.tableData = [];
-        this.fetchCorrectGames();
+        this.facade.initializePageData();
 
-        this.adminSocketService.connect();
-        this.adminSocketService
+        this.facade
             .onGamesModified()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: () => this.fetchCorrectGames(),
-                error: (error: HttpErrorResponse) =>
-                    this.toastService.show(this.getServerMessage(error, "Il y a eu un problème lors de l'ajout des jeux.")),
+                next: () => this.facade.fetchGames(),
+                error: (error: HttpErrorResponse) => this.facade.showServerMessage(error, "Il y a eu un problème lors de l'ajout des jeux."),
             });
-    }
 
-    private fetchCorrectGames(): void {
-        this.gameTableService.fetchGames(false);
+        this.facade.connectSocket();
     }
 
     gameIsViewable(element: IExistingGame): boolean {
@@ -86,7 +71,7 @@ export class AdministrationPageComponent implements OnInit {
         }
         this.updateVisibilityTogglePending(element._id, true);
 
-        this.adminService
+        this.facade
             .changeGameVisibility(element._id, input.checked)
             .pipe(
                 finalize(() => {
@@ -94,26 +79,21 @@ export class AdministrationPageComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: () => this.gameTableService.fetchGames(false),
+                next: () => this.facade.fetchGames(),
                 error: (error: HttpErrorResponse) => {
                     input.checked = !input.checked;
-                    this.toastService.show(this.getServerMessage(error, 'Il y a eu un problème lors du changement de visibilité.'));
+                    this.facade.showServerMessage(error, 'Il y a eu un problème lors du changement de visibilité.');
                 },
             });
     }
 
     deleteGame(element: IExistingGame): void {
-        this.gameService.deleteGame(element).subscribe({
+        this.facade.deleteGame(element).subscribe({
             next: () => {
-                this.gameTableService.tableData = this.gameTableService.tableData.filter((item) => item._id !== element._id);
+                this.facade.removeDeletedGameFromTable(element._id);
             },
-            error: (error: HttpErrorResponse) =>
-                this.toastService.show(this.getServerMessage(error, 'Il y a eu un problème lors de la suppression.')),
+            error: (error: HttpErrorResponse) => this.facade.showServerMessage(error, 'Il y a eu un problème lors de la suppression.'),
         });
-    }
-
-    private getServerMessage(error: HttpErrorResponse, fallback: string): string {
-        return mapErrorCodesToMessage(extractErrorCodes(error), fallback);
     }
 
     private updateVisibilityTogglePending(gameId: string, isPending: boolean): void {

@@ -49,8 +49,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             const player = context.getPlayerByName(playerMove.playerId);
             if (!player) return;
 
-            player.positionGrille.x = playerMove.newPosition.x;
-            player.positionGrille.y = playerMove.newPosition.y;
+            player.currentPosition.x = playerMove.newPosition.x;
+            player.currentPosition.y = playerMove.newPosition.y;
             player.movementLeft = playerMove.movementLeft;
 
             toggle(context.hasChangedLocation);

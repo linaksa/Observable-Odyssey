@@ -199,8 +199,8 @@ describe('JoinFormPageComponent', () => {
                     movementLeft: 1,
                     victories: 0,
                     hasAbandoned: false,
-                    positionDepart: { x: 0, y: 0 },
-                    positionGrille: { x: 0, y: 0 },
+                    startingPosition: { x: 0, y: 0 },
+                    currentPosition: { x: 0, y: 0 },
 
                     nCombats: 0,
                     nVictories: 0,
@@ -223,8 +223,8 @@ describe('JoinFormPageComponent', () => {
                     movementLeft: 1,
                     victories: 0,
                     hasAbandoned: true,
-                    positionDepart: { x: 0, y: 0 },
-                    positionGrille: { x: 0, y: 0 },
+                    startingPosition: { x: 0, y: 0 },
+                    currentPosition: { x: 0, y: 0 },
 
                     nCombats: 0,
                     nVictories: 0,
