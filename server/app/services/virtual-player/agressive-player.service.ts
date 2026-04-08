@@ -81,6 +81,6 @@ export class AgressivePlayerService implements VirtualPlayer {
         const namespace = this.socketService.getNamespace(Namespaces.Game);
 
         await sleep();
-        await this.gameplayActionService.combatManager(game._id.toString(), character.name, targetName, namespace);
+        await this.gameplayActionService.combatManager(game._id.toString(), character.name, targetName, null, namespace);
     }
 }
