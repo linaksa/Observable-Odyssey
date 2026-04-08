@@ -1,6 +1,8 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/activeGame';
+import { Position } from '@common/character';
 import { ALL_EXCEPT_ONE_PLAYER_ABANDONED, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
@@ -10,6 +12,7 @@ export class EndGameService {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly turnService: TurnService,
+        private readonly positionValidatorService: PositionValidatorService,
     ) {}
 
     async checkEndGame(gameId: string): Promise<boolean> {
@@ -108,11 +111,7 @@ export class EndGameService {
         const player = activeGame?.players.find((p) => p.name === playerName);
         if (!player) return;
 
-        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.positionGrille.x, player.positionGrille.y);
-
-        const startingPosition = player.positionDepart;
-
-        activeGame.game.board.items = activeGame.game.board.items.filter((item) => item.x !== startingPosition.x || item.y !== startingPosition.y);
+        this.dropFlagIfCarrierAbandons(activeGame, playerName, player.positionGrille);
 
         player.hasAbandoned = true;
         await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
@@ -130,8 +129,13 @@ export class EndGameService {
         }
     }
 
-    private dropFlagIfCarrierAbandons(activeGame: IActiveGame, playerName: string, x: number, y: number): void {
+    private dropFlagIfCarrierAbandons(activeGame: IActiveGame, playerName: string, position: Position): void {
         if (activeGame.game.gameMode !== 'ctf' || activeGame.hasFlagId !== playerName) {
+            return;
+        }
+
+        const carrier = activeGame.players.find((player) => player.name === playerName);
+        if (!carrier) {
             return;
         }
 
@@ -140,9 +144,11 @@ export class EndGameService {
             return;
         }
 
+        const dropPosition = this.positionValidatorService.resolveFlagDropPosition(position, carrier.positionDepart, activeGame);
+
         activeGame.hasFlagId = '';
         flag.isCarried = false;
-        flag.x = x;
-        flag.y = y;
+        flag.x = dropPosition.x;
+        flag.y = dropPosition.y;
     }
 }
