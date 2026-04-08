@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
+import { JournalComponent } from '@app/components/chat/journal/journal.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { FinalPlayerListComponent } from '@app/components/end-game/final-player-list/final-player-list.component';
@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-game-end',
-    imports: [NavButtonsComponent, PageTitleComponent, ChatPanelComponent, FinalPlayerListComponent, GlobalStatsComponent],
+    imports: [NavButtonsComponent, PageTitleComponent, JournalComponent, FinalPlayerListComponent, GlobalStatsComponent],
     templateUrl: './game-end.component.html',
 })
 export class GameEndComponent implements OnInit, OnDestroy {
