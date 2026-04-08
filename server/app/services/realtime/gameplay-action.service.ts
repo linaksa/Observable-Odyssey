@@ -375,7 +375,6 @@ export class GameplayActionService {
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-            console.log(`Game ended. Winner: ${attackerName}`);
             //await this.activeGameService.deleteGameById(gameId);
         }
 

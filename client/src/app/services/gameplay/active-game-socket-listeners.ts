@@ -224,8 +224,6 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
-            console.log(`Game ended. Winner: ${data.winner}`);
-
             activeGame.winner = data.winner;
             activeGame.isFinished = true;
 
