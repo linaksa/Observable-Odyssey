@@ -1,17 +1,13 @@
-import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { JournalComponent } from '@app/components/chat/journal/journal.component';
-import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
-import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
-import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
-import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
-import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
-import { GameComponent } from '@app/components/game/game/game.component';
-import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
-import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
-import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
-import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { GameChatPanelComponent } from '@app/components/game/game-chat-panel/game-chat-panel.component';
+import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
+import { GameListPanelComponent } from '@app/components/game/game-list-panel/game-list-panel.component';
 import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { ICharacter } from '@common/character';
 import { Subscription } from 'rxjs';
@@ -19,28 +15,57 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-game-page',
     imports: [
-        PlayerInfoComponent,
-        GameComponent,
-        PlayerListComponent,
-        GameInfosComponent,
-        GameActionComponent,
-        JournalComponent,
-        GameEndedComponent,
-        TurnStatusComponent,
-        CombatModeComponent,
-        CombatOutcomeComponent,
+        NavButtonsComponent,
+        PageTitleComponent,
+        GameListPanelComponent,
+        GameGridPanelComponent,
+        GameChatPanelComponent,
+        LoadingOverlayComponent,
     ],
     providers: [GameTurnService, GamePageFacadeService],
     templateUrl: './game-page.component.html',
 })
 export class GamePageComponent implements OnInit, OnDestroy {
+    // TODO: write the new game-page with component from @client/src/app/components/game/
+
+    protected readonly showButton: WritableSignal<boolean> = signal(false);
+    protected readonly isLoading: WritableSignal<boolean> = signal(false);
+
+    private readonly timeout: number = 3000;
+    private buttonTimeoutId?: ReturnType<typeof setTimeout>;
+
+    ngOnInit(): void {
+        this.isLoading.set(true);
+
+        this.initializeButtonTimeout();
+        // loading the data for the page
+
+        this.isLoading.set(false);
+    }
+
+    ngOnDestroy(): void {
+        // unsubscribe
+
+        if (this.buttonTimeoutId) {
+            clearTimeout(this.buttonTimeoutId);
+        }
+    }
+
+    private initializeButtonTimeout(): void {
+        this.buttonTimeoutId = setTimeout(() => {
+            this.showButton.set(true);
+        }, this.timeout);
+    }
+
+    // the following is for reference only, this is the old implementation
+    // for the old implementation of the front-end, go to the @client/src/app/components/game.old/ folder
     private readonly route = inject(ActivatedRoute);
     private readonly facade = inject(GamePageFacadeService);
     protected readonly activeGameService = this.facade.activeGameService;
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
-    ngOnInit(): void {
+    old_ngOnInit(): void {
         this.facade.connectDebugSocket();
         this.routeSubscription = this.route.params.subscribe((params) => {
             const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
@@ -73,7 +98,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy(): void {
+    old_ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
         this.playersSubscription?.unsubscribe();
         this.facade.destroyTurnService();
@@ -110,6 +135,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
     get pendingFlagQuestion() {
         return this.facade.pendingFlagQuestion;
     }
+
     get localPlayer(): ICharacter | undefined {
         return this.facade.getLocalPlayer();
     }

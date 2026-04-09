@@ -1,63 +1,27 @@
-<div class="flex flex-col min-h-screen p-4">
-    <app-game-infos></app-game-infos>
-    <div class="mt-4 mb-2 rounded-lg bg-[#233f74] p-3 text-center text-white">
-        <app-turn-status [data]="turnStatusData" (endTurnRequested)="endTurn()"></app-turn-status>
-    </div>
-    <div class="flex grow gap-4">
-        <div class="flex flex-col basis-3/4 grow gap-4">
-            <div class="flex bg-[#233f74] rounded-lg p-4">
-                <app-player-info></app-player-info>
-            </div>
-            <div class="bg-[#233f74] rounded-lg grow">
-                <app-game></app-game>
-            </div>
+<div class="content">
+    @if (isLoading()) {
+        <div class="flex flex-1 justify-center items-center">
+            <app-loading-overlay
+                loadingText="Chargement de la partie..."
+                class="flex flex-col gap-8 items-center justify-center"
+            ></app-loading-overlay>
         </div>
-        <div class="flex flex-col justify-between basis-1/4 p-4 bg-[#233f74] rounded-lg">
-            <div>
-                <app-player-list></app-player-list>
-            </div>
-            <div>
-                <app-journal></app-journal>
-            </div>
+
+        <div class="absolute left-0 bottom-4 w-full flex justify-center">
+            @if (showButton()) {
+                <button class="btn" routerLink="/home">Retour vers la vue initiale</button>
+            }
         </div>
-    </div>
+    } @else {
+        <app-nav-buttons textBack="Abandonner la partie" />
+        <app-page-title title="Vue de jeu" />
+
+        <section class="flex flex-col lg:flex-row justify-center gap-4">
+            <app-game-list-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" />
+
+            <app-game-grid-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4" />
+
+            <app-game-chat-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" />
+        </section>
+    }
 </div>
-@if (
-    isGameFinished ||
-    activeGameService.combatOutcome()?.winner === localPlayer?.name ||
-    activeGameService.combatOutcome()?.losers?.includes(localPlayer?.name ?? '') ||
-    (currentAttack && (currentAttack.attacker === localPlayer?.name || currentAttack.defender === localPlayer?.name))
-) {
-    <div class="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="w-full max-w-[520px] max-h-full overflow-y-auto flex flex-col items-center gap-4">
-            @if (isGameFinished) {
-                <app-game-ended></app-game-ended>
-            }
-
-            @if (activeGameService.combatOutcome()) {
-                <app-combat-outcome></app-combat-outcome>
-            }
-
-            @if (currentAttack) {
-                <app-combat-mode></app-combat-mode>
-            }
-        </div>
-    </div>
-}
-
-<div class="fixed bottom-6 left-6">
-    <app-game-action></app-game-action>
-</div>
-
-@if (pendingFlagQuestion) {
-    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/70">
-        <div class="w-full max-w-md rounded-lg bg-[#233f74] p-6 text-white shadow-xl">
-            <h3 class="mb-4 text-center text-xl font-semibold">Demande de drapeau</h3>
-            <p class="mb-6 text-center">{{ pendingFlagQuestion }}</p>
-            <div class="flex justify-center gap-3">
-                <button type="button" class="btn" (click)="respondToFlagRequest(false)">Refuser</button>
-                <button type="button" class="btn btn-blue" (click)="respondToFlagRequest(true)">Accepter</button>
-            </div>
-        </div>
-    </div>
-}
