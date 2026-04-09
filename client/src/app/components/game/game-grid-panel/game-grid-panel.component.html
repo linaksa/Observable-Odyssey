@@ -1,1 +1,24 @@
-<p>game-grid-panel works!</p>
+<div class="text-2xl text-white tracking-wider text-center">TODO: title and size of the game</div>
+
+<!--
+The header of this panel should look like this : "Title (M×M)" , and hovering over this should show the game's description like in @client/src/app/components/common/game-table/game-table.component.html where the tooltip is limited in x and y only by the webview (not it's direct parent)
+This panel should only contain one component : the game-grid
+
+the game grid should update in real time, showing the player moving, the door opening, the sanctuaries being used, etc. (using signals)
+to check what the logic can look like, go to the old component in @client/src/app/components/game.old/game/
+
+when 2 players are in combat, only the 2 can see everything like the stats, the buttons, the health, etc. the other players do not have this popup, they can still see the game (go check @client/src/app/components/game/game-action-panel/ to see what other players should see when 2 players are in combat)
+only this panel (game-grid-panel) should get blurred and overlayed with the combat popup when a combat is happening
+
+when a player right click on a tile (and is not able to move with debug mode), a tooltip like in @client/src/app/components/edition/grid-panel/edition-grid-panel.component.html shows up
+this tooltip should show the following:
+- the tile name
+- the tile description
+- the tile movement penality
+- the player's avatar picture if there is one
+- the player's name if there is one
+in the case there is a player on the tile, add a separator between the tile's info and the player's info. the avatar should be next to the name, while the tile's info should be on different lines.
+the objects are not part of the requirement on the tooltip
+
+when in debug mode, the player that is currently playing can teleport to an other tile when right clicking on a valid tile (no objects like sanctuaries, open door, spawn point, etc.)
+-->

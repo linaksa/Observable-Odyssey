@@ -3,9 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
-import { GameChatPanelComponent } from '@app/components/game/game-chat-panel/game-chat-panel.component';
+import { GameActionPanelComponent } from '@app/components/game/game-action-panel/game-action-panel.component';
 import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
-import { GameListPanelComponent } from '@app/components/game/game-list-panel/game-list-panel.component';
+import { GameInfoPanelComponent } from '@app/components/game/game-info-panel/game-info-panel.component';
 import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
@@ -17,9 +17,9 @@ import { Subscription } from 'rxjs';
     imports: [
         NavButtonsComponent,
         PageTitleComponent,
-        GameListPanelComponent,
+        GameActionPanelComponent,
         GameGridPanelComponent,
-        GameChatPanelComponent,
+        GameInfoPanelComponent,
         LoadingOverlayComponent,
     ],
     providers: [GameTurnService, GamePageFacadeService],

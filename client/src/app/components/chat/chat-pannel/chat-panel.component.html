@@ -1,20 +1,38 @@
 <div
-    class="bg-gray-100 flex flex-col justify-between min-w-75 h-100 rounded-sm p-2 gap-7"
+    class="flex h-full w-full min-w-0 flex-col gap-4 rounded-lg border border-transparent"
     [class.border-2]="invalidSubmission()"
     [class.border-red-500]="invalidSubmission()"
 >
-    <div class="w-full border-b border-gray-300 pb-2">
-        <p class="font-semibold text-gray-900">{{ localPlayerService.getLocalPlayer()?.name }}</p>
+    <div class="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white">
+        <p class="text-xs uppercase tracking-[0.35em] text-white/60">Joueur connecté</p>
+        <p class="text-lg font-semibold">{{ localPlayerService.getLocalPlayer()?.name }}</p>
     </div>
 
-    <div #scrollContainer class="flex flex-col w-full overflow-y-auto gap-2">
+    <div
+        #scrollContainer
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
+        aria-label="Messages du clavardage"
+        aria-live="polite"
+        role="log"
+    >
         @for (message of activeGameService.activeGame.messages; track $index) {
             <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
         }
     </div>
-    <form [formGroup]="messageForm" (ngSubmit)="onNewMessage()" class="w-full flex">
-        <input class="input w-full" type="text" formControlName="message" maxlength="200" data-chat-message-input />
 
-        <button class="btn min-w-1/10" type="submit">Envoyer</button>
+    <form [formGroup]="messageForm" (ngSubmit)="onNewMessage()" class="rounded-lg border border-white/10 bg-white/5 p-3">
+        <div class="flex items-end gap-3">
+            <input
+                class="input w-full"
+                type="text"
+                formControlName="message"
+                maxlength="200"
+                data-chat-message-input
+                placeholder="Écrire un message..."
+                aria-label="Écrire un message"
+            />
+
+            <button class="btn min-w-1/10" type="submit">Envoyer</button>
+        </div>
     </form>
 </div>

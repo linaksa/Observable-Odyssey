@@ -1,8 +1,9 @@
 <div
-    class="max-w-xs break-all h-fit p-2 rounded-lg"
-    [style.background-color]="isSelf ? 'lightblue' : 'lightgray'"
-    [ngClass]="{ 'justify-self-end': isSelf, 'justify-self-start': !isSelf }"
+    class="max-w-xs h-fit wrap-break-word rounded-lg border border-black/5 p-2 text-gray-900 shadow-sm"
+    [style.background-color]="isSelf() ? 'lightblue' : 'lightgray'"
+    [class.self-end]="isSelf()"
+    [class.self-start]="!isSelf()"
 >
-    <div>{{ message.author }} - {{ message.postedAt | date: 'HH:mm:ss' }}</div>
-    <div class="">{{ message.content }}</div>
+    <div class="text-xs font-medium tracking-wide text-gray-700">{{ message().author }} - {{ message().postedAt | date: 'HH:mm:ss' }}</div>
+    <div class="mt-1 whitespace-pre-wrap text-sm leading-5">{{ message().content }}</div>
 </div>

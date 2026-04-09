@@ -1,7 +1,7 @@
 import { Component, effect, inject, OnInit } from '@angular/core';
 import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
-import { SanctuaryPopupComponent } from '@app/components/game/sanctuary-popup/sanctuary-popup.component';
-import { TileInfoPopupComponent } from '@app/components/game/tile-info-popup/tile-info-popup.component';
+import { SanctuaryPopupComponent } from '@app/components/game.old/sanctuary-popup/sanctuary-popup.component';
+import { TileInfoPopupComponent } from '@app/components/game.old/tile-info-popup/tile-info-popup.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameInteractionService } from '@app/services/gameplay/game-interaction.service';
 import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
