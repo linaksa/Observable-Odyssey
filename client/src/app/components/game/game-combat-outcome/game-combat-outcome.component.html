@@ -1,5 +1,5 @@
 @if (visibleOutcome(); as outcome) {
-    <div class="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+    <div class="fixed inset-0 z-90 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
         <div class="w-full max-w-[340px]">
             <section class="relative overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
                 <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
@@ -7,7 +7,7 @@
 
                     <div class="flex items-center gap-2">
                         @if (debugMode()) {
-                            <div class="flex items-center gap-2 rounded-lg border-[2px] border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
+                            <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
                                 <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
                                 <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
                             </div>

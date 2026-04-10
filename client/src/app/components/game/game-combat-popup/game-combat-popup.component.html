@@ -1,5 +1,5 @@
 @if (combatActive()) {
-    <div class="absolute inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4">
+    <div class="absolute inset-0 z-1000 flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4">
         <section class="flex w-full max-w-[1440px] items-center justify-center gap-4">
             <aside class="hidden w-40 shrink-0 flex-col lg:flex">
                 <div class="combat-side-card rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 shadow-2xl" [class.invisible]="!roundOutcome()">
@@ -16,7 +16,7 @@
                     <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
                     <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
                         <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
+                        <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-6 text-center">
                             {{ combatTimeLeftDisplaySeconds() }}s
                         </span>
                     </div>
@@ -96,7 +96,7 @@
                     <div class="bg-[#0d1f42] border-2 border-[#2d5199] rounded-lg px-4 py-3">
                         <p class="text-[11px] text-[#c8dcff] leading-loose tracking-wide font-mono">
                             {{ dialogMessage }}
-                            <span class="inline-block w-[7px] h-[7px] bg-[#c8dcff] ml-1 animate-[blink_1.1s_step-end_infinite]"></span>
+                            <span class="inline-block w-[7px] h-[7px] bg-[#c8dcff] ml-1 animate-blink"></span>
                         </p>
                     </div>
 
@@ -158,7 +158,7 @@
 
                 <div class="h-[3px] bg-[#0d1f42]">
                     <div
-                        class="h-full bg-gradient-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
+                        class="h-full bg-linear-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
                         [style.width.%]="combatTimerPercent"
                     ></div>
                 </div>
