@@ -185,7 +185,7 @@ describe('GameGridPanelComponent', () => {
         const gridContainer = fixture.nativeElement.querySelector('#grid-container');
         expect(gridContainer).toBeTruthy();
         expect(gridContainer.classList.contains('overflow-hidden')).toBeTruthy();
-        expect(gridContainer.classList.contains('[container-type:size]')).toBeTruthy();
+        expect(gridContainer.classList.contains('@container-[size]')).toBeTruthy();
     });
 
     it('delegates keyboard events to interaction service', () => {
