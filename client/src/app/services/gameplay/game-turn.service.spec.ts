@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-magic-numbers -- test fixture values */
 /**
  * Testing strategy — Game Turn Service
  *
@@ -16,10 +17,10 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { Avatar, DiceType, MILLISECONDS_PER_SECOND, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
+import { Avatar, DiceType, MILLISECONDS_PER_SECOND, COMBAT_TIME_MS, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -113,8 +114,8 @@ describe('GameTurnService', () => {
         getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Bob' });
 
         expect(service.currentPlayerName).toBe('Bob');
-        expect(service.isTurnPreparing).toBeTrue();
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
+        expect(service.isTurnPreparing()).toBeTrue();
+        expect(service.turnTimeLeftSeconds()).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
 
         getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
             player: 'Alice',
@@ -123,9 +124,49 @@ describe('GameTurnService', () => {
         });
 
         expect(service.currentPlayerName).toBe('Alice');
-        expect(service.isTurnPreparing).toBeFalse();
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_TIME_MS / MILLISECONDS_PER_SECOND));
+        expect(service.isTurnPreparing()).toBeFalse();
+        expect(service.turnTimeLeftSeconds()).toBe(Math.ceil(TURN_TIME_MS / MILLISECONDS_PER_SECOND));
     });
+
+    it('should freeze the turn countdown and start combat countdown when combat begins', fakeAsync(() => {
+        service.turnTimeLeftSeconds.set(5);
+        service.initializeTurnListeners();
+
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 3),
+        });
+
+        const combatStartSeconds = Math.ceil(COMBAT_TIME_MS / MILLISECONDS_PER_SECOND);
+
+        expect(service.isCombatActive()).toBeTrue();
+        expect(service.combatTimeLeftSeconds()).toBe(combatStartSeconds);
+
+        tick(COMBAT_TIME_MS + MILLISECONDS_PER_SECOND);
+
+        expect(service.turnTimeLeftSeconds()).toBe(5);
+        expect(service.combatTimeLeftSeconds()).toBeNull();
+        expect(service.canEndTurn).toBeFalse();
+        service.destroy();
+    }));
+
+    it('should clear the combat countdown when combat resolves', fakeAsync(() => {
+        service.initializeTurnListeners();
+
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 2),
+        });
+
+        getEventStream<IActiveGame>(SocketEvent.CombatResolved).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: null,
+        });
+
+        expect(service.isCombatActive()).toBeFalse();
+        expect(service.combatTimeLeftSeconds()).toBeNull();
+        service.destroy();
+    }));
 
     it('should ignore turn sync when active game has no turn order', () => {
         activeGameServiceStub.activeGame = {
@@ -218,11 +259,11 @@ describe('GameTurnService', () => {
         service.initializeTurnListeners();
 
         getEventStream<{ player: string }>(SocketEvent.TurnPreparing).next({ player: 'Alice' });
-        expect(service.turnTimeLeftSeconds).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
+        expect(service.turnTimeLeftSeconds()).toBe(Math.ceil(TURN_PREPARATION_TIME_MS / MILLISECONDS_PER_SECOND));
 
         tick(TURN_PREPARATION_TIME_MS + MILLISECONDS_PER_SECOND);
 
-        expect(service.turnTimeLeftSeconds).toBe(0);
+        expect(service.turnTimeLeftSeconds()).toBe(0);
     }));
 
     // Edge case: When listeners are destroyed, subsequent socket events should no longer mutate turn state.
@@ -303,5 +344,16 @@ function createCharacter(name: string): ICharacter {
         totalDamageDealt: 0,
         totalDamageReceived: 0,
         visitedCells: [],
+    };
+}
+
+function createAttack(attacker: string, defender: string, suspendedTurnTimer: number): ICurrentAttack {
+    return {
+        attacker,
+        defender,
+        attackerPosture: null,
+        defenderPosture: null,
+        turnCount: 1,
+        suspendedTurnTimer,
     };
 }

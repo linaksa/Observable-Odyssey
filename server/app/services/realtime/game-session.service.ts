@@ -73,6 +73,15 @@ export class GameSessionService {
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const player = activeGame.players.find((p) => p.name === playerId);
+        if (!player) {
+            return;
+        }
+
         const currentAttack = activeGame.currentAttack;
         if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
             const combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
@@ -139,28 +148,7 @@ export class GameSessionService {
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
         const { gameId, playerId } = data;
-        await this.endGameService.handlePlayerAbandon(playerId, gameId);
-        emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
-
-        const updatedGame = await this.activeGameService.getActiveGameById(gameId);
-        await this.disableDebugModeIfOrganizerLeft(gameId, playerId, updatedGame, namespace, emitGameLog);
-
-        const playerAbandonned: IPlayerAbandonnedGame = {
-            playerName: playerId,
-            activeGame: updatedGame,
-        };
-
-        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonned);
-        const gameEnded = await this.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
-            emitGameLog(
-                gameId,
-                `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(updatedGame)}.`,
-            );
-            // await this.activeGameService.deleteGameById(gameId);
-        }
-
+        await this.handleActiveGameDisconnect(gameId, playerId, namespace, emitGameLog);
         this.unregisterSocketFromGame(socket, gameId);
     }
 

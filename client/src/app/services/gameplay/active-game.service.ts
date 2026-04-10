@@ -38,6 +38,10 @@ interface PendingFlagRequest {
     question: string;
 }
 
+interface ToggleSignalRef {
+    update(updater: (current: boolean) => boolean): void;
+}
+
 @Injectable({
     providedIn: 'root',
 })
@@ -93,7 +97,7 @@ export class ActiveGameService implements OnDestroy {
         );
     }
 
-    private toggle(signalRef: { update: (updater: (current: boolean) => boolean) => void }): void {
+    private toggle(signalRef: ToggleSignalRef): void {
         signalRef.update((current) => !current);
     }
 
@@ -129,6 +133,7 @@ export class ActiveGameService implements OnDestroy {
                     this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
                     this.removeUnusedSpawnPoints();
+                    this.hasChangedLocation.update((current) => !current);
 
                     this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
                 },
@@ -216,6 +221,7 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.syncTurnOrderWithPlayers();
+        this.hasChangedLocation.update((current) => !current);
     }
 
     private syncTurnOrderWithPlayers(): void {

@@ -1,6 +1,12 @@
 import { AfterViewChecked, Component, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TextMessageComponent } from '@app/components/chat/text-message/text-message.component';
+import {
+    CHAT_PANEL_AUTO_SCROLL_BOUNDARY_PX,
+    CHAT_PANEL_INVALID_SUBMISSION_FEEDBACK_DURATION_MS,
+    CHAT_PANEL_MAX_MESSAGE_LENGTH,
+    CHAT_PANEL_MIN_MESSAGE_LENGTH,
+} from '@app/constants/chat';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ChatService } from '@app/services/realtime/chat.service';
@@ -11,14 +17,10 @@ import { ChatService } from '@app/services/realtime/chat.service';
     templateUrl: './chat-panel.component.html',
 })
 export class ChatPanelComponent implements AfterViewChecked {
-    private readonly autoScrollBoundary = 80;
-    private readonly maxMessageLength = 200;
-    private readonly minMessageLength = 1;
-    private readonly invalidSubmissionFeedbackDuration = 2000;
-
     private readonly chatService = inject(ChatService);
     protected readonly activeGameService = inject(ActiveGameService);
     protected readonly localPlayerService = inject(LocalPlayerService);
+    protected readonly maxMessageLength = CHAT_PANEL_MAX_MESSAGE_LENGTH;
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
@@ -31,9 +33,9 @@ export class ChatPanelComponent implements AfterViewChecked {
                 '',
                 [
                     Validators.required,
-                    Validators.maxLength(this.maxMessageLength),
+                    Validators.maxLength(CHAT_PANEL_MAX_MESSAGE_LENGTH),
                     (control: AbstractControl) => {
-                        return control.value?.trim().length >= this.minMessageLength ? null : { whitespace: true };
+                        return control.value?.trim().length >= CHAT_PANEL_MIN_MESSAGE_LENGTH ? null : { whitespace: true };
                     },
                 ],
             ],
@@ -49,7 +51,7 @@ export class ChatPanelComponent implements AfterViewChecked {
     onNewMessage() {
         if (this.messageForm.invalid) {
             this.invalidSubmission.set(true);
-            setTimeout(() => this.invalidSubmission.set(false), this.invalidSubmissionFeedbackDuration);
+            setTimeout(() => this.invalidSubmission.set(false), CHAT_PANEL_INVALID_SUBMISSION_FEEDBACK_DURATION_MS);
             return;
         }
 
@@ -71,7 +73,7 @@ export class ChatPanelComponent implements AfterViewChecked {
     private scrollToBottom() {
         const el = this.scrollContainer.nativeElement;
 
-        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < this.autoScrollBoundary;
+        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < CHAT_PANEL_AUTO_SCROLL_BOUNDARY_PX;
 
         if (isNearBottom) {
             el.scrollTop = el.scrollHeight;

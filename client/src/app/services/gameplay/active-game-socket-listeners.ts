@@ -18,6 +18,22 @@ interface BooleanSignal {
     update(updater: (current: boolean) => boolean): void;
 }
 
+interface TurnPreparingPayload {
+    player: string;
+}
+
+interface PlayerIdPayload {
+    playerId: string;
+}
+
+interface WinnerPayload {
+    winner: string;
+}
+
+interface FlagPickedUpPayload {
+    playerName: string;
+}
+
 export interface ActiveGameSocketContext {
     socket: SocketService;
     localPlayer: LocalPlayerService;
@@ -55,7 +71,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
+        context.socket.on<TurnPreparingPayload>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -181,16 +197,13 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
-            context.setActiveGame(data.activeGame);
-
-            const player = context.getPlayerByName(data.playerName);
-            if (!player) return;
-
-            player.hasAbandoned = true;
-
+            context.setActiveGame({
+                ...data.activeGame,
+                players: data.activeGame.players.map((player) => (player.name === data.playerName ? { ...player, hasAbandoned: true } : player)),
+            });
             toggle(context.hasAbandonned);
         }),
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
+        context.socket.on<PlayerIdPayload>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -207,7 +220,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.toastService.show('Vous avez été expulsé de la partie');
             context.router.navigate(['/']);
         }),
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
+        context.socket.on<PlayerIdPayload>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -217,8 +230,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!player) return;
 
             activeGame.players = activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+            toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
+        context.socket.on<WinnerPayload>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -229,7 +243,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             toggle(context.gameHasEnded);
         }),
-        context.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
+        context.socket.on<WinnerPayload>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
             context.localPlayer.clear();
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
@@ -239,7 +253,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.setRoundOutcome(roundCombatOutcome);
         }),
 
-        context.socket.on<{ playerName: string }>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
+        context.socket.on<FlagPickedUpPayload>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;

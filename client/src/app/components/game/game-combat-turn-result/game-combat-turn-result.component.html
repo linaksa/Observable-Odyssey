@@ -1,0 +1,79 @@
+<div class="rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 text-[#a8c8ff] shadow-inner">
+    <p class="mb-2 text-center text-[9px] font-bold uppercase tracking-[0.2em] text-[#6b9ed4]">{{ label() }}</p>
+
+    <div class="space-y-1 text-[10px] font-mono tabular-nums">
+        <div class="flex justify-between gap-4">
+            <span>Base</span>
+            <span>+{{ turnStats().baseAttackPoints }}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+            <span>Dés</span>
+            <span>{{ turnStats().attackDiceBonus }}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+            <span>Posture</span>
+            <span>{{ turnStats().postureAttackBonus }}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+            <span>Sanctuaire</span>
+            <span>{{ turnStats().fightSanctuaryBonus || 0 }}</span>
+        </div>
+        <div class="flex justify-between gap-4 text-white">
+            <span>Glace</span>
+            <span>{{ turnStats().attackIceMalus }}</span>
+        </div>
+
+        <div class="my-1 border-t border-[#2d5199]"></div>
+
+        <div class="flex justify-between gap-4 font-bold text-white">
+            <span>Total ATK</span>
+            <span>{{ turnStats().totalAttackPoints }}</span>
+        </div>
+
+        <div class="my-1 border-t border-[#2d5199]"></div>
+
+        <div class="text-[8px] font-semibold uppercase">Défense</div>
+
+        <div class="flex justify-between gap-4">
+            <span>Base</span>
+            <span>+{{ turnStats().baseDefensePoints }}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+            <span>Dés</span>
+            <span>{{ turnStats().defenseDiceBonus }}</span>
+        </div>
+        <div class="flex justify-between gap-4">
+            <span>Posture</span>
+            <span>{{ turnStats().postureDefenseBonus }}</span>
+        </div>
+        <div class="flex justify-between gap-4 text-white">
+            <span>Glace</span>
+            <span>{{ turnStats().defenseIceMalus }}</span>
+        </div>
+
+        <div class="my-1 border-t border-[#2d5199]"></div>
+
+        <div class="flex justify-between gap-4 font-bold text-white">
+            <span>Total DEF</span>
+            <span>{{ turnStats().totalDefensePoints }}</span>
+        </div>
+
+        <div class="my-2 border-t border-[#2d5199]"></div>
+
+        <div class="flex justify-between gap-4 text-[#c8dcff]">
+            <span>ATK adverse</span>
+            <span>{{ turnStats().totalAttackPoints }}</span>
+        </div>
+        <div class="flex justify-between gap-4 text-[#c8dcff]">
+            <span>Total DEF</span>
+            <span>{{ turnStats().totalDefensePoints }}</span>
+        </div>
+
+        <div class="my-1 border-t border-[#2d5199]"></div>
+
+        <div class="flex justify-between gap-4 font-bold text-red-400">
+            <span>Dégâts subis</span>
+            <span>{{ receivedDamage() }}</span>
+        </div>
+    </div>
+</div>

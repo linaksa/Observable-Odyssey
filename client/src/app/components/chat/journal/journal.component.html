@@ -1,61 +1,32 @@
-<div class="flex min-h-0 min-w-0 flex-col gap-4 rounded-lg bg-[#233f74] p-4 text-white">
-    <div class="flex gap-2">
-        <button
-            type="button"
-            class="btn flex-1"
-            [class.bg-white]="activeTab === journalTab.Chat"
-            [class.text-black]="activeTab === journalTab.Chat"
-            [class.shadow-md]="activeTab === journalTab.Chat"
-            (click)="setActiveTab(journalTab.Chat)"
-        >
-            {{ journalTabLabels[journalTab.Chat] }}
-        </button>
-        <button
-            type="button"
-            class="btn flex-1"
-            [class.bg-white]="activeTab === journalTab.Journal"
-            [class.text-black]="activeTab === journalTab.Journal"
-            [class.shadow-md]="activeTab === journalTab.Journal"
-            (click)="setActiveTab(journalTab.Journal)"
-        >
-            {{ journalTabLabels[journalTab.Journal] }}
-        </button>
+<div class="flex h-full min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-black/10 p-3">
+    <div class="flex items-center justify-between gap-3 text-white">
+        <div>
+            <p class="text-xs uppercase tracking-[0.35em] text-white/60">Journal de partie</p>
+            <p class="text-lg font-semibold">Historique</p>
+        </div>
+
+        <span class="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-xs tracking-[0.25em] text-white/60">
+            {{ gameLogs.length }}
+        </span>
     </div>
 
-    @if (activeTab === journalTab.Chat) {
-        <app-chat-panel class="flex min-h-0 flex-1"></app-chat-panel>
-    } @else {
-        <div class="flex min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-white/5 p-4">
-            <div class="flex items-center justify-between gap-3 text-white">
-                <div>
-                    <p class="text-xs uppercase tracking-[0.35em] text-white/60">Journal de partie</p>
-                    <p class="text-lg font-semibold">Historique</p>
-                </div>
-
-                <span class="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-xs tracking-[0.25em] text-white/60">
-                    {{ gameLogs.length }}
-                </span>
+    <div
+        #journalScrollContainer
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3"
+        aria-label="Journal de partie"
+        aria-live="polite"
+        role="log"
+    >
+        @if (gameLogs.length === 0) {
+            <div class="rounded-lg border border-dashed border-white/10 bg-white/5 p-3 text-sm text-white/60">
+                {{ journalEmptyMessage }}
             </div>
-
-            <div
-                #journalScrollContainer
-                class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
-                aria-label="Journal de partie"
-                aria-live="polite"
-                role="log"
-            >
-                @if (gameLogs.length === 0) {
-                    <div class="rounded-lg border border-dashed border-white/10 bg-white/5 p-3 text-sm text-white/60">
-                        {{ journalEmptyMessage }}
-                    </div>
-                }
-                @for (log of gameLogs; track $index) {
-                    <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white shadow-sm">
-                        <div class="text-xs uppercase tracking-wide text-white/60">{{ log.postedAt | date: journalDateFormat }}</div>
-                        <div class="mt-1 whitespace-pre-wrap leading-5">{{ log.message }}</div>
-                    </div>
-                }
+        }
+        @for (log of gameLogs; track $index) {
+            <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white shadow-sm">
+                <div class="text-xs uppercase tracking-wide text-white/60">{{ log.postedAt | date: journalDateFormat }}</div>
+                <div class="mt-1 whitespace-pre-wrap leading-5">{{ log.message }}</div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>

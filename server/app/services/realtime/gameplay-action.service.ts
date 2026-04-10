@@ -34,6 +34,7 @@ import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { CtfFlagActionService, PendingFlagRequest } from './ctf-flag-action.service';
 import { GameSessionService } from './game-session.service';
+import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 
 @Service()
 export class GameplayActionService {
@@ -50,6 +51,7 @@ export class GameplayActionService {
         private readonly activeGameService: ActiveGameService,
         private readonly actionService: ActionService,
         private readonly ctfFlagActionService: CtfFlagActionService,
+        private readonly virtualPlayerTurnFinalizerService: VirtualPlayerTurnFinalizerService,
     ) {}
     async handleEndTurn(gameId: string): Promise<void> {
         this.pendingFlagRequestsByGameId.delete(gameId);
@@ -429,6 +431,10 @@ export class GameplayActionService {
 
         const attackerIsVirtual = activeGame.players.find((player) => player.name === attackerName)?.virtualPlayerProfile;
         if (attackerIsVirtual) {
+            if (this.virtualPlayerTurnFinalizerService.isTurnInProgress(gameId)) {
+                return;
+            }
+
             await this.turnService.endTurn(gameId);
             return;
         }

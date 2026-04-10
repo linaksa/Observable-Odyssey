@@ -1,23 +1,42 @@
-<div class="text-2xl text-white tracking-wider text-center">Informations</div>
+<div class="flex h-full min-h-0 flex-col gap-4 text-white">
+    <div class="flex min-h-0 flex-1 basis-1/2 flex-col rounded-lg border border-white/10 bg-white/5 p-3">
+        <app-game-player-list class="min-h-0 flex-1" />
+    </div>
 
-<!--
-List of all the players including the current one, showing for each those infos about them:
-- Avatar picture
-- Player name
-- Role, if applicable (Organisateur or Joueur virtuel)
-- Highlighted if it is its turn
-- It's health and number of victories
+    <div class="flex min-h-0 flex-1 basis-1/2 flex-col gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+        <div class="flex gap-2" role="tablist" aria-label="Panneaux d'information de partie">
+            <button
+                type="button"
+                class="btn flex-1"
+                [class.bg-white]="activeTab() === journalTab.Chat"
+                [class.text-black]="activeTab() === journalTab.Chat"
+                [attr.aria-selected]="activeTab() === journalTab.Chat"
+                [attr.aria-pressed]="activeTab() === journalTab.Chat"
+                role="tab"
+                (click)="setActiveTab(journalTab.Chat)"
+            >
+                {{ journalTabLabels[journalTab.Chat] }}
+            </button>
+            <button
+                type="button"
+                class="btn flex-1"
+                [class.bg-white]="activeTab() === journalTab.Journal"
+                [class.text-black]="activeTab() === journalTab.Journal"
+                [attr.aria-selected]="activeTab() === journalTab.Journal"
+                [attr.aria-pressed]="activeTab() === journalTab.Journal"
+                role="tab"
+                (click)="setActiveTab(journalTab.Journal)"
+            >
+                {{ journalTabLabels[journalTab.Journal] }}
+            </button>
+        </div>
 
-Each player card should be compact, so to make space for as many card as possible without having to scroll
-If vertical space is in short supply, the list should be able to scroll and not overflow onto the bottom
-This list should be arrange by order of who plays first to who plays last
-The list should take half of the available height
-The list should have a text somewhere indicating how many remaining players are in the game (when a player give up the game, it's player card should stay but grayed out or something to show it isn't in the game anymore, then the counter should decrease)
--->
-
-<!--
-This component should take the other bottom half of the available height
-This component should include 2 buttons at the top to switch between the chat-panel and the journal component
-For the remaining space, this component should display either the game chat or the journal, which one is selected by the buttons at the top
-both chat and journal are already defined in @client/src/app/components/chat/chat-panel/ and @client/src/app/components/chat/journal/ respectively
--->
+        <div class="min-h-0 flex-1">
+            @if (activeTab() === journalTab.Chat) {
+                <app-chat-panel class="flex h-full min-h-0 flex-1" />
+            } @else {
+                <app-journal class="flex h-full min-h-0 flex-1" />
+            }
+        </div>
+    </div>
+</div>

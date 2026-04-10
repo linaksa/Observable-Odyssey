@@ -17,7 +17,7 @@ import { ActiveGameSocketContext, registerActiveGameSocketListeners } from '@app
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -145,7 +145,7 @@ describe('registerActiveGameSocketListeners', () => {
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Bob' });
         expect(activeGame?.players.map((player) => player.name)).toEqual(['Alice']);
-        expect(hasChangedLocation()).toBeTrue();
+        expect(hasChangedLocation()).toBeFalse();
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Alice' });
         expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
@@ -156,6 +156,20 @@ describe('registerActiveGameSocketListeners', () => {
         expect(localPlayerServiceSpy.clear).toHaveBeenCalledTimes(2);
         expect(toastServiceSpy.show).toHaveBeenCalledWith("L'organiseur a annulé la partie.");
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
+    });
+
+    it('should keep abandoned players in the roster and refresh abandon state', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob'), createCharacter('Carol')], 'Alice');
+        registerActiveGameSocketListeners(context());
+
+        emitEvent<IPlayerAbandonnedGame>(SocketEvent.PlayerAbandoned, {
+            playerName: 'Bob',
+            activeGame,
+        });
+
+        expect(activeGame?.players.map((player) => player.name)).toEqual(['Alice', 'Bob', 'Carol']);
+        expect(activeGame?.players[1].hasAbandoned).toBeTrue();
+        expect(hasAbandonned()).toBeTrue();
     });
 
     it('should keep sanctuary cooldown state synchronized from the socket events', () => {

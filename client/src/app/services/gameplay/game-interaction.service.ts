@@ -200,6 +200,8 @@ export class GameInteractionService {
             return false;
         }
 
-        return Boolean(target.closest('#grid-container, app-sanctuary-popup, app-tile-info-popup'));
+        return Boolean(
+            target.closest('#grid-container, app-sanctuary-popup, app-tile-info-popup, app-game-sanctuary-popup, app-game-tile-inspection-popup'),
+        );
     }
 }

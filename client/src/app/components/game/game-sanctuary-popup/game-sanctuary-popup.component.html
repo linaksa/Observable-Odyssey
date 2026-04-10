@@ -1,0 +1,38 @@
+@if (data().visible) {
+    <aside
+        class="absolute left-1/2 top-1/2 z-50 w-80 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#4a7fd4] bg-[#0f1528] p-4 text-white/85 shadow-2xl"
+        (click)="$event.stopPropagation()"
+        (contextmenu)="$event.preventDefault(); $event.stopPropagation()"
+    >
+        <h4 class="text-base font-semibold tracking-wide">{{ data().title }}</h4>
+        <p class="mt-1 text-sm text-white/70">{{ data().description }}</p>
+        <p class="mt-2 text-sm"><span class="font-medium">Effet :</span> {{ data().effectLabel }}</p>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+            <button
+                type="button"
+                class="rounded-md border border-emerald-700 bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+                data-testid="sanctuary-standard-choice"
+                (click)="choiceSelected.emit('standard')"
+            >
+                1x (100%)
+            </button>
+            <button
+                type="button"
+                class="rounded-md border border-amber-700 bg-amber-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-amber-700"
+                data-testid="sanctuary-double-choice"
+                (click)="choiceSelected.emit('double')"
+            >
+                2x (50%)
+            </button>
+            <button
+                type="button"
+                class="rounded-md border border-gray-400 bg-gray-200 px-3 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-300"
+                data-testid="sanctuary-cancel-choice"
+                (click)="cancel.emit()"
+            >
+                Annuler
+            </button>
+        </div>
+    </aside>
+}

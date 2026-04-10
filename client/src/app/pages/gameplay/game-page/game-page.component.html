@@ -16,7 +16,6 @@
         <app-nav-buttons textBack="Abandonner la partie" />
         <app-page-title title="Vue de jeu" />
 
-        <!-- TODO: make it so the panel's height is filling the height of the webview when the webview is larger than 'lg:' -->
         <section class="flex flex-col lg:flex-row justify-center gap-4">
             <app-game-action-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" />
 
@@ -24,5 +23,9 @@
 
             <app-game-info-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" />
         </section>
+
+        @if (isGameFinished) {
+            <app-game-ended />
+        }
     }
 </div>

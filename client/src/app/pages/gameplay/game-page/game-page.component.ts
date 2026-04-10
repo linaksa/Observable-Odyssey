@@ -1,9 +1,12 @@
-import { Component, HostListener, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { GAME_PAGE_HOST_BINDINGS } from '@app/constants/component-host-bindings';
+import { GAME_PAGE_RETURN_BUTTON_DELAY_MS } from '@app/constants/gameplay';
 import { GameActionPanelComponent } from '@app/components/game/game-action-panel/game-action-panel.component';
+import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
 import { GameInfoPanelComponent } from '@app/components/game/game-info-panel/game-info-panel.component';
 import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
@@ -20,59 +23,45 @@ import { Subscription } from 'rxjs';
         GameActionPanelComponent,
         GameGridPanelComponent,
         GameInfoPanelComponent,
+        GameEndedComponent,
         LoadingOverlayComponent,
     ],
     providers: [GameTurnService, GamePageFacadeService],
     templateUrl: './game-page.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: GAME_PAGE_HOST_BINDINGS,
 })
 export class GamePageComponent implements OnInit, OnDestroy {
-    // TODO: write the new game-page with component from @client/src/app/components/game/
-
-    protected readonly showButton: WritableSignal<boolean> = signal(false);
-    protected readonly isLoading: WritableSignal<boolean> = signal(false);
-
-    private readonly timeout: number = 3000;
-    private buttonTimeoutId?: ReturnType<typeof setTimeout>;
-
-    ngOnInit(): void {
-        this.isLoading.set(true);
-
-        this.initializeButtonTimeout();
-        // loading the data for the page
-
-        this.isLoading.set(false);
-    }
-
-    ngOnDestroy(): void {
-        // unsubscribe
-
-        if (this.buttonTimeoutId) {
-            clearTimeout(this.buttonTimeoutId);
-        }
-    }
-
-    private initializeButtonTimeout(): void {
-        this.buttonTimeoutId = setTimeout(() => {
-            this.showButton.set(true);
-        }, this.timeout);
-    }
-
-    // the following is for reference only, this is the old implementation
-    // for the old implementation of the front-end, go to the @client/src/app/components/game.old/ folder
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly facade = inject(GamePageFacadeService);
+
     protected readonly activeGameService = this.facade.activeGameService;
+    protected readonly showButton: WritableSignal<boolean> = signal(false);
+    protected readonly isLoading = computed(
+        () => !this.hasAttemptedJoin() || this.activeGameService.isLoading() || !this.activeGameService.activeGame,
+    );
+
+    private readonly hasAttemptedJoin = signal(false);
+    private activeGameId?: string;
+    private hasExitedGame = false;
+    private buttonTimeoutId?: ReturnType<typeof setTimeout>;
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
-    old_ngOnInit(): void {
+    ngOnInit(): void {
+        this.facade.closeAllPopups();
+        this.initializeButtonTimeout();
         this.facade.connectDebugSocket();
+
         this.routeSubscription = this.route.params.subscribe((params) => {
             const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
             if (!activeGameId) {
                 return;
             }
 
+            this.activeGameId = activeGameId;
+            this.hasAttemptedJoin.set(true);
             this.facade.setActiveGame(activeGameId);
 
             if (!this.playersSubscription) {
@@ -90,18 +79,28 @@ export class GamePageComponent implements OnInit, OnDestroy {
         });
     }
 
-    @HostListener('window:keydown', ['$event'])
-    handleKeyDown(event: KeyboardEvent) {
+    ngOnDestroy(): void {
+        this.handlePageExit();
+        this.routeSubscription?.unsubscribe();
+        this.playersSubscription?.unsubscribe();
+        this.facade.destroyTurnService();
+
+        if (this.buttonTimeoutId) {
+            clearTimeout(this.buttonTimeoutId);
+        }
+    }
+
+    handleKeyDown(event: KeyboardEvent): void {
         if (isTypingInChatMessageInput(event)) return;
         if (event.key.toLowerCase() === 'm') {
             this.facade.emitDebugToggle();
         }
     }
 
-    old_ngOnDestroy(): void {
-        this.routeSubscription?.unsubscribe();
-        this.playersSubscription?.unsubscribe();
-        this.facade.destroyTurnService();
+    private initializeButtonTimeout(): void {
+        this.buttonTimeoutId = setTimeout(() => {
+            this.showButton.set(true);
+        }, GAME_PAGE_RETURN_BUTTON_DELAY_MS);
     }
 
     get currentAttack() {
@@ -146,5 +145,26 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
     respondToFlagRequest(accepted: boolean): void {
         this.facade.respondToFlagRequest(accepted);
+    }
+
+    abandonGame(): void {
+        this.handlePageExit();
+        void this.router.navigate(['/home']);
+    }
+
+    handlePageExit(): void {
+        if (this.hasExitedGame || !this.hasAttemptedJoin() || this.isGameFinished) {
+            return;
+        }
+
+        const localPlayer = this.localPlayer;
+        const activeGameId = this.activeGameId ?? this.activeGameService.activeGame?._id;
+
+        if (!localPlayer || !activeGameId) {
+            return;
+        }
+
+        this.hasExitedGame = true;
+        this.facade.abandonGame();
     }
 }

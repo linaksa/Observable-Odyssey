@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
@@ -17,6 +18,7 @@ export class GamePageFacadeService {
     private readonly debugSocketService = inject(DebugSocketService);
     private readonly socketService = inject(SocketService);
     readonly activeGameService = inject(ActiveGameService);
+    private readonly popupStateService = inject(GamePopupStateService);
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly gameTurnService = inject(GameTurnService);
 
@@ -29,11 +31,11 @@ export class GamePageFacadeService {
     }
 
     get turnTimeLeftSeconds(): number | null {
-        return this.gameTurnService.turnTimeLeftSeconds;
+        return this.gameTurnService.turnTimeLeftSeconds();
     }
 
     get isTurnPreparing(): boolean {
-        return this.gameTurnService.isTurnPreparing;
+        return this.gameTurnService.isTurnPreparing();
     }
 
     get canEndTurn(): boolean {
@@ -41,7 +43,7 @@ export class GamePageFacadeService {
     }
 
     get isGameFinished(): boolean {
-        return this.activeGameService.activeGame.isFinished;
+        return this.activeGameService.activeGame?.isFinished ?? false;
     }
 
     get turnStatusData(): TurnStatusData {
@@ -59,6 +61,10 @@ export class GamePageFacadeService {
 
     connectDebugSocket(): void {
         this.debugSocketService.connect();
+    }
+
+    closeAllPopups(): void {
+        this.popupStateService.closeAllPopups();
     }
 
     resolveActiveGameId(routeActiveGameId?: string): string | undefined {
@@ -108,6 +114,15 @@ export class GamePageFacadeService {
 
     respondToFlagRequest(accepted: boolean): void {
         this.activeGameService.respondToFlagActionRequest(accepted);
+    }
+
+    abandonGame(): void {
+        const player = this.localPlayerService.getLocalPlayer();
+        if (!player) {
+            return;
+        }
+
+        this.activeGameService.abandonGame(player.name);
     }
 
     destroyTurnService(): void {

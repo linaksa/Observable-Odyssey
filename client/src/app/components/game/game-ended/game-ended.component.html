@@ -1,0 +1,46 @@
+@if (isFinished) {
+    <div class="fixed inset-0 z-[95] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+        <section class="w-full max-w-[420px] overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
+            <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
+                <span class="text-[9px] font-bold uppercase tracking-widest text-[#a8c8ff]">Fin de partie</span>
+
+                <span
+                    class="rounded-lg border border-[#2d5199] bg-[#0d1f42] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#6b9ed4]"
+                >
+                    Redirection
+                </span>
+            </header>
+
+            <div class="flex flex-col items-center gap-4 p-6">
+                @if (winner) {
+                    <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#3d9e32] bg-[#2a4a1a]">
+                        <img src="assets/outcome-assets/crown.gif" alt="Victoire" class="h-14 w-14 object-contain" />
+                    </div>
+
+                    <div class="text-center">
+                        <div class="mb-1 text-2xl font-bold tracking-wide text-[#80ef74]">Partie terminée</div>
+                        <div class="text-sm text-[#a8c8ff]">Le gagnant est :</div>
+                        <div class="mt-2 rounded-xl border-[1.5px] border-[#2d5199] bg-[#0d1f42] px-4 py-3 text-lg font-bold text-[#e8f0ff]">
+                            {{ winner }}
+                        </div>
+                    </div>
+                } @else {
+                    <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#c8a800] bg-[#3a2e00]">
+                        <img src="assets/outcome-assets/handshake.gif" alt="Aucun gagnant" class="h-14 w-14 object-contain" />
+                    </div>
+
+                    <div class="text-center">
+                        <div class="mb-1 text-2xl font-bold tracking-wide text-[#ffd84d]">Partie terminée</div>
+                        <div class="text-sm text-[#a8c8ff]">Pas de gagnant clair. Tous les joueurs ont abandonnés</div>
+                    </div>
+                }
+
+                <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42] p-1">
+                    <div class="h-full rounded-full animate-[timer-drain_5s_linear_forwards] bg-[#3d9e32]"></div>
+                </div>
+
+                <p class="text-[10px] uppercase tracking-[0.24em] text-[#8fb7ff]">Redirection automatique vers les statistiques de fin de partie</p>
+            </div>
+        </section>
+    </div>
+}

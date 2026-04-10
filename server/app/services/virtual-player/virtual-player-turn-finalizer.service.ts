@@ -8,12 +8,26 @@ import { Service } from 'typedi';
 
 @Service()
 export class VirtualPlayerTurnFinalizerService {
+    private readonly activeTurnGameIds = new Set<string>();
+
     constructor(
         private readonly endGameService: EndGameService,
         private readonly activeGameService: ActiveGameService,
         private readonly socketService: SocketService,
         private readonly turnService: TurnService,
     ) {}
+
+    beginTurn(gameId: string): void {
+        this.activeTurnGameIds.add(gameId);
+    }
+
+    finishTurn(gameId: string): void {
+        this.activeTurnGameIds.delete(gameId);
+    }
+
+    isTurnInProgress(gameId: string): boolean {
+        return this.activeTurnGameIds.has(gameId);
+    }
 
     async finalizeTurn(gameId: string): Promise<void> {
         const gameEnded = await this.endGameService.checkEndGame(gameId);

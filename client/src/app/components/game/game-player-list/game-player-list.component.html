@@ -1,0 +1,58 @@
+<div class="flex h-full min-h-0 flex-col gap-3">
+    <div class="flex items-center justify-between gap-2">
+        <h3 class="text-sm uppercase tracking-[0.28em] text-white/70">Joueurs</h3>
+        <span class="rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs tracking-[0.2em]">{{ playerCountLabel() }}</span>
+    </div>
+
+    <div class="min-h-0 flex-1 overflow-y-auto" role="list" aria-label="Ordre des joueurs">
+        <div class="flex flex-col gap-2">
+            @for (player of orderedPlayers(); track player.name) {
+                <article
+                    role="listitem"
+                    class="flex items-center gap-2 rounded-md border px-2 py-1.5 transition-colors"
+                    [class.border-red-500]="isCurrentTurn(player.name)"
+                    [class.bg-red-500/10]="isCurrentTurn(player.name)"
+                    [class.border-white/10]="!isCurrentTurn(player.name)"
+                    [class.bg-white/5]="!isCurrentTurn(player.name)"
+                    [class.opacity-50]="player.hasAbandoned"
+                    [class.line-through]="player.hasAbandoned"
+                >
+                    <img
+                        [ngSrc]="buildPlayerAvatarUrl(player.avatar)"
+                        [alt]="'Avatar de ' + player.name"
+                        width="32"
+                        height="32"
+                        class="h-8 w-8 rounded-full object-cover [image-rendering:pixelated]"
+                    />
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 overflow-hidden">
+                            <span class="truncate text-sm font-semibold" [style.color]="playerNameColor(player)">{{ player.name }}</span>
+                            @if (isOrganizer(player.name)) {
+                                <span class="rounded-md bg-yellow-300 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-black"
+                                    >Organisateur</span
+                                >
+                            } @else if (player.virtualPlayerProfile) {
+                                <span class="rounded-md bg-emerald-300 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-black"
+                                    >Joueur virtuel</span
+                                >
+                            }
+                            @if (hasFlag(player)) {
+                                <img
+                                    ngSrc="./assets/objects/flag.png"
+                                    alt="Porteur du drapeau"
+                                    width="14"
+                                    height="14"
+                                    class="h-3.5 w-3.5 [image-rendering:pixelated]"
+                                />
+                            }
+                        </div>
+                        <div class="text-xs text-white/70">
+                            {{ player.currentHealth }} PV · {{ player.victories }} victoire{{ player.victories > 1 ? 's' : '' }}
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+</div>

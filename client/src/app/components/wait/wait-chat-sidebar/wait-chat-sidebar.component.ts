@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, input, InputSignal } from '@angular/core';
-import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
+import { ChatPanelComponent } from '@app/components/chat/chat-panel/chat-panel.component';
+import { WAIT_ROOM_MIN_PLAYERS_TO_START } from '@app/constants/chat';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ICharacter } from '@common/character';
@@ -21,7 +22,7 @@ export class WaitChatSidebarComponent {
 
     get isStartDisabled(): boolean {
         const players = this.activeGameService.activeGame.players;
-        return players.length < 2;
+        return players.length < WAIT_ROOM_MIN_PLAYERS_TO_START;
     }
 
     get canStartGame(): boolean {
