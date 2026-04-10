@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
@@ -133,7 +134,13 @@ export class GameplayActionService {
         }
     }
 
-    async combatManager(gameId: string, attackerName: string, defenderName: string, namespace: Namespace): Promise<void> {
+    async combatManager(gameId: string, attackerName: string, defenderName: string, socket: Socket | null, namespace: Namespace): Promise<void> {
+        const allowed = await this.actionService.canUseAction(gameId, attackerName, defenderName);
+        if (!allowed) {
+            socket?.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
+            return;
+        }
+
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
         this.turnService.suspendTurn(gameId);
@@ -168,7 +175,7 @@ export class GameplayActionService {
         if (handledAsFlagAction) {
             return;
         }
-        await this.combatManager(gameId, currentPlayerName, targetName, namespace);
+        await this.combatManager(gameId, currentPlayerName, targetName, socket, namespace);
     }
 
     async handleFlagTaken(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
