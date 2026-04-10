@@ -1,18 +1,15 @@
-<div class="flex h-full min-h-0 flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-black/10 p-3">
-    <div class="flex items-center justify-between gap-3 text-white">
-        <div>
-            <p class="text-xs uppercase tracking-[0.35em] text-white/60">Journal de partie</p>
-            <p class="text-lg font-semibold">Historique</p>
-        </div>
-
-        <span class="rounded-full border border-white/10 bg-black/10 px-3 py-1 text-xs tracking-[0.25em] text-white/60">
-            {{ gameLogs.length }}
-        </span>
+<div
+    class="flex h-120 min-h-120 max-h-120 w-full min-w-0 flex-col gap-4 overflow-hidden rounded-lg border border-transparent text-white lg:h-full lg:min-h-0 lg:max-h-none"
+>
+    <div class="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white">
+        <p class="text-xs uppercase tracking-widest text-white/60">Journal de partie · {{ gameLogs.length }} logs</p>
+        <p class="text-lg font-semibold tracking-wider">Historique</p>
     </div>
 
     <div
         #journalScrollContainer
-        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-3"
+        (scroll)="onScroll()"
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
         aria-label="Journal de partie"
         aria-live="polite"
         role="log"

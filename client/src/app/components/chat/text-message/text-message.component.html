@@ -1,9 +1,14 @@
-<div
-    class="max-w-xs h-fit wrap-break-word rounded-lg border border-black/5 p-2 text-gray-900 shadow-sm"
-    [style.background-color]="isSelf() ? 'lightblue' : 'lightgray'"
-    [class.self-end]="isSelf()"
-    [class.self-start]="!isSelf()"
->
-    <div class="text-xs font-medium tracking-wide text-gray-700">{{ message().author }} - {{ message().postedAt | date: 'HH:mm:ss' }}</div>
-    <div class="mt-1 whitespace-pre-wrap text-sm leading-5">{{ message().content }}</div>
+<div class="flex w-full" [class.justify-end]="isSelf()" [class.justify-start]="!isSelf()">
+    <div
+        class="h-fit w-2/3 break-words rounded-lg border border-black/5 p-2 shadow-sm"
+        [class.bg-blue-500]="isSelf()"
+        [class.text-white]="isSelf()"
+        [class.bg-gray-200]="!isSelf()"
+        [class.text-gray-900]="!isSelf()"
+    >
+        <div class="text-xs font-medium tracking-wide" [class.text-white/80]="isSelf()" [class.text-gray-700]="!isSelf()">
+            {{ message().author }} - {{ message().postedAt | date: 'HH:mm:ss' }}
+        </div>
+        <div class="mt-1 whitespace-pre-wrap text-sm leading-5">{{ message().content }}</div>
+    </div>
 </div>

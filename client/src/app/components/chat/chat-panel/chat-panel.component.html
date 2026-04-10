@@ -1,5 +1,5 @@
 <div
-    class="flex h-full w-full min-w-0 flex-col gap-4 rounded-lg border border-transparent"
+    class="flex h-120 min-h-120 max-h-120 w-full min-w-0 flex-col gap-4 overflow-hidden rounded-lg border border-transparent lg:h-full lg:min-h-0 lg:max-h-none"
     [class.border-2]="invalidSubmission()"
     [class.border-red-500]="invalidSubmission()"
 >
@@ -10,12 +10,13 @@
 
     <div
         #scrollContainer
-        class="flex min-h-36 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
+        (scroll)="onScroll()"
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
         aria-label="Messages du clavardage"
         aria-live="polite"
         role="log"
     >
-        @for (message of activeGameService.activeGame.messages; track $index) {
+        @for (message of activeGameService.chatMessages(); track $index) {
             <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
         }
     </div>
@@ -28,7 +29,7 @@
                 formControlName="message"
                 [maxlength]="maxMessageLength"
                 data-chat-message-input
-                placeholder="Aa"
+                placeholder="Message..."
                 aria-label="Écrire un message"
             />
 

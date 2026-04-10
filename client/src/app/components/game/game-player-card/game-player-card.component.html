@@ -1,0 +1,58 @@
+<article class="rounded-lg border border-[#315a9f] bg-[#10264e] p-3">
+    <div class="flex items-center gap-3">
+        @if (avatarUrl(); as avatar) {
+            <img
+                [ngSrc]="avatar"
+                width="96"
+                height="96"
+                alt="Avatar du joueur local"
+                class="size-24 rounded-lg border-2 border-[#4a7fd4] object-cover [image-rendering:pixelated]"
+            />
+        } @else {
+            <div class="size-24 rounded-lg border-2 border-[#315a9f] bg-[#1a3260]"></div>
+        }
+
+        <div class="min-w-0 flex-1">
+            <p class="text-4xl font-extrabold tracking-wide text-[#f3f7ff] wrap-anywhere">
+                {{ playerName() }}
+            </p>
+        </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-2 gap-2">
+        <div class="flex flex-col rounded-lg px-3 py-2 bg-[#a39fff]">
+            <span class="text-sm text-black tracking-wider">Santé</span>
+            <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="hp-tile-value">
+                {{ playerStatValue(player(), player()?.currentHealth) }} / {{ playerStatValue(player(), player()?.initialHealth) }}
+            </span>
+        </div>
+        <div class="flex flex-col rounded-lg px-3 py-2 bg-[#f1969a]">
+            <span class="text-sm text-black tracking-wider">Mouvements</span>
+            <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="mvt-tile-value">
+                {{ playerStatValue(player(), player()?.movementLeft) }}
+            </span>
+        </div>
+        <div class="flex flex-col rounded-lg px-3 py-2 bg-[#fdb7c5]">
+            <span class="text-sm text-black tracking-wider">Actions</span>
+            <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="act-tile-value">
+                {{ playerStatValue(player(), player()?.actionsLeft) }}
+            </span>
+        </div>
+        <div class="flex flex-col rounded-lg px-3 py-2 bg-[#cea0d9]">
+            <span class="text-sm text-black tracking-wider">Victoires</span>
+            <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="vic-tile-value">
+                {{ playerStatValue(player(), player()?.victories) }}
+            </span>
+        </div>
+    </div>
+
+    <div class="mt-2 border-t border-[#315a9f] pt-2">
+        <div class="flex flex-row gap-4 justify-between text-[#b7d0ff] text-sm">
+            <p>ATK: {{ playerStatValue(player(), player()?.attackPoints) }}</p>
+            <p>DEF: {{ playerStatValue(player(), player()?.defensePoints) }}</p>
+            <p>RAP: {{ playerStatValue(player(), player()?.rapidityPoints) }}</p>
+            <p>D-ATK: {{ diceFaceValue(player()?.attackBonusDiceType) }}</p>
+            <p>D-DEF: {{ diceFaceValue(player()?.defenseBonusDiceType) }}</p>
+        </div>
+    </div>
+</article>

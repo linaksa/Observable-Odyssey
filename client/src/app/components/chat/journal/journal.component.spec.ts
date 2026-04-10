@@ -9,7 +9,6 @@ describe('JournalComponent', () => {
     let fixture: ComponentFixture<JournalComponent>;
     const logs = signal<IGameLogPayload[]>([]);
     const gameLogServiceMock = {
-        connect: jasmine.createSpy('connect'),
         gameLogs: logs.asReadonly(),
     };
 
@@ -20,17 +19,12 @@ describe('JournalComponent', () => {
         }).compileComponents();
 
         logs.set([]);
-        gameLogServiceMock.connect.calls.reset();
         fixture = TestBed.createComponent(JournalComponent);
         fixture.detectChanges();
     });
 
     it('should create', () => {
         expect(fixture.componentInstance).toBeTruthy();
-    });
-
-    it('should connect to game logs on init', () => {
-        expect(gameLogServiceMock.connect).toHaveBeenCalled();
     });
 
     it('should display journal only content without chat tab buttons', () => {

@@ -24,3 +24,7 @@ export const GAME_ENDED_HOST_BINDINGS = {
 export const GAME_ACTION_PANEL_HOST_BINDINGS = {
     class: 'flex flex-col gap-4 min-w-0 min-h-0',
 } as const;
+
+export const GAME_INFO_PANEL_HOST_BINDINGS = {
+    class: 'min-w-0 min-h-0',
+} as const;

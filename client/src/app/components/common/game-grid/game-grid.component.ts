@@ -27,7 +27,7 @@ export type { GameGridCellEvent, PlacementPreview, TooltipPosition } from './gam
     templateUrl: './game-grid.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
-        class: 'block w-full',
+        class: 'block h-full w-full min-h-0 min-w-0',
         tabindex: '-1',
     },
 })

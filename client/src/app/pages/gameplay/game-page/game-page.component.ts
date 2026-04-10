@@ -53,11 +53,16 @@ export class GamePageComponent implements OnInit, OnDestroy {
         this.facade.closeAllPopups();
         this.initializeButtonTimeout();
         this.facade.connectDebugSocket();
+        this.facade.connectGameLogs();
 
         this.routeSubscription = this.route.params.subscribe((params) => {
             const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
             if (!activeGameId) {
                 return;
+            }
+
+            if (this.activeGameId !== activeGameId) {
+                this.facade.clearGameLogs();
             }
 
             this.activeGameId = activeGameId;

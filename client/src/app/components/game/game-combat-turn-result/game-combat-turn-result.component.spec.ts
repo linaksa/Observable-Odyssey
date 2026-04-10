@@ -1,7 +1,7 @@
 /**
  * Testing strategy — GameCombatTurnResultComponent
  *
- * - Verify the label and received damage are rendered.
+ * - Verify the old combat stats card breakdown and received damage are rendered.
  * - Keep fixture values explicit and stable.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -25,10 +25,11 @@ describe('GameCombatTurnResultComponent', () => {
         fixture.detectChanges();
     });
 
-    it('renders the provided label and damage summary', () => {
+    it('renders the old combat stats breakdown and damage summary', () => {
         const host = fixture.nativeElement as HTMLElement;
 
-        expect(host.textContent).toContain('Attaquant');
+        expect(host.textContent).toContain('Attaque');
+        expect(host.textContent).toContain('Défense');
         expect(host.textContent).toContain('Dégâts subis');
         expect(host.textContent).toContain(String(TEST_RECEIVED_DAMAGE));
     });

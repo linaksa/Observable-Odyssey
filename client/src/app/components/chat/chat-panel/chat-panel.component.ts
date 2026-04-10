@@ -21,6 +21,7 @@ export class ChatPanelComponent implements AfterViewChecked {
     protected readonly activeGameService = inject(ActiveGameService);
     protected readonly localPlayerService = inject(LocalPlayerService);
     protected readonly maxMessageLength = CHAT_PANEL_MAX_MESSAGE_LENGTH;
+    private connectedGameId?: string;
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
@@ -42,9 +43,17 @@ export class ChatPanelComponent implements AfterViewChecked {
         });
 
         effect(() => {
-            if (!this.activeGameService.isLoading() && this.activeGameService.activeGame?._id) {
-                this.chatService.connect();
+            if (this.activeGameService.isLoading()) {
+                return;
             }
+
+            const activeGameId = this.activeGameService.activeGame?._id;
+            if (!activeGameId || this.connectedGameId === activeGameId) {
+                return;
+            }
+
+            this.connectedGameId = activeGameId;
+            this.chatService.connect();
         });
     }
 
@@ -60,23 +69,41 @@ export class ChatPanelComponent implements AfterViewChecked {
     }
 
     private lastMessageCount = 0;
+    private shouldStickToBottom = true;
 
     ngAfterViewChecked() {
-        const count = this.activeGameService.activeGame.messages.length;
+        const count = this.activeGameService.chatMessages().length;
 
         if (count !== this.lastMessageCount) {
-            this.scrollToBottom();
+            if (this.shouldStickToBottom) {
+                this.scrollToBottom();
+            }
             this.lastMessageCount = count;
         }
     }
 
+    protected onScroll(): void {
+        const element = this.scrollContainer?.nativeElement;
+        if (!element) {
+            return;
+        }
+
+        this.shouldStickToBottom = this.isNearBottom(element);
+    }
+
     private scrollToBottom() {
         const el = this.scrollContainer.nativeElement;
-
-        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < CHAT_PANEL_AUTO_SCROLL_BOUNDARY_PX;
-
-        if (isNearBottom) {
+        el.scrollTop = el.scrollHeight;
+        requestAnimationFrame(() => {
             el.scrollTop = el.scrollHeight;
-        }
+            requestAnimationFrame(() => {
+                el.scrollTop = el.scrollHeight;
+            });
+        });
+    }
+
+    private isNearBottom(element: HTMLElement): boolean {
+        const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+        return distanceFromBottom <= CHAT_PANEL_AUTO_SCROLL_BOUNDARY_PX;
     }
 }

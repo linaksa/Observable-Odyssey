@@ -1,17 +1,15 @@
-import { NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { GAME_ACTION_PANEL_HOST_BINDINGS } from '@app/constants/component-host-bindings';
-import { DICE_ICON_MAPPING } from '@app/constants/player-info';
+import { GameActionControlsComponent } from '@app/components/game/game-action-controls/game-action-controls.component';
+import { GamePlayerCardComponent } from '@app/components/game/game-player-card/game-player-card.component';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { buildAvatarAssetPath } from '@app/utils/avatar-path';
-import { formatPlayerStatValue } from '@app/utils/player-stat.utils';
 import { ICharacter } from '@common/character';
 
 @Component({
     selector: 'app-game-action-panel',
-    imports: [NgOptimizedImage],
+    imports: [GamePlayerCardComponent, GameActionControlsComponent],
     templateUrl: './game-action-panel.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: GAME_ACTION_PANEL_HOST_BINDINGS,
@@ -24,7 +22,6 @@ export class GameActionPanelComponent {
     protected readonly actionMode = this.activeGameService.actionMode;
     protected readonly debugMode = this.activeGameService.isDebugMode;
     protected readonly turnTimeLeftSeconds = this.gameTurnService.turnTimeLeftSeconds;
-    protected readonly playerStatValue = formatPlayerStatValue;
     protected readonly currentTurnPlayerName = computed<string | null>(() => {
         this.activeGameService.hasChangedLocation();
         this.activeGameService.hasAbandonned();
@@ -39,21 +36,6 @@ export class GameActionPanelComponent {
         }
 
         return this.activeGameService.activeGame?.players.find((player) => player.name === localPlayerName);
-    }
-
-    protected get avatarUrl(): string {
-        const player = this.localPlayer;
-        return player ? buildAvatarAssetPath(player.avatar, true) : '';
-    }
-
-    protected get attackDiceIconUrl(): string {
-        const player = this.localPlayer;
-        return player ? DICE_ICON_MAPPING[player.attackBonusDiceType] : '';
-    }
-
-    protected get defenseDiceIconUrl(): string {
-        const player = this.localPlayer;
-        return player ? DICE_ICON_MAPPING[player.defenseBonusDiceType] : '';
     }
 
     protected get isTurnPreparing(): boolean {
@@ -83,7 +65,7 @@ export class GameActionPanelComponent {
     }
 
     protected get canToggleActionMode(): boolean {
-        return this.canEndTurn && this.localPlayerHasActionLeft;
+        return this.isLocalPlayerTurn && this.canEndTurn && this.localPlayerHasActionLeft;
     }
 
     protected get combatStatus(): string {
