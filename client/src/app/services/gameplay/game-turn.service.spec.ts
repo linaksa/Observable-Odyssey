@@ -36,6 +36,7 @@ describe('GameTurnService', () => {
         isDebugMode: jasmine.Spy<() => boolean>;
         currentPlayer: ReturnType<typeof signal<number>>;
         hasChangedLocation: ReturnType<typeof signal<boolean>>;
+        actionMode?: ReturnType<typeof signal<boolean>>;
         getPlayerByName: jasmine.Spy<(playerName: string) => ICharacter | undefined>;
     };
 
@@ -56,6 +57,7 @@ describe('GameTurnService', () => {
             isDebugMode: jasmine.createSpy('isDebugMode').and.returnValue(false),
             currentPlayer: signal(0),
             hasChangedLocation: signal(false),
+            actionMode: signal(false),
             getPlayerByName: jasmine
                 .createSpy('getPlayerByName')
                 .and.callFake((playerName: string) => activeGameServiceStub.activeGame.players.find((player) => player.name === playerName)),
@@ -150,6 +152,25 @@ describe('GameTurnService', () => {
         service.destroy();
     }));
 
+    it('should reset action mode when combat starts', () => {
+        // Set action mode to true before starting combat
+        (activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>).set(true);
+
+        service.initializeTurnListeners();
+
+        // Verify action mode is initially true
+        expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeTrue();
+
+        // Combat starts
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 3),
+        });
+
+        // Action mode should be reset to false
+        expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeFalse();
+    });
+
     it('should clear the combat countdown when combat resolves', fakeAsync(() => {
         service.initializeTurnListeners();
 
@@ -209,10 +230,11 @@ describe('GameTurnService', () => {
         expect(service.canEndTurn).toBeFalse();
     });
 
-    it('should allow organizer to end turn in debug mode', () => {
+    it('should deny ending turn during combat even in debug mode', () => {
         activeGameServiceStub.isDebugMode.and.returnValue(true);
         activeGameServiceStub.activeGame.organizerName = 'Organizer';
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Organizer'));
+        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob', 3);
         service.initializeTurnListeners();
 
         getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
@@ -221,7 +243,17 @@ describe('GameTurnService', () => {
             actionLeft: 1,
         });
 
-        expect(service.canEndTurn).toBeTrue();
+        // Combat is already present, so even debug mode cannot end the turn
+        expect(service.canEndTurn).toBeFalse();
+
+        // Combat starts
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 3),
+        });
+
+        // Now even the organizer in debug mode cannot end turn
+        expect(service.canEndTurn).toBeFalse();
     });
 
     it('should emit end-turn event when local player can end turn', () => {
@@ -283,6 +315,22 @@ describe('GameTurnService', () => {
         });
 
         expect(service.currentPlayerName).toBe('Bob');
+    });
+
+    it('should reset action mode when a new turn starts', () => {
+        (activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>).set(true);
+
+        service.initializeTurnListeners();
+
+        expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeTrue();
+
+        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
+            player: 'Bob',
+            movementLeft: 4,
+            actionLeft: 1,
+        });
+
+        expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeFalse();
     });
 });
 

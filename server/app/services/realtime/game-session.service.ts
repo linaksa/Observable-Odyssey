@@ -4,6 +4,7 @@ import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
+import { CombatOutcome } from '@common/attackResult';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
@@ -83,10 +84,11 @@ export class GameSessionService {
         }
 
         const currentAttack = activeGame.currentAttack;
+        const combatAttackerName = currentAttack?.attacker;
+        let combatOutcome: CombatOutcome | null = null;
         if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
-            const combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
+            combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
             if (combatOutcome) {
-                this.gameplayActionService.checkEndTurnIfNoMovesLeft(gameId, currentAttack.attacker);
                 namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
             }
         }
@@ -114,6 +116,12 @@ export class GameSessionService {
                 `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`,
             );
             // await this.activeGameService.deleteGameById(gameId);
+        }
+        if (combatOutcome && combatAttackerName) {
+            const survivingAttacker = refreshedGame.players.find((currentPlayer) => currentPlayer.name === combatAttackerName);
+            if (survivingAttacker && !survivingAttacker.hasAbandoned) {
+                await this.gameplayActionService.checkEndTurnIfNoMovesLeft(gameId, combatAttackerName);
+            }
         }
         if (isCurrentPlayer) {
             await this.turnService.endTurn(gameId);

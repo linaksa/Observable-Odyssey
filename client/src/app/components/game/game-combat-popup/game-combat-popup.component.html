@@ -1,221 +1,186 @@
 @if (combatActive()) {
-    <div class="fixed inset-0 z-80 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-        <div class="w-full max-w-[1120px]">
-            <section class="overflow-hidden rounded-2xl border-2 border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
-                <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
-                    <div>
-                        <p class="text-[9px] font-bold uppercase tracking-[0.25em] text-[#a8c8ff]">Combat</p>
-                        <p class="text-sm text-white/75">
-                            @if (currentAttack(); as attack) {
-                                {{ attack.attacker }} vs {{ attack.defender }}
-                            } @else {
-                                En attente...
-                            }
+    <div class="absolute inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4">
+        <section class="flex w-full max-w-[1440px] items-center justify-center gap-4">
+            <aside class="hidden w-40 shrink-0 flex-col lg:flex">
+                <div class="rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 shadow-2xl">
+                    @if (roundOutcome(); as outcome) {
+                        <app-game-combat-turn-result
+                            label="Défenseur"
+                            [turnStats]="outcome.defenderStats"
+                            [receivedDamage]="outcome.defenderReceivedDamage"
+                        />
+                    } @else {
+                        <div class="invisible text-[9px] font-bold uppercase tracking-[0.2em]">Résultats</div>
+                    }
+                </div>
+            </aside>
+
+            <div class="combat-panel w-full max-w-[480px] bg-[#1a3260] border-[2.5px] border-[#4a7fd4] rounded-2xl overflow-hidden">
+                <div class="flex items-center justify-between bg-[#162b55] border-b-2 border-[#4a7fd4] px-4 py-3">
+                    <span class="text-[9px] text-[#a8c8ff] tracking-widest uppercase font-bold">⚔ Combat</span>
+                    <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                        <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
+                            {{ combatTimeLeftSeconds() }}s
+                        </span>
+                    </div>
+                </div>
+
+                <div class="p-4 flex flex-col gap-4">
+                    <div class="combat-comparison">
+                        <div class="combat-card w-full min-w-0 rounded-xl border-[1.5px] border-[#2d5199] bg-[#0f2248] p-3">
+                            <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#6b9ed4] mb-2">Défenseur</div>
+
+                            <div class="flex items-center gap-2">
+                                <img
+                                    [src]="getAvatarUrl(defenderCharacter)"
+                                    class="w-11 h-11 rounded-lg bg-[#1e3a70] border-2 border-[#4a7fd4] object-contain shrink-0 [image-rendering:pixelated]"
+                                />
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-bold text-[#e8f0ff] truncate">
+                                        {{ defenderCharacter?.name }}
+                                    </div>
+
+                                    <div class="text-[10px] font-semibold text-[#6b9ed4] mt-0.5">
+                                        HP {{ getFilledBlocks(defenderCharacter) }} / {{ getHealthRange(defenderCharacter).length }}
+                                    </div>
+
+                                    <div class="flex gap-[2px] mt-1.5">
+                                        @for (health of getHealthRange(defenderCharacter); track $index) {
+                                            <div
+                                                class="h-2 flex-1 rounded-sm"
+                                                [class.bg-green-500]="$index < getFilledBlocks(defenderCharacter)"
+                                                [class.bg-red-900]="$index >= getFilledBlocks(defenderCharacter)"
+                                            ></div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="combat-vs flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[#4a7fd4] bg-[#0d1f42] text-xs font-bold tracking-wider text-[#e8f0ff]"
+                        >
+                            VS
+                        </div>
+
+                        <div class="combat-card w-full min-w-0 rounded-xl border-[1.5px] border-[#e8a832] bg-[#1a1000] p-3">
+                            <div class="text-[9px] font-bold tracking-[2px] uppercase text-[#e8a832] mb-2 text-right">Attaquant</div>
+
+                            <div class="flex flex-row-reverse items-center gap-2">
+                                <img
+                                    [src]="getAvatarUrl(attackerCharacter)"
+                                    class="w-11 h-11 rounded-lg bg-[#1e3a70] border-2 border-[#e8a832] object-contain shrink-0 [image-rendering:pixelated]"
+                                />
+
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-bold text-[#e8f0ff] truncate text-right">
+                                        {{ attackerCharacter?.name }}
+                                    </div>
+
+                                    <div class="text-[10px] font-semibold text-[#e8a832] mt-0.5 text-right">
+                                        HP {{ getFilledBlocks(attackerCharacter) }} / {{ getHealthRange(attackerCharacter).length }}
+                                    </div>
+
+                                    <div class="flex gap-[2px] mt-1.5">
+                                        @for (health of getHealthRange(attackerCharacter); track $index) {
+                                            <div
+                                                class="h-2 flex-1 rounded-sm"
+                                                [class.bg-green-500]="$index < getFilledBlocks(attackerCharacter)"
+                                                [class.bg-red-900]="$index >= getFilledBlocks(attackerCharacter)"
+                                            ></div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-[#0d1f42] border-2 border-[#2d5199] rounded-lg px-4 py-3">
+                        <p class="text-[11px] text-[#c8dcff] leading-loose tracking-wide font-mono">
+                            {{ dialogMessage }}
+                            <span class="inline-block w-[7px] h-[7px] bg-[#c8dcff] ml-1 animate-[blink_1.1s_step-end_infinite]"></span>
                         </p>
                     </div>
 
-                    @if (combatTimeLeftSeconds() !== null) {
-                        <div class="flex items-center gap-2 rounded-lg border border-[#4a7fd4] bg-[#0d1f42] px-3 py-1.5">
-                            <span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-                            <span class="min-w-8 text-center text-base font-bold text-[#e8f0ff]">{{ combatTimeLeftSeconds() }}s</span>
-                        </div>
-                    }
-                </header>
+                    <p class="text-[10px] font-bold text-[#5a7fad] tracking-[3px] uppercase text-center">Choisir une action</p>
 
-                <div class="p-4">
-                    @if (currentAttack(); as attack) {
-                        @if (isLocalParticipant()) {
-                            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-                                <article class="rounded-xl border border-[#2d5199] bg-[#0f2248] p-3">
-                                    <p class="mb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#6b9ed4]">Défenseur</p>
+                    <div class="combat-actions">
+                        <button
+                            (click)="selectAction(attackPosture.Defensive)"
+                            class="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 select-none transition-all duration-150 active:scale-95"
+                            [ngClass]="
+                                selectedMode === attackPosture.Defensive
+                                    ? 'bg-[#1e4a8a] border-[#6aadff] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                                    : 'bg-[#1a3365] border-[#2d5199] text-[#a8c8ff] hover:bg-[#1e3d75] hover:border-[#4a7fd4]'
+                            "
+                        >
+                            <span class="text-xl">🛡</span>
 
-                                    <div class="flex items-center gap-3">
-                                        @if (defender(); as defenderCharacter) {
-                                            <img
-                                                [src]="avatarUrl(defenderCharacter)"
-                                                [alt]="'Avatar de ' + defenderCharacter.name"
-                                                class="h-11 w-11 shrink-0 rounded-lg border-2 border-[#4a7fd4] object-contain [image-rendering:pixelated]"
-                                            />
-                                        } @else {
-                                            <div class="h-11 w-11 shrink-0 rounded-lg border-2 border-[#4a7fd4] bg-[#1e3a70]"></div>
-                                        }
-
-                                        <div class="min-w-0 flex-1">
-                                            <div class="truncate text-sm font-bold text-[#e8f0ff]">
-                                                {{ defender()?.name ?? attack.defender }}
-                                            </div>
-                                            <div class="mt-0.5 text-[10px] font-semibold text-[#6b9ed4]">
-                                                HP {{ filledHealthBlocks(defender()) }} / {{ healthBlocks(defender()).length }}
-                                            </div>
-
-                                            <div class="mt-1.5 flex gap-[2px]">
-                                                @for (health of healthBlocks(defender()); track $index) {
-                                                    <div
-                                                        class="h-2 flex-1 rounded-sm"
-                                                        [class.bg-green-500]="$index < filledHealthBlocks(defender())"
-                                                        [class.bg-red-900]="$index >= filledHealthBlocks(defender())"
-                                                    ></div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-
-                                <div
-                                    class="flex items-center justify-center self-center rounded-full border-2 border-[#4a7fd4] bg-[#0d1f42] px-4 py-3 text-sm font-bold tracking-widest text-[#e8f0ff]"
-                                >
-                                    VS
-                                </div>
-
-                                <article class="rounded-xl border border-[#e8a832] bg-[#1a1000] p-3">
-                                    <p class="mb-2 text-right text-[9px] font-bold uppercase tracking-[0.2em] text-[#e8a832]">Attaquant</p>
-
-                                    <div class="flex flex-row-reverse items-center gap-3">
-                                        @if (attacker(); as attackerCharacter) {
-                                            <img
-                                                [src]="avatarUrl(attackerCharacter)"
-                                                [alt]="'Avatar de ' + attackerCharacter.name"
-                                                class="h-11 w-11 shrink-0 rounded-lg border-2 border-[#e8a832] object-contain [image-rendering:pixelated]"
-                                            />
-                                        } @else {
-                                            <div class="h-11 w-11 shrink-0 rounded-lg border-2 border-[#e8a832] bg-[#3b2a00]"></div>
-                                        }
-
-                                        <div class="min-w-0 flex-1">
-                                            <div class="truncate text-right text-sm font-bold text-[#e8f0ff]">
-                                                {{ attacker()?.name ?? attack.attacker }}
-                                            </div>
-                                            <div class="mt-0.5 text-right text-[10px] font-semibold text-[#e8a832]">
-                                                HP {{ filledHealthBlocks(attacker()) }} / {{ healthBlocks(attacker()).length }}
-                                            </div>
-
-                                            <div class="mt-1.5 flex gap-[2px]">
-                                                @for (health of healthBlocks(attacker()); track $index) {
-                                                    <div
-                                                        class="h-2 flex-1 rounded-sm"
-                                                        [class.bg-green-500]="$index < filledHealthBlocks(attacker())"
-                                                        [class.bg-red-900]="$index >= filledHealthBlocks(attacker())"
-                                                    ></div>
-                                                }
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            </div>
-
-                            <div class="mt-4 rounded-lg border border-[#2d5199] bg-[#0d1f42] px-4 py-3">
-                                <p class="text-[11px] leading-loose tracking-wide text-[#c8dcff] font-mono">
-                                    {{ dialogMessage() }}
-                                    <span class="ml-1 inline-block h-[7px] w-[7px] animate-blink bg-[#c8dcff]"></span>
-                                </p>
-                            </div>
-
-                            <div class="mt-4 grid gap-3 md:grid-cols-2">
-                                <button
-                                    type="button"
-                                    (click)="selectAction(attackPosture.Defensive)"
-                                    [disabled]="confirmed() || !!roundOutcome()"
-                                    class="flex select-none flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 transition-all duration-150 active:scale-95"
-                                    [ngClass]="
-                                        selectedMode() === attackPosture.Defensive && !confirmed() && !roundOutcome()
-                                            ? ['bg-[#1e4a8a]', 'border-[#6aadff]', 'text-white']
-                                            : ['bg-[#111e35]', 'border-[#1e3060]', 'text-[#3a5580]']
-                                    "
-                                    [class.opacity-40]="confirmed() || !!roundOutcome()"
-                                    [class.cursor-not-allowed]="confirmed() || !!roundOutcome()"
-                                >
-                                    <span class="text-xl">🛡</span>
-                                    <span class="text-sm font-bold tracking-wide">
-                                        @if (selectedMode() === attackPosture.Defensive) {
-                                            ✓
-                                        }
-                                        Défensif
-                                    </span>
-                                    <span class="text-[10px] font-semibold opacity-70">+DEF &amp; -ATK</span>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    (click)="selectAction(attackPosture.Offensive)"
-                                    [disabled]="confirmed() || !!roundOutcome()"
-                                    class="flex select-none flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 transition-all duration-150 active:scale-95"
-                                    [ngClass]="
-                                        selectedMode() === attackPosture.Offensive && !confirmed() && !roundOutcome()
-                                            ? ['bg-[#7a2e08]', 'border-[#ff8833]', 'text-white']
-                                            : ['bg-[#1a0d00]', 'border-[#3a1e00]', 'text-[#6b3d10]']
-                                    "
-                                    [class.opacity-40]="confirmed() || !!roundOutcome()"
-                                    [class.cursor-not-allowed]="confirmed() || !!roundOutcome()"
-                                >
-                                    <span class="text-xl">⚔</span>
-                                    <span class="text-sm font-bold tracking-wide">
-                                        @if (selectedMode() === attackPosture.Offensive) {
-                                            ✓
-                                        }
-                                        Offensif
-                                    </span>
-                                    <span class="text-[10px] font-semibold opacity-70">+ATK &amp; -DEF</span>
-                                </button>
-
-                                @if (selectedMode() !== null && !confirmed() && !roundOutcome()) {
-                                    <button
-                                        type="button"
-                                        (click)="confirmAction()"
-                                        class="col-span-2 w-full rounded-xl border-2 border-[#3d9e32] bg-[#1f4a1a] py-3 text-center text-base font-bold tracking-widest text-[#80ef74] transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
-                                    >
-                                        Confirmer
-                                    </button>
+                            <span class="text-sm font-bold tracking-wide">
+                                @if (selectedMode === attackPosture.Defensive) {
+                                    ✓
                                 }
+                                Défensif
+                            </span>
 
-                                @if (confirmed()) {
-                                    <div
-                                        class="col-span-2 w-full rounded-xl border-2 border-[#2a5e25] bg-[#0d1f0d] py-3 text-center text-base font-bold tracking-widest text-[#4a8e44] opacity-60"
-                                    >
-                                        Action confirmée
-                                    </div>
-                                }
-                            </div>
+                            <span class="text-[10px] font-semibold opacity-70">+DEF &amp; -ATK</span>
+                        </button>
 
-                            @if (showTurnResults()) {
-                                @if (roundOutcome(); as outcome) {
-                                    <div class="mt-4 grid gap-3 md:grid-cols-2">
-                                        <app-game-combat-turn-result
-                                            label="Attaquant"
-                                            [turnStats]="outcome.attackerStats"
-                                            [receivedDamage]="outcome.attackerReceivedDamage"
-                                        />
-                                        <app-game-combat-turn-result
-                                            label="Défenseur"
-                                            [turnStats]="outcome.defenderStats"
-                                            [receivedDamage]="outcome.defenderReceivedDamage"
-                                        />
-                                    </div>
+                        <button
+                            (click)="selectAction(attackPosture.Offensive)"
+                            class="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 select-none transition-all duration-150 active:scale-95"
+                            [ngClass]="
+                                selectedMode === attackPosture.Offensive
+                                    ? 'bg-[#7a2e08] border-[#ff8833] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
+                                    : 'bg-[#2a1500] border-[#7a3d0a] text-[#f5b060] hover:bg-[#3a1e00] hover:border-[#b06020]'
+                            "
+                        >
+                            <span class="text-xl">⚔</span>
+
+                            <span class="text-sm font-bold tracking-wide">
+                                @if (selectedMode === attackPosture.Offensive) {
+                                    ✓
                                 }
-                            }
-                        } @else {
-                            <div class="rounded-xl border border-[#2d5199] bg-[#0d1f42] px-4 py-6 text-center">
-                                <p class="text-xl font-semibold text-white">Combat en cours</p>
-                                <p class="mt-2 text-sm text-[#c8dcff]">{{ attack.attacker }} affronte {{ attack.defender }}.</p>
-                                <p class="mt-1 text-xs text-[#8fb7ff]">Attendez la fin du duel.</p>
-                            </div>
-                        }
-                    } @else {
-                        <div class="rounded-xl border border-[#2d5199] bg-[#0d1f42] px-4 py-6 text-center">
-                            <p class="text-xl font-semibold text-white">Combat en cours</p>
-                            <p class="mt-2 text-sm text-[#c8dcff]">Préparation du duel...</p>
-                        </div>
+                                Offensif
+                            </span>
+
+                            <span class="text-[10px] font-semibold opacity-70">+ATK &amp; -DEF</span>
+                        </button>
+                    </div>
+
+                    @if (selectedMode !== null) {
+                        <button
+                            (click)="confirmAction()"
+                            class="w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
+                        >
+                            Confirmer
+                        </button>
                     }
                 </div>
 
-                @if (combatTimeLeftSeconds() !== null) {
-                    <div class="h-[3px] bg-[#0d1f42]">
-                        <div
-                            class="h-full bg-linear-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
-                            [style.width.%]="combatTimerPercent"
-                        ></div>
-                    </div>
-                }
-            </section>
-        </div>
+                <div class="h-[3px] bg-[#0d1f42]">
+                    <div
+                        class="h-full bg-gradient-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
+                        [style.width.%]="combatTimerPercent"
+                    ></div>
+                </div>
+            </div>
+
+            <aside class="hidden w-40 shrink-0 flex-col lg:flex">
+                <div class="rounded-xl border border-[#e8a832] bg-[#1a1000] p-3 shadow-2xl">
+                    @if (roundOutcome(); as outcome) {
+                        <app-game-combat-turn-result
+                            label="Attaquant"
+                            [turnStats]="outcome.attackerStats"
+                            [receivedDamage]="outcome.attackerReceivedDamage"
+                        />
+                    } @else {
+                        <div class="invisible text-[9px] font-bold uppercase tracking-[0.2em]">Résultats</div>
+                    }
+                </div>
+            </aside>
+        </section>
     </div>
 }

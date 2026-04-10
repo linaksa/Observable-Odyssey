@@ -63,7 +63,7 @@ export class GameTurnService {
 
     get canEndTurn(): boolean {
         if (this.isTurnPreparing()) return false;
-        if (this.isCombatActive()) return false;
+        if (this.isCombatActive() || !!this.activeGameService.activeGame?.currentAttack) return false;
 
         const localPlayer = this.localPlayerService.getLocalPlayer();
         if (!localPlayer) return false;
@@ -102,6 +102,7 @@ export class GameTurnService {
                 this.syncActiveGameTurnState(player, movementLeft, actionLeft);
                 this.isTurnPreparing.set(false);
                 this.isCombatActive.set(false);
+                this.activeGameService.actionMode.set(false);
                 this.stopCombatCountdown();
 
                 const countdownDuration = timeLeft ? timeLeft : TURN_TIME_MS;
@@ -116,6 +117,7 @@ export class GameTurnService {
                 }
 
                 this.isCombatActive.set(true);
+                this.activeGameService.actionMode.set(false);
                 this.stopCountdown();
                 this.startCombatCountdown(COMBAT_TIME_MS);
             },

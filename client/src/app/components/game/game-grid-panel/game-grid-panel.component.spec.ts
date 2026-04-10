@@ -181,6 +181,12 @@ describe('GameGridPanelComponent', () => {
         expect(fixture.debugElement.query(By.css('app-game-combat-outcome'))).toBeTruthy();
     });
 
+    it('applies overflow-hidden to grid container to clip popup content', () => {
+        const gridContainer = fixture.nativeElement.querySelector('#grid-container');
+        expect(gridContainer).toBeTruthy();
+        expect(gridContainer.classList.contains('overflow-hidden')).toBeTruthy();
+    });
+
     it('delegates keyboard events to interaction service', () => {
         const keyboardEvent = new KeyboardEvent('keydown', { key: 'w' });
 

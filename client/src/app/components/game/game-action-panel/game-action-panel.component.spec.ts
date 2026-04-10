@@ -157,6 +157,31 @@ describe('GameActionPanelComponent', () => {
         expect(actionButton.disabled).toBeTrue();
     });
 
+    it('should disable both controls during combat even with debug mode enabled', () => {
+        activeGameServiceStub.isDebugMode.set(true);
+        gameTurnServiceStub.currentPlayerName = 'Alice';
+        activeGameServiceStub.activeGame.currentAttack = {
+            attacker: 'Alice',
+            defender: 'Bob',
+            attackerPosture: null,
+            defenderPosture: null,
+            turnCount: 1,
+            suspendedTurnTimer: 0,
+        };
+        fixture.detectChanges();
+
+        const actionPanel = fixture.componentInstance as unknown as GameActionPanelState;
+        const [endTurnButton, actionButton] = getButtons();
+
+        // Even though it's the player's turn and debug mode is on, combat should block everything
+        expect(actionPanel.canEndTurn).toBeFalse();
+        expect(actionPanel.canToggleActionMode).toBeFalse();
+        expect(actionPanel.isInCombat).toBeTrue();
+        expect(endTurnButton.disabled).toBeTrue();
+        expect(actionButton.disabled).toBeTrue();
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Les actions de tour sont bloquées pendant le combat');
+    });
+
     function getButtons(): HTMLButtonElement[] {
         return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
     }

@@ -2,16 +2,14 @@
 /**
  * Testing strategy — GameCombatPopupComponent
  *
- * - Verify participant vs observer rendering for active combat.
- * - Assert combat posture selection and confirmation wiring.
- * - Cover combat result rendering once the round outcome is available.
+ * - Verify the restored combat-mode shell renders inside the grid panel.
+ * - Assert posture selection and confirmation still wire through current logic.
  */
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -32,7 +30,6 @@ describe('GameCombatPopupComponent', () => {
         isCombatActive: ReturnType<typeof signal<boolean>>;
         combatTimeLeftSeconds: ReturnType<typeof signal<number | null>>;
     };
-    let localPlayerServiceStub: jasmine.SpyObj<LocalPlayerService>;
 
     beforeEach(async () => {
         const attacker = createCharacter('Alice');
@@ -50,21 +47,18 @@ describe('GameCombatPopupComponent', () => {
             isCombatActive: signal(false),
             combatTimeLeftSeconds: signal<number | null>(null),
         };
-        localPlayerServiceStub = jasmine.createSpyObj<LocalPlayerService>('LocalPlayerService', ['getLocalPlayer']);
-        localPlayerServiceStub.getLocalPlayer.and.returnValue(attacker);
 
         await TestBed.configureTestingModule({
             imports: [GameCombatPopupComponent],
             providers: [
                 { provide: ActiveGameService, useValue: activeGameServiceStub },
                 { provide: GameTurnService, useValue: gameTurnServiceStub },
-                { provide: LocalPlayerService, useValue: localPlayerServiceStub },
             ],
         }).compileComponents();
     });
 
-    // Nominal case: A local combat participant can choose a posture and confirm it.
-    it('renders participant controls and confirms the selected posture', () => {
+    // Nominal case: The restored old shell renders the combat cards, dialog, and actions.
+    it('renders the restored combat-mode shell', () => {
         activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
         gameTurnServiceStub.isCombatActive.set(true);
         gameTurnServiceStub.combatTimeLeftSeconds.set(8);
@@ -73,79 +67,88 @@ describe('GameCombatPopupComponent', () => {
         fixture.detectChanges();
 
         const root = fixture.nativeElement as HTMLElement;
-        const buttons = getButtons(fixture);
+        const outerDiv = root.querySelector('.absolute') as HTMLElement | null;
+        const panel = root.querySelector('.combat-panel') as HTMLElement | null;
+        const comparisonRow = root.querySelector('.combat-comparison') as HTMLElement | null;
+        const actionsGrid = root.querySelector('.combat-actions') as HTMLElement | null;
+        const comparisonCards = root.querySelectorAll('.combat-comparison > .combat-card');
+        const actionButtons = root.querySelectorAll('.combat-actions > button');
 
-        expect(root.textContent).toContain('Alice vs Bob');
+        expect(outerDiv).toBeTruthy();
+        expect(outerDiv?.classList.contains('fixed')).toBeFalse();
+        expect(outerDiv?.classList.contains('absolute')).toBeTrue();
+        expect(outerDiv?.classList.contains('p-4')).toBeTrue();
+        expect(outerDiv?.classList.contains('overflow-y-auto')).toBeTrue();
+        expect(outerDiv?.classList.contains('bg-black/70')).toBeTrue();
+        expect(outerDiv?.classList.contains('backdrop-blur-sm')).toBeTrue();
+
+        expect(panel).toBeTruthy();
+        expect(comparisonRow).toBeTruthy();
+        expect(actionsGrid).toBeTruthy();
+        expect(comparisonCards.length).toBe(2);
+        expect(actionButtons.length).toBe(2);
+        const comparisonCardsTopDelta = Math.abs(comparisonCards[0].getBoundingClientRect().top - comparisonCards[1].getBoundingClientRect().top);
+        const actionButtonsTopDelta = Math.abs(actionButtons[0].getBoundingClientRect().top - actionButtons[1].getBoundingClientRect().top);
+
+        expect(comparisonCardsTopDelta).toBeLessThan(1);
+        expect(actionButtonsTopDelta).toBeLessThan(1);
+        expect(root.textContent).toContain('Défenseur');
+        expect(root.textContent).toContain('Attaquant');
+        expect(root.textContent).toContain('Alice');
+        expect(root.textContent).toContain('Bob');
         expect(root.textContent).toContain('8s');
-        expect(root.textContent).toContain('Défensif');
-        expect(root.textContent).toContain('Offensif');
-        expect(root.textContent).toContain('HP 8 / 10');
-        expect(root.textContent).not.toContain('MVT:');
-        expect(root.textContent).not.toContain('ACT:');
-        expect(root.textContent).not.toContain('ATK:');
-        expect(root.textContent).not.toContain('DEF:');
-        expect(root.textContent).not.toContain('RAP:');
-        expect(root.textContent).not.toContain('VIC:');
-
-        buttons.find((button) => button.textContent?.includes('Défensif'))?.click();
-        fixture.detectChanges();
-        expect(root.textContent).toContain('Confirmer');
-
-        getButtons(fixture)
-            .find((button) => button.textContent?.includes('Confirmer'))
-            ?.click();
-
-        expect(activeGameServiceStub.chooseAttackMode).toHaveBeenCalledWith(AttackPosture.Defensive);
+        expect(root.textContent).toContain('Choisir une action');
+        expect(root.textContent).toContain('VS');
+        expect(root.querySelectorAll('aside').length).toBe(2);
+        expect(root.querySelectorAll('button').length).toBe(2);
     });
 
-    // Edge case: Observers only see the combat summary, not the participant controls.
-    it('renders an observer summary without combat controls', () => {
-        localPlayerServiceStub.getLocalPlayer.and.returnValue(createCharacter('Charlie'));
+    // Nominal case: Selecting a posture and confirming it still routes through current combat logic.
+    it('selects and confirms a combat posture', () => {
         activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
         gameTurnServiceStub.isCombatActive.set(true);
-        gameTurnServiceStub.combatTimeLeftSeconds.set(6);
+        gameTurnServiceStub.combatTimeLeftSeconds.set(8);
+
+        fixture = TestBed.createComponent(GameCombatPopupComponent);
+        fixture.detectChanges();
+
+        const root = fixture.nativeElement as HTMLElement;
+        const chooseButtons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
+
+        chooseButtons.find((button) => button.textContent?.includes('Défensif'))?.click();
+        fixture.detectChanges();
+
+        expect(root.textContent).toContain('Mode défensif sélectionné...');
+        expect(root.textContent).toContain('Confirmer');
+
+        const confirmButton = Array.from(root.querySelectorAll('button')).find((button) => button.textContent?.includes('Confirmer')) as
+            | HTMLButtonElement
+            | undefined;
+        expect(confirmButton).toBeTruthy();
+
+        confirmButton?.click();
+        expect(activeGameServiceStub.chooseAttackMode).toHaveBeenCalledWith(AttackPosture.Defensive);
+        fixture.detectChanges();
+
+        expect(root.textContent).toContain('Posture défensive adoptée !');
+        expect(root.textContent).not.toContain('Confirmer');
+    });
+
+    // Nominal case: The popup includes both restored side stats cards when results are available.
+    it('renders the restored side stats cards', () => {
+        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
+        activeGameServiceStub.roundOutcome = signal<CombatTurnOutcome | null>(createCombatOutcome());
+        gameTurnServiceStub.isCombatActive.set(true);
 
         fixture = TestBed.createComponent(GameCombatPopupComponent);
         fixture.detectChanges();
 
         const root = fixture.nativeElement as HTMLElement;
 
-        expect(root.textContent).toContain('Alice affronte Bob.');
-        expect(root.textContent).not.toContain('Confirmer');
-        expect(root.textContent).not.toContain('Défensif');
-        expect(root.textContent).not.toContain('Offensif');
-    });
-
-    // Nominal case: Combat result cards appear once the round outcome is available.
-    it('renders combat turn results for participants', () => {
-        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
-        activeGameServiceStub.roundOutcome.set(createCombatOutcome());
-        gameTurnServiceStub.isCombatActive.set(true);
-        gameTurnServiceStub.combatTimeLeftSeconds.set(null);
-
-        fixture = TestBed.createComponent(GameCombatPopupComponent);
-        fixture.detectChanges();
-
         expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(2);
-        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Dégâts subis');
-    });
-
-    // Edge case: The result still appears when the combat timer expires before the postures are resolved.
-    it('renders combat turn results when the round outcome arrives after timeout', () => {
-        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
-        gameTurnServiceStub.isCombatActive.set(true);
-        gameTurnServiceStub.combatTimeLeftSeconds.set(null);
-
-        fixture = TestBed.createComponent(GameCombatPopupComponent);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(0);
-
-        activeGameServiceStub.roundOutcome.set(createCombatOutcome());
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(2);
-        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Dégâts subis');
+        expect(root.textContent).toContain('Attaque');
+        expect(root.textContent).toContain('Défense');
+        expect(root.textContent).toContain('Dégâts subis');
     });
 });
 
@@ -241,8 +244,4 @@ function createAttackStats(baseAttackPoints: number, baseDefensePoints: number, 
         totalAttackPoints: baseAttackPoints + 2 + postureAttackBonus,
         totalDefensePoints: baseDefensePoints + 1,
     };
-}
-
-function getButtons(fixture: ComponentFixture<GameCombatPopupComponent>): HTMLButtonElement[] {
-    return Array.from(fixture.nativeElement.querySelectorAll('button'));
 }
