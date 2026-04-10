@@ -30,7 +30,7 @@ export function buildItemTop(item: IItem, rowIndex: number): string {
         return '0';
     }
 
-    return rowIndex === item.x ? '0' : '-100%';
+    return rowIndex === item.y ? '0' : '-100%';
 }
 
 export function buildItemLeft(item: IItem, colIndex: number): string {
@@ -38,7 +38,7 @@ export function buildItemLeft(item: IItem, colIndex: number): string {
         return '0';
     }
 
-    return colIndex === item.y ? '0' : '-100%';
+    return colIndex === item.x ? '0' : '-100%';
 }
 
 export function buildItemWidth(item: IItem): string {
@@ -58,8 +58,8 @@ export function buildItemBackgroundPosition(item: IItem, rowIndex: number, colIn
         return '';
     }
 
-    const relativeRow = rowIndex - item.x;
-    const relativeCol = colIndex - item.y;
+    const relativeRow = rowIndex - item.y;
+    const relativeCol = colIndex - item.x;
 
     if (relativeRow === 0 && relativeCol === 0) {
         return '0% 0%';

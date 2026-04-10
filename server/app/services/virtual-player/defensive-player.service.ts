@@ -3,8 +3,8 @@ import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
 import { AgressivePlayerService } from './agressive-player.service';
-import { VirtualPlayer } from './virtual-player.interface';
 import { VirtualPlayerSanctuaryService } from './virtual-player-sanctuary.service';
+import { VirtualPlayer } from './virtual-player.interface';
 import { VirtualPlayerUtilitiesService } from './virtual-player.utilities';
 
 @Service()
@@ -36,9 +36,9 @@ export class DefensivePlayerService implements VirtualPlayer {
 
         if (adversePlayers.length === 0) {
             if (game.game.gameMode !== GameType.Ctf) {
-                await this.sanctuaryService.tryFallbackObjective(character, game);
+                const success = await this.sanctuaryService.tryFallbackObjective(character, game);
+                if (success) return; // return if player managed to get to a sanctuary, else move towards closest player
             }
-            return;
         }
 
         await this.virtualPlayerUtilities.moveAwayFromPlayers(character, game, adversePlayers);
@@ -49,9 +49,7 @@ export class DefensivePlayerService implements VirtualPlayer {
             return undefined;
         }
 
-        return game.players.find(
-            (player) => player.name === game.hasFlagId && player.team !== character.team && !player.hasAbandoned,
-        );
+        return game.players.find((player) => player.name === game.hasFlagId && player.team !== character.team && !player.hasAbandoned);
     }
 
     private async tryBlockEnemyFlagCarrier(character: ICharacter, game: IActiveGame, enemyCarrier: ICharacter): Promise<void> {

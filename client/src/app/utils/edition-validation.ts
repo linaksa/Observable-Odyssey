@@ -159,12 +159,12 @@ function getBlockedCells(items: IItem[]): Set<string> {
     const blockedCells = new Set<string>();
 
     for (const item of items) {
-        if (!sanctuaryCoversCell(item, item.x, item.y)) {
+        if (!sanctuaryCoversCell(item, item.y, item.x)) {
             continue;
         }
 
-        for (let row = item.x; row <= item.x + 1; row++) {
-            for (let col = item.y; col <= item.y + 1; col++) {
+        for (let row = item.y; row <= item.y + 1; row++) {
+            for (let col = item.x; col <= item.x + 1; col++) {
                 blockedCells.add(getCellKey(row, col));
             }
         }

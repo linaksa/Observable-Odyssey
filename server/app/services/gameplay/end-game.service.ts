@@ -53,6 +53,8 @@ export class EndGameService {
 
         const hasOneRealPlayer = activePlayers.find((player) => !player.virtualPlayerProfile);
         if (!hasOneRealPlayer) {
+            activeGame.isFinished = true;
+            await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
             return true;
         }
         // si une des 2 équipes n'a plus de joueurs actifs, l'autre équipe gagne (mode ctf)

@@ -1,11 +1,12 @@
 import { IActiveGame } from './activeGame';
+import { Position } from './character';
 
 export interface AttackResult {
     attackerName: string;
     defenderName: string;
     attackerVictories: number;
     attackerActionsLeft: number;
-    defenderNewPosition: { x: number; y: number };
+    defenderNewPosition: Position;
 }
 
 export enum AttackPosture {

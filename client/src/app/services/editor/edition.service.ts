@@ -211,7 +211,7 @@ export class BoardEditorService {
 
         if (this.selectedObject === ItemType.FightSanctuary && this.getObjectCount(ItemType.FightSanctuary) >= this.sanctuaryMaxAmount) return;
 
-        this.objects = [...this.objects, { itemType: this.selectedObject, x: rowIndex, y: colIndex, size: SANCTUARY_SIZE }];
+        this.objects = [...this.objects, { itemType: this.selectedObject, x: colIndex, y: rowIndex, size: SANCTUARY_SIZE }];
     }
 
     isSelectedObjectPlacementPositionValid(rowIndex: number, colIndex: number): boolean {
