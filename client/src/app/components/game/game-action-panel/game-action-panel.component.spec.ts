@@ -138,7 +138,23 @@ describe('GameActionPanelComponent', () => {
         activeGameServiceStub.isDebugMode.set(true);
         fixture.detectChanges();
 
-        expect((fixture.nativeElement as HTMLElement).textContent).toContain('DEBUG');
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('DEBUG MODE');
+    });
+
+    it('should keep action mode disabled for non-current players in debug mode while allowing turn skip', () => {
+        activeGameServiceStub.isDebugMode.set(true);
+        gameTurnServiceStub.currentPlayerName = 'Bob';
+        activeGameServiceStub.hasChangedLocation.set(true);
+        fixture.detectChanges();
+
+        const actionPanel = fixture.componentInstance as unknown as GameActionPanelState;
+        const [endTurnButton, actionButton] = getButtons();
+
+        expect(actionPanel.canEndTurn).toBeTrue();
+        expect(actionPanel.canToggleActionMode).toBeFalse();
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Attendez votre tour pour agir.');
+        expect(endTurnButton.disabled).toBeFalse();
+        expect(actionButton.disabled).toBeTrue();
     });
 
     function getButtons(): HTMLButtonElement[] {

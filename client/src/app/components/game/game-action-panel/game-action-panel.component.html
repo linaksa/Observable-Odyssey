@@ -5,7 +5,10 @@
             <p class="text-[10px] uppercase tracking-[0.18em] text-[#8fb7ff]">Panneau de tour</p>
         </div>
         @if (debugMode()) {
-            <span class="rounded-md border border-[#ffd84d] bg-[#c8a800] px-2 py-1 text-[10px] font-bold tracking-[0.12em] text-black"> DEBUG </span>
+            <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
+                <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
+                <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
+            </div>
         }
     </header>
 
@@ -129,7 +132,7 @@
                 Partie terminée.
             } @else if (isInCombat) {
                 Les actions de tour sont bloquées pendant le combat.
-            } @else if (!isLocalPlayerTurn && !debugMode()) {
+            } @else if (!isLocalPlayerTurn) {
                 Attendez votre tour pour agir.
             } @else if (!localPlayerHasActionLeft) {
                 Plus d'actions disponibles ce tour.

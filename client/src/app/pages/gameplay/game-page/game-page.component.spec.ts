@@ -20,9 +20,11 @@ describe('GamePageComponent', () => {
         };
         closeAllPopups: jasmine.Spy;
         connectDebugSocket: jasmine.Spy;
+        connectGameLogs: jasmine.Spy;
         resolveActiveGameId: jasmine.Spy<(activeGameId?: string) => string | undefined>;
         setActiveGame: jasmine.Spy;
         connectGameplaySocket: jasmine.Spy;
+        clearGameLogs: jasmine.Spy;
         onPlayersUpdated: jasmine.Spy;
         applyPlayersUpdate: jasmine.Spy;
         initializeTurnListeners: jasmine.Spy;
@@ -53,9 +55,11 @@ describe('GamePageComponent', () => {
             },
             closeAllPopups: jasmine.createSpy('closeAllPopups'),
             connectDebugSocket: jasmine.createSpy('connectDebugSocket'),
+            connectGameLogs: jasmine.createSpy('connectGameLogs'),
             resolveActiveGameId: jasmine.createSpy('resolveActiveGameId').and.callFake((activeGameId?: string) => activeGameId),
             setActiveGame: jasmine.createSpy('setActiveGame'),
             connectGameplaySocket: jasmine.createSpy('connectGameplaySocket'),
+            clearGameLogs: jasmine.createSpy('clearGameLogs'),
             onPlayersUpdated: jasmine.createSpy('onPlayersUpdated').and.returnValue(of([])),
             applyPlayersUpdate: jasmine.createSpy('applyPlayersUpdate'),
             initializeTurnListeners: jasmine.createSpy('initializeTurnListeners'),
@@ -100,5 +104,7 @@ describe('GamePageComponent', () => {
 
         expect(facadeStub.closeAllPopups).toHaveBeenCalledTimes(1);
         expect(facadeStub.connectDebugSocket).toHaveBeenCalledTimes(1);
+        expect(facadeStub.connectGameLogs).toHaveBeenCalledTimes(1);
+        expect(facadeStub.clearGameLogs).toHaveBeenCalledTimes(1);
     });
 });

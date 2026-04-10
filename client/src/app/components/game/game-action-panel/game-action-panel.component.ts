@@ -83,7 +83,7 @@ export class GameActionPanelComponent {
     }
 
     protected get canToggleActionMode(): boolean {
-        return this.canEndTurn && this.localPlayerHasActionLeft;
+        return this.isLocalPlayerTurn && this.canEndTurn && this.localPlayerHasActionLeft;
     }
 
     protected get combatStatus(): string {

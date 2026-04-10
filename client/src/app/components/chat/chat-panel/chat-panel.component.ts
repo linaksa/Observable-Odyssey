@@ -21,6 +21,7 @@ export class ChatPanelComponent implements AfterViewChecked {
     protected readonly activeGameService = inject(ActiveGameService);
     protected readonly localPlayerService = inject(LocalPlayerService);
     protected readonly maxMessageLength = CHAT_PANEL_MAX_MESSAGE_LENGTH;
+    private connectedGameId?: string;
 
     @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
     messageForm: FormGroup;
@@ -42,9 +43,17 @@ export class ChatPanelComponent implements AfterViewChecked {
         });
 
         effect(() => {
-            if (!this.activeGameService.isLoading() && this.activeGameService.activeGame?._id) {
-                this.chatService.connect();
+            if (this.activeGameService.isLoading()) {
+                return;
             }
+
+            const activeGameId = this.activeGameService.activeGame?._id;
+            if (!activeGameId || this.connectedGameId === activeGameId) {
+                return;
+            }
+
+            this.connectedGameId = activeGameId;
+            this.chatService.connect();
         });
     }
 
@@ -62,7 +71,7 @@ export class ChatPanelComponent implements AfterViewChecked {
     private lastMessageCount = 0;
 
     ngAfterViewChecked() {
-        const count = this.activeGameService.activeGame.messages.length;
+        const count = this.activeGameService.chatMessages().length;
 
         if (count !== this.lastMessageCount) {
             this.scrollToBottom();

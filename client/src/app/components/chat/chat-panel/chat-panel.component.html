@@ -15,7 +15,7 @@
         aria-live="polite"
         role="log"
     >
-        @for (message of activeGameService.activeGame.messages; track $index) {
+        @for (message of activeGameService.chatMessages(); track $index) {
             <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
         }
     </div>

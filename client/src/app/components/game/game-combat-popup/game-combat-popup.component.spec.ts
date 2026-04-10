@@ -24,7 +24,7 @@ describe('GameCombatPopupComponent', () => {
     let fixture: ComponentFixture<GameCombatPopupComponent>;
     let activeGameServiceStub: {
         activeGame: IActiveGame;
-        roundOutcome: CombatTurnOutcome | null;
+        roundOutcome: ReturnType<typeof signal<CombatTurnOutcome | null>>;
         chooseAttackMode: jasmine.Spy;
         getPlayerByName: jasmine.Spy<(name: string) => ICharacter | undefined>;
     };
@@ -40,7 +40,7 @@ describe('GameCombatPopupComponent', () => {
 
         activeGameServiceStub = {
             activeGame: createActiveGame([attacker, defender]),
-            roundOutcome: null,
+            roundOutcome: signal<CombatTurnOutcome | null>(null),
             chooseAttackMode: jasmine.createSpy('chooseAttackMode'),
             getPlayerByName: jasmine
                 .createSpy('getPlayerByName')
@@ -79,6 +79,13 @@ describe('GameCombatPopupComponent', () => {
         expect(root.textContent).toContain('8s');
         expect(root.textContent).toContain('Défensif');
         expect(root.textContent).toContain('Offensif');
+        expect(root.textContent).toContain('HP 8 / 10');
+        expect(root.textContent).not.toContain('MVT:');
+        expect(root.textContent).not.toContain('ACT:');
+        expect(root.textContent).not.toContain('ATK:');
+        expect(root.textContent).not.toContain('DEF:');
+        expect(root.textContent).not.toContain('RAP:');
+        expect(root.textContent).not.toContain('VIC:');
 
         buttons.find((button) => button.textContent?.includes('Défensif'))?.click();
         fixture.detectChanges();
@@ -112,11 +119,29 @@ describe('GameCombatPopupComponent', () => {
     // Nominal case: Combat result cards appear once the round outcome is available.
     it('renders combat turn results for participants', () => {
         activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
-        activeGameServiceStub.roundOutcome = createCombatOutcome();
+        activeGameServiceStub.roundOutcome.set(createCombatOutcome());
         gameTurnServiceStub.isCombatActive.set(true);
         gameTurnServiceStub.combatTimeLeftSeconds.set(null);
 
         fixture = TestBed.createComponent(GameCombatPopupComponent);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(2);
+        expect((fixture.nativeElement as HTMLElement).textContent).toContain('Dégâts subis');
+    });
+
+    // Edge case: The result still appears when the combat timer expires before the postures are resolved.
+    it('renders combat turn results when the round outcome arrives after timeout', () => {
+        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
+        gameTurnServiceStub.isCombatActive.set(true);
+        gameTurnServiceStub.combatTimeLeftSeconds.set(null);
+
+        fixture = TestBed.createComponent(GameCombatPopupComponent);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(0);
+
+        activeGameServiceStub.roundOutcome.set(createCombatOutcome());
         fixture.detectChanges();
 
         expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(2);

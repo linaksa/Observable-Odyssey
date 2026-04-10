@@ -14,7 +14,6 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
-import { formatPlayerStatValue } from '@app/utils/player-stat.utils';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { HUNDRED_PERCENT } from '@common/constants';
@@ -35,7 +34,7 @@ export class GameCombatPopupComponent {
     protected readonly selectedMode = signal<AttackPosture | null>(null);
     protected readonly confirmed = signal(false);
     protected readonly dialogMessage = signal(GAME_COMBAT_DEFAULT_DIALOG_MESSAGE);
-    protected readonly playerStatValue = formatPlayerStatValue;
+    protected readonly roundOutcome = this.activeGameService.roundOutcome;
 
     private lastTurnCount: number | null = null;
     private lastCombatTimeLeft = 0;
@@ -65,13 +64,10 @@ export class GameCombatPopupComponent {
 
         return attack.attacker === localPlayerName || attack.defender === localPlayerName;
     });
-    protected get roundOutcome() {
-        return this.activeGameService.roundOutcome;
-    }
     protected readonly showTurnResults = computed<boolean>(() => {
         this.combatActive();
         this.combatTimeLeftSeconds();
-        return this.isLocalParticipant() && Boolean(this.roundOutcome);
+        return this.isLocalParticipant() && Boolean(this.roundOutcome());
     });
 
     constructor() {
@@ -109,20 +105,18 @@ export class GameCombatPopupComponent {
     }
 
     protected selectAction(mode: AttackPosture): void {
-        if (!this.isLocalParticipant() || this.confirmed() || this.roundOutcome) {
+        if (!this.isLocalParticipant() || this.confirmed() || this.roundOutcome()) {
             return;
         }
 
         this.selectedMode.set(mode);
-        this.dialogMessage.set(
-            mode === AttackPosture.Defensive ? GAME_COMBAT_DEFENSIVE_SELECTED_MESSAGE : GAME_COMBAT_OFFENSIVE_SELECTED_MESSAGE,
-        );
+        this.dialogMessage.set(mode === AttackPosture.Defensive ? GAME_COMBAT_DEFENSIVE_SELECTED_MESSAGE : GAME_COMBAT_OFFENSIVE_SELECTED_MESSAGE);
     }
 
     protected confirmAction(): void {
         const selectedMode = this.selectedMode();
 
-        if (!this.isLocalParticipant() || selectedMode === null || this.confirmed()) {
+        if (!this.isLocalParticipant() || selectedMode === null || this.confirmed() || this.roundOutcome()) {
             return;
         }
 
@@ -133,16 +127,24 @@ export class GameCombatPopupComponent {
         );
     }
 
-    protected healthLabel(player: ICharacter | null): string {
-        if (!player) {
-            return '-- / --';
-        }
-
-        return `${player.currentHealth} / ${player.initialHealth}`;
-    }
-
     protected avatarUrl(player: ICharacter | null): string {
         return player ? buildAvatarAssetPath(player.avatar, true) : '';
+    }
+
+    protected healthBlocks(player: ICharacter | null): unknown[] {
+        if (!player) {
+            return [];
+        }
+
+        return Array.from({ length: player.initialHealth });
+    }
+
+    protected filledHealthBlocks(player: ICharacter | null): number {
+        if (!player || player.initialHealth <= 0) {
+            return 0;
+        }
+
+        return Math.min(player.currentHealth, player.initialHealth);
     }
 
     private resetSelection(): void {

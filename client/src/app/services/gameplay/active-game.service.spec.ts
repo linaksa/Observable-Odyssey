@@ -24,6 +24,7 @@ import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
+import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
@@ -60,6 +61,10 @@ describe('ActiveGameService', () => {
         }
 
         return eventStreams.get(event) as Subject<T>;
+    };
+
+    const emitEvent = <T>(event: string, payload: T): void => {
+        getEventStream<T>(event).next(payload);
     };
 
     beforeEach(() => {
@@ -129,6 +134,35 @@ describe('ActiveGameService', () => {
         expect(service.isDebugMode()).toBeTrue();
         expect(service.isLoading()).toBeFalse();
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, 'remote-game-id');
+    });
+
+    it('should preserve newer chat messages when refreshing the same active game', () => {
+        const preservedMessages: IMessage[] = [{ author: 'Alice', content: 'Bonjour', postedAt: new Date('2026-01-01T00:00:00.000Z') }];
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+        service.activeGame.messages = preservedMessages;
+
+        const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
+        fetchedGame.messages = [];
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGame));
+
+        service.setActiveGame('remote-game-id');
+
+        expect(service.activeGame.messages).toEqual(preservedMessages);
+        expect(service.chatMessages()).toEqual(preservedMessages);
+    });
+
+    it('should preserve newer chat messages when a socket refresh replaces the same active game', () => {
+        const preservedMessages: IMessage[] = [{ author: 'Alice', content: 'Salut', postedAt: new Date('2026-01-01T00:00:00.000Z') }];
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+        service.activeGame.messages = preservedMessages;
+
+        const refreshedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
+        refreshedGame.messages = [];
+
+        emitEvent<IActiveGame>(SocketEvent.CombatStarted, refreshedGame);
+
+        expect(service.activeGame.messages).toEqual(preservedMessages);
+        expect(service.chatMessages()).toEqual(preservedMessages);
     });
 
     it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {

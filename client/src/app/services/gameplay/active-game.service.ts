@@ -10,6 +10,7 @@ import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
+import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 
@@ -67,9 +68,11 @@ export class ActiveGameService implements OnDestroy {
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
+    private readonly _chatMessages = signal<IMessage[]>([]);
+    readonly chatMessages = this._chatMessages.asReadonly();
 
     reachableTiles = new Set<number>();
-    roundOutcome: CombatTurnOutcome | null = null;
+    readonly roundOutcome = signal<CombatTurnOutcome | null>(null);
 
     currentPlayer = signal<number>(0);
 
@@ -83,9 +86,9 @@ export class ActiveGameService implements OnDestroy {
                 toastService: this.toastService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
-                setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
+                setActiveGame: (activeGame: IActiveGame) => this.updateActiveGame(activeGame),
                 setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
-                setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => (this.roundOutcome = roundOutcome),
+                setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => this.roundOutcome.set(roundOutcome),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
@@ -99,6 +102,51 @@ export class ActiveGameService implements OnDestroy {
 
     private toggle(signalRef: ToggleSignalRef): void {
         signalRef.update((current) => !current);
+    }
+
+    private syncChatMessages(messages: IMessage[]): void {
+        const nextMessages = [...messages];
+        this._chatMessages.set(nextMessages);
+
+        if (this.activeGame) {
+            this.activeGame.messages = nextMessages;
+        }
+    }
+
+    private getCurrentChatMessages(): IMessage[] {
+        const activeGameMessages = this.activeGame?.messages ?? [];
+        const signalMessages = this._chatMessages();
+
+        return activeGameMessages.length > signalMessages.length ? activeGameMessages : signalMessages;
+    }
+
+    setChatMessages(messages: IMessage[]): void {
+        const currentMessages = this.getCurrentChatMessages();
+        const nextMessages = currentMessages.length > messages.length ? currentMessages : messages;
+
+        this.syncChatMessages(nextMessages);
+    }
+
+    appendChatMessage(message: IMessage): void {
+        this.syncChatMessages([...this.getCurrentChatMessages(), message]);
+    }
+
+    private updateActiveGame(activeGame: IActiveGame): void {
+        this.activeGame = this.mergeMessages(activeGame);
+        this.syncChatMessages(this.activeGame.messages ?? []);
+    }
+
+    private mergeMessages(game: IActiveGame): IActiveGame {
+        const currentMessages = this.getCurrentChatMessages();
+
+        if (this.activeGame?._id === game._id && currentMessages.length > game.messages.length) {
+            return {
+                ...game,
+                messages: [...currentMessages],
+            };
+        }
+
+        return game;
     }
 
     applyDebugModeState(data: IDebugToggleState) {
@@ -128,7 +176,7 @@ export class ActiveGameService implements OnDestroy {
                         return;
                     }
 
-                    this.activeGame = game;
+                    this.updateActiveGame(game);
                     this._isDebugMode.set(game.isDebugMode);
                     this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
