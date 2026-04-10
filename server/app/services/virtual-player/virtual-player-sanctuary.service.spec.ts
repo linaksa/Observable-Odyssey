@@ -70,6 +70,36 @@ describe('VirtualPlayerSanctuaryService', () => {
         expect(handled).to.equal(true);
         expect(gameplayActionService.handleSanctuaryInteraction.calledOnce).to.equal(true);
     });
+
+    it('should consider half health as low health and prioritize life sanctuary', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 3;
+
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary), createSanctuary(ItemType.FightSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(gameplayActionService.handleSanctuaryInteraction.calledOnce).to.equal(true);
+        const interactionData = gameplayActionService.handleSanctuaryInteraction.firstCall.args[0];
+        expect(interactionData.position).to.deep.equal({ x: 1, y: 1 });
+    });
+
+    it('should keep sanctuary coordinates unchanged when interacting', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 2;
+
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary, 1, 0)]);
+        movementService.getReachablePositions.resolves([{ x: 2, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(gameplayActionService.handleSanctuaryInteraction.calledOnce).to.equal(true);
+        const interactionData = gameplayActionService.handleSanctuaryInteraction.firstCall.args[0];
+        expect(interactionData.position).to.deep.equal({ x: 1, y: 0 });
+    });
 });
 
 function createGame(items: { x: number; y: number; size: number; itemType: ItemType; active?: boolean }[]): IActiveGame {
@@ -137,11 +167,11 @@ function createCharacter(name: string): ICharacter {
     };
 }
 
-function createSanctuary(itemType: ItemType.LifeSanctuary | ItemType.FightSanctuary) {
+function createSanctuary(itemType: ItemType.LifeSanctuary | ItemType.FightSanctuary, x: number = 1, y: number = 1) {
     return {
         itemType,
-        x: 1,
-        y: 1,
+        x,
+        y,
         size: 4,
         active: true,
     };

@@ -51,11 +51,11 @@ export class AgressivePlayerService implements VirtualPlayer {
             game.game.board.cells,
             game.game.board.items,
         );
-        if (!closestAdversePlayer) {
+        if ((closestAdversePlayer?.distance ?? 0) > character.movementLeft) {
             if (game.game.gameMode !== GameType.Ctf) {
-                await this.sanctuaryService.tryFallbackObjective(character, game);
+                const success = await this.sanctuaryService.tryFallbackObjective(character, game);
+                if (success) return; // return if player managed to get to a sanctuary, else move towards closest player
             }
-            return;
         }
 
         await this.virtualPlayerUtilities.moveToPlayer(character, game, closestAdversePlayer.bestAdjacentIndex);

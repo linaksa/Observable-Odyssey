@@ -29,7 +29,7 @@ export class VirtualPlayerSanctuaryService {
         const reachablePositions = await this.movementService.getReachablePositions(character.name, gameId);
 
         const lowHealthThreshold = character.initialHealth / 2;
-        const isLowHealth = character.currentHealth < lowHealthThreshold;
+        const isLowHealth = character.currentHealth <= lowHealthThreshold;
         if (isLowHealth && (await this.trySanctuaryType(character, game, reachablePositions, ItemType.LifeSanctuary))) {
             return true;
         }
