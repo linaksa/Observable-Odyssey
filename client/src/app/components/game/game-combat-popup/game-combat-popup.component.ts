@@ -9,6 +9,7 @@ import {
     GAME_COMBAT_DEFENSIVE_SELECTED_MESSAGE,
     GAME_COMBAT_OFFENSIVE_CONFIRMED_MESSAGE,
     GAME_COMBAT_OFFENSIVE_SELECTED_MESSAGE,
+    GAME_COMBAT_TURN_RESULT_PLACEHOLDER_STATS,
 } from '@app/constants/gameplay';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
@@ -73,6 +74,7 @@ export class GameCombatPopupComponent {
 
     protected readonly attackPosture = AttackPosture;
     protected readonly roundOutcome = this.activeGameService.roundOutcome;
+    protected readonly combatTurnResultPlaceholderStats = GAME_COMBAT_TURN_RESULT_PLACEHOLDER_STATS;
     private readonly selectedModeState = signal<AttackPosture | null>(null);
     private readonly confirmedState = signal(false);
     private readonly dialogMessageState = signal(GAME_COMBAT_DEFAULT_DIALOG_MESSAGE);
@@ -81,6 +83,8 @@ export class GameCombatPopupComponent {
     private lastCombatTimeLeft = 0;
 
     protected readonly combatActive = computed<boolean>(() => this.gameTurnService.isCombatActive());
+    protected readonly actionsLocked = computed<boolean>(() => this.confirmedState() || !!this.roundOutcome());
+    protected readonly combatTimeLeftDisplaySeconds = computed(() => this.gameTurnService.combatTimeLeftSeconds() ?? 0);
     protected readonly currentAttack = computed(() => {
         this.combatActive();
         this.combatTimeLeftSeconds();
@@ -158,7 +162,6 @@ export class GameCombatPopupComponent {
         }
 
         this.confirmedState.set(true);
-        this.selectedModeState.set(null);
         this.activeGameService.chooseAttackMode(selectedMode);
         this.dialogMessageState.set(
             selectedMode === AttackPosture.Defensive ? GAME_COMBAT_DEFENSIVE_CONFIRMED_MESSAGE : GAME_COMBAT_OFFENSIVE_CONFIRMED_MESSAGE,

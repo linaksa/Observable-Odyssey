@@ -1,4 +1,4 @@
-<div class="content">
+<div class="content h-dvh overflow-hidden">
     @if (isLoading()) {
         <div class="flex flex-1 justify-center items-center">
             <app-loading-overlay
@@ -16,7 +16,7 @@
         <app-nav-buttons textBack="Abandonner la partie" />
         <app-page-title title="Vue de jeu" />
 
-        <section class="flex flex-col lg:flex-row justify-center gap-4">
+        <section class="flex flex-1 min-h-0 flex-col lg:flex-row justify-center gap-4 overflow-hidden">
             <app-game-action-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" />
 
             <app-game-grid-panel class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4" />

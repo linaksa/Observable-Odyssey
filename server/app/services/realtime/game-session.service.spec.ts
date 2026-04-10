@@ -21,6 +21,7 @@ import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { Namespace } from 'socket.io';
+import { Container } from 'typedi';
 
 describe('GameSessionService', () => {
     let service: GameSessionService;
@@ -49,6 +50,7 @@ describe('GameSessionService', () => {
     let namespaceEmitStub: sinon.SinonStub;
 
     beforeEach(() => {
+        Container.reset();
         activeGameService = {
             getActiveGameById: sinon.stub(),
             saveActiveGameById: sinon.stub().resolves(),
@@ -70,6 +72,7 @@ describe('GameSessionService', () => {
         gameplayActionService = {
             checkEndTurnIfNoMovesLeft: sinon.stub().resolves(),
         };
+        Container.set(GameplayActionService, gameplayActionService as unknown as GameplayActionService);
 
         service = new GameSessionService(
             activeGameService as unknown as ActiveGameService,
@@ -77,7 +80,6 @@ describe('GameSessionService', () => {
             endGameService as unknown as EndGameService,
             turnService as unknown as TurnService,
             activeGameListSocketsService as unknown as ActiveGameListSocketsService,
-            gameplayActionService as unknown as GameplayActionService,
         );
 
         namespaceEmitStub = sinon.stub();
@@ -88,6 +90,7 @@ describe('GameSessionService', () => {
 
     afterEach(() => {
         sinon.restore();
+        Container.reset();
     });
 
     // Edge case: the attacker disconnects during combat cleanup, so the turn check must be skipped.

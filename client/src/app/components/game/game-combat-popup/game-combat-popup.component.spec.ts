@@ -3,6 +3,7 @@
  * Testing strategy — GameCombatPopupComponent
  *
  * - Verify the restored combat-mode shell renders inside the grid panel.
+ * - Hide the side result boxes until combat results are available.
  * - Assert posture selection and confirmation still wire through current logic.
  */
 import { signal } from '@angular/core';
@@ -57,8 +58,8 @@ describe('GameCombatPopupComponent', () => {
         }).compileComponents();
     });
 
-    // Nominal case: The restored old shell renders the combat cards, dialog, and actions.
-    it('renders the restored combat-mode shell', () => {
+    // Nominal case: The combat shell keeps both side cards in place until results exist.
+    it('renders the combat shell with hidden side result cards before outcomes exist', () => {
         activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
         gameTurnServiceStub.isCombatActive.set(true);
         gameTurnServiceStub.combatTimeLeftSeconds.set(8);
@@ -71,7 +72,6 @@ describe('GameCombatPopupComponent', () => {
         const panel = root.querySelector('.combat-panel') as HTMLElement | null;
         const comparisonRow = root.querySelector('.combat-comparison') as HTMLElement | null;
         const actionsGrid = root.querySelector('.combat-actions') as HTMLElement | null;
-        const comparisonCards = root.querySelectorAll('.combat-comparison > .combat-card');
         const actionButtons = root.querySelectorAll('.combat-actions > button');
 
         expect(outerDiv).toBeTruthy();
@@ -85,12 +85,9 @@ describe('GameCombatPopupComponent', () => {
         expect(panel).toBeTruthy();
         expect(comparisonRow).toBeTruthy();
         expect(actionsGrid).toBeTruthy();
-        expect(comparisonCards.length).toBe(2);
         expect(actionButtons.length).toBe(2);
-        const comparisonCardsTopDelta = Math.abs(comparisonCards[0].getBoundingClientRect().top - comparisonCards[1].getBoundingClientRect().top);
         const actionButtonsTopDelta = Math.abs(actionButtons[0].getBoundingClientRect().top - actionButtons[1].getBoundingClientRect().top);
 
-        expect(comparisonCardsTopDelta).toBeLessThan(1);
         expect(actionButtonsTopDelta).toBeLessThan(1);
         expect(root.textContent).toContain('Défenseur');
         expect(root.textContent).toContain('Attaquant');
@@ -100,11 +97,17 @@ describe('GameCombatPopupComponent', () => {
         expect(root.textContent).toContain('Choisir une action');
         expect(root.textContent).toContain('VS');
         expect(root.querySelectorAll('aside').length).toBe(2);
+        expect(root.querySelectorAll('.combat-side-card').length).toBe(2);
+        expect(root.querySelectorAll('.combat-side-card.invisible').length).toBe(2);
+        expect(actionButtons[0]).toBeInstanceOf(HTMLButtonElement);
+        expect(actionButtons[1]).toBeInstanceOf(HTMLButtonElement);
+        expect((actionButtons[0] as HTMLButtonElement).disabled).toBeFalse();
+        expect((actionButtons[1] as HTMLButtonElement).disabled).toBeFalse();
         expect(root.querySelectorAll('button').length).toBe(2);
     });
 
     // Nominal case: Selecting a posture and confirming it still routes through current combat logic.
-    it('selects and confirms a combat posture', () => {
+    it('keeps the selected posture checked and locks the action buttons after confirmation', () => {
         activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
         gameTurnServiceStub.isCombatActive.set(true);
         gameTurnServiceStub.combatTimeLeftSeconds.set(8);
@@ -131,7 +134,11 @@ describe('GameCombatPopupComponent', () => {
         fixture.detectChanges();
 
         expect(root.textContent).toContain('Posture défensive adoptée !');
+        expect(root.textContent).toContain('✓');
+        expect(root.textContent).toContain('Défensif');
         expect(root.textContent).not.toContain('Confirmer');
+        expect((Array.from(root.querySelectorAll('.combat-actions > button'))[0] as HTMLButtonElement).disabled).toBeTrue();
+        expect((Array.from(root.querySelectorAll('.combat-actions > button'))[1] as HTMLButtonElement).disabled).toBeTrue();
     });
 
     // Nominal case: The popup includes both restored side stats cards when results are available.
@@ -144,8 +151,13 @@ describe('GameCombatPopupComponent', () => {
         fixture.detectChanges();
 
         const root = fixture.nativeElement as HTMLElement;
+        const actionButtons = root.querySelectorAll('.combat-actions > button');
 
         expect(fixture.debugElement.queryAll(By.css('app-game-combat-turn-result')).length).toBe(2);
+        expect(root.querySelectorAll('.combat-side-card.invisible').length).toBe(0);
+        expect(actionButtons.length).toBe(2);
+        expect((actionButtons[0] as HTMLButtonElement).disabled).toBeTrue();
+        expect((actionButtons[1] as HTMLButtonElement).disabled).toBeTrue();
         expect(root.textContent).toContain('Attaque');
         expect(root.textContent).toContain('Défense');
         expect(root.textContent).toContain('Dégâts subis');

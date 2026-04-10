@@ -8,19 +8,17 @@ import { CombatOutcome } from '@common/attackResult';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
-import { Service } from 'typedi';
+import { Container, Service } from 'typedi';
 import { GameplayActionService } from './gameplay-action.service';
 
 @Service()
 export class GameSessionService {
-    /* eslint-disable max-params */
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly combatService: CombatService,
         private readonly endGameService: EndGameService,
         private readonly turnService: TurnService,
         private readonly activeGameListSocketService: ActiveGameListSocketsService,
-        private readonly gameplayActionService: GameplayActionService,
     ) {}
 
     parseJoinGamePayload(payload: string | IJoinGamePayload): IJoinGamePayload {
@@ -120,7 +118,7 @@ export class GameSessionService {
         if (combatOutcome && combatAttackerName) {
             const survivingAttacker = refreshedGame.players.find((currentPlayer) => currentPlayer.name === combatAttackerName);
             if (survivingAttacker && !survivingAttacker.hasAbandoned) {
-                await this.gameplayActionService.checkEndTurnIfNoMovesLeft(gameId, combatAttackerName);
+                await this.getGameplayActionService().checkEndTurnIfNoMovesLeft(gameId, combatAttackerName);
             }
         }
         if (isCurrentPlayer) {
@@ -193,6 +191,10 @@ export class GameSessionService {
     private getActivePlayerNames(activeGame: IActiveGame): string {
         const activePlayerNames = activeGame.players.filter((player) => !player.hasAbandoned).map((player) => player.name);
         return activePlayerNames.length > 0 ? activePlayerNames.join(', ') : 'aucun';
+    }
+
+    private getGameplayActionService(): GameplayActionService {
+        return Container.get(GameplayActionService);
     }
 
     private async disableDebugModeIfOrganizerLeft(

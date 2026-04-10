@@ -2,16 +2,12 @@
     <div class="absolute inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4">
         <section class="flex w-full max-w-[1440px] items-center justify-center gap-4">
             <aside class="hidden w-40 shrink-0 flex-col lg:flex">
-                <div class="rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 shadow-2xl">
-                    @if (roundOutcome(); as outcome) {
-                        <app-game-combat-turn-result
-                            label="Défenseur"
-                            [turnStats]="outcome.defenderStats"
-                            [receivedDamage]="outcome.defenderReceivedDamage"
-                        />
-                    } @else {
-                        <div class="invisible text-[9px] font-bold uppercase tracking-[0.2em]">Résultats</div>
-                    }
+                <div class="combat-side-card rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 shadow-2xl" [class.invisible]="!roundOutcome()">
+                    <app-game-combat-turn-result
+                        label="Défenseur"
+                        [turnStats]="roundOutcome()?.defenderStats ?? combatTurnResultPlaceholderStats"
+                        [receivedDamage]="roundOutcome()?.defenderReceivedDamage ?? 0"
+                    />
                 </div>
             </aside>
 
@@ -21,7 +17,7 @@
                     <div class="flex items-center gap-2 bg-[#0d1f42] border-[1.5px] border-[#4a7fd4] rounded-lg px-3 py-1.5">
                         <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                         <span class="font-bold text-base text-[#e8f0ff] tracking-wide min-w-[1.5rem] text-center">
-                            {{ combatTimeLeftSeconds() }}s
+                            {{ combatTimeLeftDisplaySeconds() }}s
                         </span>
                     </div>
                 </div>
@@ -108,49 +104,49 @@
 
                     <div class="combat-actions">
                         <button
+                            type="button"
+                            [disabled]="actionsLocked()"
                             (click)="selectAction(attackPosture.Defensive)"
-                            class="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 select-none transition-all duration-150 active:scale-95"
+                            class="flex w-full flex-row items-center justify-between gap-3 rounded-xl border-2 px-3 py-2.5 text-left select-none transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
                             [ngClass]="
                                 selectedMode === attackPosture.Defensive
                                     ? 'bg-[#1e4a8a] border-[#6aadff] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
                                     : 'bg-[#1a3365] border-[#2d5199] text-[#a8c8ff] hover:bg-[#1e3d75] hover:border-[#4a7fd4]'
                             "
                         >
-                            <span class="text-xl">🛡</span>
-
-                            <span class="text-sm font-bold tracking-wide">
+                            <span class="text-base font-bold tracking-wide">
                                 @if (selectedMode === attackPosture.Defensive) {
                                     ✓
                                 }
                                 Défensif
                             </span>
 
-                            <span class="text-[10px] font-semibold opacity-70">+DEF &amp; -ATK</span>
+                            <span class="text-sm font-semibold opacity-80">+DEF &amp; -ATK</span>
                         </button>
 
                         <button
+                            type="button"
+                            [disabled]="actionsLocked()"
                             (click)="selectAction(attackPosture.Offensive)"
-                            class="flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-3 py-4 select-none transition-all duration-150 active:scale-95"
+                            class="flex w-full flex-row items-center justify-between gap-3 rounded-xl border-2 px-3 py-2.5 text-left select-none transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
                             [ngClass]="
                                 selectedMode === attackPosture.Offensive
                                     ? 'bg-[#7a2e08] border-[#ff8833] text-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)]'
                                     : 'bg-[#2a1500] border-[#7a3d0a] text-[#f5b060] hover:bg-[#3a1e00] hover:border-[#b06020]'
                             "
                         >
-                            <span class="text-xl">⚔</span>
-
-                            <span class="text-sm font-bold tracking-wide">
+                            <span class="text-base font-bold tracking-wide">
                                 @if (selectedMode === attackPosture.Offensive) {
                                     ✓
                                 }
                                 Offensif
                             </span>
 
-                            <span class="text-[10px] font-semibold opacity-70">+ATK &amp; -DEF</span>
+                            <span class="text-sm font-semibold opacity-80">+ATK &amp; -DEF</span>
                         </button>
                     </div>
 
-                    @if (selectedMode !== null) {
+                    @if (selectedMode !== null && !actionsLocked()) {
                         <button
                             (click)="confirmAction()"
                             class="w-full bg-[#1f4a1a] border-2 border-[#3d9e32] rounded-xl py-3 text-center text-[#80ef74] text-base font-bold tracking-widest cursor-pointer select-none transition-colors hover:bg-[#2a6624] active:scale-[0.98]"
@@ -169,16 +165,12 @@
             </div>
 
             <aside class="hidden w-40 shrink-0 flex-col lg:flex">
-                <div class="rounded-xl border border-[#e8a832] bg-[#1a1000] p-3 shadow-2xl">
-                    @if (roundOutcome(); as outcome) {
-                        <app-game-combat-turn-result
-                            label="Attaquant"
-                            [turnStats]="outcome.attackerStats"
-                            [receivedDamage]="outcome.attackerReceivedDamage"
-                        />
-                    } @else {
-                        <div class="invisible text-[9px] font-bold uppercase tracking-[0.2em]">Résultats</div>
-                    }
+                <div class="combat-side-card rounded-xl border border-[#e8a832] bg-[#1a1000] p-3 shadow-2xl" [class.invisible]="!roundOutcome()">
+                    <app-game-combat-turn-result
+                        label="Attaquant"
+                        [turnStats]="roundOutcome()?.attackerStats ?? combatTurnResultPlaceholderStats"
+                        [receivedDamage]="roundOutcome()?.attackerReceivedDamage ?? 0"
+                    />
                 </div>
             </aside>
         </section>

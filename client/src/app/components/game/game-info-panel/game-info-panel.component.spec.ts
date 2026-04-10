@@ -42,10 +42,19 @@ describe('GameInfoPanelComponent', () => {
         expect(fixture.componentInstance).toBeTruthy();
     });
 
-    it('should render the player list in the upper half', () => {
-        const playerList = fixture.nativeElement.querySelector('[data-testid="player-list"]');
+    it('should keep the player list capped at half height and give the lower panel more space', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('min-h-0')).toBeTrue();
+        expect(host.classList.contains('min-w-0')).toBeTrue();
+        const playerListShell = host.querySelector('[data-testid="player-list-shell"]') as HTMLElement | null;
+        const infoPanelShell = host.querySelector('[data-testid="info-panel-shell"]') as HTMLElement | null;
 
-        expect(playerList).toBeTruthy();
+        expect(playerListShell).toBeTruthy();
+        expect(playerListShell?.classList.contains('flex-initial')).toBeTrue();
+        expect(playerListShell?.classList.contains('max-h-[50%]')).toBeTrue();
+        expect(playerListShell?.classList.contains('overflow-hidden')).toBeTrue();
+        expect(infoPanelShell).toBeTruthy();
+        expect(infoPanelShell?.classList.contains('flex-1')).toBeTrue();
     });
 
     it('should show chat by default and switch to journal tab', () => {

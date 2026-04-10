@@ -7,6 +7,7 @@
  * - Verify edit-mode output events are emitted only when the grid is editable.
  * - Test tooltip functionality: show, position, and hide based on hover events.
  * - Test placement preview overlay rendering and opacity.
+ * - Verify the shared wrapper fills the available height for the grid shell.
  *
  * Edge cases covered:
  * - Sanctuary items should span 2x2 cells with shifted offsets.
@@ -86,6 +87,15 @@ describe('GameGridComponent', () => {
         expect(objectImages.length).toBeGreaterThan(0);
         expect(objectImages[0].getAttribute('src')).toContain(ITEM_TYPE_PATHS[ItemType.LifeSanctuary]);
         expect(objectImages[0].className).toContain('[image-rendering:pixelated]');
+    });
+
+    it('should keep the grid container sized to the available height', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        const gridContainer = fixture.nativeElement.querySelector('[data-testid="game-grid-container"]') as HTMLElement;
+
+        expect(host.className).toContain('h-full');
+        expect(host.className).toContain('min-h-0');
+        expect(gridContainer.className).toContain('h-full');
     });
 
     it('should emit mouse events when editable', () => {

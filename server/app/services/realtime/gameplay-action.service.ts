@@ -151,6 +151,11 @@ export class GameplayActionService {
         this.emitGameLogToRoom(gameId, `Début du combat entre ${attackerName} et ${defenderName}.`, namespace);
 
         this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
+            const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
+            if (!refreshedGame || refreshedGame.isFinished || !refreshedGame.currentAttack) {
+                return;
+            }
+
             const combatResolved = await this.actionService.applyCombatTurn(gameId);
             if (combatResolved) {
                 await this.handlePostCombatEndScenario(attackerName, gameId, namespace);
