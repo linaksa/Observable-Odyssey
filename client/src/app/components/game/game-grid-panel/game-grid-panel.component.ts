@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
 import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
@@ -43,6 +43,7 @@ export class GameGridPanelComponent {
     protected readonly debugMode = this.activeGameService.isDebugMode;
     protected readonly titleTooltip = signal<string | null>(null);
     protected readonly titleTooltipPosition = signal<TooltipPosition>({ x: 0, y: 0 });
+    protected readonly tileInfoTooltipPosition = signal<TooltipPosition>({ x: 0, y: 0 });
     protected readonly gameTitle = computed<string>(() => {
         this.activeGameService.hasChangedLocation();
         this.activeGameService.hasAbandonned();
@@ -77,6 +78,9 @@ export class GameGridPanelComponent {
 
     @ViewChild('titleTooltipElement', { read: ElementRef })
     private titleTooltipRef?: ElementRef<HTMLDivElement>;
+
+    @ViewChild(GameTileInspectionPopupComponent)
+    private tileInfoTooltipComponent?: GameTileInspectionPopupComponent;
 
     readonly getObjectAt = (rowIndex: number, colIndex: number): IItem | null => {
         const activeGame = this.activeGameService.activeGame;
@@ -141,6 +145,10 @@ export class GameGridPanelComponent {
 
     protected onGridCellContextMenu(event: GameGridCellEvent): void {
         this.interactionService.handleCellRightClick(event.event, event.rowIndex, event.colIndex, event.cellType, event.item);
+
+        if (this.popupStateService.tileInfoPopupData.visible) {
+            this.updateTileInfoTooltipPosition(event.event);
+        }
     }
 
     protected onGridCellClick(event: GameGridCellEvent): void {
@@ -165,6 +173,31 @@ export class GameGridPanelComponent {
 
     protected handleDocumentClick(event?: MouseEvent): void {
         this.interactionService.handleDocumentClick(event);
+    }
+
+    @HostListener('window:mousemove', ['$event'])
+    protected handleWindowMouseMove(event: MouseEvent): void {
+        if (!this.popupStateService.tileInfoPopupData.visible) {
+            return;
+        }
+
+        const hoveredCell = this.getHoveredGridCell(event.target);
+
+        if (!hoveredCell) {
+            this.popupStateService.closeTileInfo();
+            return;
+        }
+
+        const cellType = this.gameCells()[hoveredCell.rowIndex]?.[hoveredCell.colIndex];
+
+        if (cellType === undefined) {
+            this.popupStateService.closeTileInfo();
+            return;
+        }
+
+        const playerAtPosition = this.activeGameService.getPlayersAtPosition(hoveredCell.rowIndex, hoveredCell.colIndex)[0] ?? null;
+        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+        this.updateTileInfoTooltipPosition(event);
     }
 
     private isLocalPlayerTurn(): boolean {
@@ -200,6 +233,47 @@ export class GameGridPanelComponent {
             computeTooltipPosition({
                 event,
                 containerRect,
+                tooltipWidth,
+                tooltipHeight,
+                horizontalOffsetPx: TOOLTIP_HORIZONTAL_OFFSET_PX,
+                verticalOffsetPx: TOOLTIP_VERTICAL_OFFSET_PX,
+                fallbackPosition: {
+                    x: event.clientX + TOOLTIP_HORIZONTAL_OFFSET_PX,
+                    y: event.clientY + TOOLTIP_VERTICAL_OFFSET_PX,
+                },
+            }),
+        );
+    }
+
+    private getHoveredGridCell(target: EventTarget | null): { rowIndex: number; colIndex: number } | null {
+        if (!(target instanceof Element)) {
+            return null;
+        }
+
+        const cellElement = target.closest('[data-testid="game-grid-cell"]');
+
+        if (!(cellElement instanceof HTMLElement)) {
+            return null;
+        }
+
+        const rowIndex = Number(cellElement.dataset.rowIndex);
+        const colIndex = Number(cellElement.dataset.colIndex);
+
+        if (!Number.isInteger(rowIndex) || !Number.isInteger(colIndex)) {
+            return null;
+        }
+
+        return { rowIndex, colIndex };
+    }
+
+    private updateTileInfoTooltipPosition(event: MouseEvent): void {
+        const tooltipWidth =
+            this.tileInfoTooltipComponent?.tooltipElement?.getBoundingClientRect().width ?? GAME_GRID_PANEL_TOOLTIP_FALLBACK_WIDTH_PX;
+        const tooltipHeight = this.tileInfoTooltipComponent?.tooltipElement?.getBoundingClientRect().height ?? TOOLTIP_FALLBACK_HEIGHT_PX;
+
+        this.tileInfoTooltipPosition.set(
+            computeTooltipPosition({
+                event,
                 tooltipWidth,
                 tooltipHeight,
                 horizontalOffsetPx: TOOLTIP_HORIZONTAL_OFFSET_PX,

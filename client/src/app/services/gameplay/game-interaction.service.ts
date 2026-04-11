@@ -104,7 +104,7 @@ export class GameInteractionService {
 
         if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn()) {
             if (!this.isTeleportableCell(rowIndex, colIndex, cellType, boardItem)) {
-                this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition);
+                this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
                 return;
             }
             this.popupStateService.closeTileInfo();
@@ -119,7 +119,7 @@ export class GameInteractionService {
             return;
         }
 
-        this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition);
+        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
     }
 
     handleDocumentClick(event?: MouseEvent): void {

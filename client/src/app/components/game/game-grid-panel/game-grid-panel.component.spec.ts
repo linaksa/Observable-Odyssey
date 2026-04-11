@@ -22,6 +22,19 @@ import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { GameGridPanelComponent } from './game-grid-panel.component';
 
+const TOOLTIP_VIEWPORT_WIDTH = 400;
+const TOOLTIP_VIEWPORT_HEIGHT = 200;
+const TOOLTIP_RENDER_WIDTH = 200;
+const TOOLTIP_RENDER_HEIGHT = 90;
+const TOOLTIP_INITIAL_POSITION_X = 132;
+const TOOLTIP_INITIAL_POSITION_Y = 88;
+const TOOLTIP_FIRST_CURSOR_X = 120;
+const TOOLTIP_FIRST_CURSOR_Y = 80;
+const TOOLTIP_SECOND_CURSOR_X = 350;
+const TOOLTIP_SECOND_CURSOR_Y = 120;
+const TOOLTIP_FLIPPED_POSITION_X = 138;
+const TOOLTIP_FLIPPED_POSITION_Y = 22;
+
 describe('GameGridPanelComponent', () => {
     let fixture: ComponentFixture<GameGridPanelComponent>;
     let component: GameGridPanelComponent;
@@ -36,6 +49,7 @@ describe('GameGridPanelComponent', () => {
         reachableTiles: Set<number>;
         updateMovementRange: jasmine.Spy;
         getCurrentPlayer: jasmine.Spy<() => ICharacter | undefined>;
+        getPlayersAtPosition: jasmine.Spy<(rowIndex: number, colIndex: number) => ICharacter[]>;
         getPlayerByName: jasmine.Spy<(name: string) => ICharacter | undefined>;
         roundOutcome: null;
         combatOutcome: ReturnType<typeof signal<CombatOutcome | null>>;
@@ -48,6 +62,8 @@ describe('GameGridPanelComponent', () => {
     let popupStateServiceStub: {
         isSanctuaryPopupVisible: boolean;
         closeSanctuaryPopup: jasmine.Spy;
+        openTileInfo: jasmine.Spy;
+        closeTileInfo: jasmine.Spy;
         tileInfoPopupData: {
             visible: boolean;
             title: string;
@@ -55,8 +71,8 @@ describe('GameGridPanelComponent', () => {
             movementCost: string;
             itemTitle: null;
             itemDescription: null;
-            playerName: null;
-            playerAvatarUrl: null;
+            playerName: string | null;
+            playerAvatarUrl: string | null;
         };
         sanctuaryPopupData: {
             visible: boolean;
@@ -70,6 +86,25 @@ describe('GameGridPanelComponent', () => {
         const alice = createCharacter('Alice', { x: 0, y: 0 });
         const bob = createCharacter('Bob', { x: 1, y: 0 });
         const activeGame = createActiveGame([alice, bob]);
+        let tileInfoPopupData: {
+            visible: boolean;
+            title: string;
+            description: string;
+            movementCost: string;
+            itemTitle: null;
+            itemDescription: null;
+            playerName: string | null;
+            playerAvatarUrl: string | null;
+        } = {
+            visible: false,
+            title: '',
+            description: '',
+            movementCost: '',
+            itemTitle: null,
+            itemDescription: null,
+            playerName: null,
+            playerAvatarUrl: null,
+        };
 
         interactionServiceSpy = jasmine.createSpyObj<GameInteractionService>('GameInteractionService', [
             'handleKeyboard',
@@ -91,6 +126,7 @@ describe('GameGridPanelComponent', () => {
             reachableTiles: new Set<number>([0, 1]),
             updateMovementRange: jasmine.createSpy('updateMovementRange'),
             getCurrentPlayer: jasmine.createSpy('getCurrentPlayer').and.returnValue(alice),
+            getPlayersAtPosition: jasmine.createSpy('getPlayersAtPosition').and.returnValue([]),
             getPlayerByName: jasmine
                 .createSpy('getPlayerByName')
                 .and.callFake((name: string) => activeGame.players.find((player) => player.name === name)),
@@ -106,15 +142,32 @@ describe('GameGridPanelComponent', () => {
         popupStateServiceStub = {
             isSanctuaryPopupVisible: false,
             closeSanctuaryPopup: jasmine.createSpy('closeSanctuaryPopup'),
-            tileInfoPopupData: {
-                visible: false,
-                title: '',
-                description: '',
-                movementCost: '',
-                itemTitle: null,
-                itemDescription: null,
-                playerName: null,
-                playerAvatarUrl: null,
+            openTileInfo: jasmine.createSpy('openTileInfo').and.callFake(() => {
+                tileInfoPopupData = {
+                    visible: true,
+                    title: 'Tuile de base',
+                    description: 'Terrain libre et traversable.',
+                    movementCost: '1 point de mouvement.',
+                    itemTitle: null,
+                    itemDescription: null,
+                    playerName: 'Alice',
+                    playerAvatarUrl: '/avatar.png',
+                };
+            }),
+            closeTileInfo: jasmine.createSpy('closeTileInfo').and.callFake(() => {
+                tileInfoPopupData = {
+                    visible: false,
+                    title: '',
+                    description: '',
+                    movementCost: '',
+                    itemTitle: null,
+                    itemDescription: null,
+                    playerName: null,
+                    playerAvatarUrl: null,
+                };
+            }),
+            get tileInfoPopupData() {
+                return tileInfoPopupData;
             },
             sanctuaryPopupData: {
                 visible: false,
@@ -171,6 +224,55 @@ describe('GameGridPanelComponent', () => {
         expect(interactionServiceSpy.handleCellRightClick).toHaveBeenCalled();
         expect(interactionServiceSpy.handleGridCellClick).toHaveBeenCalledWith(0, 1, CellType.Empty, null);
         expect(interactionServiceSpy.handlePlayerClick).toHaveBeenCalledWith('Bob');
+    });
+
+    it('positions the tile tooltip near the cursor and keeps it updated while moving', () => {
+        interactionServiceSpy.handleCellRightClick.and.callFake((event, rowIndex, colIndex, cellType) => {
+            popupStateServiceStub.openTileInfo(cellType, null, null);
+        });
+
+        spyOnProperty(window, 'innerWidth', 'get').and.returnValue(TOOLTIP_VIEWPORT_WIDTH);
+        spyOnProperty(window, 'innerHeight', 'get').and.returnValue(TOOLTIP_VIEWPORT_HEIGHT);
+
+        const grid = fixture.debugElement.query(By.directive(GameGridComponent)).componentInstance as GameGridComponent;
+        const firstEvent = new MouseEvent('contextmenu', { bubbles: true, clientX: TOOLTIP_FIRST_CURSOR_X, clientY: TOOLTIP_FIRST_CURSOR_Y });
+
+        grid.cellContextMenu.emit({ rowIndex: 0, colIndex: 0, cellType: CellType.Empty, item: null, event: firstEvent });
+        fixture.detectChanges();
+
+        let tooltip = fixture.nativeElement.querySelector('app-game-tile-inspection-popup aside') as HTMLElement;
+
+        expect(tooltip).toBeTruthy();
+        expect((component as unknown as { tileInfoTooltipPosition: () => { x: number; y: number } }).tileInfoTooltipPosition()).toEqual({
+            x: TOOLTIP_INITIAL_POSITION_X,
+            y: TOOLTIP_INITIAL_POSITION_Y,
+        });
+        expect(tooltip.textContent).toContain('Alice');
+        spyOn(tooltip, 'getBoundingClientRect').and.returnValue(createGridBounds(0, 0, TOOLTIP_RENDER_WIDTH, TOOLTIP_RENDER_HEIGHT));
+
+        const secondCell = fixture.nativeElement.querySelectorAll('[data-testid="game-grid-cell"]')[1] as HTMLElement;
+        secondCell.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: TOOLTIP_SECOND_CURSOR_X, clientY: TOOLTIP_SECOND_CURSOR_Y }));
+        fixture.detectChanges();
+
+        tooltip = fixture.nativeElement.querySelector('app-game-tile-inspection-popup aside') as HTMLElement;
+
+        const updatedPosition = (component as unknown as { tileInfoTooltipPosition: () => { x: number; y: number } }).tileInfoTooltipPosition();
+        expect(updatedPosition).toEqual({
+            x: TOOLTIP_FLIPPED_POSITION_X,
+            y: TOOLTIP_FLIPPED_POSITION_Y,
+        });
+        expect(popupStateServiceStub.openTileInfo).toHaveBeenCalledTimes(2);
+    });
+
+    it('dismisses the tile tooltip when the cursor leaves the grid', () => {
+        popupStateServiceStub.openTileInfo(CellType.Empty, null, null);
+        fixture.detectChanges();
+
+        fixture.nativeElement.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 20, clientY: 20 }));
+        fixture.detectChanges();
+
+        expect(popupStateServiceStub.closeTileInfo).toHaveBeenCalled();
+        expect(fixture.nativeElement.querySelector('app-game-tile-inspection-popup aside')).toBeFalsy();
     });
 
     it('renders the combat popup shell alongside the grid', () => {
@@ -263,4 +365,18 @@ function createActiveGame(players: ICharacter[]): IActiveGame {
         turnStartTimeStamp: Date.now(),
         currentAttack: null,
     };
+}
+
+function createGridBounds(left: number, top: number, width: number, height: number): DOMRect {
+    return {
+        left,
+        top,
+        width,
+        height,
+        right: left + width,
+        bottom: top + height,
+        x: left,
+        y: top,
+        toJSON: () => ({}),
+    } as DOMRect;
 }
