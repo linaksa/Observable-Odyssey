@@ -85,8 +85,27 @@ describe('GameActionPanelComponent', () => {
 
         expect(root.textContent).toContain('Alice');
         expect(root.textContent).toContain('12s');
-        expect(root.textContent).toContain('MVT: 4');
-        expect(root.textContent).toContain('ACT: 1');
+        expect(root.textContent).toContain('Mouvements');
+        expect(root.textContent).toContain('Actions');
+        expect(root.textContent).toContain('Victoires');
+        expect(root.querySelector('[data-testid="mvt-tile-value"]')?.textContent).toContain('4');
+        expect(root.querySelector('[data-testid="act-tile-value"]')?.textContent).toContain('1');
+        expect(root.querySelector('[data-testid="vic-tile-value"]')?.textContent).toContain('2');
+        expect(root.textContent).toContain('D-ATK: 4');
+        expect(root.textContent).toContain('D-DEF: 6');
+    });
+
+    it('should render player card at top and controls block at bottom', () => {
+        const root = fixture.nativeElement as HTMLElement;
+        const stack = root.querySelector('.flex.h-full.flex-col.gap-4') as HTMLElement;
+        const card = root.querySelector('app-game-player-card') as HTMLElement;
+        const controls = root.querySelector('app-game-action-controls') as HTMLElement;
+
+        expect(stack).toBeTruthy();
+        expect(card).toBeTruthy();
+        expect(controls).toBeTruthy();
+        expect(stack.firstElementChild?.tagName.toLowerCase()).toBe('app-game-player-card');
+        expect(controls.classList.contains('mt-auto')).toBeTrue();
     });
 
     // Nominal case: End-turn button triggers turn service when enabled.
@@ -134,11 +153,17 @@ describe('GameActionPanelComponent', () => {
         expect(actionPanel.canToggleActionMode).toBeFalse();
     });
 
-    it('should render debug badge when debug mode is enabled', () => {
+    it('should keep controls enabled for local player in debug mode', () => {
         activeGameServiceStub.isDebugMode.set(true);
         fixture.detectChanges();
 
-        expect((fixture.nativeElement as HTMLElement).textContent).toContain('DEBUG MODE');
+        const actionPanel = fixture.componentInstance as unknown as GameActionPanelState;
+        const [endTurnButton, actionButton] = getButtons();
+
+        expect(actionPanel.canEndTurn).toBeTrue();
+        expect(actionPanel.canToggleActionMode).toBeTrue();
+        expect(endTurnButton.disabled).toBeFalse();
+        expect(actionButton.disabled).toBeFalse();
     });
 
     it('should keep action mode disabled for non-current players in debug mode while allowing turn skip', () => {
@@ -160,14 +185,8 @@ describe('GameActionPanelComponent', () => {
     it('should disable both controls during combat even with debug mode enabled', () => {
         activeGameServiceStub.isDebugMode.set(true);
         gameTurnServiceStub.currentPlayerName = 'Alice';
-        activeGameServiceStub.activeGame.currentAttack = {
-            attacker: 'Alice',
-            defender: 'Bob',
-            attackerPosture: null,
-            defenderPosture: null,
-            turnCount: 1,
-            suspendedTurnTimer: 0,
-        };
+        gameTurnServiceStub.isCombatActive.set(true);
+        activeGameServiceStub.hasChangedLocation.set(true);
         fixture.detectChanges();
 
         const actionPanel = fixture.componentInstance as unknown as GameActionPanelState;

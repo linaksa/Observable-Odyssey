@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
-import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
 import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
+import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
 import { GameSanctuaryPopupComponent } from '@app/components/game/game-sanctuary-popup/game-sanctuary-popup.component';
 import { GameTileInspectionPopupComponent } from '@app/components/game/game-tile-inspection-popup/game-tile-inspection-popup.component';
 import { GAME_GRID_PANEL_HOST_BINDINGS } from '@app/constants/component-host-bindings';
@@ -40,6 +40,7 @@ export class GameGridPanelComponent {
     private graph: [number, number][][] = [];
     private totalColumns = 0;
 
+    protected readonly debugMode = this.activeGameService.isDebugMode;
     protected readonly titleTooltip = signal<string | null>(null);
     protected readonly titleTooltipPosition = signal<TooltipPosition>({ x: 0, y: 0 });
     protected readonly gameTitle = computed<string>(() => {

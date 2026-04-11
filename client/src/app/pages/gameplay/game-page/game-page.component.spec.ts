@@ -108,19 +108,34 @@ describe('GamePageComponent', () => {
         expect(facadeStub.clearGameLogs).toHaveBeenCalledTimes(1);
     });
 
-    it('should keep the gameplay panels within the available viewport height', () => {
+    it('should use responsive constraints: scrollable on small, constrained on large', () => {
         fixture = TestBed.createComponent(GamePageComponent);
         fixture.detectChanges();
 
         const content = fixture.nativeElement.querySelector('.content');
         const panelsSection = fixture.nativeElement.querySelector('section');
+        const actionPanel = fixture.nativeElement.querySelector('app-game-action-panel');
+        const gridPanel = fixture.nativeElement.querySelector('app-game-grid-panel');
+        const infoPanel = fixture.nativeElement.querySelector('app-game-info-panel');
 
         expect(content).toBeTruthy();
-        expect(content.classList.contains('h-dvh')).toBeTrue();
-        expect(content.classList.contains('overflow-hidden')).toBeTrue();
+        expect(content.classList.contains('min-h-dvh')).toBeTrue();
+        expect(content.classList.contains('overflow-y-auto')).toBeTrue();
+        expect(content.classList.contains('lg:h-dvh')).toBeTrue();
+        expect(content.classList.contains('lg:overflow-hidden')).toBeTrue();
         expect(panelsSection).toBeTruthy();
-        expect(panelsSection.classList.contains('flex-1')).toBeTrue();
-        expect(panelsSection.classList.contains('min-h-0')).toBeTrue();
-        expect(panelsSection.classList.contains('overflow-hidden')).toBeTrue();
+        expect(panelsSection.classList.contains('items-start')).toBeFalse();
+        expect(panelsSection.classList.contains('lg:flex-1')).toBeTrue();
+        expect(panelsSection.classList.contains('lg:min-h-0')).toBeTrue();
+        expect(panelsSection.classList.contains('lg:overflow-hidden')).toBeTrue();
+        expect(actionPanel.classList.contains('w-full')).toBeTrue();
+        expect(gridPanel.classList.contains('w-full')).toBeTrue();
+        expect(infoPanel.classList.contains('w-full')).toBeTrue();
+        expect(actionPanel.classList.contains('lg:w-auto')).toBeTrue();
+        expect(gridPanel.classList.contains('lg:w-auto')).toBeTrue();
+        expect(infoPanel.classList.contains('lg:w-auto')).toBeTrue();
+        expect(actionPanel.classList.contains('lg:flex-1')).toBeTrue();
+        expect(gridPanel.classList.contains('lg:flex-2')).toBeTrue();
+        expect(infoPanel.classList.contains('lg:flex-1')).toBeTrue();
     });
 });

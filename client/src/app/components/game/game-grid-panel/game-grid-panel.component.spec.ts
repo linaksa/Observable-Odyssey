@@ -182,10 +182,18 @@ describe('GameGridPanelComponent', () => {
     });
 
     it('applies sizing and clipping to grid container', () => {
+        const panelContainer = fixture.nativeElement.firstElementChild as HTMLElement;
         const gridContainer = fixture.nativeElement.querySelector('#grid-container');
+        const gridSizer = gridContainer.firstElementChild as HTMLElement;
+
+        expect(panelContainer.classList.contains('w-full')).toBeTruthy();
+        expect(panelContainer.classList.contains('lg:h-full')).toBeTruthy();
         expect(gridContainer).toBeTruthy();
         expect(gridContainer.classList.contains('overflow-hidden')).toBeTruthy();
-        expect(gridContainer.classList.contains('@container-[size]')).toBeTruthy();
+        expect(gridContainer.classList.contains('grow-0')).toBeTruthy();
+        expect(gridContainer.classList.contains('lg:grow')).toBeTruthy();
+        expect(gridSizer.classList.contains('aspect-square')).toBeTruthy();
+        expect(gridSizer.classList.contains('lg:aspect-auto')).toBeTruthy();
     });
 
     it('delegates keyboard events to interaction service', () => {

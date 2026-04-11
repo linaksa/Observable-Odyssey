@@ -1,18 +1,29 @@
-<div #panelContainer class="relative flex h-full w-full flex-col gap-3 min-h-0 min-w-0">
-    <h2
-        class="text-2xl text-white tracking-wider text-center"
-        data-testid="game-grid-title"
-        (mouseenter)="showTitleTooltip($event)"
-        (mousemove)="updateTitleTooltip($event)"
-        (mouseleave)="hideTitleTooltip()"
-    >
-        {{ titleLabel() }}
-    </h2>
+<div #panelContainer class="relative flex w-full flex-col gap-3 min-w-0 lg:h-full lg:min-h-0">
+    <div class="flex flex-row justify-center relative">
+        <h2
+            class="text-2xl text-white tracking-wider text-center"
+            data-testid="game-grid-title"
+            (mouseenter)="showTitleTooltip($event)"
+            (mousemove)="updateTitleTooltip($event)"
+            (mouseleave)="hideTitleTooltip()"
+        >
+            {{ titleLabel() }}
+        </h2>
 
-    <div id="grid-container" class="relative flex grow min-h-0 min-w-0 items-center justify-center overflow-hidden @container-[size]">
-        <div class="relative flex h-full w-full items-center justify-center">
+        @if (debugMode()) {
+            <div class="absolute right-0">
+                <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
+                    <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
+                    <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div id="grid-container" class="relative flex grow-0 w-full min-w-0 items-center justify-center overflow-hidden lg:grow">
+        <div class="relative flex w-full aspect-square items-center justify-center lg:h-full lg:aspect-auto">
             <app-game-grid
-                class="h-[min(100cqw,100cqh)]! w-[min(100cqw,100cqh)]! max-h-full max-w-full transition-[filter] duration-200"
+                class="h-full w-full max-h-full max-w-full transition-[filter] duration-200"
                 [cells]="gameCells()"
                 [getObjectAt]="getObjectAt"
                 [highlightedTiles]="reachableTiles"

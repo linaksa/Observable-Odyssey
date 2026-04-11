@@ -11,8 +11,7 @@
             <button
                 type="button"
                 class="btn flex-1"
-                [class.bg-white]="activeTab() === journalTab.Chat"
-                [class.text-black]="activeTab() === journalTab.Chat"
+                [class.btn-blue]="activeTab() === journalTab.Chat"
                 [attr.aria-selected]="activeTab() === journalTab.Chat"
                 [attr.aria-pressed]="activeTab() === journalTab.Chat"
                 role="tab"
@@ -23,8 +22,7 @@
             <button
                 type="button"
                 class="btn flex-1"
-                [class.bg-white]="activeTab() === journalTab.Journal"
-                [class.text-black]="activeTab() === journalTab.Journal"
+                [class.btn-blue]="activeTab() === journalTab.Journal"
                 [attr.aria-selected]="activeTab() === journalTab.Journal"
                 [attr.aria-pressed]="activeTab() === journalTab.Journal"
                 role="tab"
