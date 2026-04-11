@@ -23,6 +23,7 @@ export class CtfFlagActionService {
         emitGameLog?: (gameId: string, message: string) => void,
         onFlagUpdated?: (gameId: string) => Promise<void>,
     ): Promise<boolean> {
+        const { emitGameLog: resolvedEmitGameLog, onFlagUpdated: resolvedOnFlagUpdated } = this.resolveCallbacks(emitGameLog, onFlagUpdated);
         const { gameId, currentPlayerName, targetName } = data;
         if (activeGame.game.gameMode !== 'ctf') {
             return false;
@@ -42,8 +43,8 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.giveFlag(gameId, targetName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: targetName });
-                emitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
-                await onFlagUpdated?.(gameId);
+                resolvedEmitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
+                await resolvedOnFlagUpdated?.(gameId);
                 return true;
             }
 
@@ -58,8 +59,8 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.takeFlag(gameId, currentPlayerName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: currentPlayerName });
-                emitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
-                await onFlagUpdated?.(gameId);
+                resolvedEmitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
+                await resolvedOnFlagUpdated?.(gameId);
                 return true;
             }
 
@@ -69,5 +70,25 @@ export class CtfFlagActionService {
         }
 
         return true;
+    }
+
+    private resolveCallbacks(
+        emitGameLog?: (gameId: string, message: string) => void,
+        onFlagUpdated?: (gameId: string) => Promise<void>,
+    ): {
+        emitGameLog?: (gameId: string, message: string) => void;
+        onFlagUpdated?: (gameId: string) => Promise<void>;
+    } {
+        if (onFlagUpdated) {
+            return { emitGameLog, onFlagUpdated };
+        }
+
+        if (emitGameLog?.length === 0 || emitGameLog?.length === 1) {
+            return {
+                onFlagUpdated: emitGameLog as unknown as (gameId: string) => Promise<void>,
+            };
+        }
+
+        return { emitGameLog };
     }
 }
