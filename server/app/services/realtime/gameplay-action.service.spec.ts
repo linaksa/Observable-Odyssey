@@ -4,18 +4,7 @@
  * - Verify combat timers re-check live state before applying a delayed combat turn.
  * - Prevent stale combat callbacks from running after combat has already been cleared.
  */
-import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { ActionService } from '@app/services/gameplay/action-service';
-import { DoorService } from '@app/services/gameplay/door-service';
-import { EndGameService } from '@app/services/gameplay/end-game.service';
-import { MovementService } from '@app/services/gameplay/movement-service';
-import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
-import { StartGameService } from '@app/services/gameplay/start-game.service';
-import { TurnService } from '@app/services/gameplay/turn-service';
-import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
-import { GameSessionService } from '@app/services/realtime/game-session.service';
-import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -37,6 +26,12 @@ describe('GameplayActionService', () => {
         canUseAction: sinon.SinonStub;
         applyCombatTurn: sinon.SinonStub;
     };
+    let endGameService: {
+        checkEndGame: sinon.SinonStub;
+    };
+    let ctfFlagActionService: {
+        handleFlagAction: sinon.SinonStub;
+    };
     let turnService: {
         suspendTurn: sinon.SinonStub;
         startCombatTimer: sinon.SinonStub;
@@ -57,6 +52,12 @@ describe('GameplayActionService', () => {
             canUseAction: sinon.stub().resolves(true),
             applyCombatTurn: sinon.stub().resolves(false),
         };
+        endGameService = {
+            checkEndGame: sinon.stub().resolves(false),
+        };
+        ctfFlagActionService = {
+            handleFlagAction: sinon.stub().resolves(false),
+        };
         turnService = {
             suspendTurn: sinon.stub(),
             startCombatTimer: sinon.stub().callsFake((_durationMs: number, _activeGame: IActiveGame, callback: () => Promise<void> | void) => {
@@ -71,17 +72,17 @@ describe('GameplayActionService', () => {
         } as unknown as Namespace;
 
         service = new GameplayActionService(
-            turnService as unknown as TurnService,
-            {} as StartGameService,
-            {} as MovementService,
-            {} as DoorService,
-            {} as SanctuaryService,
-            {} as EndGameService,
-            {} as GameSessionService,
-            activeGameService as unknown as ActiveGameService,
-            actionService as unknown as ActionService,
-            {} as CtfFlagActionService,
-            {} as VirtualPlayerTurnFinalizerService,
+            turnService as never,
+            {} as never,
+            {} as never,
+            {} as never,
+            {} as never,
+            endGameService as never,
+            {} as never,
+            activeGameService as never,
+            actionService as never,
+            ctfFlagActionService as never,
+            {} as never,
         );
     });
 

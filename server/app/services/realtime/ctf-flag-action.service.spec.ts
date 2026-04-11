@@ -1,4 +1,4 @@
-import { CtfFlagActionService, PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
+import { CtfFlagActionService, type PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
 import { ActionService } from '@app/services/gameplay/action-service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
@@ -62,6 +62,7 @@ describe('CtfFlagActionService', () => {
         const game = createActiveGame([requester, virtualCarrier]);
 
         actionService.canTakeFlag.resolves(true);
+        const onFlagUpdated = sinon.stub().resolves();
 
         const handled = await service.handleFlagAction(
             game,
@@ -71,11 +72,13 @@ describe('CtfFlagActionService', () => {
                 pendingGameId = gameId;
                 pendingRequest = request;
             },
+            onFlagUpdated,
         );
 
         expect(handled).to.equal(true);
         expect(actionService.takeFlag.calledOnceWithExactly(game._id, requester.name)).to.equal(true);
         expect(namespaceEmitStub.calledWithExactly(SocketEvent.FlagPickedUp, { playerName: requester.name })).to.equal(true);
+        expect(onFlagUpdated.calledOnceWithExactly(game._id)).to.equal(true);
         expect(namespaceEmitStub.calledWith(SocketEvent.TakeFlag)).to.equal(false);
         expect(pendingGameId).to.equal(null);
         expect(pendingRequest).to.equal(null);
