@@ -1,5 +1,6 @@
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { CombatLogService } from '@app/services/gameplay/combat-log.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { FlagCarrierDefeat } from '@app/services/interfaces/flag-carrier-defeat';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -38,6 +39,7 @@ export class CombatService {
         private positionValidatorService: PositionValidatorService,
         private turnService: TurnService,
         private readonly socketService: SocketService,
+        private readonly combatLogService: CombatLogService,
     ) {}
 
     async applyCombatTurn(activeGameId: string): Promise<boolean> {
@@ -63,6 +65,19 @@ export class CombatService {
         const attackerDealtDamage = Math.min(attackerNetDealtDamage, defender.currentHealth);
         const defenderDealtDamage = Math.min(defenderNetDealtDamage, attacker.currentHealth);
 
+        this.combatLogService.emitPrivateCombatTurnLogs({
+            gameId: activeGameId,
+            attackerName: attacker.name,
+            defenderName: defender.name,
+            combatTurnNumber: currentAttack.turnCount,
+            attackerPosture: currentAttack.attackerPosture,
+            defenderPosture: currentAttack.defenderPosture,
+            attackerStats,
+            defenderStats,
+            attackerDealtDamage,
+            defenderDealtDamage,
+        });
+
         attacker.currentHealth = Math.max(attacker.currentHealth - defenderDealtDamage, 0);
         defender.currentHealth = Math.max(defender.currentHealth - attackerDealtDamage, 0);
 
@@ -79,6 +94,12 @@ export class CombatService {
         const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         const namespace = this.socketService.getNamespace(Namespaces.Game);
 
+        if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
+            const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
+            namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            this.combatLogService.emitPublicGameLog(activeGameId, this.buildCombatResolutionMessage(combatOutcome));
+            return true;
+        }
         const turnResult: CombatTurnOutcome = {
             updatedActiveGame: updatedGame,
             attackerStats,
@@ -255,6 +276,18 @@ export class CombatService {
     private rollDice(diceType: DiceType): number {
         const interval = diceType === DiceType.SixSided ? SIX_SIDED_DICE_MAX : FOUR_SIDED_DICE_MAX;
         return Math.floor(Math.random() * interval) + 1;
+    }
+
+    private buildCombatResolutionMessage(combatOutcome: CombatOutcome): string {
+        const { winner, losers } = combatOutcome;
+
+        if (winner) {
+            const defeated = losers.join(' et ');
+            return `Fin du combat: ${winner} gagne contre ${defeated}.`;
+        }
+
+        const knockedOutPlayers = losers.join(' et ');
+        return `Fin du combat: aucun gagnant (${knockedOutPlayers} sont K.O. !).`;
     }
 
     private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {

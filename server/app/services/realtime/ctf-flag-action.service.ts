@@ -1,7 +1,7 @@
 import { ActionService } from '@app/services/gameplay/action-service';
 import { IActiveGame } from '@common/activeGame';
-import { IActionData } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
+import { IActionData } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -19,6 +19,7 @@ export class CtfFlagActionService {
         data: IActionData,
         namespace: Namespace,
         setPendingFlagRequest: (gameId: string, request: PendingFlagRequest) => void,
+        emitGameLog?: (gameId: string, message: string) => void,
     ): Promise<boolean> {
         const { gameId, currentPlayerName, targetName } = data;
         if (activeGame.game.gameMode !== 'ctf') {
@@ -39,6 +40,7 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.giveFlag(gameId, targetName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: targetName });
+                emitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
                 return true;
             }
 
@@ -53,6 +55,7 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.takeFlag(gameId, currentPlayerName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: currentPlayerName });
+                emitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
                 return true;
             }
 

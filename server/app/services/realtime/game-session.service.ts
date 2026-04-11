@@ -100,7 +100,10 @@ export class GameSessionService {
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
-            emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
+            emitGameLog(
+                gameId,
+                `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`,
+            );
             // await this.activeGameService.deleteGameById(gameId);
         }
         if (isCurrentPlayer) {
@@ -151,7 +154,10 @@ export class GameSessionService {
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
-            emitGameLog(gameId, 'Fin de partie: il ne reste pas assez de joueurs.');
+            emitGameLog(
+                gameId,
+                `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(updatedGame)}.`,
+            );
             // await this.activeGameService.deleteGameById(gameId);
         }
 
@@ -188,6 +194,11 @@ export class GameSessionService {
         }
     }
 
+    private getActivePlayerNames(activeGame: IActiveGame): string {
+        const activePlayerNames = activeGame.players.filter((player) => !player.hasAbandoned).map((player) => player.name);
+        return activePlayerNames.length > 0 ? activePlayerNames.join(', ') : 'aucun';
+    }
+
     private async disableDebugModeIfOrganizerLeft(
         gameId: string,
         playerId: string,
@@ -204,6 +215,6 @@ export class GameSessionService {
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
         const payload: IDebugToggleState = { playerName: playerId, isDebugMode: false };
         namespace.to(gameId).emit(SocketEvent.DebugToggle, payload);
-        emitGameLog(gameId, `Mode debug desactive (organisateur ${playerId} absent).`);
+        emitGameLog(gameId, `Mode debug désactivé (organisateur ${playerId} absent).`);
     }
 }

@@ -95,9 +95,6 @@ export class TurnService {
             timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
-        namespace.to(gameId).emit(SocketEvent.PlayerTurnAlert, {
-            log: `Debut du tour de ${player.name}.`,
-        });
         namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`Debut du tour de ${player.name}.`));
 
         const timer = setTimeout(() => {

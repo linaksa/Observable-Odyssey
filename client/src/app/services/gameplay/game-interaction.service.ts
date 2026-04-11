@@ -65,6 +65,13 @@ export class GameInteractionService {
             return;
         }
 
+        if (this.shouldInteractWithWall(cellType, playerAtPosition, boardItem)) {
+            this.popupStateService.closeAllPopups();
+            this.activeGameService.toggleDoor(rowIndex, colIndex);
+            this.activeGameService.actionMode.set(false);
+            return;
+        }
+
         if (
             !playerAtPosition &&
             currentPlayer &&
@@ -174,6 +181,18 @@ export class GameInteractionService {
         }
 
         return item?.itemType !== ItemType.Flag;
+    }
+
+    private shouldInteractWithWall(cellType: CellType, player: ICharacter | null, item: IItem | null): boolean {
+        if (!this.isLocalPlayerTurn()) {
+            return false;
+        }
+
+        if (cellType !== CellType.Wall) {
+            return false;
+        }
+
+        return !player && !item;
     }
 
     private isGridOrPopupClick(target: EventTarget | null): boolean {
