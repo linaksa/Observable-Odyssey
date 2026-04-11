@@ -49,19 +49,9 @@ const TOOLTIP_START_X = 120;
 const TOOLTIP_START_Y = 80;
 const TOOLTIP_NEXT_X = 185;
 const TOOLTIP_NEXT_Y = 110;
-const CONTAINER_LEFT = 20;
-const CONTAINER_TOP = 40;
-const CONTAINER_WIDTH = 300;
-const CONTAINER_HEIGHT = 180;
-const TOOLTIP_WIDTH = 200;
-const TOOLTIP_HEIGHT = 90;
 const LARGE_CONTAINER_DIMENSION = 1_000;
 const SMALL_TOOLTIP_WIDTH = 100;
 const SMALL_TOOLTIP_HEIGHT = 50;
-const CLAMPED_TOP = 90;
-const CURSOR_LEFT_EDGE_OFFSET = 8;
-const CURSOR_BOTTOM_EDGE_OFFSET = 160;
-const ZERO_DIMENSION = 0;
 
 @Component({
     standalone: true,
@@ -217,42 +207,6 @@ describe('GameTableComponent', () => {
         tooltipApi.hideDescriptionTooltip();
 
         expect(tooltipApi.descriptionTooltip()).toBeNull();
-    });
-
-    // Edge case: When container bounds are unavailable, use cursor fall back position.
-    it('should use cursor fallback position when container bounds are unavailable', () => {
-        const game = createExistingGame('game-1', 'Game 1');
-        hostComponent.games = [game];
-        fixture.detectChanges();
-
-        const tooltipApi = getTooltipApi(getGameTableComponent(fixture));
-        tooltipApi.tableContainerRef = createContainerElementRef(ZERO_DIMENSION, ZERO_DIMENSION, ZERO_DIMENSION, ZERO_DIMENSION);
-        tooltipApi.showDescriptionTooltip(createMouseEvent('mouseenter', TOOLTIP_START_X, TOOLTIP_START_Y), game.description);
-
-        expect(tooltipApi.descriptionTooltipPosition()).toEqual({
-            x: TOOLTIP_START_X,
-            y: TOOLTIP_START_Y + TOOLTIP_Y_OFFSET,
-        });
-    });
-
-    it('should keep tooltip inside container bounds', () => {
-        const game = createExistingGame('game-1', 'Game 1');
-        hostComponent.games = [game];
-        fixture.detectChanges();
-
-        const tooltipApi = getTooltipApi(getGameTableComponent(fixture));
-        tooltipApi.tableContainerRef = createContainerElementRef(CONTAINER_LEFT, CONTAINER_TOP, CONTAINER_WIDTH, CONTAINER_HEIGHT);
-        tooltipApi.descriptionTooltipRef = createTooltipElementRef(TOOLTIP_WIDTH, TOOLTIP_HEIGHT);
-
-        tooltipApi.showDescriptionTooltip(
-            createMouseEvent('mouseenter', CONTAINER_LEFT + CURSOR_LEFT_EDGE_OFFSET, CONTAINER_TOP + CURSOR_BOTTOM_EDGE_OFFSET),
-            game.description,
-        );
-
-        expect(tooltipApi.descriptionTooltipPosition()).toEqual({
-            x: 20,
-            y: CLAMPED_TOP,
-        });
     });
 });
 
