@@ -13,6 +13,7 @@ import {
 } from '@app/constants/gameplay';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { AttackPosture } from '@common/attackResult';
 import { ICharacter } from '@common/character';
@@ -71,6 +72,7 @@ import { HUNDRED_PERCENT } from '@common/constants';
 export class GameCombatPopupComponent {
     private readonly activeGameService = inject(ActiveGameService);
     private readonly gameTurnService = inject(GameTurnService);
+    private readonly localPlayerService = inject(LocalPlayerService);
 
     protected readonly attackPosture = AttackPosture;
     protected readonly roundOutcome = this.activeGameService.roundOutcome;
@@ -85,6 +87,17 @@ export class GameCombatPopupComponent {
     protected readonly combatActive = computed<boolean>(() => this.gameTurnService.isCombatActive());
     protected readonly actionsLocked = computed<boolean>(() => this.confirmedState() || !!this.roundOutcome());
     protected readonly combatTimeLeftDisplaySeconds = computed(() => this.gameTurnService.combatTimeLeftSeconds() ?? 0);
+    protected readonly localPlayerName = computed<string | null>(() => this.localPlayerService.getLocalPlayer()?.name ?? null);
+    protected readonly isFullCombatView = computed<boolean>(() => {
+        const attack = this.currentAttack();
+        const localPlayerName = this.localPlayerName();
+
+        if (!attack || !localPlayerName) {
+            return false;
+        }
+
+        return attack.attacker === localPlayerName || attack.defender === localPlayerName;
+    });
     protected readonly currentAttack = computed(() => {
         this.combatActive();
         this.combatTimeLeftSeconds();
@@ -145,6 +158,10 @@ export class GameCombatPopupComponent {
     }
 
     protected selectAction(mode: AttackPosture): void {
+        if (!this.isFullCombatView()) {
+            return;
+        }
+
         if (this.confirmedState()) {
             return;
         }
@@ -155,6 +172,10 @@ export class GameCombatPopupComponent {
     }
 
     protected confirmAction(): void {
+        if (!this.isFullCombatView()) {
+            return;
+        }
+
         const selectedMode = this.selectedModeState();
 
         if (selectedMode === null || this.confirmedState()) {
@@ -192,5 +213,12 @@ export class GameCombatPopupComponent {
         this.selectedModeState.set(null);
         this.confirmedState.set(false);
         this.dialogMessageState.set(GAME_COMBAT_DEFAULT_DIALOG_MESSAGE);
+    }
+
+    protected getCombatSummary(): string {
+        const attackerName = this.currentAttack()?.attacker ?? '';
+        const defenderName = this.currentAttack()?.defender ?? '';
+
+        return `${attackerName} et ${defenderName} sont en combat`;
     }
 }

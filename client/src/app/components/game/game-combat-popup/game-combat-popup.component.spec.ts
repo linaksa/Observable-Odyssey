@@ -11,6 +11,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
@@ -27,6 +28,7 @@ describe('GameCombatPopupComponent', () => {
         chooseAttackMode: jasmine.Spy;
         getPlayerByName: jasmine.Spy<(name: string) => ICharacter | undefined>;
     };
+    let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
     let gameTurnServiceStub: {
         isCombatActive: ReturnType<typeof signal<boolean>>;
         combatTimeLeftSeconds: ReturnType<typeof signal<number | null>>;
@@ -44,6 +46,8 @@ describe('GameCombatPopupComponent', () => {
                 .createSpy('getPlayerByName')
                 .and.callFake((name: string) => activeGameServiceStub.activeGame.players.find((player) => player.name === name)),
         };
+        localPlayerServiceSpy = jasmine.createSpyObj<LocalPlayerService>('LocalPlayerService', ['getLocalPlayer']);
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(attacker);
         gameTurnServiceStub = {
             isCombatActive: signal(false),
             combatTimeLeftSeconds: signal<number | null>(null),
@@ -54,6 +58,7 @@ describe('GameCombatPopupComponent', () => {
             providers: [
                 { provide: ActiveGameService, useValue: activeGameServiceStub },
                 { provide: GameTurnService, useValue: gameTurnServiceStub },
+                { provide: LocalPlayerService, useValue: localPlayerServiceSpy },
             ],
         }).compileComponents();
     });
@@ -104,6 +109,28 @@ describe('GameCombatPopupComponent', () => {
         expect((actionButtons[0] as HTMLButtonElement).disabled).toBeFalse();
         expect((actionButtons[1] as HTMLButtonElement).disabled).toBeFalse();
         expect(root.querySelectorAll('button').length).toBe(2);
+    });
+
+    it('shows the compact combat summary for spectators', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Carol'));
+        activeGameServiceStub.activeGame.currentAttack = createAttack('Alice', 'Bob');
+        gameTurnServiceStub.isCombatActive.set(true);
+        gameTurnServiceStub.combatTimeLeftSeconds.set(6);
+
+        fixture = TestBed.createComponent(GameCombatPopupComponent);
+        fixture.detectChanges();
+
+        const root = fixture.nativeElement as HTMLElement;
+
+        expect(root.textContent).toContain('Combat en cours');
+        expect(root.textContent).toContain('Alice');
+        expect(root.textContent).toContain('Bob');
+        expect(root.textContent).toContain('6s');
+        expect(root.textContent).toContain('détails complets');
+        expect(root.textContent).not.toContain('HP');
+        expect(root.textContent).not.toContain('Choisir une action');
+        expect(root.querySelectorAll('button').length).toBe(0);
+        expect(root.querySelectorAll('.combat-side-card').length).toBe(0);
     });
 
     // Nominal case: Selecting a posture and confirming it still routes through current combat logic.
