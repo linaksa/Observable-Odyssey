@@ -107,6 +107,7 @@ export class GameplayActionService {
 
             await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
+            await this.tryLogWallInteraction(gameId, playerId, position, error, emitGameLog);
             socket?.emit(SocketEvent.DoorToggleError, this.toSocketError(error, ErrorCode.InvalidDoorTarget));
         }
     }
@@ -145,7 +146,7 @@ export class GameplayActionService {
         const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
         this.turnService.suspendTurn(gameId);
 
-        this.emitGameLogToRoom(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
+        this.emitGameLogToRoom(gameId, `Début du combat entre ${attackerName} et ${defenderName}.`, namespace);
 
         this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
             const combatResolved = await this.actionService.applyCombatTurn(gameId);
@@ -169,9 +170,15 @@ export class GameplayActionService {
             return;
         }
 
-        const handledAsFlagAction = await this.ctfFlagActionService.handleFlagAction(activeGame, data, namespace, (targetGameId, request) => {
-            this.pendingFlagRequestsByGameId.set(targetGameId, request);
-        });
+        const handledAsFlagAction = await this.ctfFlagActionService.handleFlagAction(
+            activeGame,
+            data,
+            namespace,
+            (targetGameId, request) => {
+                this.pendingFlagRequestsByGameId.set(targetGameId, request);
+            },
+            (targetGameId, message) => this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
         if (handledAsFlagAction) {
             return;
         }
@@ -195,8 +202,12 @@ export class GameplayActionService {
             return;
         }
 
+        const previousCarrierName = activeGame.hasFlagId;
         await this.actionService.takeFlag(gameId, newFlagCarrierName);
         namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
+        if (previousCarrierName && previousCarrierName !== newFlagCarrierName) {
+            this.emitGameLogToRoom(gameId, `Transfert du drapeau de ${previousCarrierName} à ${newFlagCarrierName}.`, namespace);
+        }
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
 
@@ -216,8 +227,12 @@ export class GameplayActionService {
             return;
         }
 
+        const previousCarrierName = activeGame.hasFlagId;
         await this.actionService.giveFlag(gameId, newFlagCarrierName);
         namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
+        if (previousCarrierName && previousCarrierName !== newFlagCarrierName) {
+            this.emitGameLogToRoom(gameId, `Transfert du drapeau de ${previousCarrierName} à ${newFlagCarrierName}.`, namespace);
+        }
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
 
@@ -369,6 +384,32 @@ export class GameplayActionService {
             await this.activeGameService.saveActiveGameById(gameId, activeGame);
         }
     }
+
+    private async tryLogWallInteraction(
+        gameId: string,
+        playerId: string,
+        position: { x: number; y: number },
+        error: unknown,
+        emitGameLog: (targetGameId: string, message: string) => void,
+    ): Promise<void> {
+        if (!(error instanceof AppError) || !error.errorCodes.includes(ErrorCode.TargetIsNotDoor)) {
+            return;
+        }
+
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            return;
+        }
+
+        const row = activeGame.game.board.cells[position.y];
+        const cellType = row?.[position.x];
+        if (cellType !== CellType.Wall) {
+            return;
+        }
+
+        emitGameLog(gameId, `${playerId} se heurte à un mur.`);
+    }
+
     private getVirtualPosture(player: ICharacter): AttackPosture {
         return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
     }

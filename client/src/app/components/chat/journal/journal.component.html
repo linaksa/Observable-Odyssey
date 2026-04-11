@@ -31,7 +31,7 @@
                 @for (log of gameLogs; track $index) {
                     <div class="rounded-md bg-gray-200 p-2 text-sm text-gray-800">
                         <div class="font-medium">{{ log.postedAt | date: journalDateFormat }}</div>
-                        <div>{{ log.message }}</div>
+                        <div class="whitespace-pre-line">{{ log.message }}</div>
                     </div>
                 }
             </div>

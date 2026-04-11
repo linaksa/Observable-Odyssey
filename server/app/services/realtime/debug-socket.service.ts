@@ -27,7 +27,7 @@ export class DebugSocketService {
                     const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
                     socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
                     socket.emit(SocketEvent.DebugToggle, payload);
-                    const statusLabel = activeGame.isDebugMode ? 'active' : 'desactive';
+                    const statusLabel = activeGame.isDebugMode ? 'activé' : 'désactivé';
                     const logPayload = this.createGameLogPayload(`Mode debug ${statusLabel} par ${playerName}.`);
                     socket.to(activeGameId).emit(SocketEvent.GameLog, logPayload);
                     socket.emit(SocketEvent.GameLog, logPayload);

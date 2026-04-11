@@ -11,6 +11,7 @@ import { ErrorCode } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
+import { IGameLogPayload } from '@common/socket-payloads';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
@@ -124,9 +125,11 @@ export class MovementService {
             flag.x = player.currentPosition.x;
             flag.y = player.currentPosition.y;
             const namespace = this.socketService.getNamespace(Namespaces.Game);
-            namespace.to(activeGame._id.toString()).emit(SocketEvent.FlagPickedUp, {
+            const gameId = activeGame._id.toString();
+            namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
                 playerName: player.name,
             });
+            namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`${player.name} a ramassé un drapeau.`));
         }
     }
 
@@ -155,5 +158,12 @@ export class MovementService {
         const cols = activeGame.game.board.cells[pos.y].length;
         if (pos.x < 0 || pos.x >= cols) return false;
         return true;
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
     }
 }
