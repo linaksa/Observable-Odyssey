@@ -41,7 +41,7 @@ export class PositionValidatorService {
     }
 
     isOccupiedByPlayer(position: Position, currentActiveGame: IActiveGame): boolean {
-        return currentActiveGame.players.some((p) => p.currentPosition.x === position.x && p.currentPosition.y === position.y);
+        return currentActiveGame.players.some((p) => !p.hasAbandoned && p.currentPosition.x === position.x && p.currentPosition.y === position.y);
     }
 
     isValidRespawnTile(position: Position, currentActiveGame: IActiveGame): boolean {

@@ -193,6 +193,7 @@ export class GameplayActionService {
                 this.pendingFlagRequestsByGameId.set(targetGameId, request);
             },
             (targetGameId, message) => this.emitGameLogToRoom(targetGameId, message, namespace),
+            this.emitGameEndedIfNeeded.bind(this),
         );
         if (handledAsFlagAction) {
             return;
@@ -223,6 +224,7 @@ export class GameplayActionService {
         if (previousCarrierName && previousCarrierName !== newFlagCarrierName) {
             this.emitGameLogToRoom(gameId, `Transfert du drapeau de ${previousCarrierName} à ${newFlagCarrierName}.`, namespace);
         }
+        await this.emitGameEndedIfNeeded(gameId, namespace);
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
 
@@ -248,6 +250,7 @@ export class GameplayActionService {
         if (previousCarrierName && previousCarrierName !== newFlagCarrierName) {
             this.emitGameLogToRoom(gameId, `Transfert du drapeau de ${previousCarrierName} à ${newFlagCarrierName}.`, namespace);
         }
+        await this.emitGameEndedIfNeeded(gameId, namespace);
         this.pendingFlagRequestsByGameId.delete(gameId);
     }
 
@@ -462,5 +465,15 @@ export class GameplayActionService {
 
     private isNoOngoingAttackError(error: unknown): boolean {
         return error instanceof AppError && error.errorCodes.includes(ErrorCode.NoOngoingAttack);
+    }
+
+    private async emitGameEndedIfNeeded(gameId: string, namespace: Namespace): Promise<void> {
+        const gameEnded = await this.endGameService.checkEndGame(gameId);
+        if (!gameEnded) {
+            return;
+        }
+
+        const endedGame = await this.activeGameService.getActiveGameById(gameId);
+        namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame?.winner ?? null });
     }
 }

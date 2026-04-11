@@ -20,6 +20,7 @@ export class CtfFlagActionService {
         namespace: Namespace,
         setPendingFlagRequest: (gameId: string, request: PendingFlagRequest) => void,
         emitGameLog?: (gameId: string, message: string) => void,
+        onFlagUpdated?: (gameId: string) => Promise<void>,
     ): Promise<boolean> {
         const { gameId, currentPlayerName, targetName } = data;
         if (activeGame.game.gameMode !== 'ctf') {
@@ -41,6 +42,7 @@ export class CtfFlagActionService {
                 await this.actionService.giveFlag(gameId, targetName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: targetName });
                 emitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
+                await onFlagUpdated?.(gameId);
                 return true;
             }
 
@@ -56,6 +58,7 @@ export class CtfFlagActionService {
                 await this.actionService.takeFlag(gameId, currentPlayerName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: currentPlayerName });
                 emitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
+                await onFlagUpdated?.(gameId);
                 return true;
             }
 
