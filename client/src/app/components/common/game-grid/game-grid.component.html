@@ -7,6 +7,8 @@
                 @let players = playersAt(rowIndex, colIndex);
                 <div
                     [class]="resolvedCellClass()"
+                    [attr.data-row-index]="rowIndex"
+                    [attr.data-col-index]="colIndex"
                     (click)="onCellClick(rowIndex, colIndex, cell, item, $event)"
                     (contextmenu)="onCellContextMenu(rowIndex, colIndex, cell, item, $event)"
                     (mousedown)="onCellMouseDown(rowIndex, colIndex, cell, item, $event)"

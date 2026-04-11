@@ -35,11 +35,12 @@
                 (cellContextMenu)="onGridCellContextMenu($event)"
                 (playerClicked)="onPlayerClicked($event)"
             />
-            <app-game-tile-inspection-popup [data]="tileInfoPopupData" />
             <app-game-sanctuary-popup [data]="sanctuaryPopupData" (choiceSelected)="onSanctuaryChoice($event)" (cancel)="onSanctuaryCancel()" />
             <app-game-combat-popup />
             <app-game-combat-outcome />
         </div>
+
+        <app-game-tile-inspection-popup [data]="tileInfoPopupData" [position]="tileInfoTooltipPosition()" />
     </div>
 
     @if (titleTooltip(); as tooltipText) {
