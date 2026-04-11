@@ -10,8 +10,7 @@ export class CombatLogService {
     constructor(private readonly socketService: SocketService) {}
 
     emitPrivateCombatTurnLogs(data: CombatTurnLogData): void {
-        const { gameId, attackerName, defenderName, combatTurnNumber, attackerStats, defenderStats, attackerDealtDamage, defenderDealtDamage } =
-            data;
+        const { gameId, attackerName, defenderName, combatTurnNumber, attackerStats, defenderStats, attackerDealtDamage, defenderDealtDamage } = data;
 
         const attackerDifference = attackerStats.totalAttackPoints - defenderStats.totalDefensePoints;
         const defenderDifference = defenderStats.totalAttackPoints - attackerStats.totalDefensePoints;

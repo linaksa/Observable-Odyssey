@@ -109,10 +109,7 @@ export class GameSessionService {
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
             namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
-            emitGameLog(
-                gameId,
-                `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`,
-            );
+            emitGameLog(gameId, `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`);
             // await this.activeGameService.deleteGameById(gameId);
         }
         if (combatOutcome && combatAttackerName) {
