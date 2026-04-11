@@ -14,6 +14,7 @@ export interface PendingFlagRequest {
 export class CtfFlagActionService {
     constructor(private readonly actionService: ActionService) {}
 
+    // eslint-disable-next-line max-params
     async handleFlagAction(
         activeGame: IActiveGame,
         data: IActionData,
