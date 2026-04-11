@@ -26,6 +26,7 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
 import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
+import { CombatOutcome } from '@common/attackResult';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { of, Subject } from 'rxjs';
@@ -163,6 +164,39 @@ describe('ActiveGameService', () => {
 
         expect(service.activeGame.messages).toEqual(preservedMessages);
         expect(service.chatMessages()).toEqual(preservedMessages);
+    });
+
+    it('should keep only occupied spawn points after a combat refresh', () => {
+        const alice = createCharacter('Alice', 0, 0);
+        const bob = createCharacter('Bob', 2, 2);
+        service.activeGame = createActiveGame([alice, bob], 'Alice', 'remote-game-id');
+        service.activeGame.game.board.items = [
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 1, 1),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ];
+
+        const refreshedGame = createActiveGame([alice, bob], 'Bob', 'remote-game-id');
+        refreshedGame.game.board.items = [
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 1, 1),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ];
+
+        emitEvent<CombatOutcome>(SocketEvent.CombatResolved, {
+            updatedActiveGame: refreshedGame,
+            winner: 'Alice',
+            losers: ['Bob'],
+            cancelled: false,
+        });
+
+        expect(service.activeGame.game.board.items).toEqual([
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ]);
     });
 
     it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {

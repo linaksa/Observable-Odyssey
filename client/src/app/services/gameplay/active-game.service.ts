@@ -133,6 +133,7 @@ export class ActiveGameService implements OnDestroy {
 
     private updateActiveGame(activeGame: IActiveGame): void {
         this.activeGame = this.mergeMessages(activeGame);
+        this.removeUnusedSpawnPoints();
         this.syncChatMessages(this.activeGame.messages ?? []);
     }
 
@@ -180,7 +181,6 @@ export class ActiveGameService implements OnDestroy {
                     this._isDebugMode.set(game.isDebugMode);
                     this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
-                    this.removeUnusedSpawnPoints();
                     this.hasChangedLocation.update((current) => !current);
 
                     this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
