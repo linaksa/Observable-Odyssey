@@ -493,6 +493,79 @@ describe('ActiveGameService', () => {
         });
     });
 
+    it('should open a waiting flag popup for the requester and prevent requester responses', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+
+        const pendingRequest = service.pendingFlagRequest();
+        expect(pendingRequest?.canRespond).toBeFalse();
+        expect(pendingRequest?.question).toContain('En attente de la décision de Bob');
+
+        socketServiceSpy.emit.calls.reset();
+        service.respondToFlagActionRequest(true);
+        expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+    });
+
+    it('should let the flag holder reject the request and notify the server', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+
+        expect(service.pendingFlagRequest()?.canRespond).toBeTrue();
+        service.respondToFlagActionRequest(false);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.RejectFlagTransfer, {
+            gameId: service.activeGame._id,
+            responderName: 'Bob',
+        });
+        expect(service.pendingFlagRequest()).toBeNull();
+    });
+
+    it('should let the flag holder accept the request and emit flag transfer decision', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+        service.respondToFlagActionRequest(true);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.FlagTaken, {
+            gameId: service.activeGame._id,
+            newFlagCarrierName: 'Alice',
+        });
+        expect(service.activeGame.hasFlagId).toBe('Alice');
+        expect(service.pendingFlagRequest()).toBeNull();
+    });
+
     it('should remove kicked local player and redirect to home', () => {
         const alice = createCharacter('Alice');
         const bob = createCharacter('Bob');

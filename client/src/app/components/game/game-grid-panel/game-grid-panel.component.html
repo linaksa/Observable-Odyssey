@@ -35,6 +35,11 @@
                 (cellContextMenu)="onGridCellContextMenu($event)"
                 (playerClicked)="onPlayerClicked($event)"
             />
+            <app-game-flag-transfer-popup
+                [request]="pendingFlagRequest()"
+                [turnTimeLeftSeconds]="turnTimeLeftSeconds()"
+                (decision)="onFlagTransferDecision($event)"
+            />
             <app-game-sanctuary-popup
                 [data]="sanctuaryPopupData"
                 [turnTimeLeftSeconds]="turnTimeLeftSeconds()"

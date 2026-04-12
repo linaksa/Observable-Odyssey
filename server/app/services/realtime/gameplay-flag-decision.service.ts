@@ -3,7 +3,7 @@ import { ActionService } from '@app/services/gameplay/action-service';
 import { CtfFlagActionService, PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { SocketEvent } from '@common/socket-events';
-import { IActionData, IFlagDecisionData } from '@common/socket-payloads';
+import { IActionData, IFlagDecisionData, IFlagTransferRejectionData, IFlagTransferRejectedPayload } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -45,6 +45,44 @@ export class GameplayFlagDecisionService {
         await this.handleFlagTransfer(data, namespace, emitGameLog, 'give');
     }
 
+    async handleFlagTransferRejected(
+        data: IFlagTransferRejectionData,
+        namespace: Namespace,
+        emitGameLog: (gameId: string, message: string) => void,
+    ): Promise<void> {
+        const pendingRequest = this.pendingFlagRequestsByGameId.get(data.gameId);
+        if (!pendingRequest) {
+            return;
+        }
+
+        const activeGame = await this.activeGameService.getActiveGameById(data.gameId);
+        if (!activeGame) {
+            this.pendingFlagRequestsByGameId.delete(data.gameId);
+            return;
+        }
+
+        const currentTurnPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
+        const isRequesterTurn = currentTurnPlayerName === pendingRequest.requesterName;
+        if (!isRequesterTurn) {
+            this.pendingFlagRequestsByGameId.delete(data.gameId);
+            return;
+        }
+
+        const expectedResponderName = pendingRequest.transferMode === 'take' ? pendingRequest.targetPlayerName : pendingRequest.requesterName;
+        if (data.responderName !== expectedResponderName) {
+            return;
+        }
+
+        const rejectedPayload: IFlagTransferRejectedPayload = {
+            gameId: data.gameId,
+            requesterName: pendingRequest.requesterName,
+            targetPlayerName: pendingRequest.targetPlayerName,
+        };
+        namespace.to(data.gameId).emit(SocketEvent.FlagTransferRejected, rejectedPayload);
+        emitGameLog(data.gameId, `Transfert du drapeau refusé par ${expectedResponderName}.`);
+        this.pendingFlagRequestsByGameId.delete(data.gameId);
+    }
+
     private async handleFlagTransfer(
         data: IFlagDecisionData,
         namespace: Namespace,
@@ -58,12 +96,21 @@ export class GameplayFlagDecisionService {
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame) {
+            this.pendingFlagRequestsByGameId.delete(gameId);
+            return;
+        }
+
         const currentTurnPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         const isRequesterTurn = currentTurnPlayerName === pendingRequest.requesterName;
         const expectedCarrierName = transferMode === 'take' ? pendingRequest.requesterName : pendingRequest.targetPlayerName;
 
-        if (!isRequesterTurn || newFlagCarrierName !== expectedCarrierName) {
+        if (!isRequesterTurn) {
             this.pendingFlagRequestsByGameId.delete(gameId);
+            return;
+        }
+
+        if (pendingRequest.transferMode !== transferMode || newFlagCarrierName !== expectedCarrierName) {
             return;
         }
 

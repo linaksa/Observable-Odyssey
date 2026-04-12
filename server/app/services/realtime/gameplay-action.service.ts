@@ -10,6 +10,7 @@ import {
     IAttackPostureData,
     IDoorToggleData,
     IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
@@ -100,6 +101,12 @@ export class GameplayActionService {
 
     async handleFlagGiven(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
         await this.gameplayRealtimeFlowService.handleFlagGiven(data, namespace, (targetGameId, message) =>
+            this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
+    }
+
+    async handleFlagTransferRejected(data: IFlagTransferRejectionData, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.handleFlagTransferRejected(data, namespace, (targetGameId, message) =>
             this.emitGameLogToRoom(targetGameId, message, namespace),
         );
     }

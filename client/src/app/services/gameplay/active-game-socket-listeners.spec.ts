@@ -26,7 +26,7 @@ import { SanctuaryChoice } from '@common/info';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
+import { IFlagTransferRejectedPayload, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
@@ -42,6 +42,7 @@ describe('registerActiveGameSocketListeners', () => {
     let hasChangedLocation = signal(false);
     let hasAbandoned = signal(false);
     let gameHasEnded = signal(false);
+    let hasPendingFlagActionRequest = false;
 
     const eventStreams = new Map<string, Subject<unknown>>();
 
@@ -76,6 +77,10 @@ describe('registerActiveGameSocketListeners', () => {
         gameHasEnded,
         handleFlagActionRequest: jasmine.createSpy('handleFlagActionRequest'),
         closeFlagActionRequestIfExpired: jasmine.createSpy('closeFlagActionRequestIfExpired'),
+        hasPendingFlagActionRequest: () => hasPendingFlagActionRequest,
+        clearPendingFlagActionRequest: jasmine.createSpy('clearPendingFlagActionRequest').and.callFake(() => {
+            hasPendingFlagActionRequest = false;
+        }),
         setCombatOutcome: () => {
             // no-op for this spec since combat outcomes aren't emitted by the tested listeners
         },
@@ -103,6 +108,7 @@ describe('registerActiveGameSocketListeners', () => {
         hasChangedLocation = signal(false);
         hasAbandoned = signal(false);
         gameHasEnded = signal(false);
+        hasPendingFlagActionRequest = false;
     });
 
     it('should update movement and turn state from socket events', () => {
@@ -246,7 +252,9 @@ describe('registerActiveGameSocketListeners', () => {
 
     it('should sync requester actions when a flag pickup resolves automatically', () => {
         activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
-        registerActiveGameSocketListeners(context());
+        const socketContext = context();
+        hasPendingFlagActionRequest = true;
+        registerActiveGameSocketListeners(socketContext);
 
         emitEvent(SocketEvent.FlagPickedUp, {
             playerName: 'Bob',
@@ -257,6 +265,23 @@ describe('registerActiveGameSocketListeners', () => {
         expect(activeGame?.hasFlagId).toBe('Bob');
         expect(activeGame?.players[0].actionsLeft).toBe(0);
         expect(hasChangedLocation()).toBeTrue();
+        expect(socketContext.clearPendingFlagActionRequest as jasmine.Spy).toHaveBeenCalled();
+    });
+
+    it('should clear pending flag requests and notify requester when transfer is rejected', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        const socketContext = context();
+        hasPendingFlagActionRequest = true;
+        registerActiveGameSocketListeners(socketContext);
+
+        emitEvent<IFlagTransferRejectedPayload>(SocketEvent.FlagTransferRejected, {
+            gameId: activeGame._id,
+            requesterName: 'Alice',
+            targetPlayerName: 'Bob',
+        });
+
+        expect(socketContext.clearPendingFlagActionRequest as jasmine.Spy).toHaveBeenCalled();
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('Le transfert du drapeau a été refusé.');
     });
 
     it('should ignore listener events when no active game is loaded', () => {

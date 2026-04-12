@@ -5,4 +5,5 @@ export interface PendingFlagRequest {
     data: IFlagActionData;
     acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag;
     question: string;
+    canRespond: boolean;
 }

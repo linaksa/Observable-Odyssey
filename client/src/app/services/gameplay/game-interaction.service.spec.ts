@@ -16,10 +16,13 @@ import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { SanctuaryChoice } from '@common/info';
 import { IItem, ItemType } from '@common/items';
+import { SocketEvent } from '@common/socket-events';
 import { GameInteractionService } from './game-interaction.service';
 
 type ActionModeSignalSpy = jasmine.Spy<() => boolean> & { set: jasmine.Spy };
-type ActiveGameServiceSpy = jasmine.SpyObj<Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary'>> & {
+type ActiveGameServiceSpy = jasmine.SpyObj<
+    Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest'>
+> & {
     actionMode: ActionModeSignalSpy;
 };
 type GamePopupStateServiceSpy = jasmine.SpyObj<Pick<GamePopupStateService, 'closeAllPopups' | 'openSanctuaryPopup' | 'closeSanctuaryPopup'>> & {
@@ -41,10 +44,9 @@ describe('GameInteractionService', () => {
     beforeEach(() => {
         currentPlayer = createPlayer();
 
-        activeGameServiceSpy = jasmine.createSpyObj<Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary'>>(
-            'ActiveGameService',
-            ['getCurrentPlayer', 'getPlayersAtPosition', 'interactSanctuary'],
-        ) as ActiveGameServiceSpy;
+        activeGameServiceSpy = jasmine.createSpyObj<
+            Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest'>
+        >('ActiveGameService', ['getCurrentPlayer', 'getPlayersAtPosition', 'interactSanctuary', 'pendingFlagRequest']) as ActiveGameServiceSpy;
         popupStateServiceSpy = jasmine.createSpyObj<Pick<GamePopupStateService, 'closeAllPopups' | 'openSanctuaryPopup' | 'closeSanctuaryPopup'>>(
             'GamePopupStateService',
             ['closeAllPopups', 'openSanctuaryPopup', 'closeSanctuaryPopup'],
@@ -59,6 +61,7 @@ describe('GameInteractionService', () => {
         (activeGameServiceSpy.getCurrentPlayer as jasmine.Spy).and.returnValue(currentPlayer);
         (activeGameServiceSpy.getPlayersAtPosition as jasmine.Spy).and.returnValue([]);
         (activeGameServiceSpy.interactSanctuary as jasmine.Spy).and.stub();
+        (activeGameServiceSpy.pendingFlagRequest as jasmine.Spy).and.returnValue(null);
         (popupStateServiceSpy.closeAllPopups as jasmine.Spy).and.stub();
         (popupStateServiceSpy.openSanctuaryPopup as jasmine.Spy).and.stub();
         (popupStateServiceSpy.closeSanctuaryPopup as jasmine.Spy).and.stub();
@@ -124,6 +127,25 @@ describe('GameInteractionService', () => {
         service.handleGridCellClick(SANCTUARY_ROW, SANCTUARY_COLUMN, CellType.Empty, reactivatedSanctuary);
 
         expect(popupStateServiceSpy.openSanctuaryPopup).toHaveBeenCalled();
+    });
+
+    it('should block grid interactions while a flag transfer decision is pending', () => {
+        (activeGameServiceSpy.pendingFlagRequest as jasmine.Spy).and.returnValue({
+            data: {
+                gameId: 'game-1',
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            acceptEvent: SocketEvent.TakeFlag,
+            question: 'En attente',
+            canRespond: false,
+        });
+
+        service.handleGridCellClick(SANCTUARY_ROW, SANCTUARY_COLUMN, CellType.Empty, createSanctuary({ active: true }));
+
+        expect(popupStateServiceSpy.closeAllPopups).not.toHaveBeenCalled();
+        expect(popupStateServiceSpy.openSanctuaryPopup).not.toHaveBeenCalled();
     });
 
     function createPlayer(): ICharacter {

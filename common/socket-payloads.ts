@@ -33,6 +33,17 @@ export interface IFlagDecisionData {
     newFlagCarrierName: string;
 }
 
+export interface IFlagTransferRejectionData {
+    gameId: string;
+    responderName: string;
+}
+
+export interface IFlagTransferRejectedPayload {
+    gameId: string;
+    requesterName: string;
+    targetPlayerName: string;
+}
+
 export interface IDoorToggleData {
     gameId: string;
     playerId: string;

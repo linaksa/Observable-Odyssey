@@ -53,4 +53,6 @@ export const enum SocketEvent {
     FlagGiven = 'flag-given',
     TakeFlag = 'take-flag',
     FlagTaken = 'flag-taken',
+    RejectFlagTransfer = 'reject-flag-transfer',
+    FlagTransferRejected = 'flag-transfer-rejected',
 }

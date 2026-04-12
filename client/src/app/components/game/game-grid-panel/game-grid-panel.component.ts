@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostL
 import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
+import { GameFlagTransferPopupComponent } from '@app/components/game/game-flag-transfer-popup/game-flag-transfer-popup.component';
 import { GameSanctuaryPopupComponent } from '@app/components/game/game-sanctuary-popup/game-sanctuary-popup.component';
 import { GameSanctuaryOutcomeComponent } from '@app/components/game/game-sanctuary-outcome/game-sanctuary-outcome.component';
 import { GameTileInspectionPopupComponent } from '@app/components/game/game-tile-inspection-popup/game-tile-inspection-popup.component';
@@ -30,6 +31,7 @@ import { IItem } from '@common/items';
     imports: [
         GameGridComponent,
         GameTileInspectionPopupComponent,
+        GameFlagTransferPopupComponent,
         GameSanctuaryPopupComponent,
         GameSanctuaryOutcomeComponent,
         GameCombatPopupComponent,
@@ -79,6 +81,7 @@ export class GameGridPanelComponent {
         return [...(this.activeGameService.activeGame?.players ?? [])];
     });
     protected readonly turnTimeLeftSeconds = this.gameTurnService.turnTimeLeftSeconds;
+    protected readonly pendingFlagRequest = this.activeGameService.pendingFlagRequest;
     protected readonly titleLabel = computed<string>(() => `${this.gameTitle()} (${this.gameCells().length}×${this.gameCells().length})`);
     protected get reachableTiles(): ReadonlySet<number> | null {
         return this.isLocalPlayerTurn() ? this.activeGameService.reachableTiles : null;
@@ -172,6 +175,10 @@ export class GameGridPanelComponent {
 
     protected onSanctuaryChoice(choice: SanctuaryChoice): void {
         this.interactionService.handleSanctuaryChoice(choice);
+    }
+
+    protected onFlagTransferDecision(accepted: boolean): void {
+        this.activeGameService.respondToFlagActionRequest(accepted);
     }
 
     protected onSanctuaryCancel(): void {
