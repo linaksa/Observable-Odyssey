@@ -5,6 +5,7 @@ import { SANCTUARY_PREVIEW_TILE_POSITIONS, SELECTED_OBJECT_PREVIEW_CLASS, Sanctu
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
+import { GameType } from '@common/game';
 
 @Component({
     selector: 'app-editor-item-selector-object',
@@ -80,7 +81,7 @@ export class EditorItemSelectorObjectComponent {
     }
 
     protected remainingCountClass(type: ItemType | undefined = undefined): string {
-        if (type === ItemType.StartingPosition && this.boardEditorService.getRemainingObjectCount(type) !== 0) {
+        if (type !== undefined && this.hasMandatoryRemainingCount(type) && this.boardEditorService.getRemainingObjectCount(type) !== 0) {
             return 'text-red-500';
         }
 
@@ -109,12 +110,16 @@ export class EditorItemSelectorObjectComponent {
     protected objectButtonClass(type: ItemType): string {
         return this.joinClasses(
             'relative w-16 h-auto aspect-square rounded-full overflow-hidden focus-visible:ring-2 focus-visible:ring-blue-400',
-            this.boardEditorService.selectedObject === type
-                ? 'outline-4 outline-blue-600'
-                : type === ItemType.StartingPosition && this.boardEditorService.getRemainingObjectCount(type) !== 0
-                  ? 'outline-2 outline-red-600'
+            this.hasMandatoryRemainingCount(type) && this.boardEditorService.getRemainingObjectCount(type) !== 0
+                ? 'outline-2 outline-red-600'
+                : this.boardEditorService.selectedObject === type
+                  ? 'outline-4 outline-blue-600'
                   : 'outline-none',
         );
+    }
+
+    private hasMandatoryRemainingCount(type: ItemType): boolean {
+        return type === ItemType.StartingPosition || (type === ItemType.Flag && this.boardEditorService.gameMode === GameType.Ctf);
     }
 
     private setTooltipPointerFromEvent(event: MouseEvent | FocusEvent): void {
