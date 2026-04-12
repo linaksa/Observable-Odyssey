@@ -1,7 +1,7 @@
 @if (data().visible) {
     <aside
         #tooltipElement
-        class="fixed z-[2147483647] w-72 rounded-xl border border-[#4a7fd4] bg-[#0f1528] p-4 text-white/85 shadow-2xl pointer-events-none"
+        class="fixed z-2147483647 w-72 rounded-xl border border-[#4a7fd4] bg-[#0f1528] p-4 text-white/85 shadow-2xl pointer-events-none"
         [style.left.px]="position().x"
         [style.top.px]="position().y"
         (click)="$event.stopPropagation()"
