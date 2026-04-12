@@ -93,13 +93,6 @@ export class CombatService {
 
         const updatedGame = await this.activeGameService.saveActiveGameById(currentActiveGame._id, currentActiveGame);
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-
-        if (attacker.currentHealth === 0 || defender.currentHealth === 0) {
-            const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
-            namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
-            this.combatLogService.emitPublicGameLog(activeGameId, this.buildCombatResolutionMessage(combatOutcome));
-            return true;
-        }
         const turnResult: CombatTurnOutcome = {
             updatedActiveGame: updatedGame,
             attackerStats,
@@ -276,18 +269,6 @@ export class CombatService {
     private rollDice(diceType: DiceType): number {
         const interval = diceType === DiceType.SixSided ? SIX_SIDED_DICE_MAX : FOUR_SIDED_DICE_MAX;
         return Math.floor(Math.random() * interval) + 1;
-    }
-
-    private buildCombatResolutionMessage(combatOutcome: CombatOutcome): string {
-        const { winner, losers } = combatOutcome;
-
-        if (winner) {
-            const defeated = losers.join(' et ');
-            return `Fin du combat: ${winner} gagne contre ${defeated}.`;
-        }
-
-        const knockedOutPlayers = losers.join(' et ');
-        return `Fin du combat: aucun gagnant (${knockedOutPlayers} sont K.O. !).`;
     }
 
     private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {
