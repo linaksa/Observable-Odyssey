@@ -13,24 +13,24 @@ import { Subscription } from 'rxjs';
 })
 export class JoinFormPageComponent implements OnInit, OnDestroy {
     private readonly facade = inject(JoinFormPageFacadeService);
+    route = inject(ActivatedRoute);
 
     private routeSubscription?: Subscription;
     private socketSubscription?: Subscription;
 
-    router = inject(ActivatedRoute);
     activeGameId: string | null = null;
 
     ngOnInit(): void {
         this.facade.connectToJoinableGamesUpdates();
 
-        this.routeSubscription = this.router.params.subscribe((params) => {
-            this.activeGameId = params.activeGameId || null;
+        this.routeSubscription = this.route.params.subscribe((params) => {
+            this.activeGameId = this.facade.resolveActiveGameId(params);
             this.fetchAvailableAvatars();
 
             this.socketSubscription?.unsubscribe();
             this.socketSubscription = this.facade.onJoinableGamesUpdated().subscribe({
                 next: (activeGameId) => {
-                    if (activeGameId === this.activeGameId) {
+                    if (this.facade.shouldRefreshAvatars(activeGameId, this.activeGameId)) {
                         this.fetchAvailableAvatars();
                     }
                 },
@@ -41,6 +41,7 @@ export class JoinFormPageComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
         this.socketSubscription?.unsubscribe();
+        this.facade.disconnectFromJoinableGamesUpdates();
     }
 
     fetchAvailableAvatars(): void {

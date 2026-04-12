@@ -88,7 +88,7 @@ describe('JoinFormPageComponent', () => {
             errors: signal(null),
         });
 
-        socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect']);
+        socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect', 'disconnect']);
         gameServiceMock = jasmine.createSpyObj('GameService', ['getActiveGameById']);
         toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
         localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
@@ -167,7 +167,7 @@ describe('JoinFormPageComponent', () => {
 
     it('should set activeGameId to null when route params are missing activeGameId', () => {
         const fetchSpy = spyOn(component, 'fetchAvailableAvatars').and.stub();
-        component.router = { params: of({}) } as ActivatedRoute;
+        component.route = { params: of({}) } as ActivatedRoute;
 
         component.ngOnInit();
 

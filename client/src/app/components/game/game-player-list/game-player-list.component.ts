@@ -18,7 +18,7 @@ export class GamePlayerListComponent {
 
     protected readonly orderedPlayers = computed<ICharacter[]>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
 
         const activeGame = this.activeGameService.activeGame;
@@ -32,7 +32,7 @@ export class GamePlayerListComponent {
 
     protected readonly currentPlayerName = computed<string | undefined>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
 
         const activeGame = this.activeGameService.activeGame;

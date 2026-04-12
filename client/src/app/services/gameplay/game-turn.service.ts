@@ -1,4 +1,4 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -14,15 +14,11 @@ import {
 } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { ITurnStartedPayload } from '@common/socket-payloads';
+import { ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
-interface TurnPreparingPayload {
-    player: string;
-}
-
 @Injectable()
-export class GameTurnService {
+export class GameTurnService implements OnDestroy {
     // Services
     private readonly socketService = inject(SocketService);
     private readonly activeGameService = inject(ActiveGameService);
@@ -83,7 +79,7 @@ export class GameTurnService {
             return;
         }
 
-        this.turnPreparingSubscription = this.socketService.on<TurnPreparingPayload>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe({
+        this.turnPreparingSubscription = this.socketService.on<ITurnPreparingPayload>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe({
             next: ({ player }) => {
                 this.clearReachableTiles();
                 this.activeTurnPlayerName = player;
@@ -176,6 +172,10 @@ export class GameTurnService {
         this.combatResolvedSubscription = undefined;
         this.stopCountdown();
         this.stopCombatCountdown();
+    }
+
+    ngOnDestroy(): void {
+        this.destroy();
     }
 
     // UI-only countdown triggered by server events

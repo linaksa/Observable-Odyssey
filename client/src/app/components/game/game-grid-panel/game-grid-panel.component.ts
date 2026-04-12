@@ -46,25 +46,25 @@ export class GameGridPanelComponent {
     protected readonly tileInfoTooltipPosition = signal<TooltipPosition>({ x: 0, y: 0 });
     protected readonly gameTitle = computed<string>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
         return this.activeGameService.activeGame?.game.gameTitle ?? 'Partie';
     });
     protected readonly gameDescription = computed<string>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
         return this.activeGameService.activeGame?.game.description ?? '';
     });
     protected readonly gameCells = computed<CellType[][]>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
         return this.activeGameService.activeGame?.game.board.cells ?? [];
     });
     protected readonly gamePlayers = computed<readonly ICharacter[]>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
         return [...(this.activeGameService.activeGame?.players ?? [])];
     });
@@ -96,7 +96,7 @@ export class GameGridPanelComponent {
         effect(() => {
             this.activeGameService.currentPlayer();
             this.activeGameService.hasChangedLocation();
-            this.activeGameService.hasAbandonned();
+            this.activeGameService.hasAbandoned();
             this.activeGameService.gameHasEnded();
 
             if (this.popupStateService.isSanctuaryPopupVisible && (!this.isLocalPlayerTurn() || this.activeGameService.gameHasEnded())) {

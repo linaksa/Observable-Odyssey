@@ -1,32 +1,12 @@
 import { computed, signal } from '@angular/core';
 import { CursorFollowingTooltipController } from '@app/components/common/tooltip/cursor-following-tooltip.controller';
-import { CellType } from '@common/board';
-import { IItem } from '@common/items';
+import { GameGridTooltipDependencies, GameGridTooltipPointer, TooltipTarget } from '@app/interfaces/game-grid-tooltip.interface';
 import type { TooltipPosition } from './game-grid-types';
-
-interface TooltipTarget {
-    rowIndex: number;
-    colIndex: number;
-}
-
-interface TooltipPointer {
-    x: number;
-    y: number;
-}
-
-export interface GameGridTooltipDependencies {
-    cells: () => CellType[][];
-    objects: () => readonly IItem[] | null;
-    getObjectAt: () => (rowIndex: number, colIndex: number) => IItem | null;
-    showTooltip: () => boolean;
-    getTooltipText: () => ((rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null) => string | null) | null;
-    getGridContainer: () => HTMLElement | null;
-    getTooltipElement: () => HTMLElement | null;
-}
+export type { GameGridTooltipDependencies };
 
 export class GameGridTooltipController {
     readonly hoveredCell = signal<TooltipTarget | null>(null);
-    readonly tooltipPointer: () => TooltipPointer | null;
+    readonly tooltipPointer: () => GameGridTooltipPointer | null;
     readonly tooltipText = computed(() => {
         const hoveredCell = this.hoveredCell();
 

@@ -79,7 +79,7 @@ describe('GameCreationDialogComponent', () => {
         expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
 
-    it('should create classic game with selected dimension and navigate to edition page', () => {
+    it('should create classic game with selected dimension and navigate to editor page', () => {
         component.form.get('dimension')?.setValue('small');
 
         component.createGame();

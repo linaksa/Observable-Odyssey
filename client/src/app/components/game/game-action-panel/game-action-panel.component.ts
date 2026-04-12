@@ -24,7 +24,7 @@ export class GameActionPanelComponent {
     protected readonly turnTimeLeftSeconds = this.gameTurnService.turnTimeLeftSeconds;
     protected readonly currentTurnPlayerName = computed<string | null>(() => {
         this.activeGameService.hasChangedLocation();
-        this.activeGameService.hasAbandonned();
+        this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
         return this.gameTurnService.currentPlayerName;
     });

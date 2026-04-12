@@ -1,179 +1,71 @@
-/**
- * Testing strategy — GameplayActionService
- *
- * - Verify combat timers re-check live state before applying a delayed combat turn.
- * - Prevent stale combat callbacks from running after combat has already been cleared.
- */
+import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { StartGameService } from '@app/services/gameplay/start-game.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameSessionService } from '@app/services/realtime/game-session.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
-import { IActiveGame, ICurrentAttack } from '@common/activeGame';
-import { AttackPosture } from '@common/attackResult';
-import { CellType } from '@common/board';
-import { ICharacter } from '@common/character';
-import { Avatar, DiceType } from '@common/constants';
-import { GameType, Visibility } from '@common/game';
-import { Namespace } from 'socket.io';
+import { GameplayRealtimeFlowService } from '@app/services/realtime/gameplay-realtime-flow.service';
+import { ErrorCode } from '@common/error-codes';
+import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { Namespace, Socket } from 'socket.io';
 
 describe('GameplayActionService', () => {
     let service: GameplayActionService;
-    let activeGameService: {
-        getActiveGameById: sinon.SinonStub;
-        startCombat: sinon.SinonStub;
-        saveActiveGameById: sinon.SinonStub;
-    };
-    let actionService: {
+    let flowService: {
         canUseAction: sinon.SinonStub;
-        applyCombatTurn: sinon.SinonStub;
-    };
-    let endGameService: {
-        checkEndGame: sinon.SinonStub;
-    };
-    let ctfFlagActionService: {
         handleFlagAction: sinon.SinonStub;
+        combatManager: sinon.SinonStub;
     };
-    let turnService: {
-        suspendTurn: sinon.SinonStub;
-        startCombatTimer: sinon.SinonStub;
-        clearCombatTimer: sinon.SinonStub;
-        endTurn: sinon.SinonStub;
-    };
+    let socket: Socket;
+    let socketEmitStub: sinon.SinonStub;
     let namespace: Namespace;
-    let namespaceEmitStub: sinon.SinonStub;
-    let combatTimerCallback: (() => Promise<void> | void) | undefined;
 
     beforeEach(() => {
-        activeGameService = {
-            getActiveGameById: sinon.stub(),
-            startCombat: sinon.stub(),
-            saveActiveGameById: sinon.stub().resolves(),
-        };
-        actionService = {
+        flowService = {
             canUseAction: sinon.stub().resolves(true),
-            applyCombatTurn: sinon.stub().resolves(false),
-        };
-        endGameService = {
-            checkEndGame: sinon.stub().resolves(false),
-        };
-        ctfFlagActionService = {
             handleFlagAction: sinon.stub().resolves(false),
+            combatManager: sinon.stub().resolves(),
         };
-        turnService = {
-            suspendTurn: sinon.stub(),
-            startCombatTimer: sinon.stub().callsFake((_durationMs: number, _activeGame: IActiveGame, callback: () => Promise<void> | void) => {
-                combatTimerCallback = callback;
-            }),
-            clearCombatTimer: sinon.stub(),
-            endTurn: sinon.stub().resolves(),
-        };
-        namespaceEmitStub = sinon.stub();
-        namespace = {
-            to: sinon.stub().returns({ emit: namespaceEmitStub }),
-        } as unknown as Namespace;
-
         service = new GameplayActionService(
-            turnService as never,
-            {} as never,
-            {} as never,
-            {} as never,
-            {} as never,
-            endGameService as never,
-            {} as never,
-            activeGameService as never,
-            actionService as never,
-            ctfFlagActionService as never,
-            {} as never,
+            {} as TurnService,
+            {} as StartGameService,
+            {} as ActiveGameService,
+            {} as GameSessionService,
+            flowService as unknown as GameplayRealtimeFlowService,
         );
+        socketEmitStub = sinon.stub();
+        socket = { emit: socketEmitStub } as unknown as Socket;
+        namespace = { to: sinon.stub().returns({ emit: sinon.stub() }) } as unknown as Namespace;
     });
 
     afterEach(() => {
         sinon.restore();
-        combatTimerCallback = undefined;
     });
 
-    it('skips delayed combat resolution when the combat has already been cleared', async () => {
-        const activeGame = createActiveGame(createCurrentAttack('Alice', 'Bob'));
-        const refreshedGame = createActiveGame(null);
-        activeGameService.startCombat.resolves(activeGame);
-        activeGameService.getActiveGameById.onFirstCall().resolves(activeGame);
-        activeGameService.getActiveGameById.onSecondCall().resolves(activeGame);
-        activeGameService.getActiveGameById.onThirdCall().resolves(refreshedGame);
+    it('emits ActionError when action is not allowed', async () => {
+        flowService.canUseAction.resolves(false);
 
-        await service.combatManager('game-1', 'Alice', 'Bob', null, namespace);
+        await service.handleAction({ gameId: 'game-1', currentPlayerName: 'Alice', targetName: 'Bob' }, socket, namespace);
 
-        expect(turnService.startCombatTimer.calledOnce).to.equal(true);
-        expect(combatTimerCallback).to.be.a('function');
+        expect(socketEmitStub.calledOnceWithExactly(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] })).to.equal(true);
+        expect(flowService.handleFlagAction.called).to.equal(false);
+        expect(flowService.combatManager.called).to.equal(false);
+    });
 
-        await combatTimerCallback?.();
+    it('starts combat when action is allowed and not handled as a flag action', async () => {
+        await service.handleAction({ gameId: 'game-1', currentPlayerName: 'Alice', targetName: 'Bob' }, socket, namespace);
 
-        expect(actionService.applyCombatTurn.called).to.equal(false);
+        expect(flowService.canUseAction.calledOnceWithExactly('game-1', 'Alice', 'Bob')).to.equal(true);
+        expect(flowService.handleFlagAction.calledOnce).to.equal(true);
+        expect(
+            flowService.combatManager.calledOnceWithExactly(
+                'game-1',
+                'Alice',
+                'Bob',
+                socket,
+                sinon.match({ namespace, emitGameLog: sinon.match.func }),
+            ),
+        ).to.equal(true);
     });
 });
-
-function createActiveGame(currentAttack: ICurrentAttack | null): IActiveGame {
-    return {
-        _id: 'game-1',
-        game: {
-            gameTitle: 'Arena',
-            description: '',
-            gameMode: GameType.Classic,
-            dateCreated: new Date('2026-01-01T00:00:00.000Z'),
-            lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
-            visibility: Visibility.Viewable,
-            board: {
-                cells: [[CellType.Empty]],
-                items: [],
-            },
-        },
-        players: [createCharacter('Alice'), createCharacter('Bob')],
-        currentPlayerIndex: 0,
-        turnOrder: ['Alice', 'Bob'],
-        isFinished: false,
-        winner: null,
-        messages: [],
-        isDebugMode: false,
-        organizerName: 'Alice',
-        maxPlayerCount: 4,
-        turnIsInPreparation: false,
-        hasFlagId: '',
-        turnStartTimeStamp: 0,
-        currentAttack,
-    };
-}
-
-function createCharacter(name: string): ICharacter {
-    return {
-        name,
-        avatar: Avatar.Avatar1,
-        initialHealth: 10,
-        currentHealth: 10,
-        attackBonusDiceType: DiceType.FourSided,
-        defenseBonusDiceType: DiceType.SixSided,
-        rapidityPoints: 4,
-        attackPoints: 4,
-        defensePoints: 4,
-        actionsLeft: 1,
-        movementLeft: 4,
-        victories: 0,
-        hasAbandoned: false,
-        startingPosition: { x: 0, y: 0 },
-        currentPosition: { x: 0, y: 0 },
-        nCombats: 0,
-        nVictories: 0,
-        nDefeats: 0,
-        totalDamageDealt: 0,
-        totalDamageReceived: 0,
-        visitedCells: [],
-    };
-}
-
-function createCurrentAttack(attacker: string, defender: string): ICurrentAttack {
-    return {
-        attacker,
-        defender,
-        turnCount: 1,
-        suspendedTurnTimer: 3,
-        attackerPosture: AttackPosture.Defensive,
-        defenderPosture: AttackPosture.Offensive,
-    };
-}

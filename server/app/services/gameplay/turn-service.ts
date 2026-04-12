@@ -5,7 +5,7 @@ import { ICharacter } from '@common/character';
 import { TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
+import { IGameLogPayload, ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 import { SanctuaryService } from './sanctuary-service';
 
@@ -55,9 +55,10 @@ export class TurnService {
 
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-        namespace.to(gameId).emit(SocketEvent.TurnPreparing, {
+        const turnPreparingPayload: ITurnPreparingPayload = {
             player: player.name,
-        });
+        };
+        namespace.to(gameId).emit(SocketEvent.TurnPreparing, turnPreparingPayload);
 
         const preparationTimer = setTimeout(() => {
             this.preparationTimers.delete(gameId);

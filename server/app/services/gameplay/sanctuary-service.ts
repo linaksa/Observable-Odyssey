@@ -214,7 +214,7 @@ export class SanctuaryService {
     }
 
     private resolveSanctuaryEffect(choice: SanctuaryChoice, standardAmount: number, doubleAmount: number): number {
-        if (choice === 'standard') {
+        if (choice === SanctuaryChoice.Standard) {
             return standardAmount;
         }
 

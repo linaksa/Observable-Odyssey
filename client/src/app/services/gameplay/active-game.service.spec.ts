@@ -23,6 +23,7 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
+import { SanctuaryChoice } from '@common/info';
 import { IItem, ItemType } from '@common/items';
 import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
@@ -347,12 +348,12 @@ describe('ActiveGameService', () => {
         service.currentPlayer.set(0);
         socketServiceSpy.emit.calls.reset();
 
-        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, 'double');
+        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, SanctuaryChoice.Double);
 
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.InteractSanctuary, {
             gameId: service.activeGame._id,
             playerId: 'Alice',
-            choice: 'double',
+            choice: SanctuaryChoice.Double,
             position: { x: INTERACTION_COL, y: INTERACTION_ROW },
         });
     });

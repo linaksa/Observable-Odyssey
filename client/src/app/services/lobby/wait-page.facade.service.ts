@@ -6,7 +6,7 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { ICharacter } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IJoinGamePayload } from '@common/socket-payloads';
+import { IGameEndedPayload, IJoinGamePayload } from '@common/socket-payloads';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -35,8 +35,8 @@ export class WaitPageFacadeService {
         return this.socketService.on<string>(Namespaces.Game, SocketEvent.GameStarted);
     }
 
-    onGameEnded(): Observable<{ winner: string | null }> {
-        return this.socketService.on<{ winner: string | null }>(Namespaces.Game, SocketEvent.GameEnded);
+    onGameEnded(): Observable<IGameEndedPayload> {
+        return this.socketService.on<IGameEndedPayload>(Namespaces.Game, SocketEvent.GameEnded);
     }
 
     updatePlayers(players: ICharacter[]): void {
@@ -61,11 +61,41 @@ export class WaitPageFacadeService {
         this.localPlayerService.clear();
     }
 
+    getLocalPlayerName(localPlayer?: ICharacter): string | undefined {
+        return localPlayer?.name ?? this.getLocalPlayer()?.name;
+    }
+
     kickPlayer(playerName: string): void {
         this.activeGameService.kickPlayer(playerName);
     }
 
     leaveWaitingRoom(playerName: string): void {
         this.activeGameService.leaveWaitingRoom(playerName);
+    }
+
+    shouldStartGame(startedGameId: string): boolean {
+        return !!startedGameId && startedGameId === this.activeGameService.activeGame?._id;
+    }
+
+    clearAndRedirectAfterGameEnded(): void {
+        this.clearLocalPlayer();
+    }
+
+    leaveWaitingRoomAndCleanup(localPlayerName: string): void {
+        this.leaveWaitingRoom(localPlayerName);
+        this.clearLocalPlayer();
+    }
+
+    kickOtherPlayersIfOrganizer(localPlayerName: string): void {
+        const activeGame = this.activeGameService.activeGame;
+        if (!activeGame || activeGame.organizerName !== localPlayerName) {
+            return;
+        }
+
+        for (const player of activeGame.players) {
+            if (player.name !== localPlayerName) {
+                this.kickPlayer(player.name);
+            }
+        }
     }
 }

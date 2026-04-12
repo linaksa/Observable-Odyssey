@@ -5,6 +5,7 @@ import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
+import { SanctuaryChoice } from '@common/info';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
@@ -46,7 +47,7 @@ describe('SanctuaryService', () => {
 
         const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
             position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'standard',
+            choice: SanctuaryChoice.Standard,
         });
 
         expect(result.succeeded).to.equal(true);
@@ -64,7 +65,7 @@ describe('SanctuaryService', () => {
 
         const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
             position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'standard',
+            choice: SanctuaryChoice.Standard,
         });
 
         const sanctuary = activeGame.game.board.items[0];
@@ -84,7 +85,7 @@ describe('SanctuaryService', () => {
 
         const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
             position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'double',
+            choice: SanctuaryChoice.Double,
         });
 
         expect(result.succeeded).to.equal(false);
@@ -102,7 +103,7 @@ describe('SanctuaryService', () => {
 
         const result = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
             position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-            choice: 'double',
+            choice: SanctuaryChoice.Double,
         });
 
         expect(result.succeeded).to.equal(false);
@@ -124,7 +125,7 @@ describe('SanctuaryService', () => {
         try {
             await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
                 position: { x: SANCTUARY_X, y: SANCTUARY_Y },
-                choice: 'standard',
+                choice: SanctuaryChoice.Standard,
             });
             throw new Error('Should have thrown');
         } catch (error) {

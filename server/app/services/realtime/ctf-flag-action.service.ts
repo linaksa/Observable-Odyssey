@@ -10,20 +10,18 @@ export interface PendingFlagRequest {
     targetPlayerName: string;
 }
 
+export interface FlagActionCallbacks {
+    setPendingFlagRequest: (gameId: string, request: PendingFlagRequest) => void;
+    emitGameLog?: (gameId: string, message: string) => void;
+    onFlagUpdated?: (gameId: string) => Promise<void>;
+}
+
 @Service()
 export class CtfFlagActionService {
     constructor(private readonly actionService: ActionService) {}
 
-    // eslint-disable-next-line max-params
-    async handleFlagAction(
-        activeGame: IActiveGame,
-        data: IActionData,
-        namespace: Namespace,
-        setPendingFlagRequest: (gameId: string, request: PendingFlagRequest) => void,
-        emitGameLog?: (gameId: string, message: string) => void,
-        onFlagUpdated?: (gameId: string) => Promise<void>,
-    ): Promise<boolean> {
-        const { emitGameLog: resolvedEmitGameLog, onFlagUpdated: resolvedOnFlagUpdated } = this.resolveCallbacks(emitGameLog, onFlagUpdated);
+    async handleFlagAction(activeGame: IActiveGame, data: IActionData, namespace: Namespace, callbacks: FlagActionCallbacks): Promise<boolean> {
+        const { setPendingFlagRequest, emitGameLog, onFlagUpdated } = callbacks;
         const { gameId, currentPlayerName, targetName } = data;
         if (activeGame.game.gameMode !== 'ctf') {
             return false;
@@ -43,8 +41,8 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.giveFlag(gameId, targetName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: targetName });
-                resolvedEmitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
-                await resolvedOnFlagUpdated?.(gameId);
+                emitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
+                await onFlagUpdated?.(gameId);
                 return true;
             }
 
@@ -59,8 +57,8 @@ export class CtfFlagActionService {
             if (targetIsVirtual) {
                 await this.actionService.takeFlag(gameId, currentPlayerName);
                 namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: currentPlayerName });
-                resolvedEmitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
-                await resolvedOnFlagUpdated?.(gameId);
+                emitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
+                await onFlagUpdated?.(gameId);
                 return true;
             }
 
@@ -70,25 +68,5 @@ export class CtfFlagActionService {
         }
 
         return true;
-    }
-
-    private resolveCallbacks(
-        emitGameLog?: (gameId: string, message: string) => void,
-        onFlagUpdated?: (gameId: string) => Promise<void>,
-    ): {
-        emitGameLog?: (gameId: string, message: string) => void;
-        onFlagUpdated?: (gameId: string) => Promise<void>;
-    } {
-        if (onFlagUpdated) {
-            return { emitGameLog, onFlagUpdated };
-        }
-
-        if (emitGameLog?.length === 0 || emitGameLog?.length === 1) {
-            return {
-                onFlagUpdated: emitGameLog as unknown as (gameId: string) => Promise<void>,
-            };
-        }
-
-        return { emitGameLog };
     }
 }

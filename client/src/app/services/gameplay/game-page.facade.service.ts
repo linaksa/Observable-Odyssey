@@ -65,6 +65,10 @@ export class GamePageFacadeService {
         this.debugSocketService.connect();
     }
 
+    disconnectDebugSocket(): void {
+        this.debugSocketService.disconnect();
+    }
+
     closeAllPopups(): void {
         this.popupStateService.closeAllPopups();
     }
@@ -83,6 +87,10 @@ export class GamePageFacadeService {
 
     connectGameLogs(): void {
         this.gameLogService.connect();
+    }
+
+    disconnectGameLogs(): void {
+        this.gameLogService.disconnect();
     }
 
     clearGameLogs(): void {

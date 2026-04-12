@@ -65,7 +65,7 @@ export class VirtualPlayerSanctuaryService {
         }
 
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-        const choice: SanctuaryChoice = 'standard';
+        const choice: SanctuaryChoice = SanctuaryChoice.Standard;
         await this.gameplayActionService.handleSanctuaryInteraction(
             {
                 gameId: game._id.toString(),

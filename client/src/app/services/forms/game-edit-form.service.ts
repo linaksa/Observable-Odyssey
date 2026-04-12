@@ -1,24 +1,12 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
+import { ERRORS_ALREADY_SHOWN_ELSEWHERE, UNKNOWN_SAVE_ERROR_MESSAGE } from '@app/constants/game-edit-form';
+import { GameService } from '@app/services/admin/game.service';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { CellType, IBoard } from '@common/board';
 import { ErrorCode } from '@common/error-codes';
 import { EditGameFormData, GameType } from '@common/game';
-
-import { GameService } from '@app/services/admin/game.service';
-import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { IItem } from '@common/items';
-
-const UNKNOWN_SAVE_ERROR_MESSAGE = 'Erreur inconnue, veuillez réessayer plus tard';
-const ERRORS_ALREADY_SHOWN_ELSEWHERE = new Set<ErrorCode>([
-    ErrorCode.GameTitleMissing,
-    ErrorCode.GameTitleTooLong,
-    ErrorCode.GameDescriptionMissing,
-    ErrorCode.GameDescriptionTooLong,
-    ErrorCode.BoardInvalidDoorPlacement,
-    ErrorCode.BoardInaccessibleCells,
-    ErrorCode.BoardInvalidSpawnCount,
-    ErrorCode.BoardMissingFlag,
-]);
 
 @Injectable({
     providedIn: 'root',

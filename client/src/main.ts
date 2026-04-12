@@ -7,7 +7,7 @@ import { waitPageGuard } from '@app/guards/wait-page.guard';
 import { AngularHttpClientAdapter } from '@app/http/angular-http-client-adapter';
 import { HTTP_CLIENT } from '@app/http/http-interface';
 import { AdministrationPageComponent } from '@app/pages/admin/administration-page/administration-page.component';
-import { EditionPageComponent } from '@app/pages/admin/edition-page/edition-page.component';
+import { EditorPageComponent } from '@app/pages/admin/editor-page/editor-page.component';
 import { AppComponent } from '@app/pages/core/app/app.component';
 import { ErrorPageComponent } from '@app/pages/core/error-page/error-page.component';
 import { MainPageComponent } from '@app/pages/core/main-page/main-page.component';
@@ -30,7 +30,7 @@ const routes: Routes = [
     { path: 'create', component: CreatePageComponent },
     { path: 'admin', component: AdministrationPageComponent },
     { path: 'form/:gameId', component: FormPageComponent },
-    { path: 'edit/:gameId', component: EditionPageComponent },
+    { path: 'edit/:gameId', component: EditorPageComponent },
     { path: 'wait/:activeGameId', component: WaitPageComponent, canActivate: [waitPageGuard] },
     { path: 'play/:activeGameId', component: GamePageComponent, canActivate: [activePlayerGuard] },
     { path: 'join', component: JoinPageComponent },
