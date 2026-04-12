@@ -127,6 +127,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 sanctuary.inactiveTurnsRemaining = data.sanctuaryInactiveTurnsRemaining;
             }
 
+            context.setSanctuaryOutcome(data);
             toggle(context.hasChangedLocation);
         }),
         context.socket.on<IErrorResponse>(Namespaces.Game, SocketEvent.DoorToggleError).subscribe((data) => {

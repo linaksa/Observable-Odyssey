@@ -6,7 +6,7 @@ import { IActiveGame } from '@common/activeGame';
 import { CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
 import { SocketEvent } from '@common/socket-events';
-import { IFlagActionData } from '@common/socket-payloads';
+import { IFlagActionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
 
 export interface BooleanSignal {
     update(updater: (current: boolean) => boolean): void;
@@ -21,6 +21,7 @@ export interface ActiveGameSocketContext {
     setActiveGame: (activeGame: IActiveGame) => void;
     getPlayerByName: (playerName: string) => ICharacter | undefined;
     setCombatOutcome: (combatOutcome: CombatOutcome) => void;
+    setSanctuaryOutcome: (sanctuaryOutcome: ISanctuaryInteractedResult | null) => void;
     setRoundOutcome: (roundCombatOutcome: CombatTurnOutcome | null) => void;
     currentPlayer: {
         set(value: number): void;

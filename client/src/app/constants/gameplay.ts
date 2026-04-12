@@ -3,6 +3,7 @@ import { AttackStats } from '@common/attackResult';
 
 export const GAME_PAGE_RETURN_BUTTON_DELAY_MS = 3000;
 export const GAME_COMBAT_OUTCOME_AUTO_CLOSE_MS = 3000;
+export const GAME_SANCTUARY_OUTCOME_AUTO_CLOSE_MS = 3000;
 export const GAME_COMBAT_DEFAULT_DIALOG_MESSAGE = 'Que ferez-vous ?';
 export const GAME_COMBAT_DEFENSIVE_SELECTED_MESSAGE = 'Mode défensif sélectionné...';
 export const GAME_COMBAT_OFFENSIVE_SELECTED_MESSAGE = 'Mode offensif sélectionné...';

@@ -25,6 +25,7 @@ import {
     IFlagActionData,
     IFlagDecisionData,
     IPlayerMoveData,
+    ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
@@ -60,6 +61,7 @@ export class ActiveGameService implements OnDestroy {
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
+    sanctuaryOutcome = signal<ISanctuaryInteractedResult | null>(null);
     private readonly _chatMessages = signal<IMessage[]>([]);
     readonly chatMessages = this._chatMessages.asReadonly();
 
@@ -80,6 +82,7 @@ export class ActiveGameService implements OnDestroy {
                 getActiveGame: () => this.activeGame,
                 setActiveGame: (activeGame: IActiveGame) => this.updateActiveGame(activeGame),
                 setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
+                setSanctuaryOutcome: (sanctuaryOutcome: ISanctuaryInteractedResult | null) => this.sanctuaryOutcome.set(sanctuaryOutcome),
                 setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => this.roundOutcome.set(roundOutcome),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,

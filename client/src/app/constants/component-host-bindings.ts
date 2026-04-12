@@ -17,6 +17,10 @@ export const GAME_COMBAT_OUTCOME_HOST_BINDINGS = {
     class: 'contents',
 } as const;
 
+export const GAME_SANCTUARY_OUTCOME_HOST_BINDINGS = {
+    class: 'contents',
+} as const;
+
 export const GAME_ENDED_HOST_BINDINGS = {
     class: 'contents',
 } as const;
