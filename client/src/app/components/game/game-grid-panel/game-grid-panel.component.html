@@ -35,7 +35,12 @@
                 (cellContextMenu)="onGridCellContextMenu($event)"
                 (playerClicked)="onPlayerClicked($event)"
             />
-            <app-game-sanctuary-popup [data]="sanctuaryPopupData" (choiceSelected)="onSanctuaryChoice($event)" (cancel)="onSanctuaryCancel()" />
+            <app-game-sanctuary-popup
+                [data]="sanctuaryPopupData"
+                [turnTimeLeftSeconds]="turnTimeLeftSeconds()"
+                (choiceSelected)="onSanctuaryChoice($event)"
+                (cancel)="onSanctuaryCancel()"
+            />
             <app-game-combat-popup />
             <app-game-combat-outcome />
         </div>

@@ -14,6 +14,7 @@ import {
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameInteractionService } from '@app/services/gameplay/game-interaction.service';
 import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { buildGraph } from '@app/utils/pathfinding';
@@ -36,6 +37,7 @@ export class GameGridPanelComponent {
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly interactionService = inject(GameInteractionService);
     private readonly popupStateService = inject(GamePopupStateService);
+    private readonly gameTurnService = inject(GameTurnService);
 
     private graph: [number, number][][] = [];
     private totalColumns = 0;
@@ -68,6 +70,7 @@ export class GameGridPanelComponent {
         this.activeGameService.gameHasEnded();
         return [...(this.activeGameService.activeGame?.players ?? [])];
     });
+    protected readonly turnTimeLeftSeconds = this.gameTurnService.turnTimeLeftSeconds;
     protected readonly titleLabel = computed<string>(() => `${this.gameTitle()} (${this.gameCells().length}×${this.gameCells().length})`);
     protected get reachableTiles(): ReadonlySet<number> | null {
         return this.isLocalPlayerTurn() ? this.activeGameService.reachableTiles : null;
