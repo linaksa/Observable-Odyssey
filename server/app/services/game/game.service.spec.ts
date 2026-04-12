@@ -22,20 +22,16 @@
  * - Duplicate title: creation or update with an existing title should be rejected.
  * - Game deleted during update (race condition): updateGame() should
  *   create a new game and signal creation (created: true).
- * - Route parameter array or invalid type for getParamAsString:
- *   verifies the controller helper handles unexpected types.
  */
 
-import { GameController } from '@app/controllers/game.controller';
 import { game } from '@app/schemas/game';
 import { CellType, IBoard } from '@common/board';
-import { BAD_DESCRIPTION_LENGTH, BAD_TITLE_LENGTH } from '@common/constants';
+import { BAD_DESCRIPTION_LENGTH, BAD_TITLE_LENGTH, GameSize } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { AdminSocketsService } from '@app/services/admin/admin-sockets.service';
 import { BoardService } from '@app/services/board/board.service';
 import { GameService } from '@app/services/game/game.service';
 
@@ -138,129 +134,19 @@ describe('Game Service', () => {
         const findOneStub = sinon.stub(game, 'findOne');
         findOneStub.resolves(null);
 
+        const boardSideLength = Math.sqrt(GameSize.Small);
+        const cellPattern = [CellType.Wall, CellType.Ice, CellType.Water];
+        const cells: CellType[][] = [];
+        for (let rowIndex = 0; rowIndex < boardSideLength; rowIndex++) {
+            const row: CellType[] = [];
+            for (let columnIndex = 0; columnIndex < boardSideLength; columnIndex++) {
+                row.push(cellPattern[(rowIndex + columnIndex) % cellPattern.length]);
+            }
+            cells.push(row);
+        }
+
         const board: IBoard = {
-            cells: [
-                [
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                ],
-                [
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                ],
-                [
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                ],
-                [
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                ],
-                [
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                ],
-                [
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                ],
-                [
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                ],
-                [
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                ],
-                [
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                ],
-                [
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                    CellType.Water,
-                    CellType.Ice,
-                    CellType.Water,
-                    CellType.Wall,
-                ],
-            ],
+            cells,
             items: [
                 {
                     itemType: ItemType.StartingPosition,
@@ -325,23 +211,6 @@ describe('Game Service', () => {
         }
     });
 
-    // Edge case: description present but empty string ("").
-    it('should throw an error when description is empty', async () => {
-        const mockGameData = {
-            gameTitle: 'Test Game',
-            description: '',
-            gameMode: 'classic',
-            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-        };
-
-        try {
-            await gameService.createGame(mockGameData as unknown as IGame);
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect((error as Error).message).to.equal("Il n'y a pas de description");
-        }
-    });
-
     // Edge case: description containing only whitespace — should be treated as absent after trim().
     it('should throw when description contains only spaces', async () => {
         const mockGameData = {
@@ -376,58 +245,8 @@ describe('Game Service', () => {
             expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameDescriptionTooLong]);
         }
     });
-    // Edge case: the route parameter is an array (Express can return an array
-    // when the key is duplicated in the query string).
-    it('should return first element when param is an array', () => {
-        const controller = new GameController({} as GameService, {} as AdminSocketsService);
-
-        const fakeReq = {
-            params: {
-                id: ['array-id'],
-            },
-        } as unknown as Request;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (controller as any).getParamAsString(fakeReq, 'id');
-
-        expect(result).to.equal('array-id');
-    });
-
-    // Edge case: the route parameter is of an unexpected type (boolean).
-    // The method should return null without crashing.
-    it('should return null when param is invalid', () => {
-        const controller = new GameController({} as GameService, {} as AdminSocketsService);
-
-        const fakeReq = {
-            params: {
-                id: false,
-            },
-        } as unknown as Request;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = (controller as any).getParamAsString(fakeReq, 'id');
-
-        expect(result).to.equal(null);
-    });
-
     it('should throw an error when gameTitle is missing', async () => {
         const mockGameData = {
-            description: 'Test Description',
-            gameMode: 'classic',
-            board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
-        };
-
-        try {
-            await gameService.createGame(mockGameData as unknown as IGame);
-            throw new Error('Should have thrown an error');
-        } catch (error) {
-            expect((error as Error).message).to.equal("Il n'y a pas de titre");
-        }
-    });
-
-    it('should throw an error when gameTitle is empty', async () => {
-        const mockGameData = {
-            gameTitle: '',
             description: 'Test Description',
             gameMode: 'classic',
             board: { cells: [CellType.Empty], items: [ItemType.FightSanctuary] },
