@@ -4,14 +4,13 @@ import { TurnService } from '@app/services/gameplay/turn-service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
-import { Avatar, DiceType } from '@common/constants';
+import { Avatar, DiceType, SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
 
 const SANCTUARY_BUFFED_STAT = 5;
 
@@ -103,6 +102,33 @@ describe('TurnService', () => {
             expect(socketService.getNamespace.calledOnceWithExactly(Namespaces.Game)).to.equal(true);
             expect(namespaceSpy.to.calledOnceWithExactly(activeGame._id)).to.equal(true);
             expect(emitSpy.calledOnceWithExactly(SocketEvent.TurnPreparing, { player: 'Alice' })).to.equal(true);
+        } finally {
+            clock.restore();
+        }
+    });
+
+    it('should reactivate a sanctuary when its cooldown expires', async () => {
+        const activeGame = createActiveGame();
+        activeGame.game.board.items = [
+            {
+                itemType: ItemType.LifeSanctuary,
+                x: 0,
+                y: 0,
+                size: 4,
+                active: false,
+                inactiveTurnsRemaining: 1,
+            },
+        ];
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const onTurnStartedSpy = sinon.spy(sanctuaryService, 'onTurnStarted');
+        const clock = sinon.useFakeTimers();
+
+        try {
+            await turnService.startTurn(activeGame._id);
+
+            expect(onTurnStartedSpy.calledOnceWithExactly(activeGame)).to.equal(true);
+            expect(activeGame.game.board.items[0].active).to.equal(true);
+            expect(activeGame.game.board.items[0].inactiveTurnsRemaining).to.equal(0);
         } finally {
             clock.restore();
         }

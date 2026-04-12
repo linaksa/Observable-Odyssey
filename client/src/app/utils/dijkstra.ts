@@ -2,8 +2,6 @@ import { Position } from '@common/character';
 import { DijkstraResult } from '@app/interfaces/dijkstra-result.interface';
 import { MinimumHeap } from './min-heap';
 
-export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;
-
 export type { DijkstraResult };
 export enum Direction {
     Up,

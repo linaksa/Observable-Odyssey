@@ -73,6 +73,7 @@ export class ActiveGameService implements OnDestroy {
 
     constructor() {
         this.socket.connect(Namespaces.Game);
+        this.socketSubscriptions.push(this.socket.on<void>(Namespaces.Game, 'connect').subscribe(() => this.rejoinActiveGameRoom()));
 
         this.socketSubscriptions.push(
             ...registerActiveGameSocketListeners({
@@ -180,7 +181,7 @@ export class ActiveGameService implements OnDestroy {
 
                     this.hasChangedLocation.update((current) => !current);
 
-                    this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
+                    this.joinActiveGameRoom(game._id);
                 },
             });
 
@@ -188,6 +189,22 @@ export class ActiveGameService implements OnDestroy {
         if (subscription.closed) {
             this.setActiveGameSubscription = undefined;
         }
+    }
+
+    private joinActiveGameRoom(activeGameId: string): void {
+        const playerName = this.localPlayer.getLocalPlayer()?.name;
+        this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId,
+            playerName,
+        });
+    }
+
+    private rejoinActiveGameRoom(): void {
+        if (!this.activeGame) {
+            return;
+        }
+
+        this.joinActiveGameRoom(this.activeGame._id);
     }
 
     toggleActionMode(): void {
@@ -361,7 +378,7 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+        const payload = {
             gameId: this.activeGame._id,
             playerId: player.name,
             choice,
@@ -369,6 +386,9 @@ export class ActiveGameService implements OnDestroy {
                 x: col,
                 y: row,
             },
+        };
+        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            ...payload,
         });
     }
 

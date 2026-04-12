@@ -4,7 +4,7 @@ import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.s
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
-import { isPositionAdjacentToSanctuary, isSanctuaryItem } from '@app/utils/sanctuary';
+import { isPositionAdjacentToSanctuary, isSanctuaryActive, isSanctuaryItem } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
@@ -77,7 +77,7 @@ export class GameInteractionService {
             currentPlayer &&
             boardItem &&
             isSanctuaryItem(boardItem) &&
-            boardItem.active !== false &&
+            isSanctuaryActive(boardItem) &&
             isPositionAdjacentToSanctuary(currentPlayer.currentPosition, boardItem)
         ) {
             this.popupStateService.openSanctuaryPopup(boardItem, rowIndex, colIndex);

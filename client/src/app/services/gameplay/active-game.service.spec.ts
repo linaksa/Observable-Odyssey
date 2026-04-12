@@ -135,7 +135,21 @@ describe('ActiveGameService', () => {
         expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
         expect(service.isDebugMode()).toBeTrue();
         expect(service.isLoading()).toBeFalse();
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, 'remote-game-id');
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId: 'remote-game-id',
+            playerName: 'Alice',
+        });
+    });
+
+    it('should rejoin the active game room when the gameplay socket reconnects', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+
+        emitEvent<void>('connect', undefined);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId: 'remote-game-id',
+            playerName: 'Alice',
+        });
     });
 
     it('should preserve newer chat messages when refreshing the same active game', () => {

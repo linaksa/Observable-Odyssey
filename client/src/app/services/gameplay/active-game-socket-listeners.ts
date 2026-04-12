@@ -114,7 +114,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             }
 
             const player = context.getPlayerByName(data.playerId);
-            if (!player) return;
+            if (!player) {
+                return;
+            }
 
             player.actionsLeft = data.actionsLeft;
             player.currentHealth = data.currentHealth;
