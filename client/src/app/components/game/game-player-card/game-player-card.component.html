@@ -48,8 +48,24 @@
 
     <div class="mt-2 border-t border-[#315a9f] pt-2">
         <div class="flex flex-row gap-4 justify-between text-[#b7d0ff] text-sm">
-            <p>ATK: {{ playerStatValue(player(), player()?.attackPoints) }}</p>
-            <p>DEF: {{ playerStatValue(player(), player()?.defensePoints) }}</p>
+            <p class="flex items-center gap-1">
+                <span>ATK:</span>
+                <span [class.text-green-400]="attackDisplay().isBuffed" data-testid="atk-tile-value">
+                    {{ playerStatValue(player(), attackDisplay().value) }}
+                </span>
+                @if (attackDisplay().bonus > 0) {
+                    <span class="font-semibold text-green-400">(+{{ attackDisplay().bonus }})</span>
+                }
+            </p>
+            <p class="flex items-center gap-1">
+                <span>DEF:</span>
+                <span [class.text-green-400]="defenseDisplay().isBuffed" data-testid="def-tile-value">
+                    {{ playerStatValue(player(), defenseDisplay().value) }}
+                </span>
+                @if (defenseDisplay().bonus > 0) {
+                    <span class="font-semibold text-green-400">(+{{ defenseDisplay().bonus }})</span>
+                }
+            </p>
             <p>RAP: {{ playerStatValue(player(), player()?.rapidityPoints) }}</p>
             <p>D-ATK: {{ diceFaceValue(player()?.attackBonusDiceType) }}</p>
             <p>D-DEF: {{ diceFaceValue(player()?.defenseBonusDiceType) }}</p>
