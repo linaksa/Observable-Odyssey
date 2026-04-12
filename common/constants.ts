@@ -59,3 +59,4 @@ export enum GameSize {
 export const COMBAT_TURN_FEEDBACK_DURATION_MS = 5000;
 export const SECONDS_PER_MINUTE = 60;
 export const HUNDRED_PERCENT = 100;
+export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;

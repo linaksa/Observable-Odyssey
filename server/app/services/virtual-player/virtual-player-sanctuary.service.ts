@@ -1,5 +1,5 @@
 import { MovementService } from '@app/services/gameplay/movement-service';
-import { isPositionAdjacentToSanctuary, isSanctuaryActive } from '@app/services/gameplay/sanctuary-helpers';
+import { isPositionAdjacentToSanctuary, isSanctuaryActive } from '@app/utils/sanctuary';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';

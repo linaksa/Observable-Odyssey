@@ -1,4 +1,4 @@
-import { sanctuaryCoversCell } from '@app/services/gameplay/sanctuary-helpers';
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';

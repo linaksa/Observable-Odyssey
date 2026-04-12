@@ -1,7 +1,17 @@
 import { AppError } from '@app/error-types/app-error';
+import {
+    FIGHT_SANCTUARY_BUFF_TURNS,
+    FIGHT_SANCTUARY_DOUBLE_BONUS,
+    FIGHT_SANCTUARY_STANDARD_BONUS,
+    LIFE_SANCTUARY_DOUBLE_HEAL_AMOUNT,
+    LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT,
+    SANCTUARY_ACTION_COST,
+    SANCTUARY_DOUBLE_CHANCE,
+} from '@app/constants/sanctuary';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, Position } from '@common/character';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
@@ -9,22 +19,13 @@ import { ISanctuaryInteractedResult, ISanctuaryInteractionData } from '@common/s
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 import {
-    SANCTUARY_COOLDOWN_TURN_STEPS,
     advanceSanctuaryCooldowns,
     deactivateSanctuary,
     isPositionAdjacentToSanctuary,
     isSanctuaryActive,
     isSanctuaryItem,
     sanctuaryCoversCell,
-} from './sanctuary-helpers';
-
-const SANCTUARY_ACTION_COST = 1;
-const LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT = 2;
-const LIFE_SANCTUARY_DOUBLE_HEAL_AMOUNT = 4;
-const FIGHT_SANCTUARY_STANDARD_BONUS = 1;
-const FIGHT_SANCTUARY_DOUBLE_BONUS = 2;
-const FIGHT_SANCTUARY_BUFF_TURNS = 2;
-const SANCTUARY_DOUBLE_CHANCE = 0.5;
+} from '@app/utils/sanctuary';
 
 @Service()
 export class SanctuaryService {
@@ -83,6 +84,7 @@ export class SanctuaryService {
         player.fightSanctuaryTurnsRemaining = remainingTurns - 1;
 
         if (player.fightSanctuaryTurnsRemaining === 0) {
+            player.fightSanctuaryUsed = false;
             player.fightSanctuaryBonus = 0;
         }
     }
@@ -198,7 +200,7 @@ export class SanctuaryService {
 
     private applyFightSanctuary(player: ICharacter, choice: SanctuaryChoice, result: ISanctuaryInteractedResult): void {
         const bonus = this.resolveSanctuaryEffect(choice, FIGHT_SANCTUARY_STANDARD_BONUS, FIGHT_SANCTUARY_DOUBLE_BONUS);
-        player.fightSanctuaryUsed = true;
+        player.fightSanctuaryUsed = bonus > 0;
         player.fightSanctuaryTurnsRemaining = bonus > 0 ? FIGHT_SANCTUARY_BUFF_TURNS : 0;
         player.fightSanctuaryBonus = bonus;
 
@@ -208,7 +210,7 @@ export class SanctuaryService {
 
         result.attackPoints = player.attackPoints;
         result.defensePoints = player.defensePoints;
-        result.fightSanctuaryUsed = true;
+        result.fightSanctuaryUsed = player.fightSanctuaryUsed;
         result.fightSanctuaryTurnsRemaining = player.fightSanctuaryTurnsRemaining;
         result.fightSanctuaryBonus = player.fightSanctuaryBonus;
     }

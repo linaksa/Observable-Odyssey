@@ -28,7 +28,6 @@ import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/utils/sanctuary';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
 const MAX_PLAYER_COUNT = 4;
@@ -179,9 +178,9 @@ describe('registerActiveGameSocketListeners', () => {
         expect(hasAbandoned()).toBeTrue();
     });
 
-    it('should keep sanctuary cooldown state synchronized from the socket events', () => {
+    it('should release a sanctuary once its cooldown expires', () => {
         activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
-        activeGame.game.board.items = [createSanctuaryItem(false, SANCTUARY_COOLDOWN_TURN_STEPS)];
+        activeGame.game.board.items = [createSanctuaryItem(false, 1)];
         registerActiveGameSocketListeners(context());
 
         emitEvent<ISanctuaryInteractedResult>(SocketEvent.SanctuaryInteracted, {
@@ -195,7 +194,7 @@ describe('registerActiveGameSocketListeners', () => {
             attackPoints: 4,
             defensePoints: 4,
             sanctuaryActive: false,
-            sanctuaryInactiveTurnsRemaining: 3,
+            sanctuaryInactiveTurnsRemaining: 1,
             fightSanctuaryUsed: false,
             fightSanctuaryTurnsRemaining: 0,
             fightSanctuaryBonus: 0,
@@ -203,12 +202,12 @@ describe('registerActiveGameSocketListeners', () => {
 
         const sanctuary = activeGame.game.board.items[0];
         expect(sanctuary.active).toBeFalse();
-        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS);
+        expect(sanctuary.inactiveTurnsRemaining).toBe(1);
 
         emitEvent<{ player: string }>(SocketEvent.TurnPreparing, { player: 'Bob' });
 
-        expect(sanctuary.active).toBeFalse();
-        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
+        expect(sanctuary.active).toBeTrue();
+        expect(sanctuary.inactiveTurnsRemaining).toBe(0);
     });
 
     it('should store sanctuary interaction outcomes', () => {
