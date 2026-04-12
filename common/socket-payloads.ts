@@ -87,6 +87,10 @@ export interface IAbandonData {
     playerId: string;
 }
 
+export interface IPlayerIdPayload {
+    playerId: string;
+}
+
 export interface IDebugTeleportData {
     gameId: string;
     playerName: string;
@@ -107,6 +111,22 @@ export interface ITurnStartedPayload {
     movementLeft: number;
     actionLeft: number;
     timeLeft: number | null;
+}
+
+export interface ITurnPreparingPayload {
+    player: string;
+}
+
+export interface IGameEndedPayload {
+    winner: string | null;
+}
+
+export interface IGameCanceledPayload {
+    playerId?: string;
+}
+
+export interface IFlagPickedUpPayload {
+    playerName: string;
 }
 
 export interface IGameLogPayload {

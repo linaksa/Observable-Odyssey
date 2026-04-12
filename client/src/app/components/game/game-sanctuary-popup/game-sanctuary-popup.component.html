@@ -13,7 +13,7 @@
                 type="button"
                 class="rounded-md border border-emerald-700 bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
                 data-testid="sanctuary-standard-choice"
-                (click)="choiceSelected.emit('standard')"
+                (click)="choiceSelected.emit(sanctuaryChoice.Standard)"
             >
                 1x (100%)
             </button>
@@ -21,7 +21,7 @@
                 type="button"
                 class="rounded-md border border-amber-700 bg-amber-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-amber-700"
                 data-testid="sanctuary-double-choice"
-                (click)="choiceSelected.emit('double')"
+                (click)="choiceSelected.emit(sanctuaryChoice.Double)"
             >
                 2x (50%)
             </button>

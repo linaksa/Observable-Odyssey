@@ -1,4 +1,5 @@
-import { Component, effect, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, effect, HostListener, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -30,6 +31,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     private readonly facade = inject(WaitPageFacadeService);
     private readonly router = inject(Router);
     private readonly route: ActivatedRoute = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
     private readonly timeout: number = 3000;
 
     private playersUpdatedSubscription?: Subscription;
@@ -56,7 +58,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.initializeButtonTimeout();
 
-        this.routeSubscription = this.route.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             this.initializeWaitingRoom(params.activeGameId);
         });
     }
@@ -97,7 +99,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.startGameSubscription?.unsubscribe();
         this.startGameSubscription = this.facade.onGameStarted().subscribe({
             next: (startedGameId) => {
-                if (!startedGameId || startedGameId !== this.activeGameService.activeGame._id) {
+                if (!this.facade.shouldStartGame(startedGameId)) {
                     return;
                 }
                 this.gameStarted = true;
@@ -110,7 +112,7 @@ export class WaitPageComponent implements OnInit, OnDestroy {
         this.gameEndedSubscription?.unsubscribe();
         this.gameEndedSubscription = this.facade.onGameEnded().subscribe({
             next: () => {
-                this.facade.clearLocalPlayer();
+                this.facade.clearAndRedirectAfterGameEnded();
                 this.router.navigate(['/home']);
             },
         });
@@ -125,39 +127,16 @@ export class WaitPageComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const localPlayerName = this.getLocalPlayerName();
+        const localPlayerName = this.facade.getLocalPlayerName(this.localPlayer);
         const activeGameId = this.activeGameService.activeGame?._id;
 
         if (!localPlayerName || !activeGameId) {
             return;
         }
 
-        this.kickOtherPlayersIfOrganizer(localPlayerName);
-
-        this.leaveWaitingRoomAndCleanup(localPlayerName);
-    }
-
-    private kickOtherPlayersIfOrganizer(localPlayerName: string): void {
-        const activeGame = this.activeGameService.activeGame;
-        if (!activeGame || activeGame.organizerName !== localPlayerName) {
-            return;
-        }
-
-        for (const player of activeGame.players) {
-            if (player.name !== localPlayerName) {
-                this.facade.kickPlayer(player.name);
-            }
-        }
-    }
-
-    private getLocalPlayerName(): string | undefined {
-        return this.localPlayer?.name ?? this.facade.getLocalPlayer()?.name;
-    }
-
-    private leaveWaitingRoomAndCleanup(localPlayerName: string): void {
+        this.facade.kickOtherPlayersIfOrganizer(localPlayerName);
         this.hasLeftWaitingRoom = true;
-        this.facade.leaveWaitingRoom(localPlayerName);
-        this.facade.clearLocalPlayer();
+        this.facade.leaveWaitingRoomAndCleanup(localPlayerName);
     }
 
     private initializeActiveGameData(): void {

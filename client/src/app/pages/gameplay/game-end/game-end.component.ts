@@ -15,14 +15,14 @@ import { Subscription } from 'rxjs';
     templateUrl: './game-end.component.html',
 })
 export class GameEndComponent implements OnInit, OnDestroy {
-    private readonly router = inject(ActivatedRoute);
-    private gameService = inject(GameService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly gameService = inject(GameService);
     private routeSubscription?: Subscription;
 
     activeGame: IActiveGame | null = null;
 
     ngOnInit(): void {
-        this.routeSubscription = this.router.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.subscribe((params) => {
             if (params.activeGameId) {
                 this.gameService.getActiveGameById(params.activeGameId).subscribe((game) => {
                     this.activeGame = game;

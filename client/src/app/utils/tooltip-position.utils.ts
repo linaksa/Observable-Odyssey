@@ -1,14 +1,7 @@
-export type TooltipPosition = { x: number; y: number };
+import { TooltipPositionOptions } from '@app/interfaces/tooltip-position-options.interface';
+import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 
-interface TooltipPositionOptions {
-    event: MouseEvent;
-    containerRect?: DOMRect;
-    tooltipWidth: number;
-    tooltipHeight: number;
-    horizontalOffsetPx: number;
-    verticalOffsetPx: number;
-    fallbackPosition: TooltipPosition;
-}
+export type { TooltipPosition };
 
 export function computeTooltipPosition({
     event,

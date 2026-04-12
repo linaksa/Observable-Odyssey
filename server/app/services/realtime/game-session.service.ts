@@ -3,10 +3,10 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame, IPlayerAbandonnedGame } from '@common/activeGame';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
 import { CombatOutcome } from '@common/attackResult';
 import { SocketEvent } from '@common/socket-events';
-import { IAbandonData, IDebugToggleState, IJoinGamePayload, ISocketData } from '@common/socket-payloads';
+import { IAbandonData, IDebugToggleState, IGameEndedPayload, IJoinGamePayload, IPlayerIdPayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Container, Service } from 'typedi';
 import { GameplayActionService } from './gameplay-action.service';
@@ -56,11 +56,13 @@ export class GameSessionService {
     async handleWaitingRoomDisconnect(gameId: string, playerId: string, namespace: Namespace): Promise<void> {
         const isOrganizer = await this.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {
-            namespace.to(gameId).emit(SocketEvent.GameCanceled, { playerId });
+            const gameCanceledPayload: IPlayerIdPayload = { playerId };
+            namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
             await this.activeGameService.deleteGameById(gameId);
         } else {
             await this.activeGameService.removePlayer(gameId, playerId);
-            namespace.to(gameId).emit(SocketEvent.LeftWaitingRoom, { playerId });
+            const leftWaitingRoomPayload: IPlayerIdPayload = { playerId };
+            namespace.to(gameId).emit(SocketEvent.LeftWaitingRoom, leftWaitingRoomPayload);
         }
         this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
     }
@@ -97,18 +99,19 @@ export class GameSessionService {
         const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
         namespace.to(gameId).emit(SocketEvent.PlayersUpdated, refreshedGame.players);
 
-        const playerAbandonnedData: IPlayerAbandonnedGame = {
+        const playerAbandonedData: IPlayerAbandonedGame = {
             playerName: playerId,
             activeGame: refreshedGame,
         };
-        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonnedData);
+        namespace.to(gameId).emit(SocketEvent.PlayerAbandoned, playerAbandonedData);
 
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, refreshedGame, namespace, emitGameLog);
 
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
         const gameEnded = await this.endGameService.checkEndGame(gameId);
         if (gameEnded) {
-            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: null });
+            const gameEndedPayload: IGameEndedPayload = { winner: null };
+            namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
             emitGameLog(gameId, `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`);
             // await this.activeGameService.deleteGameById(gameId);
         }
@@ -126,7 +129,8 @@ export class GameSessionService {
     async handlePlayerKick(data: IAbandonData, namespace: Namespace): Promise<void> {
         const { gameId, playerId } = data;
         await this.activeGameService.removePlayer(gameId, playerId);
-        namespace.to(gameId).emit(SocketEvent.PlayerKicked, { playerId });
+        const playerKickedPayload: IPlayerIdPayload = { playerId };
+        namespace.to(gameId).emit(SocketEvent.PlayerKicked, playerKickedPayload);
         this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
     }
 
@@ -138,7 +142,8 @@ export class GameSessionService {
             await this.activeGameService.deleteGameById(gameId);
         } else {
             await this.activeGameService.removePlayer(gameId, playerId);
-            namespace.to(gameId).emit(SocketEvent.LeftWaitingRoom, { playerId });
+            const leftWaitingRoomPayload: IPlayerIdPayload = { playerId };
+            namespace.to(gameId).emit(SocketEvent.LeftWaitingRoom, leftWaitingRoomPayload);
         }
         this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
         this.unregisterSocketFromGame(socket, gameId);

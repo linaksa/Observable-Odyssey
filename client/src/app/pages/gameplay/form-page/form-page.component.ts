@@ -21,13 +21,13 @@ export class FormPageComponent implements OnInit, OnDestroy {
     private readonly toastService = inject(ToastService);
     private readonly localPlayerService = inject(LocalPlayerService);
 
-    private readonly router = inject(ActivatedRoute);
+    private readonly route = inject(ActivatedRoute);
     private readonly navigator = inject(Router);
     private gameId: string | null = null;
     private routeSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.routeSubscription = this.router.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.subscribe((params) => {
             this.gameId = params.gameId || null;
         });
     }

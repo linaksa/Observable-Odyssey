@@ -55,7 +55,7 @@ describe('AdministrationPageComponent', () => {
         administrationServiceSpy = jasmine.createSpyObj('AdministrationService', ['changeGameVisibility']);
         gameServiceSpy = jasmine.createSpyObj('GameService', ['deleteGame']);
         toastServiceSpy = jasmine.createSpyObj('ToastService', ['show']);
-        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['connect', 'onGamesModified']);
+        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['connect', 'disconnect', 'onGamesModified']);
         adminSocketServiceSpy.onGamesModified.and.returnValue(of(void 0));
 
         gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames']);

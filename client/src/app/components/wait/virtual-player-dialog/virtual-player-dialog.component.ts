@@ -1,10 +1,10 @@
 import { Component, inject, OnDestroy, OnInit, output } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { VirtualPlayerOption } from '@app/interfaces/virtual-player-option.interface';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { VirtualPlayerProfile } from '@common/character';
 import { Subscription } from 'rxjs';
-import { VirtualPlayerOption } from './virtual-player-dialog.types';
 
 @Component({
     selector: 'app-virtual-player-dialog',

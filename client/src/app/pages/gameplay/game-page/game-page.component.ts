@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
@@ -35,6 +36,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly facade = inject(GamePageFacadeService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly activeGameService = this.facade.activeGameService;
     protected readonly showButton: WritableSignal<boolean> = signal(false);
@@ -55,7 +57,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
         this.facade.connectDebugSocket();
         this.facade.connectGameLogs();
 
-        this.routeSubscription = this.route.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
             if (!activeGameId) {
                 return;
@@ -71,11 +73,14 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
             if (!this.playersSubscription) {
                 this.facade.connectGameplaySocket();
-                this.playersSubscription = this.facade.onPlayersUpdated().subscribe({
-                    next: (players) => {
-                        this.facade.applyPlayersUpdate(players);
-                    },
-                });
+                this.playersSubscription = this.facade
+                    .onPlayersUpdated()
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: (players) => {
+                            this.facade.applyPlayersUpdate(players);
+                        },
+                    });
 
                 this.facade.initializeTurnListeners();
             }
@@ -88,10 +93,13 @@ export class GamePageComponent implements OnInit, OnDestroy {
         this.handlePageExit();
         this.routeSubscription?.unsubscribe();
         this.playersSubscription?.unsubscribe();
+        this.facade.disconnectDebugSocket();
+        this.facade.disconnectGameLogs();
         this.facade.destroyTurnService();
 
         if (this.buttonTimeoutId) {
             clearTimeout(this.buttonTimeoutId);
+            this.buttonTimeoutId = undefined;
         }
     }
 

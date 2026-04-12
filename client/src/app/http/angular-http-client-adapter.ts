@@ -1,16 +1,17 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { HttpClientPort } from '@app/interfaces/http-client-port.interface';
+import { HttpError } from '@app/interfaces/http-error.interface';
+import { HttpOptions } from '@app/interfaces/http-options.interface';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
-import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
-
-interface MappedHttpOptions {
+type MappedHttpOptions = {
     headers?: Record<string, string>;
     params?: HttpParams;
     responseType?: 'json';
     withCredentials?: boolean;
-}
+};
 
 @Injectable()
 export class AngularHttpClientAdapter implements HttpClientPort {

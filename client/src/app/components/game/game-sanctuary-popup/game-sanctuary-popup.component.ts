@@ -7,6 +7,7 @@ import { SanctuaryChoice, SanctuaryPopupData } from '@common/info';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GameSanctuaryPopupComponent {
+    protected readonly sanctuaryChoice = SanctuaryChoice;
     readonly data = input.required<SanctuaryPopupData>();
     readonly choiceSelected = output<SanctuaryChoice>();
     readonly cancel = output<void>();

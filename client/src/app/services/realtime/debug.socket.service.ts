@@ -19,7 +19,7 @@ export class DebugSocketService implements OnDestroy {
             this.socketService.connect(Namespaces.Game);
         }
 
-        this.debugSubscription?.unsubscribe();
+        this.disconnect();
         this.debugSubscription = this.onDebugModeToggle().subscribe({
             next: (data) => {
                 this.activeGameService.applyDebugModeState(data);
@@ -35,8 +35,13 @@ export class DebugSocketService implements OnDestroy {
         this.socketService.emitMany(Namespaces.Game, SocketEvent.DebugToggle, playerName, activeGameId);
     }
 
-    ngOnDestroy(): void {
-        this.socketService.disconnect(Namespaces.Game);
+    disconnect(): void {
         this.debugSubscription?.unsubscribe();
+        this.debugSubscription = undefined;
+    }
+
+    ngOnDestroy(): void {
+        this.disconnect();
+        this.socketService.disconnect(Namespaces.Game);
     }
 }

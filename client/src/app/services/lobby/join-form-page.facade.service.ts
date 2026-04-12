@@ -26,8 +26,20 @@ export class JoinFormPageFacadeService {
         this.socketService.connect(Namespaces.ActiveGameAdmin);
     }
 
+    disconnectFromJoinableGamesUpdates(): void {
+        this.socketService.disconnect(Namespaces.ActiveGameAdmin);
+    }
+
     onJoinableGamesUpdated(): Observable<string> {
         return this.socketService.on<string>(Namespaces.ActiveGameAdmin, SocketEvent.JoinableGamesUpdated);
+    }
+
+    resolveActiveGameId(routeParams: Record<string, string | undefined>): string | null {
+        return routeParams.activeGameId ?? null;
+    }
+
+    shouldRefreshAvatars(updatedGameId: string, activeGameId: string | null): boolean {
+        return !!activeGameId && updatedGameId === activeGameId;
     }
 
     fetchUnavailableAvatars(activeGameId: string): void {

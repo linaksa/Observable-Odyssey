@@ -1,13 +1,9 @@
 import { CELL_TYPE_BACKGROUNDS, CELL_TYPE_PATHS, ITEM_TYPE_PATHS, OBJECT_IMAGES, OBJECT_SPECIFIC_CLASSES } from '@app/constants/backgrounds-mapping';
+import { CELL_PREVIEW_OVERLAY_CLASS, ITEM_PREVIEW_OVERLAY_CLASS, SANCTUARY_ITEM_SIZE, SINGLE_ITEM_SIZE } from '@app/constants/game-grid-layout';
+import { PlacementPreview } from '@app/interfaces/game-grid.interface';
 import { isSanctuaryItem } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { IItem, ItemType } from '@common/items';
-import { PlacementPreview } from './game-grid-types';
-
-const SINGLE_ITEM_SIZE = '100%';
-const SANCTUARY_ITEM_SIZE = '200%';
-const ITEM_PREVIEW_OVERLAY_CLASS = 'absolute inset-0 z-30 pointer-events-none opacity-50 bg-no-repeat [image-rendering:pixelated]';
-const CELL_PREVIEW_OVERLAY_CLASS = 'absolute inset-0 z-30 pointer-events-none opacity-50 bg-no-repeat bg-cover [image-rendering:pixelated]';
 
 export function buildCellImagePath(cellType: CellType): string {
     return CELL_TYPE_PATHS[cellType];

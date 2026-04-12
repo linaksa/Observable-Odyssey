@@ -68,11 +68,13 @@ describe('CtfFlagActionService', () => {
             game,
             { gameId: game._id, currentPlayerName: requester.name, targetName: virtualCarrier.name },
             namespace,
-            (gameId, request) => {
-                pendingGameId = gameId;
-                pendingRequest = request;
+            {
+                setPendingFlagRequest: (gameId, request) => {
+                    pendingGameId = gameId;
+                    pendingRequest = request;
+                },
+                onFlagUpdated,
             },
-            onFlagUpdated,
         );
 
         expect(handled).to.equal(true);
@@ -95,9 +97,11 @@ describe('CtfFlagActionService', () => {
             game,
             { gameId: game._id, currentPlayerName: virtualCarrier.name, targetName: teammate.name },
             namespace,
-            (gameId, request) => {
-                pendingGameId = gameId;
-                pendingRequest = request;
+            {
+                setPendingFlagRequest: (gameId, request) => {
+                    pendingGameId = gameId;
+                    pendingRequest = request;
+                },
             },
         );
 

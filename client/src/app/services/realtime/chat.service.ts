@@ -14,10 +14,10 @@ export class ChatService implements OnDestroy {
     private readonly socketService = inject(SocketService);
     private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
-    private chatSubscription: Subscription;
+    private chatSubscription?: Subscription;
 
     connect() {
-        this.chatSubscription?.unsubscribe();
+        this.disconnect();
         this.socketService.connect(Namespaces.Game);
         const activeGameId = this.activeGameService.activeGame._id;
 
@@ -56,7 +56,12 @@ export class ChatService implements OnDestroy {
         this.activeGameService.appendChatMessage(message);
     }
 
-    ngOnDestroy(): void {
+    disconnect(): void {
         this.chatSubscription?.unsubscribe();
+        this.chatSubscription = undefined;
+    }
+
+    ngOnDestroy(): void {
+        this.disconnect();
     }
 }

@@ -6,6 +6,8 @@ import { GameService } from '@app/services/admin/game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { PendingFlagRequest } from '@app/interfaces/pending-flag-request.interface';
+import { ToggleSignalRef } from '@app/interfaces/toggle-signal-ref.interface';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
@@ -33,16 +35,6 @@ import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attackR
 import { ItemType } from '@common/items';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
-interface PendingFlagRequest {
-    data: IFlagActionData;
-    acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag;
-    question: string;
-}
-
-interface ToggleSignalRef {
-    update(updater: (current: boolean) => boolean): void;
-}
-
 @Injectable({
     providedIn: 'root',
 })
@@ -63,7 +55,7 @@ export class ActiveGameService implements OnDestroy {
 
     isLoading = signal(false);
     hasChangedLocation = signal(false);
-    hasAbandonned = signal(false);
+    hasAbandoned = signal(false);
     gameHasEnded = signal(false);
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
@@ -92,7 +84,7 @@ export class ActiveGameService implements OnDestroy {
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
-                hasAbandonned: this.hasAbandonned,
+                hasAbandoned: this.hasAbandoned,
                 gameHasEnded: this.gameHasEnded,
                 handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
                 closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
