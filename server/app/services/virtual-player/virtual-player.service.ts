@@ -18,7 +18,7 @@ export class VirtualPlayerService {
     async startTurn(character: ICharacter, game: IActiveGame) {
         const gameId = game._id.toString();
 
-        this.turnFinalizerService.beginTurn(gameId);
+        this.turnFinalizerService.beginTurn(gameId, character.name);
 
         try {
             const ctfObjectiveHandled = await this.ctfObjectiveService.handleTurnObjective(character, game);
