@@ -543,9 +543,12 @@ describe('ActiveGameService', () => {
         expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
     });
 
-    it('should keep non-starting items and only remove unused spawn points', () => {
-        const alice = createCharacter('Alice', 0, 0);
-        service.activeGame = createActiveGame([alice], 'Alice');
+    it('should keep active player spawns and remove abandoned ones', () => {
+        const alice = createCharacter('Alice', 0, 0, PLAYER_INDEX_BOB);
+        alice.currentPosition = { x: 1, y: 1 };
+        const bob = createCharacter('Bob', PLAYER_INDEX_BOB, PLAYER_INDEX_BOB);
+        bob.hasAbandoned = true;
+        service.activeGame = createActiveGame([alice, bob], 'Alice');
         service.activeGame.game.board.items = [
             createItem(ItemType.StartingPosition, 0, 0),
             createItem(ItemType.StartingPosition, PLAYER_INDEX_BOB, PLAYER_INDEX_BOB),
