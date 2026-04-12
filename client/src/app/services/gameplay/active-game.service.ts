@@ -62,6 +62,7 @@ export class ActiveGameService implements OnDestroy {
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
     sanctuaryOutcome = signal<ISanctuaryInteractedResult | null>(null);
+    readonly actionStatsVersion = signal(0);
     private readonly _chatMessages = signal<IMessage[]>([]);
     readonly chatMessages = this._chatMessages.asReadonly();
 
@@ -84,6 +85,7 @@ export class ActiveGameService implements OnDestroy {
                 setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
                 setSanctuaryOutcome: (sanctuaryOutcome: ISanctuaryInteractedResult | null) => this.sanctuaryOutcome.set(sanctuaryOutcome),
                 setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => this.roundOutcome.set(roundOutcome),
+                bumpActionStatsVersion: () => this.actionStatsVersion.update((current) => current + 1),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
@@ -442,6 +444,7 @@ export class ActiveGameService implements OnDestroy {
         const currentPlayer = this.getPlayerByName(data.currentPlayerName);
         if (currentPlayer) {
             currentPlayer.actionsLeft = data.currentPlayerActionsLeft;
+            this.actionStatsVersion.update((current) => current + 1);
         }
 
         this.activeGame.hasFlagId = isTakingFlag ? data.currentPlayerName : data.targetPlayerName;

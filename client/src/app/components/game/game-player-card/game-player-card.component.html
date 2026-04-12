@@ -29,19 +29,19 @@
         <div class="flex flex-col rounded-lg px-3 py-2 bg-[#f1969a]">
             <span class="text-sm text-black tracking-wider">Mouvements</span>
             <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="mvt-tile-value">
-                {{ playerStatValue(player(), player()?.movementLeft) }}
+                {{ playerStatValue(player(), player()?.movementLeft) }} / {{ playerStatValue(player(), player()?.rapidityPoints) }}
             </span>
         </div>
         <div class="flex flex-col rounded-lg px-3 py-2 bg-[#fdb7c5]">
             <span class="text-sm text-black tracking-wider">Actions</span>
             <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="act-tile-value">
-                {{ playerStatValue(player(), player()?.actionsLeft) }}
+                {{ playerStatValue(player(), player()?.actionsLeft) }} / {{ maxPlayerActions }}
             </span>
         </div>
         <div class="flex flex-col rounded-lg px-3 py-2 bg-[#cea0d9]">
             <span class="text-sm text-black tracking-wider">Victoires</span>
             <span class="text-2xl wrap-anywhere ml-auto text-right text-black" data-testid="vic-tile-value">
-                {{ playerStatValue(player(), player()?.victories) }}
+                {{ playerStatValue(player(), victoriesAchieved(player())) }} / {{ victoriesToWin }}
             </span>
         </div>
     </div>
