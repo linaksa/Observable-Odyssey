@@ -80,6 +80,9 @@ describe('registerActiveGameSocketListeners', () => {
         setCombatOutcome: () => {
             // no-op for this spec since combat outcomes aren't emitted by the tested listeners
         },
+        setSanctuaryOutcome: () => {
+            // no-op for this spec since sanctuary outcomes aren't asserted here
+        },
     });
 
     beforeEach(() => {
@@ -203,6 +206,40 @@ describe('registerActiveGameSocketListeners', () => {
 
         expect(sanctuary.active).toBeFalse();
         expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
+    });
+
+    it('should store sanctuary interaction outcomes', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        const setSanctuaryOutcomeSpy = jasmine.createSpy('setSanctuaryOutcome');
+
+        registerActiveGameSocketListeners({
+            ...context(),
+            setSanctuaryOutcome: setSanctuaryOutcomeSpy,
+        });
+
+        emitEvent<ISanctuaryInteractedResult>(SocketEvent.SanctuaryInteracted, {
+            playerId: 'Alice',
+            position: { x: 1, y: 1 },
+            itemType: ItemType.FightSanctuary,
+            choice: SanctuaryChoice.Double,
+            succeeded: false,
+            actionsLeft: 0,
+            currentHealth: 6,
+            attackPoints: 4,
+            defensePoints: 4,
+            sanctuaryActive: false,
+            sanctuaryInactiveTurnsRemaining: 3,
+            fightSanctuaryUsed: true,
+            fightSanctuaryTurnsRemaining: 0,
+            fightSanctuaryBonus: 0,
+        });
+
+        expect(setSanctuaryOutcomeSpy).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+                playerId: 'Alice',
+                succeeded: false,
+            }),
+        );
     });
 
     it('should sync requester actions when a flag pickup resolves automatically', () => {

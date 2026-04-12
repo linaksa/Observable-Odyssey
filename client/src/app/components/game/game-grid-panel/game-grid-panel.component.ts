@@ -3,6 +3,7 @@ import { GameGridCellEvent, GameGridComponent } from '@app/components/common/gam
 import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
 import { GameSanctuaryPopupComponent } from '@app/components/game/game-sanctuary-popup/game-sanctuary-popup.component';
+import { GameSanctuaryOutcomeComponent } from '@app/components/game/game-sanctuary-outcome/game-sanctuary-outcome.component';
 import { GameTileInspectionPopupComponent } from '@app/components/game/game-tile-inspection-popup/game-tile-inspection-popup.component';
 import { GAME_GRID_PANEL_HOST_BINDINGS } from '@app/constants/component-host-bindings';
 import {
@@ -26,7 +27,14 @@ import { IItem } from '@common/items';
 
 @Component({
     selector: 'app-game-grid-panel',
-    imports: [GameGridComponent, GameTileInspectionPopupComponent, GameSanctuaryPopupComponent, GameCombatPopupComponent, GameCombatOutcomeComponent],
+    imports: [
+        GameGridComponent,
+        GameTileInspectionPopupComponent,
+        GameSanctuaryPopupComponent,
+        GameSanctuaryOutcomeComponent,
+        GameCombatPopupComponent,
+        GameCombatOutcomeComponent,
+    ],
     templateUrl: './game-grid-panel.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: GAME_GRID_PANEL_HOST_BINDINGS,

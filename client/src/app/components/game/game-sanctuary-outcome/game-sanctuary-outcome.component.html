@@ -1,0 +1,49 @@
+@if (visibleOutcome(); as outcome) {
+    <div class="fixed inset-0 z-90 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-[340px]">
+            <section class="relative overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
+                <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-[#a8c8ff]">Résultat du sanctuaire</span>
+
+                    <button
+                        type="button"
+                        (click)="closeOutcome()"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-xs font-bold text-[#6b9ed4] transition-colors hover:border-[#4a7fd4] hover:text-[#a8c8ff]"
+                    >
+                        X
+                    </button>
+                </header>
+
+                <div class="flex flex-col items-center gap-4 p-6">
+                    @if (isSuccess(outcome)) {
+                        <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#3d9e32] bg-[#2a4a1a]">
+                            <div class="text-4xl font-black text-[#80ef74]">+</div>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="mb-1 text-2xl font-bold tracking-wide text-[#80ef74]">Buff obtenu !</div>
+                            <div class="text-sm text-[#a8c8ff]">Le sanctuaire a fonctionné.</div>
+                        </div>
+
+                        <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42]">
+                            <div class="h-full animate-[timer-drain_3s_linear_forwards] rounded-full bg-[#3d9e32]"></div>
+                        </div>
+                    } @else {
+                        <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#9e3232] bg-[#3a0a0a]">
+                            <div class="text-4xl font-black text-[#ef7474]">×</div>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="mb-1 text-2xl font-bold tracking-wide text-[#ef7474]">Buff raté</div>
+                            <div class="text-sm text-[#a8c8ff]">Le sanctuaire n'a rien donné.</div>
+                        </div>
+
+                        <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42]">
+                            <div class="h-full animate-[timer-drain_3s_linear_forwards] rounded-full bg-[#9e3232]"></div>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+    </div>
+}
