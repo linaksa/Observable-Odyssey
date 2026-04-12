@@ -127,6 +127,8 @@ export interface IGameCanceledPayload {
 
 export interface IFlagPickedUpPayload {
     playerName: string;
+    requesterName?: string;
+    requesterActionsLeft?: number;
 }
 
 export interface IGameLogPayload {

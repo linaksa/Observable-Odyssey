@@ -236,6 +236,14 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (flag) {
                 flag.isCarried = true;
             }
+
+            if (data.requesterName && data.requesterActionsLeft !== undefined) {
+                const requester = context.getPlayerByName(data.requesterName);
+                if (requester) {
+                    requester.actionsLeft = data.requesterActionsLeft;
+                }
+            }
+
             toggle(context.hasChangedLocation);
         }),
         context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
