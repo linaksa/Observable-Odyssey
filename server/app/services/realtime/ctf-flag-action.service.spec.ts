@@ -79,7 +79,13 @@ describe('CtfFlagActionService', () => {
 
         expect(handled).to.equal(true);
         expect(actionService.takeFlag.calledOnceWithExactly(game._id, requester.name)).to.equal(true);
-        expect(namespaceEmitStub.calledWithExactly(SocketEvent.FlagPickedUp, { playerName: requester.name })).to.equal(true);
+        expect(
+            namespaceEmitStub.calledWithExactly(SocketEvent.FlagPickedUp, {
+                playerName: requester.name,
+                requesterName: requester.name,
+                requesterActionsLeft: 0,
+            }),
+        ).to.equal(true);
         expect(onFlagUpdated.calledOnceWithExactly(game._id)).to.equal(true);
         expect(namespaceEmitStub.calledWith(SocketEvent.TakeFlag)).to.equal(false);
         expect(pendingGameId).to.equal(null);

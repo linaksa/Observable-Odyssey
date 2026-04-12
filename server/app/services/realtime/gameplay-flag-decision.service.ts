@@ -74,7 +74,12 @@ export class GameplayFlagDecisionService {
             await this.actionService.giveFlag(gameId, newFlagCarrierName);
         }
 
-        namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: newFlagCarrierName });
+        const requester = activeGame.players.find((player) => player.name === pendingRequest.requesterName);
+        namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
+            playerName: newFlagCarrierName,
+            requesterName: pendingRequest.requesterName,
+            requesterActionsLeft: requester?.actionsLeft,
+        });
         if (previousCarrierName && previousCarrierName !== newFlagCarrierName) {
             emitGameLog(gameId, `Transfert du drapeau de ${previousCarrierName} à ${newFlagCarrierName}.`);
         }

@@ -205,6 +205,21 @@ describe('registerActiveGameSocketListeners', () => {
         expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
     });
 
+    it('should sync requester actions when a flag pickup resolves automatically', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        registerActiveGameSocketListeners(context());
+
+        emitEvent(SocketEvent.FlagPickedUp, {
+            playerName: 'Bob',
+            requesterName: 'Alice',
+            requesterActionsLeft: 0,
+        });
+
+        expect(activeGame?.hasFlagId).toBe('Bob');
+        expect(activeGame?.players[0].actionsLeft).toBe(0);
+        expect(hasChangedLocation()).toBeTrue();
+    });
+
     it('should ignore listener events when no active game is loaded', () => {
         registerActiveGameSocketListeners(context());
         activeGame = undefined;

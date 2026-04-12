@@ -40,7 +40,11 @@ export class CtfFlagActionService {
             const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
             if (targetIsVirtual) {
                 await this.actionService.giveFlag(gameId, targetName);
-                namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: targetName });
+                namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
+                    playerName: targetName,
+                    requesterName: currentPlayerName,
+                    requesterActionsLeft: flagActionData.currentPlayerActionsLeft,
+                });
                 emitGameLog?.(gameId, `Transfert du drapeau de ${currentPlayerName} à ${targetName}.`);
                 await onFlagUpdated?.(gameId);
                 return true;
@@ -56,7 +60,11 @@ export class CtfFlagActionService {
             const flagActionData = await this.actionService.flagActionRequest(currentPlayerName, targetName, gameId);
             if (targetIsVirtual) {
                 await this.actionService.takeFlag(gameId, currentPlayerName);
-                namespace.to(gameId).emit(SocketEvent.FlagPickedUp, { playerName: currentPlayerName });
+                namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
+                    playerName: currentPlayerName,
+                    requesterName: currentPlayerName,
+                    requesterActionsLeft: flagActionData.currentPlayerActionsLeft,
+                });
                 emitGameLog?.(gameId, `Transfert du drapeau de ${targetName} à ${currentPlayerName}.`);
                 await onFlagUpdated?.(gameId);
                 return true;
