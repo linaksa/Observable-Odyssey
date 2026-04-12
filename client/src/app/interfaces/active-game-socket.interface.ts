@@ -23,6 +23,7 @@ export interface ActiveGameSocketContext {
     setCombatOutcome: (combatOutcome: CombatOutcome) => void;
     setSanctuaryOutcome: (sanctuaryOutcome: ISanctuaryInteractedResult | null) => void;
     setRoundOutcome: (roundCombatOutcome: CombatTurnOutcome | null) => void;
+    bumpActionStatsVersion: () => void;
     currentPlayer: {
         set(value: number): void;
     };

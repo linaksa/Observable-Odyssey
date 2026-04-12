@@ -2,7 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
-import { TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
+import { MAX_PLAYER_ACTIONS, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IGameLogPayload, ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
@@ -147,7 +147,7 @@ export class TurnService {
 
         if (nextPlayer) {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;
-            nextPlayer.actionsLeft = 1;
+            nextPlayer.actionsLeft = MAX_PLAYER_ACTIONS;
         }
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);

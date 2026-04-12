@@ -38,6 +38,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             player.currentPosition.y = playerMove.newPosition.y;
             player.movementLeft = playerMove.movementLeft;
 
+            context.bumpActionStatsVersion();
             toggle(context.hasChangedLocation);
         }),
         context.socket.on<ITurnPreparingPayload>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
@@ -72,6 +73,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 currentPlayer.actionsLeft = data.actionLeft;
                 activeGame.currentPlayerIndex = index;
                 context.currentPlayer.set(index);
+                context.bumpActionStatsVersion();
                 toggle(context.hasChangedLocation);
             }
         }),
@@ -100,6 +102,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             const player = context.getPlayerByName(data.playerId);
             if (player) {
                 player.actionsLeft = data.actionsLeft;
+                context.bumpActionStatsVersion();
             }
 
             toggle(context.hasChangedLocation);
@@ -127,6 +130,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 sanctuary.inactiveTurnsRemaining = data.sanctuaryInactiveTurnsRemaining;
             }
 
+            context.bumpActionStatsVersion();
             context.setSanctuaryOutcome(data);
             toggle(context.hasChangedLocation);
         }),
@@ -242,6 +246,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 const requester = context.getPlayerByName(data.requesterName);
                 if (requester) {
                     requester.actionsLeft = data.requesterActionsLeft;
+                    context.bumpActionStatsVersion();
                 }
             }
 
@@ -268,6 +273,7 @@ function handleFlagActionPrompt(
     const requester = context.getPlayerByName(data.currentPlayerName);
     if (requester) {
         requester.actionsLeft = data.currentPlayerActionsLeft;
+        context.bumpActionStatsVersion();
         toggle(context.hasChangedLocation);
     }
 

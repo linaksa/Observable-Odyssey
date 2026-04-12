@@ -83,6 +83,9 @@ describe('registerActiveGameSocketListeners', () => {
         setSanctuaryOutcome: () => {
             // no-op for this spec since sanctuary outcomes aren't asserted here
         },
+        bumpActionStatsVersion: () => {
+            // no-op for this socket listener spec
+        },
     });
 
     beforeEach(() => {

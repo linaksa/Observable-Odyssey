@@ -22,21 +22,27 @@ export class GameActionPanelComponent {
     protected readonly actionMode = this.activeGameService.actionMode;
     protected readonly debugMode = this.activeGameService.isDebugMode;
     protected readonly turnTimeLeftSeconds = this.gameTurnService.turnTimeLeftSeconds;
-    protected readonly currentTurnPlayerName = computed<string | null>(() => {
+    protected readonly localPlayer = computed<ICharacter | undefined>(() => {
+        this.activeGameService.actionStatsVersion();
         this.activeGameService.hasChangedLocation();
         this.activeGameService.hasAbandoned();
         this.activeGameService.gameHasEnded();
-        return this.gameTurnService.currentPlayerName;
-    });
 
-    protected get localPlayer(): ICharacter | undefined {
         const localPlayerName = this.localPlayerService.getLocalPlayer()?.name;
         if (!localPlayerName) {
             return undefined;
         }
 
-        return this.activeGameService.activeGame?.players.find((player) => player.name === localPlayerName);
-    }
+        const player = this.activeGameService.activeGame?.players.find((currentPlayer) => currentPlayer.name === localPlayerName);
+        return player ? { ...player } : undefined;
+    });
+    protected readonly currentTurnPlayerName = computed<string | null>(() => {
+        this.activeGameService.actionStatsVersion();
+        this.activeGameService.hasChangedLocation();
+        this.activeGameService.hasAbandoned();
+        this.activeGameService.gameHasEnded();
+        return this.gameTurnService.currentPlayerName;
+    });
 
     protected get isTurnPreparing(): boolean {
         return this.gameTurnService.isTurnPreparing();
@@ -56,16 +62,14 @@ export class GameActionPanelComponent {
         return !!localPlayerName && localPlayerName === currentPlayerName;
     }
 
-    protected get localPlayerHasActionLeft(): boolean {
-        return (this.localPlayer?.actionsLeft ?? 0) > 0;
-    }
+    protected readonly localPlayerHasActionLeft = computed<boolean>(() => (this.localPlayer()?.actionsLeft ?? 0) > 0);
 
     protected get canEndTurn(): boolean {
         return this.gameTurnService.canEndTurn && !this.isInCombat && !this.isGameFinished;
     }
 
     protected get canToggleActionMode(): boolean {
-        return this.isLocalPlayerTurn && this.canEndTurn && this.localPlayerHasActionLeft;
+        return this.isLocalPlayerTurn && this.canEndTurn && this.localPlayerHasActionLeft();
     }
 
     protected get combatStatus(): string {
