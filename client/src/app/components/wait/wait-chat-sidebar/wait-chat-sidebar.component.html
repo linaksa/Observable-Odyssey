@@ -4,6 +4,13 @@
 
 @if (canStartGame) {
     <div class="border-t border-white"></div>
+
+    @if (startGameError(); as errorMessage) {
+        <div class="bg-red-900/30 border border-red-500 text-red-500 text-sm p-2 text-center">
+            <p>{{ errorMessage }}</p>
+        </div>
+    }
+
     <div class="flex shrink flex-col gap-2">
         <button class="btn btn-green" type="submit" [disabled]="isStartDisabled" (click)="startGame()">
             <span>Commencer</span>
