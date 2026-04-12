@@ -1,13 +1,14 @@
-import { DatePipe, NgClass } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { IMessage } from '@common/message';
 
 @Component({
     selector: 'app-text-message',
-    imports: [NgClass, DatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [DatePipe],
     templateUrl: './text-message.component.html',
 })
 export class TextMessageComponent {
-    @Input({ required: true }) message: IMessage;
-    @Input({ required: true }) isSelf: boolean;
+    readonly message = input.required<IMessage>();
+    readonly isSelf = input.required<boolean>();
 }

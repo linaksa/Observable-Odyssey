@@ -110,8 +110,10 @@ export class EndGameService {
     // handles a player's abandonment
     async handlePlayerAbandon(playerName: string, gameId: string): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        const player = activeGame?.players.find((p) => p.name === playerName);
-        if (!player) return;
+        const playerIndex = activeGame?.players.findIndex((p) => p.name === playerName) ?? -1;
+        if (!activeGame || playerIndex === -1) return;
+
+        const player = activeGame.players[playerIndex];
 
         this.dropFlagIfCarrierAbandons(activeGame, playerName, player.currentPosition);
 

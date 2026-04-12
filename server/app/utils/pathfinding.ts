@@ -34,6 +34,9 @@ function addSanctuaryBlockedCells(blockedCells: Set<string>, items: IItem[]): vo
 
 function addPlayerBlockedCells(blockedCells: Set<string>, players: ICharacter[]): void {
     for (const player of players) {
+        if (player.hasAbandoned) {
+            continue;
+        }
         blockedCells.add(`${player.currentPosition.y},${player.currentPosition.x}`);
     }
 }

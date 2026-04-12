@@ -8,12 +8,29 @@ import { Service } from 'typedi';
 
 @Service()
 export class VirtualPlayerTurnFinalizerService {
+    private readonly activeTurnGameIds = new Set<string>();
+    private readonly activeTurnPlayerNames = new Map<string, string>();
+
     constructor(
         private readonly endGameService: EndGameService,
         private readonly activeGameService: ActiveGameService,
         private readonly socketService: SocketService,
         private readonly turnService: TurnService,
     ) {}
+
+    beginTurn(gameId: string, playerName: string): void {
+        this.activeTurnGameIds.add(gameId);
+        this.activeTurnPlayerNames.set(gameId, playerName);
+    }
+
+    finishTurn(gameId: string): void {
+        this.activeTurnGameIds.delete(gameId);
+        this.activeTurnPlayerNames.delete(gameId);
+    }
+
+    isTurnInProgress(gameId: string): boolean {
+        return this.activeTurnGameIds.has(gameId);
+    }
 
     async finalizeTurn(gameId: string): Promise<void> {
         const gameEnded = await this.endGameService.checkEndGame(gameId);
@@ -24,6 +41,12 @@ export class VirtualPlayerTurnFinalizerService {
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (activeGame && activeGame.currentAttack) {
+            return;
+        }
+
+        const activeTurnPlayerName = this.activeTurnPlayerNames.get(gameId);
+        const currentPlayerName = activeGame?.turnOrder[activeGame.currentPlayerIndex];
+        if (!activeTurnPlayerName || activeTurnPlayerName !== currentPlayerName) {
             return;
         }
 

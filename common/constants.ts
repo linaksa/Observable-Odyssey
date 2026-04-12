@@ -31,6 +31,7 @@ export const MILLISECONDS_PER_SECOND = 1000;
 export const COUNTDOWN_TICK_INTERVAL_MS = 250;
 export const COUNTDOWN_MIN_REMAINING_MS = 0;
 export const VICTORIES_TO_WIN = 3;
+export const MAX_PLAYER_ACTIONS = 1;
 export const MIN_PLAYER_COUNT = 1;
 export const MAX_TITLE_LENGTH = 50;
 export const MAX_DESCRIPTION_LENGTH = 200;
@@ -58,3 +59,4 @@ export enum GameSize {
 export const COMBAT_TURN_FEEDBACK_DURATION_MS = 5000;
 export const SECONDS_PER_MINUTE = 60;
 export const HUNDRED_PERCENT = 100;
+export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;

@@ -23,8 +23,11 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
+import { SanctuaryChoice } from '@common/info';
 import { IItem, ItemType } from '@common/items';
+import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
+import { CombatOutcome } from '@common/attackResult';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
 import { of, Subject } from 'rxjs';
@@ -60,6 +63,10 @@ describe('ActiveGameService', () => {
         }
 
         return eventStreams.get(event) as Subject<T>;
+    };
+
+    const emitEvent = <T>(event: string, payload: T): void => {
+        getEventStream<T>(event).next(payload);
     };
 
     beforeEach(() => {
@@ -128,7 +135,83 @@ describe('ActiveGameService', () => {
         expect(service.currentPlayer()).toBe(PLAYER_INDEX_BOB);
         expect(service.isDebugMode()).toBeTrue();
         expect(service.isLoading()).toBeFalse();
-        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, 'remote-game-id');
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId: 'remote-game-id',
+            playerName: 'Alice',
+        });
+    });
+
+    it('should rejoin the active game room when the gameplay socket reconnects', () => {
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+
+        emitEvent<void>('connect', undefined);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId: 'remote-game-id',
+            playerName: 'Alice',
+        });
+    });
+
+    it('should preserve newer chat messages when refreshing the same active game', () => {
+        const preservedMessages: IMessage[] = [{ author: 'Alice', content: 'Bonjour', postedAt: new Date('2026-01-01T00:00:00.000Z') }];
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+        service.activeGame.messages = preservedMessages;
+
+        const fetchedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
+        fetchedGame.messages = [];
+        gameServiceSpy.getActiveGameById.and.returnValue(of(fetchedGame));
+
+        service.setActiveGame('remote-game-id');
+
+        expect(service.activeGame.messages).toEqual(preservedMessages);
+        expect(service.chatMessages()).toEqual(preservedMessages);
+    });
+
+    it('should preserve newer chat messages when a socket refresh replaces the same active game', () => {
+        const preservedMessages: IMessage[] = [{ author: 'Alice', content: 'Salut', postedAt: new Date('2026-01-01T00:00:00.000Z') }];
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice', 'remote-game-id');
+        service.activeGame.messages = preservedMessages;
+
+        const refreshedGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Bob', 'remote-game-id');
+        refreshedGame.messages = [];
+
+        emitEvent<IActiveGame>(SocketEvent.CombatStarted, refreshedGame);
+
+        expect(service.activeGame.messages).toEqual(preservedMessages);
+        expect(service.chatMessages()).toEqual(preservedMessages);
+    });
+
+    it('should keep only occupied spawn points after a combat refresh', () => {
+        const alice = createCharacter('Alice', 0, 0);
+        const bob = createCharacter('Bob', 2, 2);
+        service.activeGame = createActiveGame([alice, bob], 'Alice', 'remote-game-id');
+        service.activeGame.game.board.items = [
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 1, 1),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ];
+
+        const refreshedGame = createActiveGame([alice, bob], 'Bob', 'remote-game-id');
+        refreshedGame.game.board.items = [
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 1, 1),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ];
+
+        emitEvent<CombatOutcome>(SocketEvent.CombatResolved, {
+            updatedActiveGame: refreshedGame,
+            winner: 'Alice',
+            losers: ['Bob'],
+            cancelled: false,
+        });
+
+        expect(service.activeGame.game.board.items).toEqual([
+            createItem(ItemType.StartingPosition, 0, 0),
+            createItem(ItemType.StartingPosition, 2, 2),
+            createItem(ItemType.Flag, 0, 1),
+        ]);
     });
 
     it('should default current player to index 0 when fetched game currentPlayerIndex is missing', () => {
@@ -279,12 +362,12 @@ describe('ActiveGameService', () => {
         service.currentPlayer.set(0);
         socketServiceSpy.emit.calls.reset();
 
-        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, 'double');
+        service.interactSanctuary(INTERACTION_ROW, INTERACTION_COL, SanctuaryChoice.Double);
 
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.InteractSanctuary, {
             gameId: service.activeGame._id,
             playerId: 'Alice',
-            choice: 'double',
+            choice: SanctuaryChoice.Double,
             position: { x: INTERACTION_COL, y: INTERACTION_ROW },
         });
     });
@@ -410,6 +493,79 @@ describe('ActiveGameService', () => {
         });
     });
 
+    it('should open a waiting flag popup for the requester and prevent requester responses', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+
+        const pendingRequest = service.pendingFlagRequest();
+        expect(pendingRequest?.canRespond).toBeFalse();
+        expect(pendingRequest?.question).toContain('En attente de la décision de Bob');
+
+        socketServiceSpy.emit.calls.reset();
+        service.respondToFlagActionRequest(true);
+        expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+    });
+
+    it('should let the flag holder reject the request and notify the server', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+
+        expect(service.pendingFlagRequest()?.canRespond).toBeTrue();
+        service.respondToFlagActionRequest(false);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.RejectFlagTransfer, {
+            gameId: service.activeGame._id,
+            responderName: 'Bob',
+        });
+        expect(service.pendingFlagRequest()).toBeNull();
+    });
+
+    it('should let the flag holder accept the request and emit flag transfer decision', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+        service.respondToFlagActionRequest(true);
+
+        expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.FlagTaken, {
+            gameId: service.activeGame._id,
+            newFlagCarrierName: 'Alice',
+        });
+        expect(service.activeGame.hasFlagId).toBe('Alice');
+        expect(service.pendingFlagRequest()).toBeNull();
+    });
+
     it('should remove kicked local player and redirect to home', () => {
         const alice = createCharacter('Alice');
         const bob = createCharacter('Bob');
@@ -474,9 +630,12 @@ describe('ActiveGameService', () => {
         expect((subscriptions.setActiveGameSubscription as { unsubscribe?: jasmine.Spy }).unsubscribe).toHaveBeenCalled();
     });
 
-    it('should keep non-starting items and only remove unused spawn points', () => {
-        const alice = createCharacter('Alice', 0, 0);
-        service.activeGame = createActiveGame([alice], 'Alice');
+    it('should keep active player spawns and remove abandoned ones', () => {
+        const alice = createCharacter('Alice', 0, 0, PLAYER_INDEX_BOB);
+        alice.currentPosition = { x: 1, y: 1 };
+        const bob = createCharacter('Bob', PLAYER_INDEX_BOB, PLAYER_INDEX_BOB);
+        bob.hasAbandoned = true;
+        service.activeGame = createActiveGame([alice, bob], 'Alice');
         service.activeGame.game.board.items = [
             createItem(ItemType.StartingPosition, 0, 0),
             createItem(ItemType.StartingPosition, PLAYER_INDEX_BOB, PLAYER_INDEX_BOB),

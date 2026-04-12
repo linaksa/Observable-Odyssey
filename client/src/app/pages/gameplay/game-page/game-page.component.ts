@@ -1,17 +1,17 @@
-import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { JournalComponent } from '@app/components/chat/journal/journal.component';
-import { CombatModeComponent } from '@app/components/game/combat-mode/combat-mode.component';
-import { CombatOutcomeComponent } from '@app/components/game/combat-outcome/combat-outcome.component';
-import { GameActionComponent } from '@app/components/game/game-action/game-action.component';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { GAME_PAGE_HOST_BINDINGS } from '@app/constants/component-host-bindings';
+import { GAME_PAGE_RETURN_BUTTON_DELAY_MS } from '@app/constants/gameplay';
+import { GameActionPanelComponent } from '@app/components/game/game-action-panel/game-action-panel.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
-import { GameInfosComponent } from '@app/components/game/game-infos/game-infos.component';
-import { GameComponent } from '@app/components/game/game/game.component';
-import { PlayerInfoComponent } from '@app/components/game/player-info/player-info.component';
-import { PlayerListComponent } from '@app/components/game/player-list/player-list.component';
-import { TurnStatusComponent } from '@app/components/game/turn-status/turn-status.component';
-import { GameTurnService } from '@app/services/gameplay/game-turn.service';
+import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
+import { GameInfoPanelComponent } from '@app/components/game/game-info-panel/game-info-panel.component';
 import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 import { ICharacter } from '@common/character';
 import { Subscription } from 'rxjs';
@@ -19,44 +19,68 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'app-game-page',
     imports: [
-        PlayerInfoComponent,
-        GameComponent,
-        PlayerListComponent,
-        GameInfosComponent,
-        GameActionComponent,
-        JournalComponent,
+        NavButtonsComponent,
+        PageTitleComponent,
+        GameActionPanelComponent,
+        GameGridPanelComponent,
+        GameInfoPanelComponent,
         GameEndedComponent,
-        TurnStatusComponent,
-        CombatModeComponent,
-        CombatOutcomeComponent,
+        LoadingOverlayComponent,
     ],
     providers: [GameTurnService, GamePageFacadeService],
     templateUrl: './game-page.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: GAME_PAGE_HOST_BINDINGS,
 })
 export class GamePageComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly facade = inject(GamePageFacadeService);
+    private readonly destroyRef = inject(DestroyRef);
+
     protected readonly activeGameService = this.facade.activeGameService;
+    protected readonly showButton: WritableSignal<boolean> = signal(false);
+    protected readonly isLoading = computed(
+        () => !this.hasAttemptedJoin() || this.activeGameService.isLoading() || !this.activeGameService.activeGame,
+    );
+
+    private readonly hasAttemptedJoin = signal(false);
+    private activeGameId?: string;
+    private hasExitedGame = false;
+    private buttonTimeoutId?: ReturnType<typeof setTimeout>;
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
 
     ngOnInit(): void {
+        this.facade.closeAllPopups();
+        this.initializeButtonTimeout();
         this.facade.connectDebugSocket();
-        this.routeSubscription = this.route.params.subscribe((params) => {
+        this.facade.connectGameLogs();
+
+        this.routeSubscription = this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const activeGameId = this.facade.resolveActiveGameId(params.activeGameId);
             if (!activeGameId) {
                 return;
             }
 
+            if (this.activeGameId !== activeGameId) {
+                this.facade.clearGameLogs();
+            }
+
+            this.activeGameId = activeGameId;
+            this.hasAttemptedJoin.set(true);
             this.facade.setActiveGame(activeGameId);
 
             if (!this.playersSubscription) {
                 this.facade.connectGameplaySocket();
-                this.playersSubscription = this.facade.onPlayersUpdated().subscribe({
-                    next: (players) => {
-                        this.facade.applyPlayersUpdate(players);
-                    },
-                });
+                this.playersSubscription = this.facade
+                    .onPlayersUpdated()
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe({
+                        next: (players) => {
+                            this.facade.applyPlayersUpdate(players);
+                        },
+                    });
 
                 this.facade.initializeTurnListeners();
             }
@@ -65,18 +89,31 @@ export class GamePageComponent implements OnInit, OnDestroy {
         });
     }
 
-    @HostListener('window:keydown', ['$event'])
-    handleKeyDown(event: KeyboardEvent) {
+    ngOnDestroy(): void {
+        this.handlePageExit();
+        this.routeSubscription?.unsubscribe();
+        this.playersSubscription?.unsubscribe();
+        this.facade.disconnectDebugSocket();
+        this.facade.disconnectGameLogs();
+        this.facade.destroyTurnService();
+
+        if (this.buttonTimeoutId) {
+            clearTimeout(this.buttonTimeoutId);
+            this.buttonTimeoutId = undefined;
+        }
+    }
+
+    handleKeyDown(event: KeyboardEvent): void {
         if (isTypingInChatMessageInput(event)) return;
         if (event.key.toLowerCase() === 'm') {
             this.facade.emitDebugToggle();
         }
     }
 
-    ngOnDestroy(): void {
-        this.routeSubscription?.unsubscribe();
-        this.playersSubscription?.unsubscribe();
-        this.facade.destroyTurnService();
+    private initializeButtonTimeout(): void {
+        this.buttonTimeoutId = setTimeout(() => {
+            this.showButton.set(true);
+        }, GAME_PAGE_RETURN_BUTTON_DELAY_MS);
     }
 
     get currentAttack() {
@@ -110,6 +147,7 @@ export class GamePageComponent implements OnInit, OnDestroy {
     get pendingFlagQuestion() {
         return this.facade.pendingFlagQuestion;
     }
+
     get localPlayer(): ICharacter | undefined {
         return this.facade.getLocalPlayer();
     }
@@ -120,5 +158,26 @@ export class GamePageComponent implements OnInit, OnDestroy {
 
     respondToFlagRequest(accepted: boolean): void {
         this.facade.respondToFlagRequest(accepted);
+    }
+
+    abandonGame(): void {
+        this.handlePageExit();
+        void this.router.navigate(['/home']);
+    }
+
+    handlePageExit(): void {
+        if (this.hasExitedGame || !this.hasAttemptedJoin() || this.isGameFinished) {
+            return;
+        }
+
+        const localPlayer = this.localPlayer;
+        const activeGameId = this.activeGameId ?? this.activeGameService.activeGame?._id;
+
+        if (!localPlayer || !activeGameId) {
+            return;
+        }
+
+        this.hasExitedGame = true;
+        this.facade.abandonGame();
     }
 }

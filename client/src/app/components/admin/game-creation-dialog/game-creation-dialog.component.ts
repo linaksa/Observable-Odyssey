@@ -2,12 +2,13 @@ import { NgClass } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GridSize } from '@app/constants/grid-edition';
+import { GridSize } from '@app/constants/grid-editor';
+import { DimensionConfig, DimensionOption } from '@app/interfaces/game-creation-dialog.interface';
 import { GameService } from '@app/services/admin/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { Subject, takeUntil } from 'rxjs';
-import { DimensionConfig, DimensionOption, DimensionSize } from './game-creation-dialog.types';
+import { DimensionSize } from './game-creation-dialog.types';
 
 @Component({
     selector: 'app-game-creation-dialog',

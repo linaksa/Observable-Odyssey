@@ -1,8 +1,0 @@
-@switch (boardEditorService.activeTool) {
-    @case (toolOption.Placement) {
-        <app-edition-item-selector-material (materialSelected)="materialSelected.emit($event)" />
-    }
-    @case (toolOption.Objects) {
-        <app-edition-item-selector-object (objectSelected)="objectSelected.emit($event)" />
-    }
-}

@@ -6,6 +6,7 @@ import { ActiveGameListSocketsService } from './services/active-game/active-game
 import { AdminSocketsService } from './services/admin/admin-sockets.service';
 import { TurnService } from './services/gameplay/turn-service';
 import { GameSocketsService } from './services/realtime/game-sockets.service';
+import { GameplayRealtimeFlowService } from './services/realtime/gameplay-realtime-flow.service';
 import { SocketService } from './services/realtime/socket.service';
 import { VirtualPlayerService } from './services/virtual-player/virtual-player.service';
 
@@ -41,7 +42,9 @@ export class Server {
         // Wire up virtual player turn handler to break circular dependency
         const turnService = Container.get(TurnService);
         const virtualPlayerService = Container.get(VirtualPlayerService);
+        const gameplayRealtimeFlowService = Container.get(GameplayRealtimeFlowService);
         turnService.setVirtualPlayerTurnHandler((player, game) => virtualPlayerService.startTurn(player, game));
+        turnService.setTurnEndedHandler((gameId) => gameplayRealtimeFlowService.clearPendingFlagRequest(gameId));
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

@@ -82,6 +82,30 @@ describe('MovementService', () => {
         }
     });
 
+    it('should allow moving onto a tile occupied only by an abandoned player', async () => {
+        const activeGame = createActiveGame();
+        activeGame.players = [
+            {
+                ...activeGame.players[0],
+                name: 'Alice',
+                currentPosition: { x: 0, y: 1 },
+                movementLeft: 1,
+            },
+            {
+                ...createCharacter('Bob'),
+                hasAbandoned: true,
+                currentPosition: { x: 1, y: 1 },
+                startingPosition: { x: 1, y: 1 },
+            },
+        ];
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await movementService.movePlayer('Alice', activeGame._id, { x: 1, y: 1 });
+
+        expect(result.newPosition).to.deep.equal({ x: 1, y: 1 });
+        expect(activeGame.players[0].currentPosition).to.deep.equal({ x: 1, y: 1 });
+    });
+
     it('should list open doors as reachable and exclude closed doors', async () => {
         const activeGame = createActiveGame();
         activeGame.players[0].movementLeft = 1;

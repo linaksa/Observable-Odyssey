@@ -33,6 +33,17 @@ export interface IFlagDecisionData {
     newFlagCarrierName: string;
 }
 
+export interface IFlagTransferRejectionData {
+    gameId: string;
+    responderName: string;
+}
+
+export interface IFlagTransferRejectedPayload {
+    gameId: string;
+    requesterName: string;
+    targetPlayerName: string;
+}
+
 export interface IDoorToggleData {
     gameId: string;
     playerId: string;
@@ -87,6 +98,10 @@ export interface IAbandonData {
     playerId: string;
 }
 
+export interface IPlayerIdPayload {
+    playerId: string;
+}
+
 export interface IDebugTeleportData {
     gameId: string;
     playerName: string;
@@ -107,6 +122,24 @@ export interface ITurnStartedPayload {
     movementLeft: number;
     actionLeft: number;
     timeLeft: number | null;
+}
+
+export interface ITurnPreparingPayload {
+    player: string;
+}
+
+export interface IGameEndedPayload {
+    winner: string | null;
+}
+
+export interface IGameCanceledPayload {
+    playerId?: string;
+}
+
+export interface IFlagPickedUpPayload {
+    playerName: string;
+    requesterName?: string;
+    requesterActionsLeft?: number;
 }
 
 export interface IGameLogPayload {

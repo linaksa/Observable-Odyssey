@@ -3,13 +3,17 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService } from '@app/services/admin/game.service';
+import { FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX, FLAG_TRANSFER_SELF_REJECTED_TOAST } from '@app/constants/gameplay';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { PendingFlagRequest } from '@app/interfaces/pending-flag-request.interface';
+import { ToggleSignalRef } from '@app/interfaces/toggle-signal-ref.interface';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
+import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 
@@ -21,7 +25,9 @@ import {
     IDoorToggleData,
     IFlagActionData,
     IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
+    ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
@@ -31,12 +37,6 @@ import { environment } from 'src/environments/environment';
 import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { ItemType } from '@common/items';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
-
-interface PendingFlagRequest {
-    data: IFlagActionData;
-    acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag;
-    question: string;
-}
 
 @Injectable({
     providedIn: 'root',
@@ -58,19 +58,24 @@ export class ActiveGameService implements OnDestroy {
 
     isLoading = signal(false);
     hasChangedLocation = signal(false);
-    hasAbandonned = signal(false);
+    hasAbandoned = signal(false);
     gameHasEnded = signal(false);
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
+    sanctuaryOutcome = signal<ISanctuaryInteractedResult | null>(null);
+    readonly actionStatsVersion = signal(0);
+    private readonly _chatMessages = signal<IMessage[]>([]);
+    readonly chatMessages = this._chatMessages.asReadonly();
 
     reachableTiles = new Set<number>();
-    roundOutcome: CombatTurnOutcome | null = null;
+    readonly roundOutcome = signal<CombatTurnOutcome | null>(null);
 
     currentPlayer = signal<number>(0);
 
     constructor() {
         this.socket.connect(Namespaces.Game);
+        this.socketSubscriptions.push(this.socket.on<void>(Namespaces.Game, 'connect').subscribe(() => this.rejoinActiveGameRoom()));
 
         this.socketSubscriptions.push(
             ...registerActiveGameSocketListeners({
@@ -79,22 +84,72 @@ export class ActiveGameService implements OnDestroy {
                 toastService: this.toastService,
                 router: this.router,
                 getActiveGame: () => this.activeGame,
-                setActiveGame: (activeGame: IActiveGame) => (this.activeGame = activeGame),
+                setActiveGame: (activeGame: IActiveGame) => this.updateActiveGame(activeGame),
                 setCombatOutcome: (combatOutcome: CombatOutcome) => this.combatOutcome.set(combatOutcome),
-                setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => (this.roundOutcome = roundOutcome),
+                setSanctuaryOutcome: (sanctuaryOutcome: ISanctuaryInteractedResult | null) => this.sanctuaryOutcome.set(sanctuaryOutcome),
+                setRoundOutcome: (roundOutcome: CombatTurnOutcome | null) => this.roundOutcome.set(roundOutcome),
+                bumpActionStatsVersion: () => this.actionStatsVersion.update((current) => current + 1),
                 getPlayerByName: (playerName) => this.getPlayerByName(playerName),
                 currentPlayer: this.currentPlayer,
                 hasChangedLocation: this.hasChangedLocation,
-                hasAbandonned: this.hasAbandonned,
+                hasAbandoned: this.hasAbandoned,
                 gameHasEnded: this.gameHasEnded,
                 handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
                 closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
+                hasPendingFlagActionRequest: () => this.hasPendingFlagActionRequest(),
+                clearPendingFlagActionRequest: () => this.clearPendingFlagActionRequest(),
             }),
         );
     }
 
-    private toggle(signalRef: { update: (updater: (current: boolean) => boolean) => void }): void {
+    private toggle(signalRef: ToggleSignalRef): void {
         signalRef.update((current) => !current);
+    }
+
+    private syncChatMessages(messages: IMessage[]): void {
+        const nextMessages = [...messages];
+        this._chatMessages.set(nextMessages);
+
+        if (this.activeGame) {
+            this.activeGame.messages = nextMessages;
+        }
+    }
+
+    private getCurrentChatMessages(): IMessage[] {
+        const activeGameMessages = this.activeGame?.messages ?? [];
+        const signalMessages = this._chatMessages();
+
+        return activeGameMessages.length > signalMessages.length ? activeGameMessages : signalMessages;
+    }
+
+    setChatMessages(messages: IMessage[]): void {
+        const currentMessages = this.getCurrentChatMessages();
+        const nextMessages = currentMessages.length > messages.length ? currentMessages : messages;
+
+        this.syncChatMessages(nextMessages);
+    }
+
+    appendChatMessage(message: IMessage): void {
+        this.syncChatMessages([...this.getCurrentChatMessages(), message]);
+    }
+
+    private updateActiveGame(activeGame: IActiveGame): void {
+        this.activeGame = this.mergeMessages(activeGame);
+        this.removeUnusedSpawnPoints();
+        this.syncChatMessages(this.activeGame.messages ?? []);
+    }
+
+    private mergeMessages(game: IActiveGame): IActiveGame {
+        const currentMessages = this.getCurrentChatMessages();
+
+        if (this.activeGame?._id === game._id && currentMessages.length > game.messages.length) {
+            return {
+                ...game,
+                messages: [...currentMessages],
+            };
+        }
+
+        return game;
     }
 
     applyDebugModeState(data: IDebugToggleState) {
@@ -124,13 +179,13 @@ export class ActiveGameService implements OnDestroy {
                         return;
                     }
 
-                    this.activeGame = game;
+                    this.updateActiveGame(game);
                     this._isDebugMode.set(game.isDebugMode);
                     this.currentPlayer.set(game.currentPlayerIndex ?? 0);
 
-                    this.removeUnusedSpawnPoints();
+                    this.hasChangedLocation.update((current) => !current);
 
-                    this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, game._id);
+                    this.joinActiveGameRoom(game._id);
                 },
             });
 
@@ -138,6 +193,22 @@ export class ActiveGameService implements OnDestroy {
         if (subscription.closed) {
             this.setActiveGameSubscription = undefined;
         }
+    }
+
+    private joinActiveGameRoom(activeGameId: string): void {
+        const playerName = this.localPlayer.getLocalPlayer()?.name;
+        this.socket.emit(Namespaces.Game, SocketEvent.JoinGame, {
+            activeGameId,
+            playerName,
+        });
+    }
+
+    private rejoinActiveGameRoom(): void {
+        if (!this.activeGame) {
+            return;
+        }
+
+        this.joinActiveGameRoom(this.activeGame._id);
     }
 
     toggleActionMode(): void {
@@ -216,6 +287,7 @@ export class ActiveGameService implements OnDestroy {
         };
 
         this.syncTurnOrderWithPlayers();
+        this.hasChangedLocation.update((current) => !current);
     }
 
     private syncTurnOrderWithPlayers(): void {
@@ -310,7 +382,7 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+        const payload = {
             gameId: this.activeGame._id,
             playerId: player.name,
             choice,
@@ -318,6 +390,9 @@ export class ActiveGameService implements OnDestroy {
                 x: col,
                 y: row,
             },
+        };
+        this.socket.emit<ISanctuaryInteractionData, void>(Namespaces.Game, SocketEvent.InteractSanctuary, {
+            ...payload,
         });
     }
 
@@ -358,41 +433,58 @@ export class ActiveGameService implements OnDestroy {
 
     handleFlagActionRequest(data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag): void {
         const localPlayerName = this.localPlayer.getLocalPlayer()?.name;
-        if (!localPlayerName || data.targetPlayerName !== localPlayerName) {
+        if (!localPlayerName || !this.activeGame) {
             return;
         }
 
-        if (!this.activeGame) {
+        const isLocalRequester = localPlayerName === data.currentPlayerName;
+        const isLocalTarget = localPlayerName === data.targetPlayerName;
+        if (!isLocalRequester && !isLocalTarget) {
             return;
         }
 
         const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
-        const question = isTakingFlag
-            ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
-            : `${data.currentPlayerName} veut vous donner son drapeau. Voulez-vous le prendre ?`;
+        const flagHolderName = isTakingFlag ? data.targetPlayerName : data.currentPlayerName;
+        const canRespond = localPlayerName === flagHolderName;
+        const question = canRespond
+            ? isTakingFlag
+                ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
+                : `Voulez-vous donner votre drapeau à ${data.targetPlayerName} ?`
+            : `${FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX} ${flagHolderName}.`;
 
-        this.pendingFlagRequest.set({ data, acceptEvent, question });
+        this.pendingFlagRequest.set({ data, acceptEvent, question, canRespond });
     }
 
     respondToFlagActionRequest(accepted: boolean): void {
         const pendingRequest = this.pendingFlagRequest();
-        if (!pendingRequest) {
+        if (!pendingRequest || !pendingRequest.canRespond) {
             return;
         }
 
-        this.pendingFlagRequest.set(null);
+        this.clearPendingFlagActionRequest();
         const { data, acceptEvent } = pendingRequest;
 
         const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
 
         if (!accepted) {
-            this.toastService.show(isTakingFlag ? 'Vous avez refusé de donner votre drapeau.' : 'Vous avez refusé de prendre le drapeau.');
+            const responderName = this.localPlayer.getLocalPlayer()?.name;
+            if (!responderName) {
+                return;
+            }
+
+            this.toastService.show(FLAG_TRANSFER_SELF_REJECTED_TOAST);
+            const rejectionData: IFlagTransferRejectionData = {
+                gameId: data.gameId,
+                responderName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.RejectFlagTransfer, rejectionData);
             return;
         }
 
         const currentPlayer = this.getPlayerByName(data.currentPlayerName);
         if (currentPlayer) {
             currentPlayer.actionsLeft = data.currentPlayerActionsLeft;
+            this.actionStatsVersion.update((current) => current + 1);
         }
 
         this.activeGame.hasFlagId = isTakingFlag ? data.currentPlayerName : data.targetPlayerName;
@@ -418,6 +510,14 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
+        this.clearPendingFlagActionRequest();
+    }
+
+    hasPendingFlagActionRequest(): boolean {
+        return this.pendingFlagRequest() !== null;
+    }
+
+    clearPendingFlagActionRequest(): void {
         this.pendingFlagRequest.set(null);
     }
 
@@ -440,7 +540,11 @@ export class ActiveGameService implements OnDestroy {
         }
 
         this.activeGame.game.board.items = this.activeGame.game.board.items.filter(
-            (item) => item.itemType !== ItemType.StartingPosition || this.getPlayersAtPosition(item.y, item.x).length > 0,
+            (item) =>
+                item.itemType !== ItemType.StartingPosition ||
+                this.activeGame.players.some(
+                    (player) => !player.hasAbandoned && player.startingPosition.x === item.x && player.startingPosition.y === item.y,
+                ),
         );
     }
 

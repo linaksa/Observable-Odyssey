@@ -1,7 +1,6 @@
 import { Position } from '@common/character';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
-
-export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;
 
 export function isSanctuaryItem(item: IItem | null | undefined): item is ILifeSanctuary | IFightSanctuary {
     return item?.itemType === ItemType.LifeSanctuary || item?.itemType === ItemType.FightSanctuary;
@@ -32,7 +31,11 @@ export function isPositionAdjacentToSanctuary(position: Position, sanctuary: IIt
 }
 
 export function isSanctuaryActive(item: IItem | null | undefined): item is ILifeSanctuary | IFightSanctuary {
-    return isSanctuaryItem(item) && item.active !== false && (item.inactiveTurnsRemaining ?? 0) <= 0;
+    if (!isSanctuaryItem(item) || item.active === false) {
+        return false;
+    }
+
+    return item.active === true || (item.inactiveTurnsRemaining ?? 0) <= 0;
 }
 
 export function deactivateSanctuary(item: IItem): void {
@@ -52,13 +55,13 @@ export function advanceSanctuaryCooldowns(items: IItem[]): void {
 
         const remainingTurns = item.inactiveTurnsRemaining ?? 0;
 
-        if (item.active !== false && remainingTurns <= 0) {
+        if (item.active !== false || remainingTurns <= 0) {
             continue;
         }
 
         if (remainingTurns <= 1) {
             item.active = true;
-            delete item.inactiveTurnsRemaining;
+            item.inactiveTurnsRemaining = 0;
             continue;
         }
 

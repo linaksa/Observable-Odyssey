@@ -18,16 +18,22 @@ export class VirtualPlayerService {
     async startTurn(character: ICharacter, game: IActiveGame) {
         const gameId = game._id.toString();
 
-        const ctfObjectiveHandled = await this.ctfObjectiveService.handleTurnObjective(character, game);
-        if (!ctfObjectiveHandled) {
-            if (character.virtualPlayerProfile === VirtualPlayerProfile.Agressive) {
-                await this.agressiveTurn(character, game);
-            } else if (character.virtualPlayerProfile === VirtualPlayerProfile.Defensive) {
-                await this.defensiveTurn(character, game);
-            }
-        }
+        this.turnFinalizerService.beginTurn(gameId, character.name);
 
-        await this.turnFinalizerService.finalizeTurn(gameId);
+        try {
+            const ctfObjectiveHandled = await this.ctfObjectiveService.handleTurnObjective(character, game);
+            if (!ctfObjectiveHandled) {
+                if (character.virtualPlayerProfile === VirtualPlayerProfile.Agressive) {
+                    await this.agressiveTurn(character, game);
+                } else if (character.virtualPlayerProfile === VirtualPlayerProfile.Defensive) {
+                    await this.defensiveTurn(character, game);
+                }
+            }
+
+            await this.turnFinalizerService.finalizeTurn(gameId);
+        } finally {
+            this.turnFinalizerService.finishTurn(gameId);
+        }
     }
 
     private async agressiveTurn(character: ICharacter, game: IActiveGame) {

@@ -1,0 +1,67 @@
+<div #panelContainer class="relative flex w-full flex-col gap-3 min-w-0 lg:h-full lg:min-h-0">
+    <div class="flex flex-row justify-center relative">
+        <h2
+            class="text-2xl text-white tracking-wider text-center"
+            data-testid="game-grid-title"
+            (mouseenter)="showTitleTooltip($event)"
+            (mousemove)="updateTitleTooltip($event)"
+            (mouseleave)="hideTitleTooltip()"
+        >
+            {{ titleLabel() }}
+        </h2>
+
+        @if (debugMode()) {
+            <div class="absolute right-0">
+                <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
+                    <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
+                    <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div id="grid-container" class="relative flex grow-0 w-full min-w-0 items-center justify-center overflow-hidden lg:grow">
+        <div class="relative flex w-full aspect-square items-center justify-center lg:h-full lg:aspect-auto">
+            <app-game-grid
+                class="h-full w-full max-h-full max-w-full transition-[filter] duration-200"
+                [cells]="gameCells()"
+                [getObjectAt]="getObjectAt"
+                [highlightedTiles]="reachableTiles"
+                [players]="gamePlayers()"
+                [playerAvatarPortrait]="false"
+                [useBackgroundRendering]="true"
+                gridClass="rounded-lg"
+                (cellClick)="onGridCellClick($event)"
+                (cellContextMenu)="onGridCellContextMenu($event)"
+                (playerClicked)="onPlayerClicked($event)"
+            />
+            <app-game-flag-transfer-popup
+                [request]="pendingFlagRequest()"
+                [turnTimeLeftSeconds]="turnTimeLeftSeconds()"
+                (decision)="onFlagTransferDecision($event)"
+            />
+            <app-game-sanctuary-popup
+                [data]="sanctuaryPopupData"
+                [turnTimeLeftSeconds]="turnTimeLeftSeconds()"
+                (choiceSelected)="onSanctuaryChoice($event)"
+                (cancel)="onSanctuaryCancel()"
+            />
+            <app-game-sanctuary-outcome />
+            <app-game-combat-popup />
+            <app-game-combat-outcome />
+        </div>
+
+        <app-game-tile-inspection-popup [data]="tileInfoPopupData" [position]="tileInfoTooltipPosition()" />
+    </div>
+
+    @if (titleTooltip(); as tooltipText) {
+        <div
+            #titleTooltipElement
+            class="absolute z-1000 max-w-100 px-4 py-2 rounded-lg bg-[#0f1528] border border-white/30 shadow-xl text-white/80 text-sm tracking-widest wrap-break-word pointer-events-none"
+            [style.left.px]="titleTooltipPosition().x"
+            [style.top.px]="titleTooltipPosition().y"
+        >
+            {{ tooltipText }}
+        </div>
+    }
+</div>

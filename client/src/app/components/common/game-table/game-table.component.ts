@@ -2,17 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, InputSignal, OnInit, TemplateRef, ViewChild, inject, input, signal } from '@angular/core';
 import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
+import {
+    GAME_TABLE_TOOLTIP_FALLBACK_WIDTH_PX,
+    TOOLTIP_FALLBACK_HEIGHT_PX,
+    TOOLTIP_HORIZONTAL_OFFSET_PX,
+    TOOLTIP_VERTICAL_OFFSET_PX,
+} from '@app/constants/tooltip';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
+import { computeTooltipPosition, TooltipPosition } from '@app/utils/tooltip-position.utils';
 import { IActiveGame } from '@common/activeGame';
 import { IExistingGame, IGame } from '@common/game';
 import { IItem } from '@common/items';
 
 type GameTableRow = IExistingGame | IActiveGame;
-type TooltipPosition = { x: number; y: number };
-const TOOLTIP_VERTICAL_OFFSET_PX = 8;
-const TOOLTIP_HORIZONTAL_OFFSET_PX = 12;
-const TOOLTIP_FALLBACK_WIDTH_PX = 200;
-const TOOLTIP_FALLBACK_HEIGHT_PX = 80;
 
 @Component({
     selector: 'app-game-table',
@@ -102,28 +104,21 @@ export class GameTableComponent implements OnInit {
 
     private updateTooltipPosition(event: MouseEvent): void {
         const containerRect = this.tableContainerRef?.nativeElement.getBoundingClientRect();
-        if (!containerRect || containerRect.width <= 0 || containerRect.height <= 0) {
-            this.descriptionTooltipPosition.set({
-                x: event.clientX,
-                y: event.clientY + TOOLTIP_VERTICAL_OFFSET_PX,
-            });
-            return;
-        }
-
-        const tooltipWidth = this.descriptionTooltipRef?.nativeElement.offsetWidth ?? TOOLTIP_FALLBACK_WIDTH_PX;
+        const tooltipWidth = this.descriptionTooltipRef?.nativeElement.offsetWidth ?? GAME_TABLE_TOOLTIP_FALLBACK_WIDTH_PX;
         const tooltipHeight = this.descriptionTooltipRef?.nativeElement.offsetHeight ?? TOOLTIP_FALLBACK_HEIGHT_PX;
-        const relativeCursorX = event.clientX - containerRect.left;
-        const relativeCursorY = event.clientY - containerRect.top;
-        const maxLeft = Math.max(0, containerRect.width - tooltipWidth);
-        const maxTop = Math.max(0, containerRect.height - tooltipHeight);
-
-        this.descriptionTooltipPosition.set({
-            x: this.clamp(relativeCursorX + TOOLTIP_HORIZONTAL_OFFSET_PX, 0, maxLeft),
-            y: this.clamp(relativeCursorY + TOOLTIP_VERTICAL_OFFSET_PX, 0, maxTop),
-        });
-    }
-
-    private clamp(value: number, min: number, max: number): number {
-        return Math.min(Math.max(value, min), max);
+        this.descriptionTooltipPosition.set(
+            computeTooltipPosition({
+                event,
+                containerRect,
+                tooltipWidth,
+                tooltipHeight,
+                horizontalOffsetPx: TOOLTIP_HORIZONTAL_OFFSET_PX,
+                verticalOffsetPx: TOOLTIP_VERTICAL_OFFSET_PX,
+                fallbackPosition: {
+                    x: event.clientX,
+                    y: event.clientY + TOOLTIP_VERTICAL_OFFSET_PX,
+                },
+            }),
+        );
     }
 }

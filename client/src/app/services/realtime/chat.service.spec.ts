@@ -28,13 +28,23 @@ describe('ChatService', () => {
     let service: ChatService;
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
     let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
-    let activeGameServiceStub: { activeGame: IActiveGame };
+    let activeGameServiceStub: {
+        activeGame: IActiveGame;
+        setChatMessages: (messages: IMessage[]) => void;
+        appendChatMessage: (message: IMessage) => void;
+    };
 
     beforeEach(() => {
         socketServiceSpy = jasmine.createSpyObj<SocketService>('SocketService', ['connect', 'emit', 'on']);
         localPlayerServiceSpy = jasmine.createSpyObj<LocalPlayerService>('LocalPlayerService', ['getLocalPlayer']);
         activeGameServiceStub = {
             activeGame: createActiveGame('active-game-1'),
+            setChatMessages: (messages: IMessage[]) => {
+                activeGameServiceStub.activeGame.messages = [...messages];
+            },
+            appendChatMessage: (message: IMessage) => {
+                activeGameServiceStub.activeGame.messages = [...activeGameServiceStub.activeGame.messages, message];
+            },
         };
 
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));

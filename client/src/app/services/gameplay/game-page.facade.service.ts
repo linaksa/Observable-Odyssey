@@ -1,7 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { GameLogService } from '@app/services/realtime/game-log.service';
 import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ICurrentAttack } from '@common/activeGame';
@@ -16,7 +18,9 @@ import { Observable } from 'rxjs';
 export class GamePageFacadeService {
     private readonly debugSocketService = inject(DebugSocketService);
     private readonly socketService = inject(SocketService);
+    private readonly gameLogService = inject(GameLogService);
     readonly activeGameService = inject(ActiveGameService);
+    private readonly popupStateService = inject(GamePopupStateService);
     private readonly localPlayerService = inject(LocalPlayerService);
     private readonly gameTurnService = inject(GameTurnService);
 
@@ -29,11 +33,11 @@ export class GamePageFacadeService {
     }
 
     get turnTimeLeftSeconds(): number | null {
-        return this.gameTurnService.turnTimeLeftSeconds;
+        return this.gameTurnService.turnTimeLeftSeconds();
     }
 
     get isTurnPreparing(): boolean {
-        return this.gameTurnService.isTurnPreparing;
+        return this.gameTurnService.isTurnPreparing();
     }
 
     get canEndTurn(): boolean {
@@ -41,7 +45,7 @@ export class GamePageFacadeService {
     }
 
     get isGameFinished(): boolean {
-        return this.activeGameService.activeGame.isFinished;
+        return this.activeGameService.activeGame?.isFinished ?? false;
     }
 
     get turnStatusData(): TurnStatusData {
@@ -61,6 +65,14 @@ export class GamePageFacadeService {
         this.debugSocketService.connect();
     }
 
+    disconnectDebugSocket(): void {
+        this.debugSocketService.disconnect();
+    }
+
+    closeAllPopups(): void {
+        this.popupStateService.closeAllPopups();
+    }
+
     resolveActiveGameId(routeActiveGameId?: string): string | undefined {
         return routeActiveGameId ?? this.activeGameService.activeGame?._id;
     }
@@ -71,6 +83,18 @@ export class GamePageFacadeService {
 
     connectGameplaySocket(): void {
         this.socketService.connect(Namespaces.Game);
+    }
+
+    connectGameLogs(): void {
+        this.gameLogService.connect();
+    }
+
+    disconnectGameLogs(): void {
+        this.gameLogService.disconnect();
+    }
+
+    clearGameLogs(): void {
+        this.gameLogService.clear();
     }
 
     onPlayersUpdated(): Observable<ICharacter[]> {
@@ -108,6 +132,15 @@ export class GamePageFacadeService {
 
     respondToFlagRequest(accepted: boolean): void {
         this.activeGameService.respondToFlagActionRequest(accepted);
+    }
+
+    abandonGame(): void {
+        const player = this.localPlayerService.getLocalPlayer();
+        if (!player) {
+            return;
+        }
+
+        this.activeGameService.abandonGame(player.name);
     }
 
     destroyTurnService(): void {

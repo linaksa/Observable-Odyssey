@@ -1,0 +1,53 @@
+<article class="rounded-lg border border-[#315a9f] bg-[#10264e] px-4 py-3 mb-4">
+    <div class="flex justify-between items-center gap-4">
+        <div>
+            <p class="font-semibold tracking-wide text-white">
+                @if (currentTurnPlayerName(); as currentPlayerName) {
+                    Tour de {{ currentPlayerName }}
+                } @else {
+                    Tour en attente...
+                }
+            </p>
+
+            @if (isTurnPreparing()) {
+                <p class="text-sm tracking-wider text-yellow-200">Préparation du tour...</p>
+            } @else if (isGameFinished()) {
+                <p class="text-sm tracking-wider text-blue-300">Partie terminée.</p>
+            } @else if (isInCombat()) {
+                <p class="text-sm tracking-wider text-red-500/80 italic">Attendez la fin du combat pour agir.</p>
+            } @else if (!isLocalPlayerTurn()) {
+                <p class="text-sm tracking-wider text-white/50 italic">Attendez votre tour pour agir.</p>
+            } @else if (!localPlayerHasActionLeft()) {
+                <p class="text-sm tracking-wider text-white/50 italic">Aucune action restante.</p>
+            } @else {
+                <p class="text-sm tracking-wider text-white/50 italic">Vous pouvez agir.</p>
+            }
+        </div>
+        @if (showTurnTimer()) {
+            <div class="flex items-center gap-2 rounded-lg border border-[#4a7fd4] bg-[#0d1f42] px-3 py-1.5">
+                <span class="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
+                <span class="min-w-6 text-center text-base font-bold tracking-wide text-[#a8c8ff]">{{ turnTimeLeftSeconds() }}s</span>
+            </div>
+        }
+    </div>
+</article>
+
+<div class="flex flex-col gap-2">
+    <button type="button" [disabled]="!canEndTurn()" (click)="endTurnRequested.emit()" class="btn" [class.btn-red]="canEndTurn()">
+        Passer le tour
+    </button>
+
+    <button
+        type="button"
+        [disabled]="!canToggleActionMode()"
+        (click)="toggleActionModeRequested.emit()"
+        class="btn"
+        [class.btn-blue]="canToggleActionMode() && actionMode()"
+    >
+        @if (actionMode()) {
+            Posez votre action
+        } @else {
+            Action
+        }
+    </button>
+</div>

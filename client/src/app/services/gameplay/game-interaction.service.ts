@@ -4,7 +4,7 @@ import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.s
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
-import { isPositionAdjacentToSanctuary, isSanctuaryItem } from '@app/utils/sanctuary';
+import { isPositionAdjacentToSanctuary, isSanctuaryActive, isSanctuaryItem } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
@@ -21,6 +21,7 @@ export class GameInteractionService {
 
     handleKeyboard(event: KeyboardEvent, totalColumns: number): void {
         if (isTypingInChatMessageInput(event)) return;
+        if (this.activeGameService.pendingFlagRequest()) return;
         if (this.popupStateService.isSanctuaryPopupVisible) return;
         if (!this.isLocalPlayerTurn()) return;
 
@@ -48,6 +49,10 @@ export class GameInteractionService {
     }
 
     handleGridCellClick(rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null): void {
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         this.popupStateService.closeAllPopups();
 
         if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
@@ -77,7 +82,7 @@ export class GameInteractionService {
             currentPlayer &&
             boardItem &&
             isSanctuaryItem(boardItem) &&
-            boardItem.active !== false &&
+            isSanctuaryActive(boardItem) &&
             isPositionAdjacentToSanctuary(currentPlayer.currentPosition, boardItem)
         ) {
             this.popupStateService.openSanctuaryPopup(boardItem, rowIndex, colIndex);
@@ -85,6 +90,10 @@ export class GameInteractionService {
     }
 
     handlePlayerClick(playerName: string): void {
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
             return;
         }
@@ -97,6 +106,11 @@ export class GameInteractionService {
     handleCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null = null): void {
         event.preventDefault();
         event.stopPropagation();
+
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         this.popupStateService.closeSanctuaryPopup();
 
         const playerAtPosition = this.activeGameService.getPlayersAtPosition(rowIndex, colIndex)[0] ?? null;
@@ -104,7 +118,7 @@ export class GameInteractionService {
 
         if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn()) {
             if (!this.isTeleportableCell(rowIndex, colIndex, cellType, boardItem)) {
-                this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition);
+                this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
                 return;
             }
             this.popupStateService.closeTileInfo();
@@ -119,7 +133,7 @@ export class GameInteractionService {
             return;
         }
 
-        this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition);
+        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
     }
 
     handleDocumentClick(event?: MouseEvent): void {
@@ -200,6 +214,11 @@ export class GameInteractionService {
             return false;
         }
 
-        return Boolean(target.closest('#grid-container, app-sanctuary-popup, app-tile-info-popup'));
+        return Boolean(
+            target.closest(
+                '#grid-container, app-sanctuary-popup, app-tile-info-popup, app-game-sanctuary-popup, app-game-flag-transfer-popup, ' +
+                    'app-game-tile-inspection-popup',
+            ),
+        );
     }
 }

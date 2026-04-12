@@ -19,6 +19,7 @@
  * - Invalid visibility on PATCH: verifies out-of-enum values are rejected.
  */
 import { Application } from '@app/app';
+import { GameController } from '@app/controllers/game.controller';
 import { AppError } from '@app/error-types/app-error';
 import { ErrorCode } from '@common/error-codes';
 import { ValidationError } from '@app/error-types/validation-error';
@@ -27,6 +28,7 @@ import { GameService } from '@app/services/game/game.service';
 import { IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';
+import { Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { createStubInstance, SinonStubbedInstance } from 'sinon';
 import supertest, { Response } from 'supertest';
@@ -309,5 +311,39 @@ describe('GameController', () => {
             .then((res) => {
                 expect(res.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
+    });
+
+    // Edge case: the route parameter is an array (Express can return an array
+    // when the key is duplicated in the query string).
+    it('should return first element when param is an array', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: ['array-id'],
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal('array-id');
+    });
+
+    // Edge case: the route parameter is of an unexpected type (boolean).
+    // The method should return null without crashing.
+    it('should return null when param is invalid', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: false,
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal(null);
     });
 });

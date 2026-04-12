@@ -28,6 +28,19 @@ describe('PositionValidatorService', () => {
         expect(service.isValidRespawnTile({ x: 1, y: 1 }, activeGame)).to.equal(false);
         expect(service.isValidRespawnTile({ x: 2, y: 2 }, activeGame)).to.equal(false);
     });
+
+    it('should ignore abandoned players when checking occupancy', () => {
+        const activeGame = createActiveGame();
+        activeGame.players.push({
+            ...activeGame.players[0],
+            name: 'Bob',
+            hasAbandoned: true,
+            currentPosition: { x: 2, y: 2 },
+            startingPosition: { x: 2, y: 2 },
+        });
+
+        expect(service.isOccupiedByPlayer({ x: 2, y: 2 }, activeGame)).to.equal(false);
+    });
 });
 
 function createActiveGame(): IActiveGame {

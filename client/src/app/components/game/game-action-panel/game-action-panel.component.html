@@ -1,0 +1,23 @@
+<div class="text-2xl text-white tracking-wider text-center">Actions</div>
+
+<div class="flex h-full flex-col gap-4">
+    <app-game-player-card [player]="localPlayer()" />
+
+    <app-game-action-controls
+        class="mt-auto"
+        [currentTurnPlayerName]="currentTurnPlayerName()"
+        [showTurnTimer]="showTurnTimer"
+        [turnTimeLeftSeconds]="turnTimeLeftSeconds()"
+        [isTurnPreparing]="isTurnPreparing"
+        [isInCombat]="isInCombat"
+        [combatStatus]="combatStatus"
+        [canEndTurn]="canEndTurn"
+        [canToggleActionMode]="canToggleActionMode"
+        [actionMode]="actionMode()"
+        [isGameFinished]="isGameFinished"
+        [isLocalPlayerTurn]="isLocalPlayerTurn"
+        [localPlayerHasActionLeft]="localPlayerHasActionLeft()"
+        (endTurnRequested)="endTurn()"
+        (toggleActionModeRequested)="toggleActionMode()"
+    />
+</div>

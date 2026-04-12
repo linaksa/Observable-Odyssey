@@ -4,14 +4,15 @@ import { TurnService } from '@app/services/gameplay/turn-service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
-import { Avatar, DiceType } from '@common/constants';
+import { Avatar, DiceType, SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@app/services/gameplay/sanctuary-helpers';
+import { EndGameService } from '@app/services/gameplay/end-game.service';
+import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 
 const SANCTUARY_BUFFED_STAT = 5;
 
@@ -76,6 +77,19 @@ describe('TurnService', () => {
         expect(startTurnStub.calledOnceWithExactly(activeGame._id)).to.equal(true);
     });
 
+    it('should invoke the turn-ended handler before starting the next turn', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const startTurnStub = sinon.stub(turnService, 'startTurn').resolves();
+        const turnEndedHandler = sinon.stub().resolves();
+        turnService.setTurnEndedHandler(turnEndedHandler);
+
+        await turnService.endTurn(activeGame._id);
+
+        expect(turnEndedHandler.calledOnceWithExactly(activeGame._id)).to.equal(true);
+        expect(turnEndedHandler.calledBefore(startTurnStub)).to.equal(true);
+    });
+
     it('should advance sanctuary cooldowns when a turn starts', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.items = [
@@ -106,6 +120,92 @@ describe('TurnService', () => {
         } finally {
             clock.restore();
         }
+    });
+
+    it('should reactivate a sanctuary when its cooldown expires', async () => {
+        const activeGame = createActiveGame();
+        activeGame.game.board.items = [
+            {
+                itemType: ItemType.LifeSanctuary,
+                x: 0,
+                y: 0,
+                size: 4,
+                active: false,
+                inactiveTurnsRemaining: 1,
+            },
+        ];
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const onTurnStartedSpy = sinon.spy(sanctuaryService, 'onTurnStarted');
+        const clock = sinon.useFakeTimers();
+
+        try {
+            await turnService.startTurn(activeGame._id);
+
+            expect(onTurnStartedSpy.calledOnceWithExactly(activeGame)).to.equal(true);
+            expect(activeGame.game.board.items[0].active).to.equal(true);
+            expect(activeGame.game.board.items[0].inactiveTurnsRemaining).to.equal(0);
+        } finally {
+            clock.restore();
+        }
+    });
+});
+
+describe('VirtualPlayerTurnFinalizerService', () => {
+    let activeGameService: { getActiveGameById: sinon.SinonStub };
+    let endGameService: { checkEndGame: sinon.SinonStub };
+    let socketService: { getNamespace: sinon.SinonStub };
+    let turnService: { endTurn: sinon.SinonStub };
+    let namespaceSpy: { to: sinon.SinonStub };
+    let emitSpy: sinon.SinonStub;
+    let service: VirtualPlayerTurnFinalizerService;
+
+    beforeEach(() => {
+        activeGameService = { getActiveGameById: sinon.stub() };
+        endGameService = { checkEndGame: sinon.stub().resolves(false) };
+        emitSpy = sinon.stub();
+        namespaceSpy = {
+            to: sinon.stub().returns({ emit: emitSpy }),
+        };
+        socketService = { getNamespace: sinon.stub().returns(namespaceSpy) };
+        turnService = { endTurn: sinon.stub().resolves() };
+
+        service = new VirtualPlayerTurnFinalizerService(
+            endGameService as unknown as EndGameService,
+            activeGameService as unknown as ActiveGameService,
+            socketService as unknown as SocketService,
+            turnService as unknown as TurnService,
+        );
+    });
+
+    afterEach(() => {
+        sinon.restore();
+    });
+
+    it('should end the turn when the virtual player is still active', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        service.beginTurn(activeGame._id, 'Alice');
+
+        await service.finalizeTurn(activeGame._id);
+
+        expect(endGameService.checkEndGame.calledOnceWithExactly(activeGame._id)).to.equal(true);
+        expect(turnService.endTurn.calledOnceWithExactly(activeGame._id)).to.equal(true);
+    });
+
+    it('should not end the turn when another player already became active', async () => {
+        const activeGame = createActiveGame();
+        activeGame.currentPlayerIndex = 1;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        service.beginTurn(activeGame._id, 'Alice');
+
+        await service.finalizeTurn(activeGame._id);
+
+        expect(endGameService.checkEndGame.calledOnceWithExactly(activeGame._id)).to.equal(true);
+        expect(turnService.endTurn.called).to.equal(false);
+        expect(socketService.getNamespace.called).to.equal(false);
+        expect(service.isTurnInProgress(activeGame._id)).to.equal(true);
     });
 });
 

@@ -8,8 +8,8 @@
 </div>
 
 @if (isDialogOpen) {
-    <div class="fixed inset-0 flex items-center justify-center w-full h-full bg-black/70" (click)="closeDialog()">
-        <app-game-creation-dialog (click)="$event.stopPropagation()"></app-game-creation-dialog>
+    <div class="fixed inset-0 z-1000 flex items-center justify-center w-full h-full bg-black/70" (click)="closeDialog()">
+        <app-game-creation-dialog class="relative z-1001" (click)="$event.stopPropagation()"></app-game-creation-dialog>
     </div>
 }
 

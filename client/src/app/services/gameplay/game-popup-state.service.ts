@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
+import { ICharacter } from '@common/character';
 import { TileInfoService } from '@app/services/ui/tile-info.service';
 import { CellType } from '@common/board';
-import { ICharacter } from '@common/character';
 import { SanctuaryPopupData, TileInfoPopupData } from '@common/info';
 import { IItem, ItemType } from '@common/items';
 

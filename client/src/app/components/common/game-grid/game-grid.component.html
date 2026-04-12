@@ -1,4 +1,4 @@
-<div #gridContainer class="relative w-full">
+<div #gridContainer data-testid="game-grid-container" class="relative flex h-full w-full min-h-0 min-w-0 items-center justify-center">
     <div [class]="resolvedGridClass()" [style.gridTemplateColumns]="gridTemplateColumns()" data-testid="game-grid">
         @for (row of cells(); track $index; let rowIndex = $index) {
             @for (cell of row; track $index; let colIndex = $index) {
@@ -7,6 +7,8 @@
                 @let players = playersAt(rowIndex, colIndex);
                 <div
                     [class]="resolvedCellClass()"
+                    [attr.data-row-index]="rowIndex"
+                    [attr.data-col-index]="colIndex"
                     (click)="onCellClick(rowIndex, colIndex, cell, item, $event)"
                     (contextmenu)="onCellContextMenu(rowIndex, colIndex, cell, item, $event)"
                     (mousedown)="onCellMouseDown(rowIndex, colIndex, cell, item, $event)"

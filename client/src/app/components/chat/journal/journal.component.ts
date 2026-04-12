@@ -1,49 +1,52 @@
 import { DatePipe } from '@angular/common';
-import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
-import { JOURNAL_DATE_FORMAT, JOURNAL_DEFAULT_TAB, JOURNAL_EMPTY_MESSAGE, JOURNAL_TAB_LABELS, JournalTab } from '@app/constants/journal';
-import { ChatPanelComponent } from '@app/components/chat/chat-pannel/chat-pannel.component';
+import { afterEveryRender, ChangeDetectionStrategy, Component, ElementRef, ViewChild, inject } from '@angular/core';
+import { JOURNAL_AUTO_SCROLL_BOUNDARY_PX, JOURNAL_DATE_FORMAT, JOURNAL_EMPTY_MESSAGE } from '@app/constants/journal';
 import { GameLogService } from '@app/services/realtime/game-log.service';
 import { IGameLogPayload } from '@common/socket-payloads';
 
 @Component({
     selector: 'app-journal',
-    imports: [ChatPanelComponent, DatePipe],
+    imports: [DatePipe],
     templateUrl: './journal.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class JournalComponent implements OnInit, AfterViewChecked {
+export class JournalComponent {
     private readonly gameLogService = inject(GameLogService);
     private lastLogCount = 0;
+    private shouldStickToBottom = true;
 
     @ViewChild('journalScrollContainer') private journalScrollContainer?: ElementRef<HTMLElement>;
 
-    protected readonly journalTab = JournalTab;
-    protected readonly journalTabLabels = JOURNAL_TAB_LABELS;
     protected readonly journalDateFormat = JOURNAL_DATE_FORMAT;
     protected readonly journalEmptyMessage = JOURNAL_EMPTY_MESSAGE;
-    protected activeTab: JournalTab = JOURNAL_DEFAULT_TAB;
 
     protected get gameLogs(): readonly IGameLogPayload[] {
         return this.gameLogService.gameLogs();
     }
 
-    ngOnInit(): void {
-        this.gameLogService.connect();
+    constructor() {
+        afterEveryRender({
+            read: () => {
+                const count = this.gameLogs.length;
+                if (count === this.lastLogCount) {
+                    return;
+                }
+
+                if (this.shouldStickToBottom) {
+                    this.scrollJournalToBottom();
+                }
+                this.lastLogCount = count;
+            },
+        });
     }
 
-    protected setActiveTab(tab: JournalTab): void {
-        this.activeTab = tab;
-    }
-
-    ngAfterViewChecked(): void {
-        if (this.activeTab !== JournalTab.Journal) {
+    protected onScroll(): void {
+        const element = this.journalScrollContainer?.nativeElement;
+        if (!element) {
             return;
         }
 
-        const count = this.gameLogs.length;
-        if (count !== this.lastLogCount) {
-            this.scrollJournalToBottom();
-            this.lastLogCount = count;
-        }
+        this.shouldStickToBottom = this.isNearBottom(element);
     }
 
     private scrollJournalToBottom(): void {
@@ -51,7 +54,18 @@ export class JournalComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        const el = this.journalScrollContainer.nativeElement;
-        el.scrollTop = el.scrollHeight;
+        const element = this.journalScrollContainer.nativeElement;
+        element.scrollTop = element.scrollHeight;
+        requestAnimationFrame(() => {
+            element.scrollTop = element.scrollHeight;
+            requestAnimationFrame(() => {
+                element.scrollTop = element.scrollHeight;
+            });
+        });
+    }
+
+    private isNearBottom(element: HTMLElement): boolean {
+        const distanceFromBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
+        return distanceFromBottom <= JOURNAL_AUTO_SCROLL_BOUNDARY_PX;
     }
 }

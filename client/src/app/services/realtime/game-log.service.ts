@@ -19,7 +19,7 @@ export class GameLogService implements OnDestroy {
 
     connect(): void {
         this.socketService.connect(Namespaces.Game);
-        this.unsubscribeFromLogEvents();
+        this.disconnect();
 
         this.gameLogSubscription = this.socketService.on<IGameLogPayload>(Namespaces.Game, SocketEvent.GameLog).subscribe({
             next: (log) => this.addLog(log),
@@ -34,8 +34,12 @@ export class GameLogService implements OnDestroy {
         this._gameLogs.set([]);
     }
 
-    ngOnDestroy(): void {
+    disconnect(): void {
         this.unsubscribeFromLogEvents();
+    }
+
+    ngOnDestroy(): void {
+        this.disconnect();
     }
 
     private addLog(log: IGameLogPayload): void {

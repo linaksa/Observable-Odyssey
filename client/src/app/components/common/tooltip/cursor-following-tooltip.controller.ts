@@ -1,19 +1,12 @@
 import { signal } from '@angular/core';
+import {
+    TOOLTIP_CONTROLLER_FALLBACK_HEIGHT_PX,
+    TOOLTIP_CONTROLLER_FALLBACK_WIDTH_PX,
+    TOOLTIP_CONTROLLER_VERTICAL_OFFSET_PX,
+} from '@app/constants/tooltip';
+import { CursorFollowingTooltipDependencies, TooltipPointer, TooltipPosition } from '@app/interfaces/cursor-following-tooltip.interface';
 
-interface TooltipPointer {
-    x: number;
-    y: number;
-}
-
-export interface TooltipPosition {
-    x: number;
-    y: number;
-}
-
-export interface CursorFollowingTooltipDependencies {
-    getContainer: () => HTMLElement | null;
-    getTooltipElement: () => HTMLElement | null;
-}
+export type { CursorFollowingTooltipDependencies, TooltipPosition };
 
 export class CursorFollowingTooltipController {
     readonly tooltipPointer = signal<TooltipPointer | null>(null);
@@ -40,16 +33,12 @@ export class CursorFollowingTooltipController {
     }
 
     private updateTooltipPosition(clientX: number, clientY: number): void {
-        const TOOLTIP_VERTICAL_OFFSET_PX = 24;
-        const TOOLTIP_FALLBACK_WIDTH_PX = 200;
-        const TOOLTIP_FALLBACK_HEIGHT_PX = 80;
-
         const container = this.dependencies.getContainer();
         const tooltip = this.dependencies.getTooltipElement();
 
         const tooltipRect = tooltip?.getBoundingClientRect();
-        const tooltipWidth = tooltipRect?.width ?? TOOLTIP_FALLBACK_WIDTH_PX;
-        const tooltipHeight = tooltipRect?.height ?? TOOLTIP_FALLBACK_HEIGHT_PX;
+        const tooltipWidth = tooltipRect?.width ?? TOOLTIP_CONTROLLER_FALLBACK_WIDTH_PX;
+        const tooltipHeight = tooltipRect?.height ?? TOOLTIP_CONTROLLER_FALLBACK_HEIGHT_PX;
 
         let cursorX: number;
         let cursorY: number;
@@ -70,10 +59,10 @@ export class CursorFollowingTooltipController {
         }
 
         const x = Math.min(Math.max(cursorX, tooltipWidth / 2), Math.max(tooltipWidth / 2, containerWidth - tooltipWidth / 2));
-        let y = cursorY - tooltipHeight - TOOLTIP_VERTICAL_OFFSET_PX;
+        let y = cursorY - tooltipHeight - TOOLTIP_CONTROLLER_VERTICAL_OFFSET_PX;
 
         if (y < 0) {
-            y = cursorY + TOOLTIP_VERTICAL_OFFSET_PX;
+            y = cursorY + TOOLTIP_CONTROLLER_VERTICAL_OFFSET_PX;
         }
 
         y = Math.max(0, Math.min(y, containerHeight - tooltipHeight));

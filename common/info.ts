@@ -10,7 +10,10 @@ export interface ItemInfoData {
     description: string;
 }
 
-export type SanctuaryChoice = 'standard' | 'double';
+export enum SanctuaryChoice {
+    Standard = 'standard',
+    Double = 'double',
+}
 
 export interface SanctuaryPopupData {
     visible: boolean;
