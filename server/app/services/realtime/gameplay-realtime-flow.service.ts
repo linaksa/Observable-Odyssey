@@ -8,6 +8,7 @@ import {
     IAttackPostureData,
     IDoorToggleData,
     IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
@@ -74,6 +75,14 @@ export class GameplayRealtimeFlowService {
 
     async handleFlagGiven(data: IFlagDecisionData, namespace: Namespace, emitGameLog: (gameId: string, message: string) => void): Promise<void> {
         await this.gameplayFlagDecisionService.handleFlagGiven(data, namespace, emitGameLog);
+    }
+
+    async handleFlagTransferRejected(
+        data: IFlagTransferRejectionData,
+        namespace: Namespace,
+        emitGameLog: (gameId: string, message: string) => void,
+    ): Promise<void> {
+        await this.gameplayFlagDecisionService.handleFlagTransferRejected(data, namespace, emitGameLog);
     }
 
     clearPendingFlagRequest(gameId: string): void {

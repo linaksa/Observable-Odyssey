@@ -3,6 +3,7 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { GameService } from '@app/services/admin/game.service';
+import { FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX, FLAG_TRANSFER_SELF_REJECTED_TOAST } from '@app/constants/gameplay';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
@@ -24,6 +25,7 @@ import {
     IDoorToggleData,
     IFlagActionData,
     IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
     ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
@@ -94,6 +96,8 @@ export class ActiveGameService implements OnDestroy {
                 gameHasEnded: this.gameHasEnded,
                 handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
                 closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
+                hasPendingFlagActionRequest: () => this.hasPendingFlagActionRequest(),
+                clearPendingFlagActionRequest: () => this.clearPendingFlagActionRequest(),
             }),
         );
     }
@@ -429,35 +433,51 @@ export class ActiveGameService implements OnDestroy {
 
     handleFlagActionRequest(data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag): void {
         const localPlayerName = this.localPlayer.getLocalPlayer()?.name;
-        if (!localPlayerName || data.targetPlayerName !== localPlayerName) {
+        if (!localPlayerName || !this.activeGame) {
             return;
         }
 
-        if (!this.activeGame) {
+        const isLocalRequester = localPlayerName === data.currentPlayerName;
+        const isLocalTarget = localPlayerName === data.targetPlayerName;
+        if (!isLocalRequester && !isLocalTarget) {
             return;
         }
 
         const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
-        const question = isTakingFlag
-            ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
-            : `${data.currentPlayerName} veut vous donner son drapeau. Voulez-vous le prendre ?`;
+        const flagHolderName = isTakingFlag ? data.targetPlayerName : data.currentPlayerName;
+        const canRespond = localPlayerName === flagHolderName;
+        const question = canRespond
+            ? isTakingFlag
+                ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
+                : `Voulez-vous donner votre drapeau à ${data.targetPlayerName} ?`
+            : `${FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX} ${flagHolderName}.`;
 
-        this.pendingFlagRequest.set({ data, acceptEvent, question });
+        this.pendingFlagRequest.set({ data, acceptEvent, question, canRespond });
     }
 
     respondToFlagActionRequest(accepted: boolean): void {
         const pendingRequest = this.pendingFlagRequest();
-        if (!pendingRequest) {
+        if (!pendingRequest || !pendingRequest.canRespond) {
             return;
         }
 
-        this.pendingFlagRequest.set(null);
+        this.clearPendingFlagActionRequest();
         const { data, acceptEvent } = pendingRequest;
 
         const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
 
         if (!accepted) {
-            this.toastService.show(isTakingFlag ? 'Vous avez refusé de donner votre drapeau.' : 'Vous avez refusé de prendre le drapeau.');
+            const responderName = this.localPlayer.getLocalPlayer()?.name;
+            if (!responderName) {
+                return;
+            }
+
+            this.toastService.show(FLAG_TRANSFER_SELF_REJECTED_TOAST);
+            const rejectionData: IFlagTransferRejectionData = {
+                gameId: data.gameId,
+                responderName,
+            };
+            this.socket.emit(Namespaces.Game, SocketEvent.RejectFlagTransfer, rejectionData);
             return;
         }
 
@@ -490,6 +510,14 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
+        this.clearPendingFlagActionRequest();
+    }
+
+    hasPendingFlagActionRequest(): boolean {
+        return this.pendingFlagRequest() !== null;
+    }
+
+    clearPendingFlagActionRequest(): void {
         this.pendingFlagRequest.set(null);
     }
 

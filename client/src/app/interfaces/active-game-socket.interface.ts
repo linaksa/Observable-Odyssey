@@ -32,4 +32,6 @@ export interface ActiveGameSocketContext {
     gameHasEnded: BooleanSignal;
     handleFlagActionRequest: (data: IFlagActionData, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag) => void;
     closeFlagActionRequestIfExpired: (currentTurnPlayerName: string) => void;
+    hasPendingFlagActionRequest: () => boolean;
+    clearPendingFlagActionRequest: () => void;
 }

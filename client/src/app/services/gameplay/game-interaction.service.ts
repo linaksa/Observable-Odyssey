@@ -21,6 +21,7 @@ export class GameInteractionService {
 
     handleKeyboard(event: KeyboardEvent, totalColumns: number): void {
         if (isTypingInChatMessageInput(event)) return;
+        if (this.activeGameService.pendingFlagRequest()) return;
         if (this.popupStateService.isSanctuaryPopupVisible) return;
         if (!this.isLocalPlayerTurn()) return;
 
@@ -48,6 +49,10 @@ export class GameInteractionService {
     }
 
     handleGridCellClick(rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null): void {
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         this.popupStateService.closeAllPopups();
 
         if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
@@ -85,6 +90,10 @@ export class GameInteractionService {
     }
 
     handlePlayerClick(playerName: string): void {
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         if (!this.activeGameService.actionMode() || !this.isLocalPlayerTurn()) {
             return;
         }
@@ -97,6 +106,11 @@ export class GameInteractionService {
     handleCellRightClick(event: MouseEvent, rowIndex: number, colIndex: number, cellType: CellType, item: IItem | null = null): void {
         event.preventDefault();
         event.stopPropagation();
+
+        if (this.activeGameService.pendingFlagRequest()) {
+            return;
+        }
+
         this.popupStateService.closeSanctuaryPopup();
 
         const playerAtPosition = this.activeGameService.getPlayersAtPosition(rowIndex, colIndex)[0] ?? null;
@@ -201,7 +215,10 @@ export class GameInteractionService {
         }
 
         return Boolean(
-            target.closest('#grid-container, app-sanctuary-popup, app-tile-info-popup, app-game-sanctuary-popup, app-game-tile-inspection-popup'),
+            target.closest(
+                '#grid-container, app-sanctuary-popup, app-tile-info-popup, app-game-sanctuary-popup, app-game-flag-transfer-popup, ' +
+                    'app-game-tile-inspection-popup',
+            ),
         );
     }
 }

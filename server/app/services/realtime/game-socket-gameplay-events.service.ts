@@ -6,6 +6,7 @@ import {
     IAttackPostureData,
     IDoorToggleData,
     IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
@@ -57,6 +58,10 @@ export class GameSocketGameplayEventsService {
 
         socket.on(SocketEvent.FlagGiven, async (data: IFlagDecisionData) => {
             await this.gameplayActionService.handleFlagGiven(data, namespace);
+        });
+
+        socket.on(SocketEvent.RejectFlagTransfer, async (data: IFlagTransferRejectionData) => {
+            await this.gameplayActionService.handleFlagTransferRejected(data, namespace);
         });
     }
 

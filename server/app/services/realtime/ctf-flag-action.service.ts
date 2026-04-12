@@ -5,9 +5,12 @@ import { IActionData } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';
 import { Service } from 'typedi';
 
+export type FlagTransferMode = 'take' | 'give';
+
 export interface PendingFlagRequest {
     requesterName: string;
     targetPlayerName: string;
+    transferMode: FlagTransferMode;
 }
 
 export interface FlagActionCallbacks {
@@ -50,7 +53,7 @@ export class CtfFlagActionService {
                 return true;
             }
 
-            setPendingFlagRequest(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
+            setPendingFlagRequest(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName, transferMode: 'give' });
             namespace.to(gameId).emit(SocketEvent.GiveFlag, flagActionData);
             return true;
         }
@@ -70,7 +73,7 @@ export class CtfFlagActionService {
                 return true;
             }
 
-            setPendingFlagRequest(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName });
+            setPendingFlagRequest(gameId, { requesterName: currentPlayerName, targetPlayerName: targetName, transferMode: 'take' });
             namespace.to(gameId).emit(SocketEvent.TakeFlag, flagActionData);
             return true;
         }

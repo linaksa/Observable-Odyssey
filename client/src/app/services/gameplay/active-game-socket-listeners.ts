@@ -1,4 +1,5 @@
 import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
+import { FLAG_TRANSFER_REJECTED_TOAST } from '@app/constants/gameplay';
 import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
@@ -12,6 +13,7 @@ import {
     IDoorToggledResult,
     IFlagActionData,
     IFlagPickedUpPayload,
+    IFlagTransferRejectedPayload,
     IGameCanceledPayload,
     IGameEndedPayload,
     IPlayerIdPayload,
@@ -216,6 +218,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             activeGame.winner = data.winner;
             activeGame.isFinished = true;
+            context.clearPendingFlagActionRequest();
 
             toggle(context.gameHasEnded);
         }),
@@ -252,6 +255,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 }
             }
 
+            context.clearPendingFlagActionRequest();
             toggle(context.hasChangedLocation);
         }),
         context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
@@ -259,6 +263,16 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
         }),
         context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.GiveFlag).subscribe((data) => {
             handleFlagActionPrompt(data, SocketEvent.GiveFlag, context);
+        }),
+        context.socket.on<IFlagTransferRejectedPayload>(Namespaces.Game, SocketEvent.FlagTransferRejected).subscribe((data) => {
+            if (!context.hasPendingFlagActionRequest()) {
+                return;
+            }
+
+            context.clearPendingFlagActionRequest();
+            if (context.localPlayer.getLocalPlayer()?.name === data.requesterName) {
+                context.toastService.show(FLAG_TRANSFER_REJECTED_TOAST);
+            }
         }),
     ];
 }

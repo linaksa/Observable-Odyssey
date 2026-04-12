@@ -10,6 +10,7 @@ import { Service } from 'typedi';
 import { SanctuaryService } from './sanctuary-service';
 
 export type VirtualPlayerTurnHandler = (player: ICharacter, activeGame: IActiveGame) => Promise<void>;
+export type TurnEndedHandler = (gameId: string) => Promise<void> | void;
 
 @Service()
 export class TurnService {
@@ -17,6 +18,7 @@ export class TurnService {
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
     private combatTimers: Map<string, NodeJS.Timeout> = new Map();
     private virtualPlayerTurnHandler?: VirtualPlayerTurnHandler;
+    private turnEndedHandler?: TurnEndedHandler;
 
     constructor(
         private readonly socketService: SocketService,
@@ -26,6 +28,10 @@ export class TurnService {
 
     setVirtualPlayerTurnHandler(handler: VirtualPlayerTurnHandler): void {
         this.virtualPlayerTurnHandler = handler;
+    }
+
+    setTurnEndedHandler(handler: TurnEndedHandler): void {
+        this.turnEndedHandler = handler;
     }
 
     // logic for the 3-second delay before the start of a turn
@@ -117,6 +123,10 @@ export class TurnService {
         // Always clear timers, even if the game is already finished
         this.clearTimerFromMap(activeGame, this.turnTimers);
         this.clearTimerFromMap(activeGame, this.combatTimers);
+
+        if (this.turnEndedHandler) {
+            await this.turnEndedHandler(gameId);
+        }
 
         if (activeGame.isFinished) {
             return;

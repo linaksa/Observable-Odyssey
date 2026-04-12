@@ -77,6 +77,19 @@ describe('TurnService', () => {
         expect(startTurnStub.calledOnceWithExactly(activeGame._id)).to.equal(true);
     });
 
+    it('should invoke the turn-ended handler before starting the next turn', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const startTurnStub = sinon.stub(turnService, 'startTurn').resolves();
+        const turnEndedHandler = sinon.stub().resolves();
+        turnService.setTurnEndedHandler(turnEndedHandler);
+
+        await turnService.endTurn(activeGame._id);
+
+        expect(turnEndedHandler.calledOnceWithExactly(activeGame._id)).to.equal(true);
+        expect(turnEndedHandler.calledBefore(startTurnStub)).to.equal(true);
+    });
+
     it('should advance sanctuary cooldowns when a turn starts', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.items = [
