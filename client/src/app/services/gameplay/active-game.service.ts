@@ -443,16 +443,19 @@ export class ActiveGameService implements OnDestroy {
             return;
         }
 
-        const isTakingFlag = acceptEvent === SocketEvent.TakeFlag;
-        const flagHolderName = isTakingFlag ? data.targetPlayerName : data.currentPlayerName;
-        const canRespond = localPlayerName === flagHolderName;
-        const question = canRespond
-            ? isTakingFlag
-                ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
-                : `Voulez-vous donner votre drapeau à ${data.targetPlayerName} ?`
-            : `${FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX} ${flagHolderName}.`;
+        const currentPlayer = this.getPlayerByName(data.currentPlayerName);
+        if (currentPlayer) {
+            currentPlayer.actionsLeft = data.currentPlayerActionsLeft;
+            this.actionStatsVersion.update((current) => current + 1);
+        }
 
-        this.pendingFlagRequest.set({ data, acceptEvent, question, canRespond });
+        const question = isLocalTarget
+            ? acceptEvent === SocketEvent.TakeFlag
+                ? `${data.currentPlayerName} veut prendre votre drapeau. Voulez-vous le lui donner ?`
+                : `${data.currentPlayerName} veut vous donner son drapeau. Voulez-vous l'accepter ?`
+            : `${FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX} ${data.targetPlayerName}.`;
+
+        this.pendingFlagRequest.set({ data, acceptEvent, question, canRespond: isLocalTarget });
     }
 
     respondToFlagActionRequest(accepted: boolean): void {
