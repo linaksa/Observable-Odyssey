@@ -1,9 +1,8 @@
-<div class="flex flex-col min-h-screen p-4 gap-4">
-    <app-back-navigation />
+<div class="content">
+    <app-toast />
 
-    <app-form-page-header />
+    <app-nav-buttons linkBack="/create" textBack="Retour vers la vue de création" />
+    <app-page-title title="Formulaire de création de personnage" />
 
     <app-character-form (submitForm)="submitCharacterForm($event)" />
-
-    <app-toast />
 </div>

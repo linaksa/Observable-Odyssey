@@ -18,7 +18,8 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { FormPageComponent } from './form-page.component';
 
-import { FormPageHeaderComponent } from '@app/components/character-form/form-page-header/form-page-header.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
@@ -27,13 +28,6 @@ import { ErrorCode } from '@common/error-codes';
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IGame } from '@common/game';
-
-@Component({
-    selector: 'app-back-navigation',
-    standalone: true,
-    template: '',
-})
-class MockBackNavigationComponent {}
 
 @Component({
     selector: 'app-character-form',
@@ -76,7 +70,7 @@ describe('FormPageComponent', () => {
 
         const overrideInfo: MetadataOverride<Component> = {
             set: {
-                imports: [FormPageHeaderComponent, MockBackNavigationComponent, MockCharacterFormComponent, MockToastComponent],
+                imports: [NavButtonsComponent, PageTitleComponent, MockCharacterFormComponent, MockToastComponent],
             },
         };
 

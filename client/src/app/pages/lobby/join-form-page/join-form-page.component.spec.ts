@@ -21,6 +21,8 @@ import { JoinFormPageComponent } from './join-form-page.component';
 
 import { GameService } from '@app/services/admin/game.service';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
@@ -99,7 +101,7 @@ describe('JoinFormPageComponent', () => {
         socketServiceMock.on.and.returnValue(socketSubject.asObservable());
 
         const overrideInfo: MetadataOverride<Component> = {
-            set: { imports: [MockCharacterFormComponent, MockToastComponent] },
+            set: { imports: [NavButtonsComponent, PageTitleComponent, MockCharacterFormComponent, MockToastComponent] },
         };
 
         TestBed.overrideComponent(JoinFormPageComponent, overrideInfo);
