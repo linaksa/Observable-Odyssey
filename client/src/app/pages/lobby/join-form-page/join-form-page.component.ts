@@ -1,6 +1,8 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { JoinFormPageFacadeService } from '@app/services/lobby/join-form-page.facade.service';
 import { CharacterFormData } from '@common/character';
@@ -8,7 +10,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-join-form-page',
-    imports: [RouterLink, CharacterFormComponent, ToastComponent],
+    imports: [NavButtonsComponent, PageTitleComponent, CharacterFormComponent, ToastComponent],
     templateUrl: './join-form-page.component.html',
 })
 export class JoinFormPageComponent implements OnInit, OnDestroy {
