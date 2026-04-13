@@ -32,3 +32,7 @@ export const GAME_ACTION_PANEL_HOST_BINDINGS = {
 export const GAME_INFO_PANEL_HOST_BINDINGS = {
     class: 'min-w-0 min-h-0',
 } as const;
+
+export const MESSAGE_ZONE_HOST_BINDINGS = {
+    class: 'contents',
+} as const;
