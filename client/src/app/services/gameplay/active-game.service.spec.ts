@@ -493,8 +493,30 @@ describe('ActiveGameService', () => {
         });
     });
 
-    it('should open a waiting flag popup for the requester and prevent requester responses', () => {
+    it('should show the waiting popup for the requester', () => {
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Bob';
+        service.activeGame.players[0].actionsLeft = 3;
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.TakeFlag,
+        );
+
+        const pendingRequest = service.pendingFlagRequest();
+        expect(service.activeGame.players[0].actionsLeft).toBe(0);
+        expect(pendingRequest?.canRespond).toBeFalse();
+        expect(pendingRequest?.question).toContain('En attente de la décision de Bob');
+    });
+
+    it('should open a response popup for the flag holder', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
         service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
         service.activeGame.hasFlagId = 'Bob';
 
@@ -509,12 +531,28 @@ describe('ActiveGameService', () => {
         );
 
         const pendingRequest = service.pendingFlagRequest();
-        expect(pendingRequest?.canRespond).toBeFalse();
-        expect(pendingRequest?.question).toContain('En attente de la décision de Bob');
+        expect(pendingRequest?.canRespond).toBeTrue();
+        expect(pendingRequest?.question).toContain('Alice veut prendre votre drapeau');
+    });
 
-        socketServiceSpy.emit.calls.reset();
-        service.respondToFlagActionRequest(true);
-        expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+    it('should let the target decide when the holder offers the flag', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+        service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        service.activeGame.hasFlagId = 'Alice';
+
+        service.handleFlagActionRequest(
+            {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            },
+            SocketEvent.GiveFlag,
+        );
+
+        const pendingRequest = service.pendingFlagRequest();
+        expect(pendingRequest?.canRespond).toBeTrue();
+        expect(pendingRequest?.question).toContain('Alice veut vous donner son drapeau');
     });
 
     it('should let the flag holder reject the request and notify the server', () => {
