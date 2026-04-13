@@ -28,6 +28,7 @@ export enum ErrorCode {
     AvatarAlreadyUsed = 3004,
     AddedPlayerNotFound = 3005,
     NoOngoingAttack = 3006,
+    ActiveGameAlreadyStarted = 3007,
 
     PlayerNotFound = 4000,
     NotYourTurn = 4001,
