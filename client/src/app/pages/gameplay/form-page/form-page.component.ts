@@ -1,8 +1,8 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BackNavigationComponent } from '@app/components/character-form/back-navigation/back-navigation.component';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
-import { FormPageHeaderComponent } from '@app/components/character-form/form-page-header/form-page-header.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-form-page',
-    imports: [FormPageHeaderComponent, BackNavigationComponent, CharacterFormComponent, ToastComponent],
+    imports: [NavButtonsComponent, PageTitleComponent, CharacterFormComponent, ToastComponent],
     templateUrl: './form-page.component.html',
 })
 export class FormPageComponent implements OnInit, OnDestroy {
