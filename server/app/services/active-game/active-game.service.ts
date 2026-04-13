@@ -76,6 +76,10 @@ export class ActiveGameService {
             throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
+        if (activeGameToUpdate.turnOrder && activeGameToUpdate.turnOrder.length > 0) {
+            throw new AppError([ErrorCode.ActiveGameAlreadyStarted], StatusCodes.FORBIDDEN);
+        }
+
         const maxPlayers = activeGameToUpdate.maxPlayerCount;
         if (activeGameToUpdate.players.length >= maxPlayers) {
             throw new AppError([ErrorCode.ActiveGameFull], StatusCodes.BAD_REQUEST);
