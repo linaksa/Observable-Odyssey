@@ -20,7 +20,9 @@ export class GameplayTurnEndService {
     async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
         const reachable = await this.movementService.getReachablePositions(playerId, gameId);
         const canAttackAnyPlayer = await this.actionService.canUseActionAnyPlayer(gameId, playerId);
-        if (reachable.length === 0 && !canAttackAnyPlayer) {
+
+        const canUseAnySanctuary = await this.actionService.canUseAnySanctuary(gameId, playerId);
+        if (reachable.length === 0 && !canAttackAnyPlayer && !canUseAnySanctuary) {
             await this.turnService.endTurn(gameId);
         }
     }

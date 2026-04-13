@@ -2,6 +2,7 @@ import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { isPositionAdjacentToSanctuary, isSanctuaryActive, isSanctuaryItem } from '@app/utils/sanctuary';
 import { CombatOutcome } from '@common/attackResult';
 import { ErrorCode } from '@common/error-codes';
 import { IFlagActionData } from '@common/socket-payloads';
@@ -101,6 +102,28 @@ export class ActionService {
 
         for (const defender of currentActiveGame.players) {
             if (await this.canUseAction(activeGameId, attackerName, defender.name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    async canUseAnySanctuary(activeGameId: string, playerName: string): Promise<boolean> {
+        const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
+        if (!currentActiveGame) {
+            return false;
+        }
+
+        const player = currentActiveGame.players.find((p) => p.name === playerName);
+        if (!player) {
+            return false;
+        }
+
+        if (player.actionsLeft === 0) return false;
+
+        for (const item of Object.values(currentActiveGame.game.board.items)) {
+            if (isSanctuaryItem(item) && isSanctuaryActive(item) && isPositionAdjacentToSanctuary(player.currentPosition, item)) {
                 return true;
             }
         }
