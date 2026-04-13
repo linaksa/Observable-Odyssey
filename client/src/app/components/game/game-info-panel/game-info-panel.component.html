@@ -6,38 +6,7 @@
         <app-game-player-list class="min-h-0 flex-1" />
     </div>
 
-    <div data-testid="info-panel-shell" class="flex min-h-0 flex-1 flex-col gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
-        <div class="flex gap-2" role="tablist" aria-label="Panneaux d'information de partie">
-            <button
-                type="button"
-                class="btn flex-1"
-                [class.btn-blue]="activeTab() === journalTab.Chat"
-                [attr.aria-selected]="activeTab() === journalTab.Chat"
-                [attr.aria-pressed]="activeTab() === journalTab.Chat"
-                role="tab"
-                (click)="setActiveTab(journalTab.Chat)"
-            >
-                {{ journalTabLabels[journalTab.Chat] }}
-            </button>
-            <button
-                type="button"
-                class="btn flex-1"
-                [class.btn-blue]="activeTab() === journalTab.Journal"
-                [attr.aria-selected]="activeTab() === journalTab.Journal"
-                [attr.aria-pressed]="activeTab() === journalTab.Journal"
-                role="tab"
-                (click)="setActiveTab(journalTab.Journal)"
-            >
-                {{ journalTabLabels[journalTab.Journal] }}
-            </button>
-        </div>
-
-        <div class="min-h-0 flex-1">
-            @if (activeTab() === journalTab.Chat) {
-                <app-chat-panel class="flex h-full min-h-0 flex-1" />
-            } @else {
-                <app-journal class="flex h-full min-h-0 flex-1" />
-            }
-        </div>
+    <div data-testid="info-panel-shell" class="flex min-h-0 flex-1 flex-col grow gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+        <app-message-zone></app-message-zone>
     </div>
 </div>
