@@ -30,6 +30,7 @@ export const ERROR_CODE_MESSAGES: Record<ErrorCode, string> = {
     [ErrorCode.AvatarAlreadyUsed]: 'Avatar déjà utilisé par un autre joueur dans cette partie',
     [ErrorCode.AddedPlayerNotFound]: 'Joueur ajouté introuvable.',
     [ErrorCode.NoOngoingAttack]: 'Aucun combat en cours.',
+    [ErrorCode.ActiveGameAlreadyStarted]: 'La partie a déjà commencé.',
 
     [ErrorCode.PlayerNotFound]: 'Joueur introuvable.',
     [ErrorCode.NotYourTurn]: "Ce n'est pas votre tour.",
