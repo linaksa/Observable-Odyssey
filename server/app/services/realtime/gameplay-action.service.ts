@@ -17,18 +17,18 @@ import {
 } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
-import { Inject, Service } from 'typedi';
+import { Service } from 'typedi';
 
 @Service()
 export class GameplayActionService {
-    @Inject(() => GameplayLogService)
-    private readonly gameplayLogService!: GameplayLogService;
-
+    // Realtime orchestration facade: coordinates the main gameplay entry points and delegates work to specialized services.
+    // eslint-disable-next-line max-params -- higher constructor arity is acceptable here because this facade centralizes coordination, not business logic
     constructor(
         private readonly turnService: TurnService,
         private readonly startGameService: StartGameService,
         private readonly activeGameService: ActiveGameService,
         private readonly gameSessionService: GameSessionService,
+        private readonly gameplayLogService: GameplayLogService,
         private readonly gameplayRealtimeFlowService: GameplayRealtimeFlowService,
     ) {}
 
