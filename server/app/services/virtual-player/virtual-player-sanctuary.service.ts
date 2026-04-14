@@ -1,9 +1,9 @@
 import { MovementService } from '@app/services/gameplay/movement-service';
-import { isPositionAdjacentToSanctuary, isSanctuaryActive } from '@app/utils/sanctuary';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { isPositionAdjacentToSanctuary, isSanctuaryActive } from '@app/utils/sanctuary';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter, Position } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, ILifeSanctuary, ItemType } from '@common/items';

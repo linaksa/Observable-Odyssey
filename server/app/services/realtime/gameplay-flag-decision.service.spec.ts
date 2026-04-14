@@ -1,9 +1,9 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
+import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
 import { GameplayFlagDecisionService } from '@app/services/realtime/gameplay-flag-decision.service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
-import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

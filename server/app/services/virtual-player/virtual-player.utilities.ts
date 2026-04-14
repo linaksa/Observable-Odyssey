@@ -7,12 +7,12 @@ import { GameplayLogService } from '@app/services/realtime/gameplay-log.service'
 import { SocketService } from '@app/services/realtime/socket.service';
 import { dijkstra, DIRECTION_DELTA, indexToDirection, reconstructPath } from '@app/utils/dijkstra';
 import { buildGraph } from '@app/utils/pathfinding';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { IItem } from '@common/items';
 import { Namespaces } from '@common/namespaces';
-import { PlayerMovedResult } from '@common/playerMovedResult';
+import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
 import { IDoorToggleData } from '@common/socket-payloads';
 import { Service } from 'typedi';

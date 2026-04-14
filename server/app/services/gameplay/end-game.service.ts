@@ -1,7 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { Position } from '@common/character';
 import { MIN_PLAYER_COUNT, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';

@@ -1,8 +1,8 @@
 import { AppError } from '@app/error-types/app-error';
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
-import { IActiveGame, ICurrentAttack } from '@common/activeGame';
-import { AttackPosture } from '@common/attackResult';
+import { IActiveGame, ICurrentAttack } from '@common/active-game';
+import { AttackPosture } from '@common/attack-result';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { ErrorCode } from '@common/error-codes';

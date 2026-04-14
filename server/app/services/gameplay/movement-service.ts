@@ -4,13 +4,13 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter, Position } from '@common/character';
 import { GRASS_OR_DOOR_MOVEMENT_COST, ICE_MOVEMENT_COST, WATER_MOVEMENT_COST } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
-import { PlayerMovedResult } from '@common/playerMovedResult';
+import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';

@@ -9,10 +9,10 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
-import { IActiveGame, ICurrentAttack } from '@common/activeGame';
-import { CombatOutcome } from '@common/attackResult';
+import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { IActiveGame, ICurrentAttack } from '@common/active-game';
+import { CombatOutcome } from '@common/attack-result';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

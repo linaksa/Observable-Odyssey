@@ -1,4 +1,4 @@
-import { IActiveGame } from './activeGame';
+import { IActiveGame } from './active-game';
 import { Position } from './character';
 
 export interface AttackResult {

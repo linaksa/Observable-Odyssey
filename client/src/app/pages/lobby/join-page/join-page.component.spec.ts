@@ -25,7 +25,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ActiveGameTableService } from '@app/services/tables/active-game-table.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';

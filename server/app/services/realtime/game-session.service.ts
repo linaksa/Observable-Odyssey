@@ -3,8 +3,8 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
-import { CombatOutcome } from '@common/attackResult';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/active-game';
+import { CombatOutcome } from '@common/attack-result';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IGameEndedPayload, IJoinGamePayload, IPlayerIdPayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';

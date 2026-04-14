@@ -3,7 +3,7 @@ import { GAME_COMBAT_OUTCOME_HOST_BINDINGS } from '@app/constants/component-host
 import { GAME_COMBAT_OUTCOME_AUTO_CLOSE_MS } from '@app/constants/gameplay';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { CombatOutcome } from '@common/attackResult';
+import { CombatOutcome } from '@common/attack-result';
 
 @Component({
     selector: 'app-game-combat-outcome',

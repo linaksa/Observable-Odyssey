@@ -16,7 +16,7 @@
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';

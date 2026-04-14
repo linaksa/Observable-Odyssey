@@ -1,6 +1,6 @@
-import { CtfFlagActionService, type PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
 import { ActionService } from '@app/services/gameplay/action-service';
-import { IActiveGame } from '@common/activeGame';
+import { CtfFlagActionService, type PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter, Team, VirtualPlayerProfile } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

@@ -1,10 +1,10 @@
+import { AppError } from '@app/error-types/app-error';
+import { toErrorResponse } from '@app/error-types/error-response';
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
-import { AppError } from '@app/error-types/app-error';
-import { toErrorResponse } from '@app/error-types/error-response';
+import { IActiveGameWithPlayer } from '@common/active-game';
 import { ErrorCode } from '@common/error-codes';
-import { IActiveGameWithPlayer } from '@common/activeGame';
 import { Request, Response, Router } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';

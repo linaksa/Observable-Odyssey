@@ -6,7 +6,7 @@ import { PageTitleComponent } from '@app/components/common/page-title/page-title
 import { FinalPlayerListComponent } from '@app/components/end-game/final-player-list/final-player-list.component';
 import { GlobalStatsComponent } from '@app/components/end-game/global-stats/global-stats.component';
 import { GameService } from '@app/services/admin/game.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { Subscription } from 'rxjs';
 
 @Component({

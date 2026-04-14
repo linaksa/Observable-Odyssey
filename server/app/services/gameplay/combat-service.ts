@@ -4,8 +4,8 @@ import { CombatLogService } from '@app/services/gameplay/combat-log.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { FlagCarrierDefeat } from '@app/services/interfaces/flag-carrier-defeat';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
-import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
+import { IActiveGame } from '@common/active-game';
+import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { CellType } from '@common/board';
 import { ICharacter, Position, VirtualPlayerProfile } from '@common/character';
 import {

@@ -1,9 +1,11 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Avatar, DiceType, SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
@@ -12,8 +14,6 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { EndGameService } from '@app/services/gameplay/end-game.service';
-import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 
 const SANCTUARY_BUFFED_STAT = 5;
 
