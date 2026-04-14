@@ -49,6 +49,7 @@ export class DebugSocketService {
                 if (!activeGame.isDebugMode) return;
                 if (activeGame.turnIsInPreparation) return;
 
+                // Only the current player can teleport
                 const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
                 if (currentPlayerName !== playerName) return;
 
@@ -58,8 +59,11 @@ export class DebugSocketService {
                 const targetRow = target.y;
                 const targetCol = target.x;
 
+                // Target must be a walkable terrain tile
                 const cellType = activeGame.game.board.cells[targetRow]?.[targetCol];
                 if (!this.positionValidatorService.isWalkableCell(cellType)) return;
+
+                // Target must have no items and no other players
                 if (this.cellHasItem(activeGame.game.board.items, targetRow, targetCol)) return;
                 if (this.cellHasPlayer(activeGame.players, playerName, targetRow, targetCol)) return;
 

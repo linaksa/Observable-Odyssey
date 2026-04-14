@@ -24,6 +24,7 @@ export class MovementService {
         private readonly gameplayLogService: GameplayLogService,
     ) {}
 
+    // Validates and applies the movement in a single DB access. Throws an error if invalid.
     async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<PlayerMovedResult> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
@@ -67,6 +68,7 @@ export class MovementService {
         return { playerId: player.name, newPosition, movementLeft: player.movementLeft };
     }
 
+    // Returns all tiles reachable from the player's current position (budgeted BFS).
     async getReachablePositions(playerName: string, activeGameId: string): Promise<Position[]> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!activeGame) return [];
@@ -115,12 +117,14 @@ export class MovementService {
         if (!flag) return;
 
         const playerCarriesFlag = activeGame.hasFlagId === player.name;
+        // if player has the flag, it moves with them
         if (playerCarriesFlag) {
             flag.x = player.currentPosition.x;
             flag.y = player.currentPosition.y;
             return;
         }
 
+        // if player doesn't have the flag, check if they can pick it up
         const flagIsOnGround = !activeGame.hasFlagId;
         if (flagIsOnGround && player.currentPosition.x === flag.x && player.currentPosition.y === flag.y) {
             activeGame.hasFlagId = player.name;
@@ -142,6 +146,7 @@ export class MovementService {
     }
 
     private getPriceTile(activeGame: IActiveGame, pos: Position): number {
+        // guard: ensure indices exist
         if (!this.isPositionWithinBounds(pos, activeGame)) return Infinity;
 
         const cell = activeGame.game.board.cells[pos.y][pos.x];
