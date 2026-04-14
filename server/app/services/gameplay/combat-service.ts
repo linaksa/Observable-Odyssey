@@ -316,7 +316,7 @@ export class CombatService {
     }
 
     private getAttackStatsForPlayer(activeGame: IActiveGame, character: ICharacter, posture: AttackPosture): AttackStats {
-        const cell = activeGame.game.board.cells[character.currentPosition.x][character.currentPosition.y];
+        const cell = activeGame.game.board.cells[character.currentPosition.y][character.currentPosition.x];
 
         const baseAttackPoints = character.attackPoints;
         let attackDiceBonus: number;

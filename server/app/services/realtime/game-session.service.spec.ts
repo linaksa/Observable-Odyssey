@@ -36,6 +36,7 @@ describe('GameSessionService', () => {
         handlePlayerAbandon: sinon.SinonStub;
         checkEndGame: sinon.SinonStub;
         checkIfOrganizer: sinon.SinonStub;
+        getEndGameLogMessage: sinon.SinonStub;
     };
     let turnService: {
         endTurn: sinon.SinonStub;
@@ -60,8 +61,9 @@ describe('GameSessionService', () => {
         };
         endGameService = {
             handlePlayerAbandon: sinon.stub().resolves(),
-            checkEndGame: sinon.stub().resolves(false),
+            checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }),
             checkIfOrganizer: sinon.stub().resolves(false),
+            getEndGameLogMessage: sinon.stub().returns('Fin de partie: test. Joueurs restants: Alice.'),
         };
         turnService = {
             endTurn: sinon.stub().resolves(),
@@ -125,6 +127,27 @@ describe('GameSessionService', () => {
         expect(combatService.cancelCombat.calledOnceWithExactly(activeGame, 'Bob')).to.equal(true);
         expect(gameplayActionService.checkEndTurnIfNoMovesLeft.calledOnceWithExactly(activeGame._id, 'Alice')).to.equal(true);
         expect(namespaceEmitStub.calledWithExactly(SocketEvent.CombatResolved, combatOutcome)).to.equal(true);
+    });
+
+    it('logs end-game reason and remaining players when disconnect ends the game', async () => {
+        const activeGame = createActiveGame(['Alice', 'Bob'], 0, null);
+        const refreshedGame = createActiveGame(['Alice', 'Bob'], 0, null, ['Bob']);
+        const emitGameLog = sinon.stub();
+
+        activeGameService.getActiveGameById.onFirstCall().resolves(activeGame);
+        activeGameService.getActiveGameById.onSecondCall().resolves(refreshedGame);
+        endGameService.checkEndGame.resolves({
+            hasEnded: true,
+            winner: 'Alice',
+            reason: 'insufficient-active-players',
+            remainingPlayers: ['Alice'],
+        });
+
+        await service.handleActiveGameDisconnect(activeGame._id, 'Bob', namespace, emitGameLog);
+
+        expect(endGameService.getEndGameLogMessage.calledOnce).to.equal(true);
+        expect(emitGameLog.calledWithExactly(activeGame._id, 'Fin de partie: test. Joueurs restants: Alice.')).to.equal(true);
+        expect(namespaceEmitStub.calledWithExactly(SocketEvent.GameEnded, { winner: 'Alice' })).to.equal(true);
     });
 });
 

@@ -110,12 +110,17 @@ export class EditorItemSelectorObjectComponent {
     protected objectButtonClass(type: ItemType): string {
         return this.joinClasses(
             'relative w-16 h-auto aspect-square rounded-full overflow-hidden focus-visible:ring-2 focus-visible:ring-blue-400',
+            this.isObjectUnavailable(type) && 'opacity-45 grayscale',
             this.hasMandatoryRemainingCount(type) && this.boardEditorService.getRemainingObjectCount(type) !== 0
                 ? 'outline-2 outline-red-600'
                 : this.boardEditorService.selectedObject === type
                   ? 'outline-4 outline-blue-600'
                   : 'outline-none',
         );
+    }
+
+    private isObjectUnavailable(type: ItemType): boolean {
+        return this.boardEditorService.getRemainingObjectCount(type) === 0;
     }
 
     private hasMandatoryRemainingCount(type: ItemType): boolean {
