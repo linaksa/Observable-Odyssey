@@ -1,4 +1,3 @@
-import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
@@ -12,11 +11,6 @@ import { IDoorToggleData, IDoorToggledResult, ISanctuaryInteractedResult, ISanct
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { toSocketError } from './socket-error';
-
-interface BoardPosition {
-    x: number;
-    y: number;
-}
 
 @Service()
 export class GameplayInteractionFlowService {
@@ -38,10 +32,9 @@ export class GameplayInteractionFlowService {
             const result: IDoorToggledResult = await this.doorService.toggleDoor(playerId, gameId, position);
             await this.trackManipulatedDoor(gameId, result.position.x, result.position.y);
             namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
-            emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
+            emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'ferme'} une porte.`);
             await this.gameplayTurnEndService.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
-            await this.tryLogWallInteraction(gameId, playerId, position, error, emitGameLog);
             socket?.emit(SocketEvent.DoorToggleError, toSocketError(error, ErrorCode.InvalidDoorTarget));
         }
     }
@@ -61,7 +54,7 @@ export class GameplayInteractionFlowService {
             await this.trackUsedSanctuary(gameId, position.x, position.y);
             namespace.to(gameId).emit(SocketEvent.SanctuaryInteracted, result);
             const sanctuaryKind = result.itemType === ItemType.LifeSanctuary ? 'vie' : 'combat';
-            emitGameLog(gameId, `${playerId} a utilisé un sanctuaire de ${sanctuaryKind}.`);
+            emitGameLog(gameId, `${playerId} a utilise un sanctuaire de ${sanctuaryKind}.`);
             await this.gameplayTurnEndService.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
             socket?.emit(SocketEvent.SanctuaryInteractionError, toSocketError(error, ErrorCode.InvalidSanctuaryTarget));
@@ -97,30 +90,5 @@ export class GameplayInteractionFlowService {
             activeGame.usedSanctuaries.push(sanctuaryKey);
             await this.activeGameService.saveActiveGameById(gameId, activeGame);
         }
-    }
-
-    private async tryLogWallInteraction(
-        gameId: string,
-        playerId: string,
-        position: BoardPosition,
-        error: unknown,
-        emitGameLog: (targetGameId: string, message: string) => void,
-    ): Promise<void> {
-        if (!(error instanceof AppError) || !error.errorCodes.includes(ErrorCode.TargetIsNotDoor)) {
-            return;
-        }
-
-        const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) {
-            return;
-        }
-
-        const row = activeGame.game.board.cells[position.y];
-        const cellType = row?.[position.x];
-        if (cellType !== CellType.Wall) {
-            return;
-        }
-
-        emitGameLog(gameId, `${playerId} se heurte à un mur.`);
     }
 }
