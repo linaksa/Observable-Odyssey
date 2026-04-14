@@ -11,6 +11,14 @@
         <p class="mt-1 text-sm text-white/70">{{ data().description }}</p>
         <p class="mt-2 text-sm"><span class="font-medium">Coût déplacement :</span> {{ data().movementCost }}</p>
 
+        @if (data().itemTitle) {
+            <hr class="my-3 border-white/20" />
+            <p class="text-sm font-medium">{{ data().itemTitle }}</p>
+            @if (data().itemDescription) {
+                <p class="mt-1 text-sm text-white/70">{{ data().itemDescription }}</p>
+            }
+        }
+
         @if (data().playerName) {
             <hr class="my-3 border-white/20" />
             <div class="flex items-center gap-2">
