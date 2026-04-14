@@ -7,12 +7,7 @@ import { MIN_PLAYER_COUNT, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
 
-export type EndGameReason =
-    | 'ctf-flag-returned'
-    | 'combat-victories'
-    | 'insufficient-active-players'
-    | 'no-human-players'
-    | 'ctf-team-eliminated';
+export type EndGameReason = 'ctf-flag-returned' | 'combat-victories' | 'insufficient-active-players' | 'no-human-players' | 'ctf-team-eliminated';
 
 export interface EndGameCheckResult {
     hasEnded: boolean;
@@ -35,13 +30,12 @@ export class EndGameService {
             return this.buildNotEndedResult(activeGame);
         }
 
-        const winnerByCombat =
-            activeGame.game.gameMode !== 'ctf'
-                ? activeGame.players.find((player) => {
-                      return this.getCombatWins(player) >= VICTORIES_TO_WIN;
-                  })
-                : undefined;
+        const winnerByCombat = activeGame.players.find((player) => {
+            return this.getCombatWins(player) >= VICTORIES_TO_WIN;
+        });
+
         const ctfWinner = this.checkCTFWinCondition(activeGame);
+
         // if a player in ctf mode has the flag and is on their starting tile, they win
         if (ctfWinner) {
             const flagHolder = activeGame.players.find((p) => p.name === activeGame.hasFlagId);
