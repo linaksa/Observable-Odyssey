@@ -111,7 +111,7 @@ export class GameInteractionService {
 
         if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn()) {
             if (!this.isTeleportableCell(rowIndex, colIndex, cellType, boardItem)) {
-                this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+                this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition, this.activeGameService.getSpawnPointOwnerName(boardItem));
                 return;
             }
             this.popupStateService.closeTileInfo();
@@ -126,7 +126,7 @@ export class GameInteractionService {
             return;
         }
 
-        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+        this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition, this.activeGameService.getSpawnPointOwnerName(boardItem));
     }
 
     handleDocumentClick(event?: MouseEvent): void {
