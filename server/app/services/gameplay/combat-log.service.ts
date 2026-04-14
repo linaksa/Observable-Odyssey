@@ -105,7 +105,7 @@ export class CombatLogService {
     }
 
     private buildDamageLine(damage: number): string {
-        return `Dégâts: ${damage}`;
+        return `Dégâts effectivement infligés ${damage}`;
     }
 
     private buildCombatExchangeMessage(data: CombatExchangeLogData): string {
