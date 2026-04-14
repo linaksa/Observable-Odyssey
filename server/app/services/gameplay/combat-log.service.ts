@@ -101,11 +101,11 @@ export class CombatLogService {
     }
 
     private buildDifferenceLine(attackTotal: number, defenseTotal: number, difference: number): string {
-        return `Différence ${attackTotal}-${defenseTotal}=${difference}`;
+        return `Différence: ${attackTotal}-${defenseTotal}=${difference}`;
     }
 
     private buildDamageLine(damage: number): string {
-        return `Dégâts ${damage}`;
+        return `Dégâts: ${damage}`;
     }
 
     private buildCombatExchangeMessage(data: CombatExchangeLogData): string {
