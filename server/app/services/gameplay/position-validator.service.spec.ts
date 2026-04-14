@@ -1,5 +1,5 @@
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';

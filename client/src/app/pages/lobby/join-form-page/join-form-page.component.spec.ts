@@ -19,14 +19,14 @@ import { of, Subject, Subscription, throwError } from 'rxjs';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { JoinFormPageComponent } from './join-form-page.component';
 
-import { GameService } from '@app/services/admin/game.service';
-import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { GameService } from '@app/services/admin/game.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { IActiveGame, IActiveGameWithPlayer } from '@common/activeGame';
+import { IActiveGame, IActiveGameWithPlayer } from '@common/active-game';
 import { Avatar, DiceType } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { IGame } from '@common/game';

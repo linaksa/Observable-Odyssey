@@ -12,7 +12,7 @@
  * - Non-positive size should clear grid/object state.
  */
 import { TestBed } from '@angular/core/testing';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { WaitGridService } from './wait-grid.service';

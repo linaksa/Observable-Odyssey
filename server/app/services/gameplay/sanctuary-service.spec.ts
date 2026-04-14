@@ -1,6 +1,6 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Avatar, DiceType, SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
 import { GameType, Visibility } from '@common/game';

@@ -15,7 +15,7 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
-import { AttackPosture } from '@common/attackResult';
+import { AttackPosture } from '@common/attack-result';
 import { ICharacter } from '@common/character';
 import { HUNDRED_PERCENT } from '@common/constants';
 

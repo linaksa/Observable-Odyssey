@@ -2,7 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

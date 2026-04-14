@@ -1,4 +1,4 @@
-import { AttackPosture, AttackStats } from './attackResult';
+import { AttackPosture, AttackStats } from './attack-result';
 
 export interface CombatTurnLogData {
     gameId: string;

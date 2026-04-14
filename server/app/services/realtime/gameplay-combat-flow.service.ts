@@ -4,7 +4,7 @@ import { ActionService } from '@app/services/gameplay/action-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
-import { AttackPosture } from '@common/attackResult';
+import { AttackPosture } from '@common/attack-result';
 import { COMBAT_TIME_MS } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { SocketEvent } from '@common/socket-events';

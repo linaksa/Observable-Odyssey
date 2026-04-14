@@ -1,6 +1,6 @@
 import { inMemoryDb } from '@app/database';
-import { ICurrentAttack } from '@common/activeGame';
-import { AttackPosture } from '@common/attackResult';
+import { ICurrentAttack } from '@common/active-game';
+import { AttackPosture } from '@common/attack-result';
 import { Schema } from 'mongoose';
 
 export const currentAttackSchema = new Schema<ICurrentAttack>({

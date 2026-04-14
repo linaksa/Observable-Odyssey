@@ -1,7 +1,7 @@
 import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { ErrorCode } from '@common/error-codes';

@@ -1,4 +1,4 @@
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
