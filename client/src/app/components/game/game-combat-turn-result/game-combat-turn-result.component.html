@@ -78,7 +78,7 @@
 
     <div class="flex justify-between text-[#c8dcff] gap-4">
         <span>ATK adverse</span>
-        <span>{{ turnStats().totalAttackPoints }}</span>
+        <span>{{ opponentStats().totalAttackPoints }}</span>
     </div>
 
     <div class="flex justify-between text-[#c8dcff] gap-4">
@@ -89,9 +89,16 @@
     <div class="border-t border-[#2d5199] my-1"></div>
 
     <div class="flex justify-between font-bold text-red-400 gap-4">
-        <span>Dégâts subis</span>
+        <span>Dégâts reçus</span>
         <span>
             {{ receivedDamage() }}
+        </span>
+    </div>
+
+    <div class="flex justify-between font-bold text-green-400 gap-4">
+        <span>Dégâts infligés</span>
+        <span>
+            {{ dealtDamage() }}
         </span>
     </div>
 </div>
