@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy } from '@angular/core';
 import { GAME_COMBAT_OUTCOME_HOST_BINDINGS } from '@app/constants/component-host-bindings';
 import { GAME_COMBAT_OUTCOME_AUTO_CLOSE_MS } from '@app/constants/gameplay';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
@@ -11,7 +11,7 @@ import { CombatOutcome } from '@common/attack-result';
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: GAME_COMBAT_OUTCOME_HOST_BINDINGS,
 })
-export class GameCombatOutcomeComponent {
+export class GameCombatOutcomeComponent implements OnDestroy {
     private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
 
@@ -52,4 +52,9 @@ export class GameCombatOutcomeComponent {
         const playerName = this.localPlayerName();
         return playerName !== null && outcome.losers.includes(playerName);
     }
+
+    ngOnDestroy(): void {
+        this.activeGameService.combatOutcome.set(null);
+    }
+
 }
