@@ -1,4 +1,4 @@
-<div class="content min-h-screen">
+<div class="content min-h-screen xl:h-screen xl:min-h-0 xl:overflow-hidden">
     @if (isLoading()) {
         <div class="flex flex-1 justify-center items-center">
             <app-loading-overlay
@@ -16,18 +16,18 @@
         <app-nav-buttons textBack="Abandonner la partie" />
         <app-page-title title="Vue de jeu" />
 
-        <section class="flex flex-col justify-center gap-4 xl:flex-1 xl:min-h-0 xl:flex-row">
-            <app-game-action-panel class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:min-h-full" />
+        <section class="flex flex-col justify-center gap-4 xl:flex-1 xl:min-h-0 xl:flex-row xl:overflow-hidden">
+            <app-game-action-panel class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:h-full" />
 
-            <app-game-grid-panel class="flex min-h-0 flex-2 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:min-h-full" />
+            <app-game-grid-panel class="flex min-h-0 flex-2 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:h-full" />
 
-            <app-game-info-panel class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:min-h-full" />
+            <app-game-info-panel class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:h-full" />
         </section>
 
-        @if (activeGameService.combatOutcome() || isGameFinished) {
+        @if (visibleOutcome() || isGameFinished) {
             <div class="fixed inset-0 z-95 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm pointer-events-none">
                 <div class="flex flex-col max-w-full flex-wrap items-center justify-center gap-4">
-                    @if (activeGameService.combatOutcome()) {
+                    @if (visibleOutcome()) {
                         <div class="pointer-events-auto">
                             <app-game-combat-outcome />
                         </div>

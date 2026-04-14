@@ -1,10 +1,12 @@
 <div class="text-2xl text-white tracking-wider text-center">Actions</div>
 
-<div class="flex h-full flex-col gap-4">
-    <app-game-player-card class="block min-h-0 flex-1 w-full" [player]="localPlayer()" />
+<div class="flex min-h-0 flex-1 flex-col gap-4">
+    <div class="min-h-0 flex-1 overflow-y-auto">
+        <app-game-player-card class="block w-full" [player]="localPlayer()" />
+    </div>
 
     <app-game-action-controls
-        class="mt-auto"
+        class="shrink-0"
         [currentTurnPlayerName]="currentTurnPlayerName()"
         [showTurnTimer]="showTurnTimer"
         [turnTimeLeftSeconds]="turnTimeLeftSeconds()"

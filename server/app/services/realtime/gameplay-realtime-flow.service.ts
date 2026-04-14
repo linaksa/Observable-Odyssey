@@ -1,7 +1,6 @@
 import { GameplayCombatFlowService, ICombatFlowContext } from '@app/services/realtime/gameplay-combat-flow.service';
 import { GameplayFlagDecisionService } from '@app/services/realtime/gameplay-flag-decision.service';
 import { GameplayInteractionFlowService } from '@app/services/realtime/gameplay-interaction-flow.service';
-import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { GameplayMovementFlowService } from '@app/services/realtime/gameplay-movement-flow.service';
 import {
     IActionData,
@@ -22,7 +21,6 @@ export class GameplayRealtimeFlowService {
         private readonly gameplayInteractionFlowService: GameplayInteractionFlowService,
         private readonly gameplayCombatFlowService: GameplayCombatFlowService,
         private readonly gameplayFlagDecisionService: GameplayFlagDecisionService,
-        private readonly gameplayLogService: GameplayLogService,
     ) {}
 
     async handlePlayerMove(data: IPlayerMoveData, socket: Socket, namespace: Namespace): Promise<void> {
@@ -95,9 +93,5 @@ export class GameplayRealtimeFlowService {
 
     async emitGameEndedIfNeeded(gameId: string, namespace: Namespace): Promise<boolean> {
         return await this.gameplayMovementFlowService.emitGameEndedIfNeeded(gameId, namespace);
-    }
-
-    emitGameLogToRoom(gameId: string, message: string, namespace?: Namespace): void {
-        this.gameplayLogService.emitGameLogToRoom(gameId, message, namespace);
     }
 }

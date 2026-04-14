@@ -23,7 +23,7 @@
     </button>
 </div>
 
-<div class="min-h-0 flex-1 grow">
+<div class="flex min-h-0 flex-1 grow flex-col overflow-hidden">
     @if (activeTab() === journalTab.Chat) {
         <app-chat-panel class="flex h-full min-h-0 flex-1" />
     } @else {

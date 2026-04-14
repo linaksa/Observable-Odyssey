@@ -40,7 +40,7 @@ export class VirtualPlayerTurnFinalizerService {
             const endedGame = await this.activeGameService.getActiveGameById(gameId);
             const gameNamespace = this.socketService.getNamespace(Namespaces.Game);
             gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
-            this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult), gameNamespace);
+            this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);

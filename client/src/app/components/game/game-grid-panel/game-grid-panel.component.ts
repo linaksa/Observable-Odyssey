@@ -211,8 +211,11 @@ export class GameGridPanelComponent {
             return;
         }
 
-        const playerAtPosition = this.activeGameService.getPlayersAtPosition(hoveredCell.rowIndex, hoveredCell.colIndex)[0] ?? null;
-        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+        const rowIndex = hoveredCell.rowIndex;
+        const colIndex = hoveredCell.colIndex;
+        const playerAtPosition = this.activeGameService.getPlayersAtPosition(rowIndex, colIndex)[0] ?? null;
+        const item = this.getObjectAt(rowIndex, colIndex);
+        this.popupStateService.openTileInfo(cellType, item, playerAtPosition, this.activeGameService.getSpawnPointOwnerName(item));
         this.updateTileInfoTooltipPosition(event);
     }
 

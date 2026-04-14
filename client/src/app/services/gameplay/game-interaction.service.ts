@@ -70,13 +70,6 @@ export class GameInteractionService {
             return;
         }
 
-        if (this.shouldInteractWithWall(cellType, playerAtPosition, boardItem)) {
-            this.popupStateService.closeAllPopups();
-            this.activeGameService.toggleDoor(rowIndex, colIndex);
-            this.activeGameService.actionMode.set(false);
-            return;
-        }
-
         if (
             !playerAtPosition &&
             currentPlayer &&
@@ -118,7 +111,7 @@ export class GameInteractionService {
 
         if (this.activeGameService.isDebugMode() && this.isLocalPlayerTurn()) {
             if (!this.isTeleportableCell(rowIndex, colIndex, cellType, boardItem)) {
-                this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+                this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition, this.activeGameService.getSpawnPointOwnerName(boardItem));
                 return;
             }
             this.popupStateService.closeTileInfo();
@@ -133,7 +126,7 @@ export class GameInteractionService {
             return;
         }
 
-        this.popupStateService.openTileInfo(cellType, null, playerAtPosition);
+        this.popupStateService.openTileInfo(cellType, boardItem, playerAtPosition, this.activeGameService.getSpawnPointOwnerName(boardItem));
     }
 
     handleDocumentClick(event?: MouseEvent): void {
@@ -195,18 +188,6 @@ export class GameInteractionService {
         }
 
         return item?.itemType !== ItemType.Flag;
-    }
-
-    private shouldInteractWithWall(cellType: CellType, player: ICharacter | null, item: IItem | null): boolean {
-        if (!this.isLocalPlayerTurn()) {
-            return false;
-        }
-
-        if (cellType !== CellType.Wall) {
-            return false;
-        }
-
-        return !player && !item;
     }
 
     private isGridOrPopupClick(target: EventTarget | null): boolean {

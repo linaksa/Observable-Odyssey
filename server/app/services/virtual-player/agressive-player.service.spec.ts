@@ -73,15 +73,30 @@ describe('AgressivePlayerService', () => {
         const [, candidateTargets] = virtualPlayerUtilities.findClosestReachablePlayer.firstCall.args as [ICharacter, ICharacter[]];
         expect(candidateTargets).to.deep.equal([enemyCarrier]);
     });
+
+    it('should fall back safely when no closest reachable adverse player exists', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        bot.virtualPlayerProfile = VirtualPlayerProfile.Agressive;
+        const ally = createCharacter('Ally', Team.RED);
+        const game = createGame([bot, ally], GameType.Classic);
+
+        virtualPlayerUtilities.findClosestReachablePlayer.returns(null);
+
+        await service.play(bot, game);
+
+        expect(sanctuaryService.tryFallbackObjective.calledOnceWithExactly(bot, game)).to.equal(true);
+        expect(virtualPlayerUtilities.moveToPlayer.called).to.equal(false);
+        expect(gameplayActionService.combatManager.called).to.equal(false);
+    });
 });
 
-function createGame(players: ICharacter[]): IActiveGame {
+function createGame(players: ICharacter[], gameMode: GameType = GameType.Ctf): IActiveGame {
     return {
         _id: 'game-1',
         game: {
             gameTitle: 'ctf',
             description: '',
-            gameMode: GameType.Ctf,
+            gameMode,
             dateCreated: new Date('2026-01-01T00:00:00.000Z'),
             lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
             visibility: Visibility.Hidden,

@@ -1,5 +1,6 @@
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { isPositionAdjacentToSanctuary, isSanctuaryActive } from '@app/utils/sanctuary';
 import { IActiveGame } from '@common/active-game';
@@ -21,6 +22,7 @@ export class VirtualPlayerSanctuaryService {
         private readonly movementService: MovementService,
         private readonly virtualPlayerUtilities: VirtualPlayerUtilitiesService,
         private readonly gameplayActionService: GameplayActionService,
+        private readonly gameplayLogService: GameplayLogService,
         private readonly socketService: SocketService,
     ) {}
 
@@ -75,7 +77,7 @@ export class VirtualPlayerSanctuaryService {
             },
             null,
             namespace,
-            (gameId: string, message: string) => this.gameplayActionService.emitGameLogToRoom(gameId, message, namespace),
+            (gameId: string, message: string) => this.gameplayLogService.emitGameLogToRoom(gameId, message),
         );
 
         return true;

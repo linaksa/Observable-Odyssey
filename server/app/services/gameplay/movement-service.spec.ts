@@ -1,6 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
@@ -20,6 +21,9 @@ describe('MovementService', () => {
     let socketService: {
         getNamespace: sinon.SinonStub;
     };
+    let gameplayLogService: {
+        emitGameLogToRoom: sinon.SinonStub;
+    };
 
     beforeEach(() => {
         activeGameService = {
@@ -27,10 +31,15 @@ describe('MovementService', () => {
             saveActiveGameById: sinon.stub().resolves(),
         };
 
+        gameplayLogService = {
+            emitGameLogToRoom: sinon.stub(),
+        };
+
         movementService = new MovementService(
             activeGameService as unknown as ActiveGameService,
             new PositionValidatorService(),
             socketService as unknown as SocketService,
+            gameplayLogService as unknown as GameplayLogService,
         );
     });
 

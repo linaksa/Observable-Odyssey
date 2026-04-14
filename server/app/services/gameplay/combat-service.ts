@@ -42,7 +42,7 @@ export class CombatService {
         private readonly combatLogService: CombatLogService,
     ) {}
 
-    async applyCombatTurn(activeGameId: string): Promise<boolean> {
+    async applyCombatTurn(activeGameId: string): Promise<CombatOutcome | null> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
         if (!currentActiveGame) {
             throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
@@ -117,7 +117,7 @@ export class CombatService {
                 if (combatIsDone) {
                     const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
                     namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
-                    return resolve(true);
+                    return resolve(combatOutcome);
                 }
 
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
@@ -128,9 +128,9 @@ export class CombatService {
 
                 if (await this.combatTurnCanBeApplied(activeGameId)) {
                     this.turnService.clearCombatTimer(currentActiveGame);
-                    await this.applyCombatTurn(activeGameId);
+                    return resolve(await this.applyCombatTurn(activeGameId));
                 }
-                return resolve(false);
+                return resolve(null);
             }, turnFeedbackDuration);
         });
     }

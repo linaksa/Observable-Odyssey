@@ -35,7 +35,7 @@ import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
-import { ItemType } from '@common/items';
+import { IItem, ItemType } from '@common/items';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
 @Injectable({
@@ -234,6 +234,18 @@ export class ActiveGameService implements OnDestroy {
             this.activeGame?.players.filter(
                 (player) => !player.hasAbandoned && player.currentPosition.y === row && player.currentPosition.x === col,
             ) ?? []
+        );
+    }
+
+    getSpawnPointOwnerName(item: IItem | null): string | null {
+        if (!item || item.itemType !== ItemType.StartingPosition || !this.activeGame) {
+            return null;
+        }
+
+        return (
+            this.activeGame.players.find(
+                (player) => !player.hasAbandoned && player.startingPosition.x === item.x && player.startingPosition.y === item.y,
+            )?.name ?? null
         );
     }
 
