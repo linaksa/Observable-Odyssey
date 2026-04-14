@@ -5,6 +5,7 @@
  * - Keep tests focused on sanctuary click behavior.
  * - Verify used sanctuaries never open the popup again.
  * - Verify still-active sanctuaries keep opening normally.
+ * - Verify keyboard movement follows physical key positions instead of typed characters.
  */
 import { TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
@@ -21,7 +22,7 @@ import { GameInteractionService } from './game-interaction.service';
 
 type ActionModeSignalSpy = jasmine.Spy<() => boolean> & { set: jasmine.Spy };
 type ActiveGameServiceSpy = jasmine.SpyObj<
-    Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest'>
+    Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest' | 'tryMove'>
 > & {
     actionMode: ActionModeSignalSpy;
 };
@@ -32,6 +33,7 @@ type GamePopupStateServiceSpy = jasmine.SpyObj<Pick<GamePopupStateService, 'clos
 describe('GameInteractionService', () => {
     const SANCTUARY_ROW = 5;
     const SANCTUARY_COLUMN = 6;
+    const TOTAL_COLUMNS = 8;
 
     let service: GameInteractionService;
     let activeGameServiceSpy: ActiveGameServiceSpy;
@@ -45,8 +47,14 @@ describe('GameInteractionService', () => {
         currentPlayer = createPlayer();
 
         activeGameServiceSpy = jasmine.createSpyObj<
-            Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest'>
-        >('ActiveGameService', ['getCurrentPlayer', 'getPlayersAtPosition', 'interactSanctuary', 'pendingFlagRequest']) as ActiveGameServiceSpy;
+            Pick<ActiveGameService, 'getCurrentPlayer' | 'getPlayersAtPosition' | 'interactSanctuary' | 'pendingFlagRequest' | 'tryMove'>
+        >('ActiveGameService', [
+            'getCurrentPlayer',
+            'getPlayersAtPosition',
+            'interactSanctuary',
+            'pendingFlagRequest',
+            'tryMove',
+        ]) as ActiveGameServiceSpy;
         popupStateServiceSpy = jasmine.createSpyObj<Pick<GamePopupStateService, 'closeAllPopups' | 'openSanctuaryPopup' | 'closeSanctuaryPopup'>>(
             'GamePopupStateService',
             ['closeAllPopups', 'openSanctuaryPopup', 'closeSanctuaryPopup'],
@@ -61,6 +69,7 @@ describe('GameInteractionService', () => {
         (activeGameServiceSpy.getCurrentPlayer as jasmine.Spy).and.returnValue(currentPlayer);
         (activeGameServiceSpy.getPlayersAtPosition as jasmine.Spy).and.returnValue([]);
         (activeGameServiceSpy.interactSanctuary as jasmine.Spy).and.stub();
+        (activeGameServiceSpy.tryMove as jasmine.Spy).and.stub();
         (activeGameServiceSpy.pendingFlagRequest as jasmine.Spy).and.returnValue(null);
         (popupStateServiceSpy.closeAllPopups as jasmine.Spy).and.stub();
         (popupStateServiceSpy.openSanctuaryPopup as jasmine.Spy).and.stub();
@@ -146,6 +155,20 @@ describe('GameInteractionService', () => {
 
         expect(popupStateServiceSpy.closeAllPopups).not.toHaveBeenCalled();
         expect(popupStateServiceSpy.openSanctuaryPopup).not.toHaveBeenCalled();
+    });
+
+    it('should move with the physical W key', () => {
+        service.handleKeyboard(new KeyboardEvent('keydown', { code: 'KeyW', key: 'w' }), TOTAL_COLUMNS);
+
+        expect(popupStateServiceSpy.closeSanctuaryPopup).toHaveBeenCalled();
+        expect(activeGameServiceSpy.tryMove).toHaveBeenCalledWith(-1, 0, TOTAL_COLUMNS);
+    });
+
+    it('should move with the physical Z key on an AZERTY keyboard', () => {
+        service.handleKeyboard(new KeyboardEvent('keydown', { code: 'KeyW', key: 'z' }), TOTAL_COLUMNS);
+
+        expect(popupStateServiceSpy.closeSanctuaryPopup).toHaveBeenCalled();
+        expect(activeGameServiceSpy.tryMove).toHaveBeenCalledWith(-1, 0, TOTAL_COLUMNS);
     });
 
     function createPlayer(): ICharacter {

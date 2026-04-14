@@ -25,23 +25,23 @@ export class GameInteractionService {
         if (this.popupStateService.isSanctuaryPopupVisible) return;
         if (!this.isLocalPlayerTurn()) return;
 
-        switch (event.key.toLowerCase()) {
-            case 'w':
+        switch (event.code) {
+            case 'KeyW':
                 this.popupStateService.closeSanctuaryPopup();
                 this.activeGameService.tryMove(-1, 0, totalColumns);
                 break;
 
-            case 's':
+            case 'KeyS':
                 this.popupStateService.closeSanctuaryPopup();
                 this.activeGameService.tryMove(1, 0, totalColumns);
                 break;
 
-            case 'a':
+            case 'KeyA':
                 this.popupStateService.closeSanctuaryPopup();
                 this.activeGameService.tryMove(0, -1, totalColumns);
                 break;
 
-            case 'd':
+            case 'KeyD':
                 this.popupStateService.closeSanctuaryPopup();
                 this.activeGameService.tryMove(0, 1, totalColumns);
                 break;
