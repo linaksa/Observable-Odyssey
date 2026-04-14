@@ -22,6 +22,10 @@ const activeGameSchema = new Schema<IActiveGame>({
         type: Date,
         default: null,
     },
+    markedForDeletionAt: {
+        type: Date,
+        default: null,
+    },
     game: gameSchema,
     players: [characterSchema],
     turnOrder: {

@@ -20,4 +20,12 @@ describe('ActiveGame schema', () => {
         expect(ttlIndex).to.not.equal(undefined);
         expect(ttlIndex?.[1].expireAfterSeconds).to.equal(ACTIVE_GAME_TTL_SECONDS);
     });
+
+    it('should include markedForDeletionAt as a Date field with a default null value', () => {
+        const markedForDeletionPath = activeGameModel.schema.path('markedForDeletionAt');
+
+        expect(markedForDeletionPath).to.not.equal(undefined);
+        expect(markedForDeletionPath.instance).to.equal('Date');
+        expect(markedForDeletionPath.options.default).to.equal(null);
+    });
 });

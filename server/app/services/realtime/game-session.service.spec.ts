@@ -5,6 +5,7 @@
  * - Verify the surviving attacker still gets the end-turn check when the defender disconnects.
  */
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
@@ -28,6 +29,8 @@ describe('GameSessionService', () => {
     let activeGameService: {
         getActiveGameById: sinon.SinonStub;
         saveActiveGameById: sinon.SinonStub;
+        removePlayer: sinon.SinonStub;
+        deleteGameById: sinon.SinonStub;
     };
     let combatService: {
         cancelCombat: sinon.SinonStub;
@@ -44,6 +47,9 @@ describe('GameSessionService', () => {
     let activeGameListSocketsService: {
         emitJoinableGamesUpdated: sinon.SinonStub;
     };
+    let activeGameGarbageCollectorService: {
+        reevaluateFinishedGameMark: sinon.SinonStub;
+    };
     let gameplayActionService: {
         checkEndTurnIfNoMovesLeft: sinon.SinonStub;
     };
@@ -55,6 +61,8 @@ describe('GameSessionService', () => {
         activeGameService = {
             getActiveGameById: sinon.stub(),
             saveActiveGameById: sinon.stub().resolves(),
+            removePlayer: sinon.stub().resolves(),
+            deleteGameById: sinon.stub().resolves(),
         };
         combatService = {
             cancelCombat: sinon.stub(),
@@ -71,10 +79,14 @@ describe('GameSessionService', () => {
         activeGameListSocketsService = {
             emitJoinableGamesUpdated: sinon.stub(),
         };
+        activeGameGarbageCollectorService = {
+            reevaluateFinishedGameMark: sinon.stub().resolves(),
+        };
         gameplayActionService = {
             checkEndTurnIfNoMovesLeft: sinon.stub().resolves(),
         };
         Container.set(GameplayActionService, gameplayActionService as unknown as GameplayActionService);
+        Container.set(ActiveGameGarbageCollectorService, activeGameGarbageCollectorService as unknown as ActiveGameGarbageCollectorService);
 
         service = new GameSessionService(
             activeGameService as unknown as ActiveGameService,
@@ -148,6 +160,58 @@ describe('GameSessionService', () => {
         expect(endGameService.getEndGameLogMessage.calledOnce).to.equal(true);
         expect(emitGameLog.calledWithExactly(activeGame._id, 'Fin de partie: test. Joueurs restants: Alice.')).to.equal(true);
         expect(namespaceEmitStub.calledWithExactly(SocketEvent.GameEnded, { winner: 'Alice' })).to.equal(true);
+        expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.calledOnceWithExactly(activeGame._id)).to.equal(true);
+    });
+
+    it('reevaluates finished-game GC mark when a player explicitly abandons', async () => {
+        const handleActiveGameDisconnectStub = sinon.stub(service, 'handleActiveGameDisconnect').resolves();
+        const gameId = 'active-game-1';
+        const socket = {
+            id: 'socket-1',
+            leave: sinon.stub(),
+            data: {
+                playerNamesByGameId: { [gameId]: 'Alice' },
+            },
+        };
+
+        await service.handlePlayerAbandon({ gameId, playerId: 'Alice' }, namespace, socket as never, sinon.stub());
+
+        expect(handleActiveGameDisconnectStub.calledOnceWithExactly(gameId, 'Alice', namespace, sinon.match.func)).to.equal(true);
+        expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.calledOnceWithExactly(gameId)).to.equal(true);
+    });
+
+    it('reevaluates finished-game GC mark when a socket disconnects', async () => {
+        const gameId = 'active-game-1';
+        const socket = {
+            data: {
+                playerNamesByGameId: { [gameId]: 'Alice' },
+            },
+        };
+        const activeGame = createActiveGame(['Alice'], 0, null);
+        activeGame.turnOrder = [];
+        const handleWaitingRoomDisconnectStub = sinon.stub(service, 'handleWaitingRoomDisconnect').resolves();
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        await service.handleDisconnect(socket as never, namespace, sinon.stub());
+
+        expect(handleWaitingRoomDisconnectStub.calledOnceWithExactly(gameId, 'Alice', namespace)).to.equal(true);
+        expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.calledOnceWithExactly(gameId)).to.equal(true);
+    });
+
+    it('reevaluates finished-game GC mark when leaving a waiting room', async () => {
+        const gameId = 'active-game-1';
+        const socket = {
+            leave: sinon.stub(),
+            data: {
+                playerNamesByGameId: { [gameId]: 'Alice' },
+            },
+        };
+
+        await service.handleLeaveWaitingRoom({ gameId, playerId: 'Alice' }, namespace, socket as never);
+
+        expect(activeGameService.removePlayer.calledOnceWithExactly(gameId, 'Alice')).to.equal(true);
+        expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.calledOnceWithExactly(gameId)).to.equal(true);
+        expect(socket.leave.calledOnceWithExactly(gameId)).to.equal(true);
     });
 });
 

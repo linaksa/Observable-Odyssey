@@ -99,8 +99,7 @@ export class DebugSocketService {
         col: number,
     ): boolean {
         return players.some(
-            (player) =>
-                !player.hasAbandoned && player.name !== excludeName && player.currentPosition.y === row && player.currentPosition.x === col,
+            (player) => !player.hasAbandoned && player.name !== excludeName && player.currentPosition.y === row && player.currentPosition.x === col,
         );
     }
 }

@@ -1,11 +1,12 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { Service } from 'typedi';
+import { Container, Service } from 'typedi';
 
 @Service()
 export class VirtualPlayerTurnFinalizerService {
@@ -41,6 +42,7 @@ export class VirtualPlayerTurnFinalizerService {
             const gameNamespace = this.socketService.getNamespace(Namespaces.Game);
             gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
             this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
@@ -55,5 +57,9 @@ export class VirtualPlayerTurnFinalizerService {
         }
 
         await this.turnService.endTurn(gameId);
+    }
+
+    private getActiveGameGarbageCollectorService(): ActiveGameGarbageCollectorService {
+        return Container.get(ActiveGameGarbageCollectorService);
     }
 }

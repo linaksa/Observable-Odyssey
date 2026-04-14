@@ -1,4 +1,5 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
@@ -113,6 +114,7 @@ export class GameSessionService {
             const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
             namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
             emitGameLog(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
             // await this.activeGameService.deleteGameById(gameId);
         }
         if (combatOutcome && combatAttackerName) {
@@ -147,6 +149,7 @@ export class GameSessionService {
         }
         this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
         this.unregisterSocketFromGame(socket, gameId);
+        await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
     }
 
     async handlePlayerAbandon(
@@ -158,6 +161,7 @@ export class GameSessionService {
         const { gameId, playerId } = data;
         await this.handleActiveGameDisconnect(gameId, playerId, namespace, emitGameLog);
         this.unregisterSocketFromGame(socket, gameId);
+        await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
     }
 
     async handleDisconnect(socket: Socket, namespace: Namespace, emitGameLog: (gameId: string, message: string) => void): Promise<void> {
@@ -175,6 +179,8 @@ export class GameSessionService {
             } else {
                 await this.handleWaitingRoomDisconnect(gameId, playerId, namespace);
             }
+
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
         }
     }
 
@@ -192,6 +198,10 @@ export class GameSessionService {
 
     private getGameplayActionService(): GameplayActionService {
         return Container.get(GameplayActionService);
+    }
+
+    private getActiveGameGarbageCollectorService(): ActiveGameGarbageCollectorService {
+        return Container.get(ActiveGameGarbageCollectorService);
     }
 
     private async disableDebugModeIfOrganizerLeft(
