@@ -2,13 +2,13 @@
 // recheck this file after refactor to see if some functions can be moved to other services to take out some lines
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { GameService } from '@app/services/admin/game.service';
 import { FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX, FLAG_TRANSFER_SELF_REJECTED_TOAST } from '@app/constants/gameplay';
+import { PendingFlagRequest } from '@app/interfaces/pending-flag-request.interface';
+import { ToggleSignalRef } from '@app/interfaces/toggle-signal-ref.interface';
+import { GameService } from '@app/services/admin/game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { PendingFlagRequest } from '@app/interfaces/pending-flag-request.interface';
-import { ToggleSignalRef } from '@app/interfaces/toggle-signal-ref.interface';
 import { dijkstra } from '@app/utils/dijkstra';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
@@ -163,6 +163,7 @@ export class ActiveGameService implements OnDestroy {
 
     setActiveGame(id: string): void {
         this.isLoading.set(true);
+        this.gameHasEnded.set(false);
         this.setActiveGameSubscription?.unsubscribe();
 
         const subscription = this.gameService
