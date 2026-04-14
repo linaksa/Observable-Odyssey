@@ -3,15 +3,19 @@
     <app-page-title title="Statistiques de fin partie" />
 
     @if (activeGame) {
-        <div class="flex flex-row gap-4 h-[80vh]">
-            <div class="bg-[#233f74] p-4 rounded-lg grow">
+        <div class="flex flex-col xl:flex-row justify-center gap-4">
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-3 gap-4 p-4">
                 <app-final-player-list [activeGame]="activeGame"></app-final-player-list>
             </div>
-            <div class="bg-[#233f74] p-4 rounded-lg grow">
+
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
                 <app-global-stats [activeGame]="activeGame"></app-global-stats>
             </div>
-            <div class="flex flex-col justify-between basis-1/4 p-4 bg-[#233f74] rounded-lg">
-                <app-message-zone></app-message-zone>
+
+            <div class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4">
+                <div class="flex min-h-0 flex-none flex-col gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                    <app-message-zone></app-message-zone>
+                </div>
             </div>
         </div>
     }
