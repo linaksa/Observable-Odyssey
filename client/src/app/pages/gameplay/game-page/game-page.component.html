@@ -24,8 +24,22 @@
             <app-game-info-panel class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4 xl:min-h-full" />
         </section>
 
-        @if (isGameFinished) {
-            <app-game-ended />
+        @if (activeGameService.combatOutcome() || isGameFinished) {
+            <div class="fixed inset-0 z-95 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm pointer-events-none">
+                <div class="flex flex-col max-w-full flex-wrap items-center justify-center gap-4">
+                    @if (activeGameService.combatOutcome()) {
+                        <div class="pointer-events-auto">
+                            <app-game-combat-outcome />
+                        </div>
+                    }
+
+                    @if (isGameFinished) {
+                        <div class="pointer-events-auto">
+                            <app-game-ended />
+                        </div>
+                    }
+                </div>
+            </div>
         }
     }
 </div>

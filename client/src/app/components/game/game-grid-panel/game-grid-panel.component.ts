@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
 import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
-import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
 import { GameFlagTransferPopupComponent } from '@app/components/game/game-flag-transfer-popup/game-flag-transfer-popup.component';
 import { GameSanctuaryPopupComponent } from '@app/components/game/game-sanctuary-popup/game-sanctuary-popup.component';
@@ -35,7 +34,6 @@ import { IItem } from '@common/items';
         GameSanctuaryPopupComponent,
         GameSanctuaryOutcomeComponent,
         GameCombatPopupComponent,
-        GameCombatOutcomeComponent,
     ],
     templateUrl: './game-grid-panel.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,

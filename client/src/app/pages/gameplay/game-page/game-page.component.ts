@@ -7,6 +7,7 @@ import { PageTitleComponent } from '@app/components/common/page-title/page-title
 import { GAME_PAGE_HOST_BINDINGS } from '@app/constants/component-host-bindings';
 import { GAME_PAGE_RETURN_BUTTON_DELAY_MS } from '@app/constants/gameplay';
 import { GameActionPanelComponent } from '@app/components/game/game-action-panel/game-action-panel.component';
+import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
 import { GameInfoPanelComponent } from '@app/components/game/game-info-panel/game-info-panel.component';
@@ -24,6 +25,7 @@ import { Subscription } from 'rxjs';
         GameActionPanelComponent,
         GameGridPanelComponent,
         GameInfoPanelComponent,
+        GameCombatOutcomeComponent,
         GameEndedComponent,
         LoadingOverlayComponent,
     ],
