@@ -1,4 +1,4 @@
-import { AttackPosture } from './attackResult';
+import { AttackPosture } from './attack-result';
 import { CellType } from './board';
 import { Position } from './character';
 import { SanctuaryChoice } from './info';

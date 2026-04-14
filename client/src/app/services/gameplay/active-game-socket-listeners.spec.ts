@@ -17,14 +17,14 @@ import { ActiveGameSocketContext, registerActiveGameSocketListeners } from '@app
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
 import { SanctuaryChoice } from '@common/info';
 import { ItemType } from '@common/items';
-import { PlayerMovedResult } from '@common/playerMovedResult';
+import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
 import { IFlagTransferRejectedPayload, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';

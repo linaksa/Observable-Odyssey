@@ -1,5 +1,5 @@
 import { sanctuaryCoversCell } from '@app/utils/sanctuary';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Position } from '@common/character';
 import { ItemType } from '@common/items';

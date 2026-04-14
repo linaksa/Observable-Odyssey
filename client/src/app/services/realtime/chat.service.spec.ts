@@ -14,7 +14,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { IMessage, INewMessage } from '@common/message';

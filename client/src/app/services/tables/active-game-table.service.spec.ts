@@ -12,10 +12,10 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { TestBed } from '@angular/core/testing';
-import { IActiveGame } from '@common/activeGame';
+import { GameService } from '@app/services/admin/game.service';
+import { IActiveGame } from '@common/active-game';
 import { Subject } from 'rxjs/internal/Subject';
 import { ActiveGameTableService } from './active-game-table.service';
-import { GameService } from '@app/services/admin/game.service';
 import SpyObj = jasmine.SpyObj;
 
 describe('ActiveGameTableService', () => {

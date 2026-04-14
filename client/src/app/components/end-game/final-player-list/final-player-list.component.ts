@@ -2,7 +2,7 @@ import { Component, inject, Input, OnInit } from '@angular/core';
 import { OrderDirection, StatOrderArgs } from '@app/constants/stats';
 import { StatOrderService } from '@app/services/end/stat-order.service';
 import { buildAvatarAssetPath } from '@app/utils/avatar-path';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { HUNDRED_PERCENT } from '@common/constants';
 

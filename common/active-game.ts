@@ -1,4 +1,4 @@
-import { AttackPosture } from './attackResult';
+import { AttackPosture } from './attack-result';
 import { ICharacter } from './character';
 import { IGame } from './game';
 import { IMessage } from './message';

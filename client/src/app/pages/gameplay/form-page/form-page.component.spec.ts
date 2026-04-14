@@ -25,7 +25,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { ErrorCode } from '@common/error-codes';
 
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { IGame } from '@common/game';
 

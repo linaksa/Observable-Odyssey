@@ -1,7 +1,7 @@
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { ErrorCode } from '@common/error-codes';
-import { PlayerMovedResult } from '@common/playerMovedResult';
+import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
 import { IPlayerMoveData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';

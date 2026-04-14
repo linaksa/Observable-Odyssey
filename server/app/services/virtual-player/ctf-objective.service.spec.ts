@@ -1,7 +1,7 @@
-import { CtfObjectiveService } from '@app/services/virtual-player/ctf-objective.service';
 import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
+import { CtfObjectiveService } from '@app/services/virtual-player/ctf-objective.service';
 import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter, Team } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
