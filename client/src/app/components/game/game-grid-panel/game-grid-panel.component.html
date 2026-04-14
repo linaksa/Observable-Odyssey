@@ -1,4 +1,4 @@
-<div #panelContainer class="relative flex w-full flex-col gap-3 min-w-0 lg:h-full lg:min-h-0">
+<div #panelContainer class="relative flex w-full flex-col gap-3 min-w-0 xl:h-full xl:min-h-0">
     <div class="flex flex-row justify-center relative">
         <h2
             class="text-2xl text-white tracking-wider text-center"
@@ -20,10 +20,10 @@
         }
     </div>
 
-    <div id="grid-container" class="relative flex grow-0 w-full min-w-0 items-center justify-center overflow-hidden lg:grow">
-        <div class="relative flex w-full aspect-square items-center justify-center lg:h-full lg:aspect-auto">
+    <div id="grid-container" class="relative flex grow-0 w-full min-w-0 items-center justify-center overflow-hidden xl:grow">
+        <div class="relative flex w-full aspect-square items-center justify-center xl:h-full xl:aspect-auto">
             <app-game-grid
-                class="h-full w-full max-h-full max-w-full transition-[filter] duration-200"
+                class="flex h-full w-full max-h-full max-w-full items-center justify-center transition-[filter] duration-200"
                 [cells]="gameCells()"
                 [getObjectAt]="getObjectAt"
                 [highlightedTiles]="reachableTiles"

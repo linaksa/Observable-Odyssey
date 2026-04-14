@@ -11,7 +11,7 @@
                         (mouseleave)="hideDescriptionTooltip()"
                     >
                         <app-game-grid
-                            class="absolute inset-0 pointer-events-none"
+                            class="absolute inset-0 flex items-center justify-center pointer-events-none"
                             [cells]="game.board.cells"
                             [getObjectAt]="getBoardObjectAt(game)"
                             [useBackgroundRendering]="true"
