@@ -93,6 +93,7 @@ export class ActionService {
         if (!this.positionValidatorService.isAdjacent(currentPlayer.currentPosition, target.currentPosition)) return false;
         return true;
     }
+
     // calls canUseAction for each opponent to check if the attacker can use an action at least one of them
     async canUseActionAnyPlayer(activeGameId: string, attackerName: string): Promise<boolean> {
         const currentActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
@@ -139,7 +140,7 @@ export class ActionService {
         return this.combatService.resolveCombat(activeGame, attackerName, defenderName);
     }
 
-    async applyCombatTurn(gameId: string): Promise<boolean> {
+    async applyCombatTurn(gameId: string): Promise<CombatOutcome | null> {
         return await this.combatService.applyCombatTurn(gameId);
     }
 
