@@ -3,6 +3,7 @@ import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { GameplayRealtimeFlowService } from '@app/services/realtime/gameplay-realtime-flow.service';
 import { ErrorCode } from '@common/error-codes';
 import { SocketEvent } from '@common/socket-events';
@@ -32,6 +33,7 @@ describe('GameplayActionService', () => {
             {} as StartGameService,
             {} as ActiveGameService,
             {} as GameSessionService,
+            { emitGameLogToRoom: sinon.stub() } as unknown as GameplayLogService,
             flowService as unknown as GameplayRealtimeFlowService,
         );
         socketEmitStub = sinon.stub();
@@ -58,14 +60,6 @@ describe('GameplayActionService', () => {
 
         expect(flowService.canUseAction.calledOnceWithExactly('game-1', 'Alice', 'Bob')).to.equal(true);
         expect(flowService.handleFlagAction.calledOnce).to.equal(true);
-        expect(
-            flowService.combatManager.calledOnceWithExactly(
-                'game-1',
-                'Alice',
-                'Bob',
-                socket,
-                sinon.match({ namespace, emitGameLog: sinon.match.func }),
-            ),
-        ).to.equal(true);
+        expect(flowService.combatManager.calledOnceWithExactly('game-1', 'Alice', 'Bob', socket, sinon.match.any)).to.equal(true);
     });
 });

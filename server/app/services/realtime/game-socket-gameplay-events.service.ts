@@ -1,5 +1,6 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketEvent } from '@common/socket-events';
 import {
     IActionData,
@@ -17,6 +18,7 @@ import { Service } from 'typedi';
 export class GameSocketGameplayEventsService {
     constructor(
         private readonly gameplayActionService: GameplayActionService,
+        private readonly gameplayLogService: GameplayLogService,
         private readonly activeGameListSocketService: ActiveGameListSocketsService,
     ) {}
 
@@ -66,6 +68,7 @@ export class GameSocketGameplayEventsService {
     }
 
     private emitGameLog(namespace: Namespace, gameId: string, message: string): void {
-        this.gameplayActionService.emitGameLogToRoom(gameId, message, namespace);
+        void namespace;
+        this.gameplayLogService.emitGameLogToRoom(gameId, message);
     }
 }

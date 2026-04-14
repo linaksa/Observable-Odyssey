@@ -31,6 +31,9 @@ describe('TurnService', () => {
     };
     let emitSpy: sinon.SinonStub;
     let sanctuaryService: SanctuaryService;
+    let gameplayLogService: {
+        emitGameLogToRoom: sinon.SinonStub;
+    };
 
     beforeEach(() => {
         activeGameService = {
@@ -47,11 +50,15 @@ describe('TurnService', () => {
             getNamespace: sinon.stub().returns(namespaceSpy),
         };
         sanctuaryService = new SanctuaryService(activeGameService as unknown as ActiveGameService);
+        gameplayLogService = {
+            emitGameLogToRoom: sinon.stub(),
+        };
 
         turnService = new TurnService(
             socketService as unknown as SocketService,
             activeGameService as unknown as ActiveGameService,
             sanctuaryService as unknown as SanctuaryService,
+            gameplayLogService as unknown as GameplayLogService,
         );
     });
 

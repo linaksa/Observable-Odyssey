@@ -1,5 +1,6 @@
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { VirtualPlayerSanctuaryService } from '@app/services/virtual-player/virtual-player-sanctuary.service';
 import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
@@ -18,8 +19,8 @@ describe('VirtualPlayerSanctuaryService', () => {
     let virtualPlayerUtilities: { moveToPosition: sinon.SinonStub };
     let gameplayActionService: {
         handleSanctuaryInteraction: sinon.SinonStub;
-        emitGameLogToRoom: sinon.SinonStub;
     };
+    let gameplayLogService: { emitGameLogToRoom: sinon.SinonStub };
     let socketService: { getNamespace: sinon.SinonStub };
     let service: VirtualPlayerSanctuaryService;
 
@@ -28,14 +29,15 @@ describe('VirtualPlayerSanctuaryService', () => {
         virtualPlayerUtilities = { moveToPosition: sinon.stub().resolves(true) };
         gameplayActionService = {
             handleSanctuaryInteraction: sinon.stub().resolves(),
-            emitGameLogToRoom: sinon.stub(),
         };
+        gameplayLogService = { emitGameLogToRoom: sinon.stub() };
         socketService = { getNamespace: sinon.stub().returns({ to: sinon.stub().returns({ emit: sinon.stub() }) }) };
 
         service = new VirtualPlayerSanctuaryService(
             movementService as unknown as MovementService,
             virtualPlayerUtilities as unknown as VirtualPlayerUtilitiesService,
             gameplayActionService as unknown as GameplayActionService,
+            gameplayLogService as unknown as GameplayLogService,
             socketService as unknown as SocketService,
         );
     });

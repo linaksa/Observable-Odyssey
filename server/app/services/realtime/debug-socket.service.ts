@@ -1,9 +1,10 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { Position } from '@common/character';
 import { IItem, ItemType } from '@common/items';
 import { SocketEvent } from '@common/socket-events';
-import { IDebugTeleportData, IDebugToggleState, IGameLogPayload } from '@common/socket-payloads';
+import { IDebugTeleportData, IDebugToggleState } from '@common/socket-payloads';
 import { Socket } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -12,6 +13,7 @@ export class DebugSocketService {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly positionValidatorService: PositionValidatorService,
+        private readonly gameplayLogService: GameplayLogService,
     ) {}
 
     register(socket: Socket): void {
@@ -19,20 +21,21 @@ export class DebugSocketService {
             if (!activeGameId) {
                 return;
             }
+
             try {
                 const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
-
-                if (activeGame.organizerName === playerName) {
-                    activeGame.isDebugMode = !activeGame.isDebugMode;
-                    const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
-                    socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
-                    socket.emit(SocketEvent.DebugToggle, payload);
-                    const statusLabel = activeGame.isDebugMode ? 'activé' : 'désactivé';
-                    const logPayload = this.createGameLogPayload(`Mode debug ${statusLabel} par ${playerName}.`);
-                    socket.to(activeGameId).emit(SocketEvent.GameLog, logPayload);
-                    socket.emit(SocketEvent.GameLog, logPayload);
-                    await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
+                if (activeGame.organizerName !== playerName) {
+                    return;
                 }
+
+                activeGame.isDebugMode = !activeGame.isDebugMode;
+                const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
+                socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
+                socket.emit(SocketEvent.DebugToggle, payload);
+
+                const statusLabel = activeGame.isDebugMode ? 'activé' : 'désactivé';
+                this.gameplayLogService.emitGameLogToRoom(activeGameId, `Mode debug ${statusLabel} par ${playerName}.`);
+                await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
             } catch {
                 return;
             }
@@ -44,14 +47,13 @@ export class DebugSocketService {
                 const activeGame = await this.activeGameService.getActiveGameById(gameId);
 
                 if (!activeGame.isDebugMode) return;
-
                 if (activeGame.turnIsInPreparation) return;
 
                 // Only the current player can teleport
                 const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
                 if (currentPlayerName !== playerName) return;
 
-                const player = activeGame.players.find((p) => p.name === playerName);
+                const player = activeGame.players.find((currentPlayer) => currentPlayer.name === playerName);
                 if (!player) return;
 
                 const targetRow = target.y;
@@ -78,13 +80,6 @@ export class DebugSocketService {
         });
     }
 
-    private createGameLogPayload(message: string): IGameLogPayload {
-        return {
-            message,
-            postedAt: new Date().toISOString(),
-        };
-    }
-
     private cellHasItem(items: IItem[], row: number, col: number): boolean {
         return items.some((item) => {
             if (item.isCarried) return false;
@@ -92,6 +87,7 @@ export class DebugSocketService {
             if (item.itemType === ItemType.LifeSanctuary || item.itemType === ItemType.FightSanctuary) {
                 return row >= item.y && row <= item.y + 1 && col >= item.x && col <= item.x + 1;
             }
+
             return item.x === col && item.y === row;
         });
     }
@@ -102,6 +98,9 @@ export class DebugSocketService {
         row: number,
         col: number,
     ): boolean {
-        return players.some((p) => !p.hasAbandoned && p.name !== excludeName && p.currentPosition.y === row && p.currentPosition.x === col);
+        return players.some(
+            (player) =>
+                !player.hasAbandoned && player.name !== excludeName && player.currentPosition.y === row && player.currentPosition.x === col,
+        );
     }
 }
