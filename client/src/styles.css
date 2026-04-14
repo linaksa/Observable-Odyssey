@@ -58,6 +58,18 @@ h1.header {
     disabled:opacity-40 disabled:cursor-not-allowed;
 }
 
+.textarea {
+    @apply block items-center tracking-wider leading-tight justify-start h-64 min-h-12 px-4 py-2 cursor-text
+    bg-gray-100 text-black shadow-inner
+    border-2 border-t-gray-700 border-l-gray-700 border-b-white border-r-white
+    focus:outline-none focus:ring-2 focus:ring-blue-500
+    disabled:opacity-40 disabled:cursor-not-allowed;
+}
+
+.field-error {
+    @apply bg-red-100 border-t-red-800 border-l-red-800 border-b-red-300 border-r-red-300;
+}
+
 .select {
     @apply inline-flex items-center tracking-wider leading-tight px-4 py-2 cursor-pointer transition-colors
     bg-gray-100 text-black shadow-inner
@@ -67,16 +79,26 @@ h1.header {
     disabled:opacity-40 disabled:cursor-not-allowed;
 }
 
+.tile-error {
+    @apply border-2 border-red-500 bg-transparent;
+}
+
 @theme {
     --animate-blink: blink 1.1s step-end infinite;
     --animate-timer-drain: timer-drain 30s linear forwards;
 
     @keyframes blink {
-        50% { opacity: 0; }
+        50% {
+            opacity: 0;
+        }
     }
 
     @keyframes timer-drain {
-        from { width: 100%; }
-        to   { width: 0%;   }
+        from {
+            width: 100%;
+        }
+        to {
+            width: 0%;
+        }
     }
 }

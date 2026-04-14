@@ -1,50 +1,67 @@
-import { IActiveGame } from '@common/activeGame';
-import { CellType } from '@common/board';
-import { Position } from '@common/character';
-import { PRIX_EAU, PRIX_GLACE, PRIX_PORTE_GAZON } from '@common/constants';
-import { Service } from 'typedi';
+import { MovementStep } from '@app/constants/movement';
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { SocketService } from '@app/services/realtime/socket.service';
+import { IActiveGame } from '@common/activeGame';
+import { CellType } from '@common/board';
+import { ICharacter, Position } from '@common/character';
+import { GRASS_OR_DOOR_MOVEMENT_COST, ICE_MOVEMENT_COST, WATER_MOVEMENT_COST } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
+import { Namespaces } from '@common/namespaces';
+import { PlayerMovedResult } from '@common/playerMovedResult';
+import { SocketEvent } from '@common/socket-events';
+import { IGameLogPayload } from '@common/socket-payloads';
+import { StatusCodes } from 'http-status-codes';
+import { Service } from 'typedi';
 
 @Service()
 export class MovementService {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly positionValidatorService: PositionValidatorService,
+        private readonly socketService: SocketService,
     ) {}
 
     // Validates and applies the movement in a single DB access. Throws an error if invalid.
-    async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<{ newPosition: Position; movementLeft: number }> {
+    async movePlayer(playerName: string, activeGameId: string, newPosition: Position): Promise<PlayerMovedResult> {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
-        if (!activeGame) throw new Error(`activeGame introuvable pour id=${activeGameId}`);
+        if (!activeGame) throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         const player = activeGame.players.find((p) => p.name === playerName);
-        if (!player) throw new Error(`joueur '${playerName}' introuvable`);
+        if (!player) throw new AppError([ErrorCode.PlayerNotFound], StatusCodes.NOT_FOUND);
 
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (playerName !== currentPlayerName) {
-            throw new Error(`Ce n'est pas le tour de '${playerName}'`);
+            throw new AppError([ErrorCode.NotYourTurn], StatusCodes.BAD_REQUEST);
         }
         if (activeGame.turnIsInPreparation) {
-            throw new Error(`Le tour de '${playerName}' n'a pas encore commencé`);
+            throw new AppError([ErrorCode.TurnNotStarted], StatusCodes.BAD_REQUEST);
         }
         if (!this.positionValidatorService.isWalkable(newPosition, activeGame)) {
-            throw new Error('Position non marchable');
+            throw new AppError([ErrorCode.PositionNotWalkable], StatusCodes.BAD_REQUEST);
         }
-        if (!this.positionValidatorService.isAdjacent(player.positionGrille, newPosition)) {
-            throw new Error(`Position non adjacente: de ${JSON.stringify(player.positionGrille)} vers ${JSON.stringify(newPosition)}`);
+        if (!this.positionValidatorService.isAdjacent(player.currentPosition, newPosition)) {
+            throw new AppError([ErrorCode.PositionNotAdjacent], StatusCodes.BAD_REQUEST);
         }
         if (this.positionValidatorService.isOccupiedByPlayer(newPosition, activeGame)) {
-            throw new Error('Case occupée par un autre joueur');
+            throw new AppError([ErrorCode.PlayerOccupiesTarget], StatusCodes.BAD_REQUEST);
         }
         const price = this.getPriceTile(activeGame, newPosition);
         if (player.movementLeft < price) {
-            throw new Error(`Mouvements insuffisants (restant: ${player.movementLeft}, coût: ${price})`);
+            throw new AppError([ErrorCode.InsufficientMovement], StatusCodes.BAD_REQUEST);
         }
 
-        player.positionGrille = newPosition;
+        player.currentPosition = newPosition;
         player.movementLeft -= price;
+
+        const serializedPos = `${newPosition.x},${newPosition.y}`;
+        if (!player.visitedCells.includes(serializedPos)) {
+            player.visitedCells.push(serializedPos);
+        }
+
+        this.updateFlagPosition(activeGame, player);
         await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
-        return { newPosition, movementLeft: player.movementLeft };
+        return { playerId: player.name, newPosition, movementLeft: player.movementLeft };
     }
 
     // Returns all tiles reachable from the player's current position (budgeted BFS).
@@ -56,8 +73,8 @@ export class MovementService {
 
         const reachable: Position[] = [];
         const visited = new Set<string>();
-        const queue: { pos: Position; costSoFar: number }[] = [{ pos: player.positionGrille, costSoFar: 0 }];
-        visited.add(`${player.positionGrille.x},${player.positionGrille.y}`);
+        const queue: MovementStep[] = [{ pos: player.currentPosition, costSoFar: 0 }];
+        visited.add(`${player.currentPosition.x},${player.currentPosition.y}`);
 
         while (queue.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -85,6 +102,37 @@ export class MovementService {
         return reachable;
     }
 
+    private updateFlagPosition(activeGame: IActiveGame, player: ICharacter): void {
+        if (activeGame.game.gameMode !== 'ctf') return;
+        const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
+        if (!flag) return;
+
+        const playerCarriesFlag = activeGame.hasFlagId === player.name;
+        // if player has the flag, it moves with them
+        if (playerCarriesFlag) {
+            flag.x = player.currentPosition.x;
+            flag.y = player.currentPosition.y;
+            return;
+        }
+        // if player doesn't have the flag, check if they can pick it up
+        const flagIsOnGround = !activeGame.hasFlagId;
+        if (flagIsOnGround && player.currentPosition.x === flag.x && player.currentPosition.y === flag.y) {
+            activeGame.hasFlagId = player.name;
+            if (!activeGame.flagHolderHistory.includes(player.name)) {
+                activeGame.flagHolderHistory.push(player.name);
+            }
+            flag.isCarried = true;
+            flag.x = player.currentPosition.x;
+            flag.y = player.currentPosition.y;
+            const namespace = this.socketService.getNamespace(Namespaces.Game);
+            const gameId = activeGame._id.toString();
+            namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
+                playerName: player.name,
+            });
+            namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`${player.name} a ramassé un drapeau.`));
+        }
+    }
+
     private getPriceTile(activeGame: IActiveGame, pos: Position): number {
         // guard: ensure indices exist
         if (!this.isPositionWithinBounds(pos, activeGame)) return Infinity;
@@ -93,22 +141,29 @@ export class MovementService {
         switch (cell) {
             case CellType.OpenDoor:
             case CellType.Empty:
-                return PRIX_PORTE_GAZON;
+                return GRASS_OR_DOOR_MOVEMENT_COST;
             case CellType.Ice:
-                return PRIX_GLACE;
+                return ICE_MOVEMENT_COST;
             case CellType.Water:
-                return PRIX_EAU;
+                return WATER_MOVEMENT_COST;
             default:
                 return Infinity;
         }
     }
 
     private isPositionWithinBounds(pos: Position, activeGame: IActiveGame): boolean {
-        if (!activeGame || !activeGame.game || !activeGame.game.board || !Array.isArray(activeGame.game.board.cells)) return false;
+        if (!activeGame?.game?.board) return false;
         const rows = activeGame.game.board.cells.length;
         if (pos.y < 0 || pos.y >= rows) return false;
         const cols = activeGame.game.board.cells[pos.y].length;
         if (pos.x < 0 || pos.x >= cols) return false;
         return true;
+    }
+
+    private createGameLogPayload(message: string): IGameLogPayload {
+        return {
+            message,
+            postedAt: new Date().toISOString(),
+        };
     }
 }

@@ -47,7 +47,7 @@ describe('GameCreationDialogComponent', () => {
     it('should initialize form with default size and game info', () => {
         expect(component.form.get('dimension')?.value).toBe('small');
         expect(component.form.get('isCTF')?.value).toBeFalse();
-        expect(component.form.get('isCTF')?.disabled).toBeTrue();
+        expect(component.form.get('isCTF')?.disabled).toBeFalse();
         expect(component.numberOfPlayers).toBe('2');
         expect(component.displaySize).toBe('10x10');
     });
@@ -79,7 +79,7 @@ describe('GameCreationDialogComponent', () => {
         expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
 
-    it('should create classic game with selected dimension and navigate to edition page', () => {
+    it('should create classic game with selected dimension and navigate to editor page', () => {
         component.form.get('dimension')?.setValue('small');
 
         component.createGame();

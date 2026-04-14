@@ -5,6 +5,10 @@ export interface Position {
     y: number;
 }
 
+export enum Team {
+    RED = 'red',
+    BLUE = 'blue',
+}
 export enum VirtualPlayerProfile {
     Agressive = 'agressif',
     Defensive = 'defensive',
@@ -23,13 +27,23 @@ export interface ICharacter {
     movementLeft: number;
     victories: number;
     hasAbandoned: boolean;
-    positionDepart: Position;
-    positionGrille: Position;
+    startingPosition: Position;
+    currentPosition: Position;
+    team?: Team | null;
     virtualPlayerProfile?: VirtualPlayerProfile;
     fightSanctuaryUsed?: boolean;
     fightSanctuaryTurnsRemaining?: number;
     fightSanctuaryBonus?: number;
+
+    // The following properties record stats about the character
+    nCombats: number;
+    nVictories: number;
+    nDefeats: number;
+    totalDamageDealt: number;
+    totalDamageReceived: number;
+    visitedCells: string[]; // list of "x,y" strings representing visited cells;
 }
+
 export interface CharacterFormData {
     name: string;
     avatar: Avatar;

@@ -1,13 +1,13 @@
+import { EXPECTED_TERRAIN_USE } from '@app/constants/terrain-validator';
 import { CellType, IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { Service } from 'typedi';
 import { IBoardValidator } from './board-validator.interface';
 
-const EXPECTED_TERRAIN_USE = 0.5;
-
 @Service()
 export class TerrainValidator implements IBoardValidator {
-    validate(board: IBoard): string[] {
-        const errors: string[] = [];
+    validate(board: IBoard): ErrorCode[] {
+        const errors: ErrorCode[] = [];
         const gameSize = board.cells.length * board.cells[0].length;
 
         let occupiedCells = 0;
@@ -20,7 +20,7 @@ export class TerrainValidator implements IBoardValidator {
         }
 
         if (occupiedCells <= gameSize * EXPECTED_TERRAIN_USE) {
-            errors.push('Moins de 50% de la surface totale de la carte est couverte par des tuiles.');
+            errors.push(ErrorCode.BoardLowTerrainCoverage);
         }
 
         return errors;

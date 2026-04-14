@@ -1,32 +1,33 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BackNavigationComponent } from '@app/components/character-form/back-navigation/back-navigation.component';
 import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
-import { FormPageHeaderComponent } from '@app/components/character-form/form-page-header/form-page-header.component';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { ToastComponent } from '@app/components/common/toast/toast.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { CharacterFormData } from '@common/character';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-form-page',
-    imports: [FormPageHeaderComponent, BackNavigationComponent, CharacterFormComponent, ToastComponent],
+    imports: [NavButtonsComponent, PageTitleComponent, CharacterFormComponent, ToastComponent],
     templateUrl: './form-page.component.html',
 })
 export class FormPageComponent implements OnInit, OnDestroy {
-    characterFormService = inject(CharacterFormService);
-    toastService = inject(ToastService);
-    localPlayerService = inject(LocalPlayerService);
+    private readonly characterFormService = inject(CharacterFormService);
+    private readonly toastService = inject(ToastService);
+    private readonly localPlayerService = inject(LocalPlayerService);
 
-    router = inject(ActivatedRoute);
-    navigator = inject(Router);
-    gameId: string | null = null;
+    private readonly route = inject(ActivatedRoute);
+    private readonly navigator = inject(Router);
+    private gameId: string | null = null;
     private routeSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.routeSubscription = this.router.params.subscribe((params) => {
+        this.routeSubscription = this.route.params.subscribe((params) => {
             this.gameId = params.gameId || null;
         });
     }
@@ -52,7 +53,7 @@ export class FormPageComponent implements OnInit, OnDestroy {
             error: (response) => {
                 this.characterFormService.isLoading.set(false);
                 this.characterFormService.errors.set(
-                    response.originalError.error.message || 'Il y a eu un problème lors de la création du personnage.',
+                    mapErrorCodesToMessage(extractErrorCodes(response), 'Il y a eu un problème lors de la création du personnage.'),
                 );
             },
         });

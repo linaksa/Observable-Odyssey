@@ -1,37 +1,29 @@
-import { Router } from '@angular/router';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { SocketService } from '@app/services/realtime/socket.service';
-import { ToastService } from '@app/services/ui/toast.service';
+import { FLAG_TRANSFER_REJECTED_TOAST } from '@app/constants/gameplay';
+import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
+import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
-import { IActiveGame } from '@common/activeGame';
-import { CombatOutcome } from '@common/attackResult';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
+import { CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { ICharacter } from '@common/character';
+import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { IDoorToggledResult, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
+import {
+    IDoorToggledResult,
+    IFlagActionData,
+    IFlagPickedUpPayload,
+    IFlagTransferRejectedPayload,
+    IGameCanceledPayload,
+    IGameEndedPayload,
+    IPlayerIdPayload,
+    ISanctuaryInteractedResult,
+    ITurnPreparingPayload,
+    ITurnStartedPayload,
+} from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
-interface BooleanSignal {
-    update(updater: (current: boolean) => boolean): void;
-}
-
-export interface ActiveGameSocketContext {
-    socket: SocketService;
-    localPlayer: LocalPlayerService;
-    toastService: ToastService;
-    router: Router;
-    getActiveGame: () => IActiveGame | undefined;
-    setActiveGame: (activeGame: IActiveGame) => void;
-    getPlayerByName: (playerName: string) => ICharacter | undefined;
-    setCombatOutcome: (combatOutcome: CombatOutcome) => void;
-    currentPlayer: {
-        set(value: number): void;
-    };
-    hasChangedLocation: BooleanSignal;
-    hasAbandonned: BooleanSignal;
-    gameHasEnded: BooleanSignal;
-}
+export type { ActiveGameSocketContext };
 
 export function registerActiveGameSocketListeners(context: ActiveGameSocketContext): Subscription[] {
     return [
@@ -44,17 +36,20 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             const player = context.getPlayerByName(playerMove.playerId);
             if (!player) return;
 
-            player.positionGrille.x = playerMove.newPosition.x;
-            player.positionGrille.y = playerMove.newPosition.y;
+            player.currentPosition.x = playerMove.newPosition.x;
+            player.currentPosition.y = playerMove.newPosition.y;
             player.movementLeft = playerMove.movementLeft;
 
+            context.bumpActionStatsVersion();
             toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ player: string }>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
+        context.socket.on<ITurnPreparingPayload>(Namespaces.Game, SocketEvent.TurnPreparing).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
+
+            context.closeFlagActionRequestIfExpired(data.player);
 
             advanceSanctuaryCooldowns(activeGame.game.board.items);
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
@@ -70,6 +65,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 return;
             }
 
+            context.closeFlagActionRequestIfExpired(data.player);
+
             const index = activeGame.turnOrder.findIndex((playerName) => playerName === data.player);
             const currentPlayer = context.getPlayerByName(data.player);
 
@@ -78,6 +75,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 currentPlayer.actionsLeft = data.actionLeft;
                 activeGame.currentPlayerIndex = index;
                 context.currentPlayer.set(index);
+                context.bumpActionStatsVersion();
                 toggle(context.hasChangedLocation);
             }
         }),
@@ -106,6 +104,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             const player = context.getPlayerByName(data.playerId);
             if (player) {
                 player.actionsLeft = data.actionsLeft;
+                context.bumpActionStatsVersion();
             }
 
             toggle(context.hasChangedLocation);
@@ -117,7 +116,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             }
 
             const player = context.getPlayerByName(data.playerId);
-            if (!player) return;
+            if (!player) {
+                return;
+            }
 
             player.actionsLeft = data.actionsLeft;
             player.currentHealth = data.currentHealth;
@@ -133,13 +134,17 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
                 sanctuary.inactiveTurnsRemaining = data.sanctuaryInactiveTurnsRemaining;
             }
 
+            context.bumpActionStatsVersion();
+            context.setSanctuaryOutcome(data);
             toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ message: string }>(Namespaces.Game, SocketEvent.DoorToggleError).subscribe((data) => {
-            context.toastService.show(data.message);
+        context.socket.on<IErrorResponse>(Namespaces.Game, SocketEvent.DoorToggleError).subscribe((data) => {
+            context.toastService.show(mapErrorCodesToMessage(data.errorCodes, mapErrorCodeToMessage(ErrorCode.InvalidDoorTarget, 'Erreur inconnue')));
         }),
-        context.socket.on<{ message: string }>(Namespaces.Game, SocketEvent.SanctuaryInteractionError).subscribe((data) => {
-            context.toastService.show(data.message);
+        context.socket.on<IErrorResponse>(Namespaces.Game, SocketEvent.SanctuaryInteractionError).subscribe((data) => {
+            context.toastService.show(
+                mapErrorCodesToMessage(data.errorCodes, mapErrorCodeToMessage(ErrorCode.InvalidSanctuaryTarget, 'Erreur inconnue')),
+            );
         }),
 
         context.socket.on<IActiveGame>(Namespaces.Game, SocketEvent.CombatTurnStart).subscribe((data) => {
@@ -147,6 +152,8 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!activeGame) {
                 return;
             }
+
+            context.setRoundOutcome(null);
 
             context.setActiveGame(data);
         }),
@@ -159,22 +166,22 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             context.setCombatOutcome(combatOutcome);
             context.setActiveGame(combatOutcome.updatedActiveGame);
+            toggle(context.hasChangedLocation);
         }),
 
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
+        context.socket.on<IPlayerAbandonedGame>(Namespaces.Game, SocketEvent.PlayerAbandoned).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
             }
 
-            const player = context.getPlayerByName(data.playerId);
-            if (!player) return;
-
-            player.hasAbandoned = true;
-
-            toggle(context.hasAbandonned);
+            context.setActiveGame({
+                ...data.activeGame,
+                players: data.activeGame.players.map((player) => (player.name === data.playerName ? { ...player, hasAbandoned: true } : player)),
+            });
+            toggle(context.hasAbandoned);
         }),
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
+        context.socket.on<IPlayerIdPayload>(Namespaces.Game, SocketEvent.PlayerKicked).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -191,7 +198,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             context.toastService.show('Vous avez été expulsé de la partie');
             context.router.navigate(['/']);
         }),
-        context.socket.on<{ playerId: string }>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
+        context.socket.on<IPlayerIdPayload>(Namespaces.Game, SocketEvent.LeftWaitingRoom).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -201,8 +208,9 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             if (!player) return;
 
             activeGame.players = activeGame.players.filter((p: ICharacter) => p.name !== data.playerId);
+            toggle(context.hasChangedLocation);
         }),
-        context.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
+        context.socket.on<IGameEndedPayload>(Namespaces.Game, SocketEvent.GameEnded).subscribe((data) => {
             const activeGame = context.getActiveGame();
             if (!activeGame) {
                 return;
@@ -210,17 +218,79 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             activeGame.winner = data.winner;
             activeGame.isFinished = true;
-
-            toggle(context.gameHasEnded);
+            context.clearPendingFlagActionRequest();
+            context.gameHasEnded.update(() => true);
         }),
-        context.socket.on<{ winner: string }>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
+        context.socket.on<IGameCanceledPayload>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
             context.localPlayer.clear();
             context.toastService.show("L'organiseur a annulé la partie.");
             context.router.navigate(['/home']);
+        }),
+
+        context.socket.on<CombatTurnOutcome>(Namespaces.Game, SocketEvent.CombatTurnApplied).subscribe((roundCombatOutcome) => {
+            context.setRoundOutcome(roundCombatOutcome);
+        }),
+
+        context.socket.on<IFlagPickedUpPayload>(Namespaces.Game, SocketEvent.FlagPickedUp).subscribe((data) => {
+            const activeGame = context.getActiveGame();
+            if (!activeGame) {
+                return;
+            }
+
+            const player = context.getPlayerByName(data.playerName);
+            if (!player) return;
+
+            activeGame.hasFlagId = player.name;
+            const flag = activeGame.game.board.items.find((item) => item.itemType === 'flag');
+            if (flag) {
+                flag.isCarried = true;
+            }
+
+            if (data.requesterName && data.requesterActionsLeft !== undefined) {
+                const requester = context.getPlayerByName(data.requesterName);
+                if (requester) {
+                    requester.actionsLeft = data.requesterActionsLeft;
+                    context.bumpActionStatsVersion();
+                }
+            }
+
+            context.clearPendingFlagActionRequest();
+            toggle(context.hasChangedLocation);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.TakeFlag).subscribe((data) => {
+            handleFlagActionPrompt(data, SocketEvent.TakeFlag, context);
+        }),
+        context.socket.on<IFlagActionData>(Namespaces.Game, SocketEvent.GiveFlag).subscribe((data) => {
+            handleFlagActionPrompt(data, SocketEvent.GiveFlag, context);
+        }),
+        context.socket.on<IFlagTransferRejectedPayload>(Namespaces.Game, SocketEvent.FlagTransferRejected).subscribe((data) => {
+            if (!context.hasPendingFlagActionRequest()) {
+                return;
+            }
+
+            context.clearPendingFlagActionRequest();
+            if (context.localPlayer.getLocalPlayer()?.name === data.requesterName) {
+                context.toastService.show(FLAG_TRANSFER_REJECTED_TOAST);
+            }
         }),
     ];
 }
 
 function toggle(signalRef: BooleanSignal): void {
     signalRef.update((current) => !current);
+}
+
+function handleFlagActionPrompt(
+    data: IFlagActionData,
+    socketEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag,
+    context: ActiveGameSocketContext,
+): void {
+    const requester = context.getPlayerByName(data.currentPlayerName);
+    if (requester) {
+        requester.actionsLeft = data.currentPlayerActionsLeft;
+        context.bumpActionStatsVersion();
+        toggle(context.hasChangedLocation);
+    }
+
+    context.handleFlagActionRequest(data, socketEvent);
 }

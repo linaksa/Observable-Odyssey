@@ -22,26 +22,27 @@ export const SIX_SIDED_DICE_MAX = 6;
 export const FOUR_SIDED_DICE_MAX = 4;
 
 export const POSTURE_BONUS = 2;
-export const ICE_CELL_MALUS = 2;
+export const ICE_CELL_MALUS = -2;
 
-export const TEMPS_PREPA_TOUR = 3000; // 3 secondes
-export const TEMPS_TOUR = 30000; // 30 secondes
-export const TEMPS_COMBAT = 10000; // 10 secondes
+export const TURN_PREPARATION_TIME_MS = 3000; // 3 seconds
+export const TURN_TIME_MS = 30000; // 30 seconds
+export const COMBAT_TIME_MS = 10000; // 10 seconds
 export const MILLISECONDS_PER_SECOND = 1000;
 export const COUNTDOWN_TICK_INTERVAL_MS = 250;
 export const COUNTDOWN_MIN_REMAINING_MS = 0;
 export const VICTORIES_TO_WIN = 3;
-export const ALL_EXCEPT_ONE_PLAYER_ABANDONED = 1;
+export const MAX_PLAYER_ACTIONS = 1;
+export const MIN_PLAYER_COUNT = 1;
 export const MAX_TITLE_LENGTH = 50;
 export const MAX_DESCRIPTION_LENGTH = 200;
 export const BAD_DESCRIPTION_LENGTH = 201;
 export const BAD_TITLE_LENGTH = 51;
 export const PLAYER_NAME_MIN_LENGTH = 3;
 export const PLAYER_NAME_MAX_LENGTH = 20;
-export const PRIX_PORTE_GAZON = 1;
-export const PRIX_GLACE = 0;
-export const PRIX_EAU = 2;
-export const TEMPS_ECRAN_FIN_PARTIE = 5000;
+export const GRASS_OR_DOOR_MOVEMENT_COST = 1;
+export const ICE_MOVEMENT_COST = 0;
+export const WATER_MOVEMENT_COST = 2;
+export const END_GAME_SCREEN_DURATION_MS = 5000;
 export const DEFAULT_PLAYER_LIFE_POINTS = 6;
 export const DEFAULT_PLAYER_SPEED_POINTS = 6;
 export const DEFAULT_PLAYER_ATTACK_POINTS = 4;
@@ -54,3 +55,8 @@ export enum GameSize {
     Mid = 225,
     Large = 400,
 }
+
+export const COMBAT_TURN_FEEDBACK_DURATION_MS = 5000;
+export const SECONDS_PER_MINUTE = 60;
+export const HUNDRED_PERCENT = 100;
+export const SANCTUARY_COOLDOWN_TURN_STEPS = 3;

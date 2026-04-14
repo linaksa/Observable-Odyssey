@@ -1,10 +1,10 @@
-import { expect } from 'chai';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
+import { expect } from 'chai';
 
 describe('PositionValidatorService', () => {
     let service: PositionValidatorService;
@@ -27,6 +27,19 @@ describe('PositionValidatorService', () => {
         expect(service.isValidRespawnTile({ x: 0, y: 0 }, activeGame)).to.equal(false);
         expect(service.isValidRespawnTile({ x: 1, y: 1 }, activeGame)).to.equal(false);
         expect(service.isValidRespawnTile({ x: 2, y: 2 }, activeGame)).to.equal(false);
+    });
+
+    it('should ignore abandoned players when checking occupancy', () => {
+        const activeGame = createActiveGame();
+        activeGame.players.push({
+            ...activeGame.players[0],
+            name: 'Bob',
+            hasAbandoned: true,
+            currentPosition: { x: 2, y: 2 },
+            startingPosition: { x: 2, y: 2 },
+        });
+
+        expect(service.isOccupiedByPlayer({ x: 2, y: 2 }, activeGame)).to.equal(false);
     });
 });
 
@@ -64,8 +77,15 @@ function createActiveGame(): IActiveGame {
                 movementLeft: 4,
                 victories: 0,
                 hasAbandoned: false,
-                positionDepart: { x: 0, y: 0 },
-                positionGrille: { x: 0, y: 0 },
+                startingPosition: { x: 0, y: 0 },
+                currentPosition: { x: 0, y: 0 },
+
+                nCombats: 0,
+                nVictories: 0,
+                nDefeats: 0,
+                totalDamageDealt: 0,
+                totalDamageReceived: 0,
+                visitedCells: [] as string[],
             },
         ],
         currentPlayerIndex: 0,
@@ -79,6 +99,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: '',
     };
 }
 

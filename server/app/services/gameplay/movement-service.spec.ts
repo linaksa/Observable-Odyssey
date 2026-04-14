@@ -1,20 +1,24 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
+import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
-import { ICharacter } from '@common/character';
 import { ItemType } from '@common/items';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 
 describe('MovementService', () => {
     let movementService: MovementService;
     let activeGameService: {
         getActiveGameById: sinon.SinonStub;
         saveActiveGameById: sinon.SinonStub;
+    };
+    let socketService: {
+        getNamespace: sinon.SinonStub;
     };
 
     beforeEach(() => {
@@ -23,7 +27,11 @@ describe('MovementService', () => {
             saveActiveGameById: sinon.stub().resolves(),
         };
 
-        movementService = new MovementService(activeGameService as unknown as ActiveGameService, new PositionValidatorService());
+        movementService = new MovementService(
+            activeGameService as unknown as ActiveGameService,
+            new PositionValidatorService(),
+            socketService as unknown as SocketService,
+        );
     });
 
     afterEach(() => {
@@ -37,10 +45,11 @@ describe('MovementService', () => {
         const result = await movementService.movePlayer('Alice', activeGame._id, { x: 2, y: 1 });
 
         expect(result).to.deep.equal({
+            playerId: 'Alice',
             newPosition: { x: 2, y: 1 },
             movementLeft: 0,
         });
-        expect(activeGame.players[0].positionGrille).to.deep.equal({ x: 2, y: 1 });
+        expect(activeGame.players[0].currentPosition).to.deep.equal({ x: 2, y: 1 });
         expect(activeGame.players[0].movementLeft).to.equal(0);
         expect(activeGameService.saveActiveGameById.calledOnceWithExactly(activeGame._id, activeGame)).to.equal(true);
     });
@@ -60,7 +69,7 @@ describe('MovementService', () => {
 
     it('should reject moving onto a sanctuary tile', async () => {
         const activeGame = createActiveGame();
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGame.players[0].movementLeft = 1;
         activeGame.game.board.items = [createSanctuary(1, 1)];
         activeGameService.getActiveGameById.resolves(activeGame);
@@ -71,6 +80,30 @@ describe('MovementService', () => {
         } catch (error) {
             expect((error as Error).message).to.equal('Position non marchable');
         }
+    });
+
+    it('should allow moving onto a tile occupied only by an abandoned player', async () => {
+        const activeGame = createActiveGame();
+        activeGame.players = [
+            {
+                ...activeGame.players[0],
+                name: 'Alice',
+                currentPosition: { x: 0, y: 1 },
+                movementLeft: 1,
+            },
+            {
+                ...createCharacter('Bob'),
+                hasAbandoned: true,
+                currentPosition: { x: 1, y: 1 },
+                startingPosition: { x: 1, y: 1 },
+            },
+        ];
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await movementService.movePlayer('Alice', activeGame._id, { x: 1, y: 1 });
+
+        expect(result.newPosition).to.deep.equal({ x: 1, y: 1 });
+        expect(activeGame.players[0].currentPosition).to.deep.equal({ x: 1, y: 1 });
     });
 
     it('should list open doors as reachable and exclude closed doors', async () => {
@@ -115,6 +148,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: null,
     };
 }
 
@@ -133,8 +167,15 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 1,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 1, y: 1 },
-        positionGrille: { x: 1, y: 1 },
+        startingPosition: { x: 1, y: 1 },
+        currentPosition: { x: 1, y: 1 },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 }
 

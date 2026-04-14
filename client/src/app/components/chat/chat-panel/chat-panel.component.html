@@ -1,0 +1,39 @@
+<div
+    class="flex h-120 min-h-120 max-h-120 w-full min-w-0 flex-col gap-4 overflow-hidden rounded-lg border border-transparent lg:h-full lg:min-h-0 lg:max-h-none"
+    [class.border-2]="invalidSubmission()"
+    [class.border-red-500]="invalidSubmission()"
+>
+    <div class="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white">
+        <p class="text-xs uppercase tracking-widest text-white/60">Joueur connecté</p>
+        <p class="text-lg font-semibold tracking-wider">{{ localPlayerService.getLocalPlayer()?.name }}</p>
+    </div>
+
+    <div
+        #scrollContainer
+        (scroll)="onScroll()"
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
+        aria-label="Messages du clavardage"
+        aria-live="polite"
+        role="log"
+    >
+        @for (message of activeGameService.chatMessages(); track $index) {
+            <app-text-message [message]="message" [isSelf]="localPlayerService.getLocalPlayer()?.name == message.author"></app-text-message>
+        }
+    </div>
+
+    <form [formGroup]="messageForm" (ngSubmit)="onNewMessage()" class="rounded-lg border border-white/10 bg-white/5 p-3">
+        <div class="flex items-end gap-3">
+            <input
+                class="input w-full h-12"
+                type="text"
+                formControlName="message"
+                [maxlength]="maxMessageLength"
+                data-chat-message-input
+                placeholder="Message..."
+                aria-label="Écrire un message"
+            />
+
+            <button class="btn w-36" type="submit">Envoyer</button>
+        </div>
+    </form>
+</div>

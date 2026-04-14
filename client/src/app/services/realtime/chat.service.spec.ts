@@ -12,6 +12,8 @@
  * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
  */
 import { TestBed } from '@angular/core/testing';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -19,22 +21,30 @@ import { IMessage, INewMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subject } from 'rxjs';
-import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ChatService } from './chat.service';
-import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from './socket.service';
 
 describe('ChatService', () => {
     let service: ChatService;
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
     let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
-    let activeGameServiceStub: { activeGame: IActiveGame };
+    let activeGameServiceStub: {
+        activeGame: IActiveGame;
+        setChatMessages: (messages: IMessage[]) => void;
+        appendChatMessage: (message: IMessage) => void;
+    };
 
     beforeEach(() => {
         socketServiceSpy = jasmine.createSpyObj<SocketService>('SocketService', ['connect', 'emit', 'on']);
         localPlayerServiceSpy = jasmine.createSpyObj<LocalPlayerService>('LocalPlayerService', ['getLocalPlayer']);
         activeGameServiceStub = {
             activeGame: createActiveGame('active-game-1'),
+            setChatMessages: (messages: IMessage[]) => {
+                activeGameServiceStub.activeGame.messages = [...messages];
+            },
+            appendChatMessage: (message: IMessage) => {
+                activeGameServiceStub.activeGame.messages = [...activeGameServiceStub.activeGame.messages, message];
+            },
         };
 
         localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
@@ -160,7 +170,14 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }

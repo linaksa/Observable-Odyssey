@@ -2,24 +2,37 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
-import { TEMPS_PREPA_TOUR, TEMPS_TOUR } from '@common/constants';
+import { MAX_PLAYER_ACTIONS, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IGameLogPayload, ITurnStartedPayload } from '@common/socket-payloads';
+import { IGameLogPayload, ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 import { SanctuaryService } from './sanctuary-service';
+
+export type VirtualPlayerTurnHandler = (player: ICharacter, activeGame: IActiveGame) => Promise<void>;
+export type TurnEndedHandler = (gameId: string) => Promise<void> | void;
 
 @Service()
 export class TurnService {
     private preparationTimers: Map<string, NodeJS.Timeout> = new Map();
     private turnTimers: Map<string, NodeJS.Timeout> = new Map();
     private combatTimers: Map<string, NodeJS.Timeout> = new Map();
+    private virtualPlayerTurnHandler?: VirtualPlayerTurnHandler;
+    private turnEndedHandler?: TurnEndedHandler;
 
     constructor(
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
         private readonly sanctuaryService: SanctuaryService,
     ) {}
+
+    setVirtualPlayerTurnHandler(handler: VirtualPlayerTurnHandler): void {
+        this.virtualPlayerTurnHandler = handler;
+    }
+
+    setTurnEndedHandler(handler: TurnEndedHandler): void {
+        this.turnEndedHandler = handler;
+    }
 
     // logic for the 3-second delay before the start of a turn
     async startTurn(gameId: string) {
@@ -48,14 +61,15 @@ export class TurnService {
 
         // notify the room
         const namespace = this.socketService.getNamespace(Namespaces.Game);
-        namespace.to(gameId).emit(SocketEvent.TurnPreparing, {
+        const turnPreparingPayload: ITurnPreparingPayload = {
             player: player.name,
-        });
+        };
+        namespace.to(gameId).emit(SocketEvent.TurnPreparing, turnPreparingPayload);
 
         const preparationTimer = setTimeout(() => {
             this.preparationTimers.delete(gameId);
             this.beginTurn(gameId);
-        }, TEMPS_PREPA_TOUR);
+        }, TURN_PREPARATION_TIME_MS);
 
         this.preparationTimers.set(gameId, preparationTimer);
     }
@@ -71,6 +85,7 @@ export class TurnService {
 
         activeGame.turnIsInPreparation = false;
         activeGame.turnStartTimeStamp = Date.now();
+        activeGame.totalTurnCount = (activeGame.totalTurnCount ?? 0) + 1;
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
@@ -87,17 +102,17 @@ export class TurnService {
             timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
-        namespace.to(gameId).emit(SocketEvent.PlayerTurnAlert, {
-            log: `Debut du tour de ${player.name}.`,
-        });
         namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`Debut du tour de ${player.name}.`));
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
             this.endTurn(gameId); // if the player does not play within 30 seconds, move to the next turn
-        }, TEMPS_TOUR);
+        }, TURN_TIME_MS);
 
         this.turnTimers.set(gameId, timer);
+        if (player.virtualPlayerProfile && this.virtualPlayerTurnHandler) {
+            await this.virtualPlayerTurnHandler(player, activeGame);
+        }
     }
 
     // end the turn and move to the next player
@@ -108,6 +123,10 @@ export class TurnService {
         // Always clear timers, even if the game is already finished
         this.clearTimerFromMap(activeGame, this.turnTimers);
         this.clearTimerFromMap(activeGame, this.combatTimers);
+
+        if (this.turnEndedHandler) {
+            await this.turnEndedHandler(gameId);
+        }
 
         if (activeGame.isFinished) {
             return;
@@ -138,7 +157,7 @@ export class TurnService {
 
         if (nextPlayer) {
             nextPlayer.movementLeft = nextPlayer.rapidityPoints;
-            nextPlayer.actionsLeft = 1;
+            nextPlayer.actionsLeft = MAX_PLAYER_ACTIONS;
         }
 
         await this.activeGameService.saveActiveGameById(gameId, activeGame);
@@ -178,7 +197,7 @@ export class TurnService {
         this.turnTimers.set(stringGameId, timer);
     }
 
-    private getCurrentPlayer(activeGame: { players: ICharacter[]; currentPlayerIndex: number; turnOrder: string[] }): ICharacter | undefined {
+    private getCurrentPlayer(activeGame: IActiveGame): ICharacter | undefined {
         const playerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (!playerName) {
             return undefined;
@@ -210,7 +229,7 @@ export class TurnService {
             return 0;
         }
 
-        const secondsRemaining = TEMPS_TOUR - (Date.now() - activeGame.turnStartTimeStamp);
+        const secondsRemaining = TURN_TIME_MS - (Date.now() - activeGame.turnStartTimeStamp);
 
         clearTimeout(timer);
         map.delete(stringGameId);

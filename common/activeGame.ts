@@ -6,6 +6,9 @@ import { IMessage } from './message';
 export interface IActiveGame {
     _id: string;
     game: IGame;
+    createdAt?: Date;
+    startedAt?: Date | null;
+    endedAt?: Date | null;
     players: ICharacter[];
     currentPlayerIndex: number;
     turnOrder: string[]; // List of player names in turn order
@@ -16,7 +19,13 @@ export interface IActiveGame {
     organizerName: string;
     maxPlayerCount: number;
     turnIsInPreparation: boolean;
+    hasFlagId: string | null;
     turnStartTimeStamp: number;
+
+    totalTurnCount?: number;
+    usedSanctuaries?: string[];
+    manipulatedDoors?: string[];
+    flagHolderHistory?: string[];
 
     currentAttack: ICurrentAttack | null;
 }
@@ -35,4 +44,9 @@ export interface ICurrentAttack {
 export interface IActiveGameWithPlayer {
     activeGame: IActiveGame;
     player: ICharacter;
+}
+
+export interface IPlayerAbandonedGame {
+    playerName: string;
+    activeGame: IActiveGame;
 }

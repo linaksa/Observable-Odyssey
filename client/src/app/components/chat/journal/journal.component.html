@@ -1,40 +1,29 @@
-<div class="flex flex-col gap-2 min-w-75">
-    <div class="flex gap-2">
-        <button
-            type="button"
-            class="btn flex-1"
-            [class.bg-white]="activeTab === journalTab.Chat"
-            [class.text-black]="activeTab === journalTab.Chat"
-            (click)="setActiveTab(journalTab.Chat)"
-        >
-            {{ journalTabLabels[journalTab.Chat] }}
-        </button>
-        <button
-            type="button"
-            class="btn flex-1"
-            [class.bg-white]="activeTab === journalTab.Journal"
-            [class.text-black]="activeTab === journalTab.Journal"
-            (click)="setActiveTab(journalTab.Journal)"
-        >
-            {{ journalTabLabels[journalTab.Journal] }}
-        </button>
+<div
+    class="flex h-120 min-h-120 max-h-120 w-full min-w-0 flex-col gap-4 overflow-hidden rounded-lg border border-transparent text-white lg:h-full lg:min-h-0 lg:max-h-none"
+>
+    <div class="rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white">
+        <p class="text-xs uppercase tracking-widest text-white/60">Journal de partie · {{ gameLogs.length }} logs</p>
+        <p class="text-lg font-semibold tracking-wider">Historique</p>
     </div>
 
-    @if (activeTab === journalTab.Chat) {
-        <app-chat-panel class="flex h-100"></app-chat-panel>
-    } @else {
-        <div class="bg-gray-100 flex h-100 flex-col rounded-sm p-2 gap-2 min-w-75">
-            <div #journalScrollContainer class="flex flex-col overflow-y-auto h-full gap-2">
-                @if (gameLogs.length === 0) {
-                    <div class="text-sm text-gray-700">{{ journalEmptyMessage }}</div>
-                }
-                @for (log of gameLogs; track $index) {
-                    <div class="rounded-md bg-gray-200 p-2 text-sm text-gray-800">
-                        <div class="font-medium">{{ log.postedAt | date: journalDateFormat }}</div>
-                        <div>{{ log.message }}</div>
-                    </div>
-                }
+    <div
+        #journalScrollContainer
+        (scroll)="onScroll()"
+        class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-white/10 bg-black/10 p-3"
+        aria-label="Journal de partie"
+        aria-live="polite"
+        role="log"
+    >
+        @if (gameLogs.length === 0) {
+            <div class="rounded-lg border border-dashed border-white/10 bg-white/5 p-3 text-sm text-white/60">
+                {{ journalEmptyMessage }}
             </div>
-        </div>
-    }
+        }
+        @for (log of gameLogs; track $index) {
+            <div class="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white shadow-sm">
+                <div class="text-xs uppercase tracking-wide text-white/60">{{ log.postedAt | date: journalDateFormat }}</div>
+                <div class="mt-1 whitespace-pre-wrap leading-5">{{ log.message }}</div>
+            </div>
+        }
+    </div>
 </div>

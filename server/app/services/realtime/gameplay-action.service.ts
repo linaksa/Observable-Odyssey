@@ -1,141 +1,118 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { GameplayServices } from '@app/services/gameplay/gameplay-dependencies.service';
-import { CellType } from '@common/board';
-import { TEMPS_COMBAT } from '@common/constants';
-import { ItemType } from '@common/items';
-import { PlayerMovedResult } from '@common/playerMovedResult';
-import { SocketEvent } from '@common/socket-events';
+import { StartGameService } from '@app/services/gameplay/start-game.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameSessionService } from '@app/services/realtime/game-session.service';
+import { GameplayRealtimeFlowService } from '@app/services/realtime/gameplay-realtime-flow.service';
+import { ErrorCode } from '@common/error-codes';
 import {
-    IAttackData,
+    IAbandonData,
+    IActionData,
     IAttackPostureData,
     IDoorToggleData,
-    IDoorToggledResult,
-    IGameLogPayload,
+    IFlagDecisionData,
+    IFlagTransferRejectionData,
     IPlayerMoveData,
-    ISanctuaryInteractedResult,
     ISanctuaryInteractionData,
 } from '@common/socket-payloads';
+import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 
 @Service()
 export class GameplayActionService {
     constructor(
-        private readonly gameplayService: GameplayServices,
+        private readonly turnService: TurnService,
+        private readonly startGameService: StartGameService,
         private readonly activeGameService: ActiveGameService,
+        private readonly gameSessionService: GameSessionService,
+        private readonly gameplayRealtimeFlowService: GameplayRealtimeFlowService,
     ) {}
 
-    async handlePlayerMove(
-        data: IPlayerMoveData,
-        socket: Socket,
-        namespace: Namespace,
-    ): Promise<void> {
-        const { gameId, playerId, direction } = data;
-        try {
-            const { newPosition, movementLeft } = await this.gameplayService.movementService.movePlayer(playerId, gameId, direction);
-            namespace.to(gameId).emit(SocketEvent.PlayerMoved, { playerId, newPosition, movementLeft } as PlayerMovedResult);
+    async handleEndTurn(gameId: string): Promise<void> {
+        this.gameplayRealtimeFlowService.clearPendingFlagRequest(gameId);
+        await this.turnService.endTurn(gameId);
+        this.gameplayRealtimeFlowService.clearPendingFlagRequest(gameId);
+    }
 
-            await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
-        } catch (error) {
-            socket.emit(SocketEvent.PlayerMoveError, { message: (error as Error).message ?? 'Déplacement non autorisé' });
+    async handlePlayerAbandon(data: IAbandonData, namespace: Namespace, socket: Socket): Promise<void> {
+        await this.gameSessionService.handlePlayerAbandon(data, namespace, socket, this.emitGameLogToRoom.bind(this));
+        const activeGame = await this.activeGameService.getActiveGameById(data.gameId);
+        if (!activeGame) {
+            return;
         }
+        const gameEnded = await this.gameplayRealtimeFlowService.emitGameEndedIfNeeded(data.gameId, namespace);
+        if (gameEnded) {
+            this.gameplayRealtimeFlowService.clearPendingFlagRequest(data.gameId);
+        }
+    }
+
+    async handlePlayerMove(data: IPlayerMoveData, socket: Socket, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.handlePlayerMove(data, socket, namespace);
     }
 
     async handleToggleDoor(
         data: IDoorToggleData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
-        const { gameId, playerId, position } = data;
-        try {
-            const result: IDoorToggledResult = await this.gameplayService.doorService.toggleDoor(playerId, gameId, position);
-            namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
-            emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
-
-            await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
-        } catch (error) {
-            socket.emit(SocketEvent.DoorToggleError, { message: (error as Error).message ?? 'Action sur la porte non autorisée' });
-        }
+        await this.gameplayRealtimeFlowService.handleToggleDoor(data, socket, namespace, emitGameLog);
     }
 
     async handleSanctuaryInteraction(
         data: ISanctuaryInteractionData,
-        socket: Socket,
+        socket: Socket | null,
         namespace: Namespace,
         emitGameLog: (gameId: string, message: string) => void,
     ): Promise<void> {
-        const { gameId, playerId, position, choice } = data;
-        try {
-            const result: ISanctuaryInteractedResult = await this.gameplayService.sanctuaryService.interactSanctuary(playerId, gameId, {
-                position,
-                choice,
-            });
-            namespace.to(gameId).emit(SocketEvent.SanctuaryInteracted, result);
-            const sanctuaryKind = result.itemType === ItemType.LifeSanctuary ? 'vie' : 'combat';
-            emitGameLog(gameId, `${playerId} a utilisé un sanctuaire de ${sanctuaryKind}.`);
-
-            await this.checkEndTurnIfNoMovesLeft(gameId, playerId);
-        } catch (error) {
-            socket.emit(SocketEvent.SanctuaryInteractionError, {
-                message: (error as Error).message ?? 'Interaction avec le sanctuaire non autorisée',
-            });
-        }
+        await this.gameplayRealtimeFlowService.handleSanctuaryInteraction(data, socket, namespace, emitGameLog);
     }
 
-    async handleAttack(
-        data: IAttackData,
-        socket: Socket,
-        namespace: Namespace,
-        emitGameLog: (gameId: string, message: string) => void,
-    ): Promise<void> {
-        const { gameId, attackerName, defenderName } = data;
-        const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        if (!activeGame) {
-            socket.emit(SocketEvent.AttackError, { message: 'Partie introuvable' });
-            return;
-        }
-
-        const allowed = await this.gameplayService.combatService.canAttack(gameId, attackerName, defenderName);
-        if (!allowed) {
-            socket.emit(SocketEvent.AttackError, { message: 'Attaque non autorisée' });
-            return;
-        }
-
-        const result = await this.activeGameService.startCombat(gameId, attackerName, defenderName);
-        this.gameplayService.turnService.suspendTurn(gameId);
-
-        emitGameLog(gameId, `Debut du combat entre ${attackerName} et ${defenderName}.`);
-
-        this.gameplayService.turnService.startCombatTimer(TEMPS_COMBAT, activeGame, async () => {
-            const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
-            if (combatResolved) {
-                await this.handleTurnAndGameEndCase(attackerName, gameId, namespace);
-            }
+    async combatManager(gameId: string, attackerName: string, defenderName: string, socket: Socket | null, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.combatManager(gameId, attackerName, defenderName, socket, {
+            namespace,
+            emitGameLog: (targetGameId, message) => this.emitGameLogToRoom(targetGameId, message, namespace),
         });
+    }
 
-        namespace.to(gameId).emit(SocketEvent.CombatStarted, result);
-        namespace.to(gameId).emit(SocketEvent.CombatTurnStart, result);
+    async handleAction(data: IActionData, socket: Socket, namespace: Namespace): Promise<void> {
+        const { gameId, currentPlayerName, targetName } = data;
+        const allowed = await this.gameplayRealtimeFlowService.canUseAction(gameId, currentPlayerName, targetName);
+
+        if (!allowed) {
+            socket.emit(SocketEvent.ActionError, { errorCodes: [ErrorCode.ActionNotAllowed] });
+            return;
+        }
+
+        const handledAsFlagAction = await this.gameplayRealtimeFlowService.handleFlagAction(data, namespace, (targetGameId, message) =>
+            this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
+        if (handledAsFlagAction) {
+            return;
+        }
+        await this.combatManager(gameId, currentPlayerName, targetName, socket, namespace);
+    }
+
+    async handleFlagTaken(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.handleFlagTaken(data, namespace, (targetGameId, message) =>
+            this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
+    }
+
+    async handleFlagGiven(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.handleFlagGiven(data, namespace, (targetGameId, message) =>
+            this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
+    }
+
+    async handleFlagTransferRejected(data: IFlagTransferRejectionData, namespace: Namespace): Promise<void> {
+        await this.gameplayRealtimeFlowService.handleFlagTransferRejected(data, namespace, (targetGameId, message) =>
+            this.emitGameLogToRoom(targetGameId, message, namespace),
+        );
     }
 
     async handleChooseAttackPosture(data: IAttackPostureData, namespace: Namespace): Promise<void> {
-        const { gameId, playerName, posture } = data;
-        const updatedActiveGame = await this.activeGameService.choosePosture(gameId, playerName, posture);
-
-        const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
-        if (!combatReady) {
-            namespace.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
-            return;
-        }
-
-        this.gameplayService.turnService.clearCombatTimer(updatedActiveGame);
-
-        const combatResolved = await this.gameplayService.combatService.applyCombatTurn(gameId);
-
-        const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
-        if (combatResolved && currentPlayerName) {
-            await this.handleTurnAndGameEndCase(currentPlayerName, gameId, namespace);
-        }
+        await this.gameplayRealtimeFlowService.handleChooseAttackPosture(data, namespace);
     }
 
     async handleStartGame(activeGameId: string, socket: Socket, namespace: Namespace): Promise<boolean> {
@@ -144,61 +121,33 @@ export class GameplayActionService {
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
-
         if (!socket.rooms.has(activeGameId)) {
             return false;
         }
-
+        if (activeGame.game.gameMode === 'ctf' && activeGame.players.length % 2 !== 0) {
+            socket.emit(SocketEvent.StartGameError, { errorCodes: [ErrorCode.CtfRequiresEvenPlayerCount] });
+            return false;
+        }
         if (activeGame.players.length < 2) {
-            socket.emit(SocketEvent.StartGameError, {
-                message: 'Il faut au moins 2 joueurs pour démarrer la partie.',
-            });
+            socket.emit(SocketEvent.StartGameError, { errorCodes: [ErrorCode.StartGameRequiresAtLeastTwoPlayers] });
             return false;
         }
 
-        await this.gameplayService.startGameService.initializeGame(activeGameId);
+        await this.startGameService.initializeGame(activeGameId);
 
         const updatedGame = await this.activeGameService.getActiveGameById(activeGameId);
         namespace.to(activeGameId).emit(SocketEvent.PlayersUpdated, updatedGame.players);
         namespace.to(activeGameId).emit(SocketEvent.GameStarted, activeGameId);
 
-        this.gameplayService.turnService.startTurn(activeGameId);
+        this.turnService.startTurn(activeGameId);
         return true;
     }
 
     emitGameLogToRoom(gameId: string, message: string, namespace?: Namespace): void {
-        if (!namespace || !gameId || !message.trim()) {
-            return;
-        }
-
-        namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
+        this.gameplayRealtimeFlowService.emitGameLogToRoom(gameId, message, namespace);
     }
 
-    private createGameLogPayload(message: string): IGameLogPayload {
-        return {
-            message,
-            postedAt: new Date().toISOString(),
-        };
-    }
-
-    private async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
-        const reachable = await this.gameplayService.movementService.getReachablePositions(playerId, gameId);
-        const canAttackAnyPlayer = await this.gameplayService.combatService.canAttackAnyPlayer(gameId, playerId);
-        if (reachable.length === 0 && !canAttackAnyPlayer) {
-            await this.gameplayService.turnService.endTurn(gameId);
-        }
-    }
-
-    private async handleTurnAndGameEndCase(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
-        const reachable = await this.gameplayService.movementService.getReachablePositions(attackerName, gameId);
-        if (reachable.length === 0) {
-            await this.gameplayService.turnService.endTurn(gameId);
-        }
-
-        const gameEnded = await this.gameplayService.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: attackerName });
-            await this.activeGameService.deleteGameById(gameId);
-        }
+    async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
+        await this.gameplayRealtimeFlowService.checkEndTurnIfNoMovesLeft(gameId, playerId);
     }
 }

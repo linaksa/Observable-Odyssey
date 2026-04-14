@@ -1,15 +1,17 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { HttpClientPort } from '@app/interfaces/http-client-port.interface';
+import { HttpError } from '@app/interfaces/http-error.interface';
+import { HttpOptions } from '@app/interfaces/http-options.interface';
+import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { HttpClientPort, HttpError, HttpOptions } from './http-interface';
-
-interface MappedHttpOptions {
+type MappedHttpOptions = {
     headers?: Record<string, string>;
     params?: HttpParams;
     responseType?: 'json';
     withCredentials?: boolean;
-}
+};
 
 @Injectable()
 export class AngularHttpClientAdapter implements HttpClientPort {
@@ -62,12 +64,14 @@ export class AngularHttpClientAdapter implements HttpClientPort {
     }
 
     private handleError(error: HttpErrorResponse, url: string): Observable<never> {
+        const errorCodes = extractErrorCodes(error.error);
         const httpError: HttpError = {
             status: error.status,
-            message: error.message || 'Unknown error',
+            message: mapErrorCodesToMessage(errorCodes, error.message || 'Unknown error'),
             url,
             timestamp: new Date(),
             originalError: error,
+            errorCodes,
         };
         return throwError(() => httpError);
     }

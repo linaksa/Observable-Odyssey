@@ -4,19 +4,22 @@ import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
 import { ActiveGameListSocketsService } from './services/active-game/active-game-list-sockets.service';
 import { AdminSocketsService } from './services/admin/admin-sockets.service';
+import { TurnService } from './services/gameplay/turn-service';
 import { GameSocketsService } from './services/realtime/game-sockets.service';
+import { GameplayRealtimeFlowService } from './services/realtime/gameplay-realtime-flow.service';
 import { SocketService } from './services/realtime/socket.service';
+import { VirtualPlayerService } from './services/virtual-player/virtual-player.service';
 
 @Service()
 export class Server {
     private static readonly appPort: string | number | boolean = Server.normalizePort(process.env.PORT || '3000');
-    private static readonly baseDix: number = 10;
+    private static readonly decimalBase: number = 10;
     private server?: http.Server;
 
     constructor(private readonly application: Application) {}
 
     private static normalizePort(val: number | string): number | string | boolean {
-        const port: number = typeof val === 'string' ? parseInt(val, this.baseDix) : val;
+        const port: number = typeof val === 'string' ? parseInt(val, this.decimalBase) : val;
         return isNaN(port) ? val : port >= 0 ? port : false;
     }
 
@@ -35,6 +38,13 @@ export class Server {
         gameSocketsService.initialize();
         const activeGameListSocketsService = Container.get(ActiveGameListSocketsService);
         activeGameListSocketsService.initialize();
+
+        // Wire up virtual player turn handler to break circular dependency
+        const turnService = Container.get(TurnService);
+        const virtualPlayerService = Container.get(VirtualPlayerService);
+        const gameplayRealtimeFlowService = Container.get(GameplayRealtimeFlowService);
+        turnService.setVirtualPlayerTurnHandler((player, game) => virtualPlayerService.startTurn(player, game));
+        turnService.setTurnEndedHandler((gameId) => gameplayRealtimeFlowService.clearPendingFlagRequest(gameId));
 
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));

@@ -1,4 +1,5 @@
 import { IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
 import { DoorValidator } from './validators/door-validator.service';
@@ -17,8 +18,8 @@ export class BoardService {
         private readonly gameModeValidator: GameModeValidator,
     ) {}
 
-    validateBoard(board: IBoard, gameMode: GameType): string[] {
-        const errors: string[] = [];
+    validateBoard(board: IBoard, gameMode: GameType): ErrorCode[] {
+        const errors: ErrorCode[] = [];
 
         errors.push(...this.doorValidator.validate(board));
         errors.push(...this.terrainValidator.validate(board));

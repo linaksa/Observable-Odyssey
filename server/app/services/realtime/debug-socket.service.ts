@@ -27,7 +27,7 @@ export class DebugSocketService {
                     const payload: IDebugToggleState = { playerName, isDebugMode: activeGame.isDebugMode };
                     socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
                     socket.emit(SocketEvent.DebugToggle, payload);
-                    const statusLabel = activeGame.isDebugMode ? 'active' : 'desactive';
+                    const statusLabel = activeGame.isDebugMode ? 'activé' : 'désactivé';
                     const logPayload = this.createGameLogPayload(`Mode debug ${statusLabel} par ${playerName}.`);
                     socket.to(activeGameId).emit(SocketEvent.GameLog, logPayload);
                     socket.emit(SocketEvent.GameLog, logPayload);
@@ -65,8 +65,8 @@ export class DebugSocketService {
                 if (this.cellHasItem(activeGame.game.board.items, targetRow, targetCol)) return;
                 if (this.cellHasPlayer(activeGame.players, playerName, targetRow, targetCol)) return;
 
-                player.positionGrille.x = targetCol;
-                player.positionGrille.y = targetRow;
+                player.currentPosition.x = targetCol;
+                player.currentPosition.y = targetRow;
                 await this.activeGameService.saveActiveGameById(gameId, activeGame);
 
                 const movedResult = { playerId: playerName, newPosition: target, movementLeft: player.movementLeft };
@@ -90,18 +90,18 @@ export class DebugSocketService {
             if (item.isCarried) return false;
             if (item.itemType === ItemType.StartingPosition) return false;
             if (item.itemType === ItemType.LifeSanctuary || item.itemType === ItemType.FightSanctuary) {
-                return row >= item.x && row <= item.x + 1 && col >= item.y && col <= item.y + 1;
+                return row >= item.y && row <= item.y + 1 && col >= item.x && col <= item.x + 1;
             }
-            return item.x === row && item.y === col;
+            return item.x === col && item.y === row;
         });
     }
 
     private cellHasPlayer(
-        players: { name: string; hasAbandoned: boolean; positionGrille: Position }[],
+        players: { name: string; hasAbandoned: boolean; currentPosition: Position }[],
         excludeName: string,
         row: number,
         col: number,
     ): boolean {
-        return players.some((p) => !p.hasAbandoned && p.name !== excludeName && p.positionGrille.y === row && p.positionGrille.x === col);
+        return players.some((p) => !p.hasAbandoned && p.name !== excludeName && p.currentPosition.y === row && p.currentPosition.x === col);
     }
 }

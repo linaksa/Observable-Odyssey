@@ -1,4 +1,4 @@
-import { ICharacter } from '@common/character';
+import { ICharacter, Team } from '@common/character';
 import { Schema } from 'mongoose';
 import { positionSchema } from './position';
 
@@ -49,11 +49,11 @@ export const characterSchema = new Schema<ICharacter>(
             type: Number,
             required: true,
         },
-        positionGrille: {
+        currentPosition: {
             type: positionSchema,
             required: true,
         },
-        positionDepart: {
+        startingPosition: {
             type: positionSchema,
             default: { x: 0, y: 0 },
         },
@@ -64,6 +64,11 @@ export const characterSchema = new Schema<ICharacter>(
         hasAbandoned: {
             type: Boolean,
             default: false,
+        },
+        team: {
+            type: String,
+            enum: Object.values(Team),
+            default: null,
         },
         fightSanctuaryUsed: {
             type: Boolean,
@@ -80,6 +85,31 @@ export const characterSchema = new Schema<ICharacter>(
         virtualPlayerProfile: {
             type: String,
             required: false,
+        },
+
+        nCombats: {
+            type: Number,
+            required: true,
+        },
+        nVictories: {
+            type: Number,
+            required: true,
+        },
+        nDefeats: {
+            type: Number,
+            required: true,
+        },
+        totalDamageDealt: {
+            type: Number,
+            required: true,
+        },
+        totalDamageReceived: {
+            type: Number,
+            required: true,
+        },
+        visitedCells: {
+            type: [String],
+            default: [],
         },
     },
     { _id: false },

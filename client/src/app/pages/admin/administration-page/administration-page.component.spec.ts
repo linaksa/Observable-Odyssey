@@ -19,6 +19,7 @@ import { GameService } from '@app/services/admin/game.service';
 import { AdminSocketService } from '@app/services/realtime/admin.socket.service';
 import { GameTableService } from '@app/services/tables/game-table.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { of, Subject, throwError } from 'rxjs';
 import { AdministrationPageComponent } from './administration-page.component';
@@ -54,7 +55,7 @@ describe('AdministrationPageComponent', () => {
         administrationServiceSpy = jasmine.createSpyObj('AdministrationService', ['changeGameVisibility']);
         gameServiceSpy = jasmine.createSpyObj('GameService', ['deleteGame']);
         toastServiceSpy = jasmine.createSpyObj('ToastService', ['show']);
-        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['connect', 'onGamesModified']);
+        adminSocketServiceSpy = jasmine.createSpyObj('AdminSocketService', ['connect', 'disconnect', 'onGamesModified']);
         adminSocketServiceSpy.onGamesModified.and.returnValue(of(void 0));
 
         gameTableServiceSpy = jasmine.createSpyObj('GameTableService', ['fetchGames']);
@@ -154,8 +155,8 @@ describe('AdministrationPageComponent', () => {
         gamesModified$.next();
         expect(gameTableServiceSpy.fetchGames).toHaveBeenCalledTimes(2);
 
-        gamesModified$.error(new HttpErrorResponse({ error: { error: 'serveur indisponible' } }));
-        expect(toastServiceSpy.show).toHaveBeenCalledWith('serveur indisponible');
+        gamesModified$.error(new HttpErrorResponse({ error: {} }));
+        expect(toastServiceSpy.show).toHaveBeenCalledWith("Il y a eu un problème lors de l'ajout des jeux.");
     });
 
     it('should remove deleted game from table data on successful deletion', () => {
@@ -169,11 +170,13 @@ describe('AdministrationPageComponent', () => {
     });
 
     it('should show server delete error message when provided', () => {
-        gameServiceSpy.deleteGame.and.returnValue(throwError(() => new HttpErrorResponse({ error: { error: 'suppression impossible' } })));
+        gameServiceSpy.deleteGame.and.returnValue(
+            throwError(() => new HttpErrorResponse({ error: { errorCodes: [ErrorCode.InternalServerError] } })),
+        );
 
         component.deleteGame(gameMock);
 
-        expect(toastServiceSpy.show).toHaveBeenCalledWith('suppression impossible');
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('Erreur interne du serveur');
     });
 
     it('should show fallback delete error message when server message is missing', () => {

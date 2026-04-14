@@ -19,6 +19,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
 import { INewMessage } from '@common/message';
 import { expect } from 'chai';
@@ -60,6 +61,7 @@ describe('ActiveGameService', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,
@@ -90,14 +92,21 @@ describe('ActiveGameService', () => {
         movementLeft: dummyCharacterForm.rapidityPoints,
         hasAbandoned: false,
         victories: 0,
-        positionDepart: {
+        startingPosition: {
             x: 1,
             y: 1,
         },
-        positionGrille: {
+        currentPosition: {
             x: 1,
             y: 1,
         },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 
     beforeEach(async () => {
@@ -126,7 +135,7 @@ describe('ActiveGameService', () => {
                 await activeGameService.createActiveGame('nonExistentActiveGameId', {} as CharacterFormData);
                 throw new Error('Expected method to reject.');
             } catch (err) {
-                expect(err.message).to.equal('GAME_NOT_FOUND');
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.GameNotFound]);
             }
         });
 
@@ -155,7 +164,7 @@ describe('ActiveGameService', () => {
                 await activeGameService.addPlayerToActiveGame('nonExistentActiveGameId', {} as CharacterFormData);
                 throw new Error('Expected method to reject.');
             } catch (err) {
-                expect(err.message).to.equal('ACTIVE_GAME_NOT_FOUND');
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameNotFound]);
             }
         });
 
@@ -365,8 +374,8 @@ describe('ActiveGameService', () => {
 
             expect(findByIdAndUpdateStub.calledOnce).to.equal(true);
             expect(findByIdAndUpdateStub.firstCall.args[0]).to.equal('dummyActiveGameId');
-            expect(findByIdAndUpdateStub.firstCall.args[1]).to.deep.equal({ isFinished: true });
-            expect(findByIdAndUpdateStub.firstCall.args[2]).to.deep.equal({ new: true });
+            expect(findByIdAndUpdateStub.firstCall.args[1]).to.deep.equal({ $set: { isFinished: true } });
+            expect(findByIdAndUpdateStub.firstCall.args[2]).to.deep.equal({ returnDocument: 'after' });
         });
 
         it('should delete the active game in the db when deleteActiveGameById is called', () => {

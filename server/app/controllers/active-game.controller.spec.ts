@@ -15,6 +15,7 @@
  * - Fetch route failures for joinable list and active-game-by-id endpoints: verifies error mapping.
  */
 import { Application } from '@app/app';
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
@@ -22,6 +23,7 @@ import { IActiveGame } from '@common/activeGame';
 import { IBoard } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';
 import { StatusCodes } from 'http-status-codes';
@@ -53,6 +55,7 @@ describe('ActiveGameController', () => {
         organizerName: 'Dummy Organizer',
         maxPlayerCount: 4,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,
@@ -72,14 +75,21 @@ describe('ActiveGameController', () => {
         movementLeft: 1,
         hasAbandoned: false,
         victories: 0,
-        positionDepart: {
+        startingPosition: {
             x: 1,
             y: 1,
         },
-        positionGrille: {
+        currentPosition: {
             x: 1,
             y: 1,
         },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 
     let activeGameService: SinonStubbedInstance<ActiveGameService>;
@@ -107,20 +117,20 @@ describe('ActiveGameController', () => {
             .send({})
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.MissingGameIdAndCharacterForm] });
             });
     });
 
     // Edge case: createActiveGame() reports GAME_NOT_FOUND, which should map to HTTP 404.
     it('post route should return 404 if game does not exists', async () => {
-        activeGameService.createActiveGame.rejects(new Error('GAME_NOT_FOUND'));
+        activeGameService.createActiveGame.rejects(new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND));
 
         return supertest(expressApp)
             .post('/api/activeGame/')
             .send({ gameId: 'non-existent-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameNotFound] });
             });
     });
 
@@ -133,7 +143,7 @@ describe('ActiveGameController', () => {
             .send({ gameId: 'some-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -162,20 +172,20 @@ describe('ActiveGameController', () => {
             .send({})
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.MissingActiveGameIdAndCharacterForm] });
             });
     });
 
     // Edge case: addPlayerToActiveGame() reports ACTIVE_GAME_NOT_FOUND, so route returns 404.
     it('join route should return 404 if game does not exists', async () => {
-        activeGameService.addPlayerToActiveGame.rejects(new Error('ACTIVE_GAME_NOT_FOUND'));
+        activeGameService.addPlayerToActiveGame.rejects(new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND));
 
         return supertest(expressApp)
             .patch('/api/activeGame/join')
             .send({ activeGameId: 'non-existent-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
             });
     });
 
@@ -188,7 +198,7 @@ describe('ActiveGameController', () => {
             .send({ activeGameId: 'non-existent-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
             });
     });
 
@@ -201,7 +211,7 @@ describe('ActiveGameController', () => {
             .send({ activeGameId: 'non-existent-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -214,7 +224,7 @@ describe('ActiveGameController', () => {
             .send({ activeGameId: 'non-existent-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -229,7 +239,7 @@ describe('ActiveGameController', () => {
             .send({ activeGameId: 'some-id', characterForm: {} as CharacterFormData })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.AddedPlayerNotFound] });
             });
     });
 
@@ -272,7 +282,7 @@ describe('ActiveGameController', () => {
             .get('/api/activeGame/joinable')
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.error).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -300,7 +310,7 @@ describe('ActiveGameController', () => {
             .get('/api/activeGame/some-id')
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body.message).not.to.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
             });
     });
 
@@ -312,8 +322,7 @@ describe('ActiveGameController', () => {
             .get('/api/activeGame/some-id')
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body.message).not.to.be.equal(undefined);
-                expect(response.body.error).not.to.be.equal(undefined);
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 

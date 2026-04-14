@@ -19,12 +19,16 @@
  * - Invalid visibility on PATCH: verifies out-of-enum values are rejected.
  */
 import { Application } from '@app/app';
+import { GameController } from '@app/controllers/game.controller';
+import { AppError } from '@app/error-types/app-error';
+import { ErrorCode } from '@common/error-codes';
 import { ValidationError } from '@app/error-types/validation-error';
 import { AdminSocketsService } from '@app/services/admin/admin-sockets.service';
 import { GameService } from '@app/services/game/game.service';
 import { IBoard } from '@common/board';
 import { GameType, IGame, Visibility } from '@common/game';
 import { expect } from 'chai';
+import { Request } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { createStubInstance, SinonStubbedInstance } from 'sinon';
 import supertest, { Response } from 'supertest';
@@ -101,7 +105,7 @@ describe('GameController', () => {
             .get('/api/games/')
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -126,7 +130,7 @@ describe('GameController', () => {
             .get(`/api/games/${fakeGameId}`)
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body).to.deep.equal({ message: 'Jeu introuvable' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameNotFound] });
             });
     });
 
@@ -139,7 +143,7 @@ describe('GameController', () => {
             .get(`/api/games/${fakeGameId}`)
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((response) => {
-                expect(response.body).to.deep.equal({ message: 'Erreur interne du serveur' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -159,13 +163,13 @@ describe('GameController', () => {
     // Edge case: the service rejects creation with a ValidationError (business data
     // invalid). The controller should return 400 rather than 500.
     it('should return an error when the game cannot be created', async () => {
-        gameService.createGame.rejects(new ValidationError('TEST'));
+        gameService.createGame.rejects(new ValidationError(ErrorCode.GameTitleMissing));
         return supertest(expressApp)
             .post('/api/games/')
             .send({ game: baseGame })
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'TEST' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameTitleMissing] });
             });
     });
 
@@ -176,7 +180,7 @@ describe('GameController', () => {
             .send({ game: baseGame })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((res) => {
-                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+                expect(res.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -188,12 +192,12 @@ describe('GameController', () => {
     // Edge case: attempting to delete a game that is already deleted — the service throws
     // an error and the controller should return 404.
     it('should return 404 if game not found on DELETE', async () => {
-        gameService.deleteGame.rejects(new Error('Jeu déjà supprimé'));
+        gameService.deleteGame.rejects(new AppError([ErrorCode.GameAlreadyDeleted], StatusCodes.NOT_FOUND));
         return supertest(expressApp)
             .delete(`/api/games/${fakeGameId}`)
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Jeu déjà supprimé' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameAlreadyDeleted] });
             });
     });
     it('should return 500 on internal server error when deleting a game', async () => {
@@ -202,7 +206,7 @@ describe('GameController', () => {
             .delete(`/api/games/${fakeGameId}`)
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((res) => {
-                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+                expect(res.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -220,26 +224,26 @@ describe('GameController', () => {
     });
 
     it('should return 404 if game not found on PATCH', async () => {
-        gameService.changeVisibility.rejects(new Error('Jeu introuvable'));
+        gameService.changeVisibility.rejects(new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND));
         return supertest(expressApp)
             .patch(`/api/games/${fakeGameId}/visibility`)
             .send({ visibility: Visibility.Viewable })
             .expect(StatusCodes.NOT_FOUND)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Jeu introuvable' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameNotFound] });
             });
     });
 
     // Edge case: the visibility value sent does not belong to the enumeration — the
     // service throws a ValidationError and the controller should return 400.
     it('should return 400 if invalid visibility on PATCH', async () => {
-        gameService.changeVisibility.rejects(new ValidationError('Visibilité invalide'));
+        gameService.changeVisibility.rejects(new ValidationError(ErrorCode.GameVisibilityInvalid));
         return supertest(expressApp)
             .patch(`/api/games/${fakeGameId}/visibility`)
             .send({ visibility: 'eqifbgqrgiqo' })
             .expect(StatusCodes.BAD_REQUEST)
             .then((response) => {
-                expect(response.body).to.deep.equal({ error: 'Visibilité invalide' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameVisibilityInvalid] });
             });
     });
     it('should return 500 on internal server error when changing visibility', async () => {
@@ -249,7 +253,7 @@ describe('GameController', () => {
             .send({ visibility: Visibility.Viewable })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((res) => {
-                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+                expect(res.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
     });
 
@@ -282,7 +286,7 @@ describe('GameController', () => {
     });
 
     it('should return 400 on PUT if body is invalid', async () => {
-        gameService.updateGame.rejects(new ValidationError('Données invalides'));
+        gameService.updateGame.rejects(new ValidationError(ErrorCode.GameTitleMissing));
         const invalidBody = {
             game: {
                 gameTitle: '',
@@ -295,7 +299,7 @@ describe('GameController', () => {
             .send(invalidBody)
             .expect(StatusCodes.BAD_REQUEST)
             .then((response: Response) => {
-                expect(response.body).to.deep.equal({ error: 'Données invalides' });
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.GameTitleMissing] });
             });
     });
     it('should return 500 on internal server error when updating a game', async () => {
@@ -305,7 +309,41 @@ describe('GameController', () => {
             .send({ game: baseGame })
             .expect(StatusCodes.INTERNAL_SERVER_ERROR)
             .then((res) => {
-                expect(res.body).to.deep.equal({ error: 'Erreur interne du serveur' });
+                expect(res.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
             });
+    });
+
+    // Edge case: the route parameter is an array (Express can return an array
+    // when the key is duplicated in the query string).
+    it('should return first element when param is an array', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: ['array-id'],
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal('array-id');
+    });
+
+    // Edge case: the route parameter is of an unexpected type (boolean).
+    // The method should return null without crashing.
+    it('should return null when param is invalid', () => {
+        const controller = new GameController({} as GameService, {} as AdminSocketsService);
+
+        const fakeReq = {
+            params: {
+                id: false,
+            },
+        } as unknown as Request;
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = (controller as any).getParamAsString(fakeReq, 'id');
+
+        expect(result).to.equal(null);
     });
 });

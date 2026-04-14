@@ -1,4 +1,5 @@
 import { IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { GameSize } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
@@ -24,36 +25,26 @@ interface ExpectedCounts {
 
 @Service()
 export class ItemsValidator implements IBoardValidator {
-    validate(board: IBoard): string[] {
-        const errors: string[] = [];
+    validate(board: IBoard): ErrorCode[] {
+        const errors: ErrorCode[] = [];
         const gameSize = board.cells.length * board.cells[0].length;
 
         const expectedCounts = this.getExpectedCounts(gameSize);
         if (!expectedCounts) {
-            errors.push('La taille de la carte est invalide.');
+            errors.push(ErrorCode.BoardInvalidSize);
             return errors;
         }
 
-        for (const item of board.items) {
-            if (item.itemType === ItemType.FightSanctuary) {
-                expectedCounts.expectedFightSanctuaries--;
-            } else if (item.itemType === ItemType.LifeSanctuary) {
-                expectedCounts.expectedLifeSanctuaries--;
-            } else if (item.itemType === ItemType.StartingPosition) {
-                expectedCounts.expectedStartingPoints--;
+        let startingPointCount = 0;
+
+        for (const item of board.items ?? []) {
+            if (item.itemType === ItemType.StartingPosition) {
+                startingPointCount++;
             }
         }
 
-        if (expectedCounts.expectedStartingPoints !== 0) {
-            errors.push('Le nombre de positions de départ est invalide.');
-        }
-
-        if (expectedCounts.expectedFightSanctuaries !== 0) {
-            errors.push('Le nombre de sanctuaires de combat est invalide.');
-        }
-
-        if (expectedCounts.expectedLifeSanctuaries !== 0) {
-            errors.push('Le nombre de sanctuaires de vie est invalide.');
+        if (startingPointCount !== expectedCounts.expectedStartingPoints) {
+            errors.push(ErrorCode.BoardInvalidSpawnCount);
         }
 
         return errors;

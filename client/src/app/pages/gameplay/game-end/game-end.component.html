@@ -1,0 +1,18 @@
+<div class="content">
+    <app-nav-buttons />
+    <app-page-title title="Statistiques de fin partie" />
+
+    @if (activeGame) {
+        <div class="flex flex-row gap-4 h-[80vh]">
+            <div class="bg-[#233f74] p-4 rounded-lg grow">
+                <app-final-player-list [activeGame]="activeGame"></app-final-player-list>
+            </div>
+            <div class="bg-[#233f74] p-4 rounded-lg grow">
+                <app-global-stats [activeGame]="activeGame"></app-global-stats>
+            </div>
+            <div class="flex flex-col justify-between basis-1/4 p-4 bg-[#233f74] rounded-lg">
+                <app-message-zone></app-message-zone>
+            </div>
+        </div>
+    }
+</div>

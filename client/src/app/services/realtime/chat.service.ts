@@ -14,17 +14,27 @@ export class ChatService implements OnDestroy {
     private readonly socketService = inject(SocketService);
     private readonly activeGameService = inject(ActiveGameService);
     private readonly localPlayerService = inject(LocalPlayerService);
-    private chatSubscription: Subscription;
+    private chatSubscription?: Subscription;
 
     connect() {
-        this.chatSubscription?.unsubscribe();
+        this.disconnect();
         this.socketService.connect(Namespaces.Game);
-        this.socketService.emit<string, IMessage[]>(Namespaces.Game, SocketEvent.JoinChat, this.activeGameService.activeGame._id, (response) => {
-            this.activeGameService.activeGame.messages = response;
+        const activeGameId = this.activeGameService.activeGame._id;
+
+        this.socketService.emit<string, IMessage[]>(Namespaces.Game, SocketEvent.JoinChat, activeGameId, (response) => {
+            if (this.activeGameService.activeGame?._id !== activeGameId) {
+                return;
+            }
+
+            this.activeGameService.setChatMessages(response);
         });
         this.chatSubscription = this.socketService.on<IMessage>(Namespaces.Game, SocketEvent.NewMessage).subscribe({
             next: (message: IMessage) => {
-                this.activeGameService.activeGame.messages.push(message);
+                if (this.activeGameService.activeGame?._id !== activeGameId) {
+                    return;
+                }
+
+                this.activeGameService.appendChatMessage(message);
             },
         });
     }
@@ -43,10 +53,15 @@ export class ChatService implements OnDestroy {
             postedAt: new Date(),
         };
         this.socketService.emit<INewMessage, unknown>(Namespaces.Game, SocketEvent.NewMessage, newMessage);
-        this.activeGameService.activeGame.messages.push(message);
+        this.activeGameService.appendChatMessage(message);
+    }
+
+    disconnect(): void {
+        this.chatSubscription?.unsubscribe();
+        this.chatSubscription = undefined;
     }
 
     ngOnDestroy(): void {
-        this.chatSubscription?.unsubscribe();
+        this.disconnect();
     }
 }

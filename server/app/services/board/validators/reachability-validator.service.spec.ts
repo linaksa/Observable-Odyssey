@@ -1,4 +1,5 @@
 import { CellType, IBoard } from '@common/board';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import { ReachabilityValidator } from './reachability-validator.service';
@@ -8,7 +9,13 @@ describe('ReachabilityValidator', () => {
         const validator = new ReachabilityValidator();
 
         expect(validator.validate(createBridgeBoard(false))).to.deep.equal([]);
-        expect(validator.validate(createBridgeBoard(true))).to.include('Toutes les cellules de la carte ne sont pas accessibles.');
+        expect(validator.validate(createBridgeBoard(true))).to.include(ErrorCode.BoardInaccessibleCells);
+    });
+
+    it('should ignore sanctuary-covered corner cells when choosing the flood-fill start', () => {
+        const validator = new ReachabilityValidator();
+
+        expect(validator.validate(createCornerSanctuaryBoard())).to.deep.equal([]);
     });
 });
 
@@ -31,5 +38,25 @@ function createBridgeBoard(withSanctuary: boolean): IBoard {
                   },
               ]
             : [],
+    };
+}
+
+function createCornerSanctuaryBoard(): IBoard {
+    return {
+        cells: [
+            [CellType.Empty, CellType.Empty, CellType.Empty, CellType.Empty],
+            [CellType.Empty, CellType.Empty, CellType.Empty, CellType.Empty],
+            [CellType.Empty, CellType.Empty, CellType.Empty, CellType.Empty],
+            [CellType.Empty, CellType.Empty, CellType.Empty, CellType.Empty],
+        ],
+        items: [
+            {
+                itemType: ItemType.LifeSanctuary,
+                x: 0,
+                y: 0,
+                size: 4,
+                active: true,
+            },
+        ],
     };
 }

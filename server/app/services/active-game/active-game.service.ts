@@ -1,10 +1,13 @@
+import { AppError } from '@app/error-types/app-error';
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { IActiveGame, ICurrentAttack } from '@common/activeGame';
 import { AttackPosture } from '@common/attackResult';
 import { BOARD_SIZE_TO_PLAYER_COUNT } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import { IMessage, INewMessage } from '@common/message';
+import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
 
 @Service()
@@ -12,7 +15,7 @@ export class ActiveGameService {
     async createActiveGame(gameId: string, characterForm: CharacterFormData): Promise<IActiveGame> {
         const gameChosen = await game.findById(gameId);
         if (!gameChosen) {
-            throw new Error('GAME_NOT_FOUND');
+            throw new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const sanctuaryState = this.createDefaultSanctuaryState();
@@ -29,14 +32,24 @@ export class ActiveGameService {
             actionsLeft: 1,
             movementLeft: characterForm.rapidityPoints,
             victories: 0,
-            positionGrille: { x: 0, y: 0 },
-            positionDepart: { x: 0, y: 0 },
+            currentPosition: { x: 0, y: 0 },
+            startingPosition: { x: 0, y: 0 },
             hasAbandoned: false,
+
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [] as string[],
             ...sanctuaryState,
         };
 
         const newActiveGame = {
             game: gameChosen,
+            createdAt: new Date(),
+            startedAt: null as Date | null,
+            endedAt: null as Date | null,
             players: [playerCharacter],
             turnOrder: [] as string[],
             currentPlayerIndex: 0,
@@ -47,24 +60,34 @@ export class ActiveGameService {
             organizerName: characterForm.name,
             maxPlayerCount: BOARD_SIZE_TO_PLAYER_COUNT[gameChosen.board.cells.length],
             turnIsInPreparation: false,
+            hasFlagId: '',
+            totalTurnCount: 0,
+            usedSanctuaries: [] as string[],
+            manipulatedDoors: [] as string[],
+            flagHolderHistory: [] as string[],
         };
+
         return await activeGameModel.create(newActiveGame);
     }
 
     async addPlayerToActiveGame(activeGameId: string, characterForm: CharacterFormData): Promise<IActiveGame | null> {
         const activeGameToUpdate = await activeGameModel.findById(activeGameId);
         if (!activeGameToUpdate) {
-            throw new Error('ACTIVE_GAME_NOT_FOUND');
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
+        }
+
+        if (activeGameToUpdate.turnOrder && activeGameToUpdate.turnOrder.length > 0) {
+            throw new AppError([ErrorCode.ActiveGameAlreadyStarted], StatusCodes.FORBIDDEN);
         }
 
         const maxPlayers = activeGameToUpdate.maxPlayerCount;
         if (activeGameToUpdate.players.length >= maxPlayers) {
-            throw new Error('Nombre maximum de joueurs atteint pour cette partie');
+            throw new AppError([ErrorCode.ActiveGameFull], StatusCodes.BAD_REQUEST);
         }
 
         const newPlayerAvatar = characterForm.avatar;
         if (activeGameToUpdate.players.some((player) => player.avatar === newPlayerAvatar)) {
-            throw new Error('Avatar déjà utilisé par un autre joueur dans cette partie');
+            throw new AppError([ErrorCode.AvatarAlreadyUsed], StatusCodes.BAD_REQUEST);
         }
 
         const uniquePlayerName = this.generateUniquePlayerName(characterForm.name, activeGameToUpdate.players);
@@ -84,9 +107,17 @@ export class ActiveGameService {
             movementLeft: characterForm.rapidityPoints,
             victories: 0,
             hasAbandoned: false,
-            positionDepart: { x: 0, y: 0 },
-            positionGrille: { x: 0, y: 0 },
+            startingPosition: { x: 0, y: 0 },
+            currentPosition: { x: 0, y: 0 },
             virtualPlayerProfile: characterForm.virtualPlayerProfile ?? undefined,
+
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [] as string[],
+
             ...sanctuaryState,
         };
         activeGameToUpdate.players.push(newPlayerCharacter);
@@ -98,7 +129,7 @@ export class ActiveGameService {
     }
 
     async saveActiveGameById(activeGameId: string, update: Partial<IActiveGame>): Promise<IActiveGame | null> {
-        return await activeGameModel.findByIdAndUpdate(activeGameId, update, { new: true });
+        return await activeGameModel.findByIdAndUpdate(activeGameId, { $set: update }, { returnDocument: 'after' });
     }
     async deleteGameById(activeGameId: string): Promise<void> {
         return await activeGameModel.findByIdAndDelete(activeGameId);
@@ -139,7 +170,7 @@ export class ActiveGameService {
         // remove any existing -{number} suffix from malicious players
         newPlayerName = newPlayerName.trim().replace(/-\d+$/, '');
         const basis = 10;
-        const regex = /^(.*)-(\d+)$/; // match "PlayerName - 1234" et capture "PlayerName" et "1234"
+        const regex = /^(.*)-(\d+)$/; // match "PlayerName-1234" and capture "PlayerName" and "1234"
         let uniquePlayerIdToAppend = 1;
 
         existingPlayers.forEach((player) => {
@@ -174,7 +205,7 @@ export class ActiveGameService {
     async startCombat(activeGameId: string, attacker: string, defender: string): Promise<IActiveGame> {
         const activeGame = await activeGameModel.findById(activeGameId);
         if (!activeGame) {
-            throw new Error(`Active game with id ${activeGameId} not found`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const currentAttack: ICurrentAttack = {
@@ -193,12 +224,12 @@ export class ActiveGameService {
     async choosePosture(activeGameId: string, playerName: string, posture: AttackPosture): Promise<IActiveGame> {
         const activeGame = await activeGameModel.findById(activeGameId);
         if (!activeGame) {
-            throw new Error(`Active game with id ${activeGameId} not found`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         const currentAttack = activeGame.currentAttack;
         if (!currentAttack) {
-            throw new Error(`No ongoing attack in active game with id ${activeGameId}`);
+            throw new AppError([ErrorCode.NoOngoingAttack], StatusCodes.BAD_REQUEST);
         }
 
         if (currentAttack.attacker === playerName) {

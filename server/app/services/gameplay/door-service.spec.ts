@@ -1,5 +1,3 @@
-import { expect } from 'chai';
-import * as sinon from 'sinon';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
@@ -9,6 +7,8 @@ import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
+import { expect } from 'chai';
+import * as sinon from 'sinon';
 
 describe('DoorService', () => {
     let doorService: DoorService;
@@ -42,7 +42,7 @@ describe('DoorService', () => {
     it('should toggle a closed door to open and consume one action', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.cells[1][1] = CellType.ClosedDoor;
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGame.players[0].actionsLeft = 2;
         activeGameService.getActiveGameById.resolves(activeGame);
 
@@ -62,7 +62,7 @@ describe('DoorService', () => {
     it('should toggle an open door to closed on a second action', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.cells[1][1] = CellType.OpenDoor;
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGameService.getActiveGameById.resolves(activeGame);
 
         const result = await doorService.toggleDoor('Alice', activeGame._id, { x: 1, y: 1 });
@@ -74,7 +74,7 @@ describe('DoorService', () => {
     it('should reject toggling when the door tile is occupied by a player or a flag', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.cells[1][1] = CellType.OpenDoor;
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGame.players.push(createCharacter('Bob', 1, 1));
         activeGameService.getActiveGameById.resolves(activeGame);
 
@@ -99,7 +99,7 @@ describe('DoorService', () => {
     it('should reject toggling when the player is not adjacent or has no actions left', async () => {
         const activeGame = createActiveGame();
         activeGame.game.board.cells[1][1] = CellType.ClosedDoor;
-        activeGame.players[0].positionGrille = { x: 0, y: 0 };
+        activeGame.players[0].currentPosition = { x: 0, y: 0 };
         activeGameService.getActiveGameById.resolves(activeGame);
 
         positionValidatorService.isAdjacent.returns(false);
@@ -112,7 +112,7 @@ describe('DoorService', () => {
         }
 
         positionValidatorService.isAdjacent.returns(true);
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGame.players[0].actionsLeft = 0;
 
         try {
@@ -125,7 +125,7 @@ describe('DoorService', () => {
 
     it('should reject non-door tiles', async () => {
         const activeGame = createActiveGame();
-        activeGame.players[0].positionGrille = { x: 0, y: 1 };
+        activeGame.players[0].currentPosition = { x: 0, y: 1 };
         activeGameService.getActiveGameById.resolves(activeGame);
 
         try {
@@ -168,6 +168,7 @@ function createActiveGame(): IActiveGame {
         turnIsInPreparation: false,
         turnStartTimeStamp: 0,
         currentAttack: null,
+        hasFlagId: '',
     };
 }
 
@@ -186,8 +187,15 @@ function createCharacter(name: string, x = 0, y = 0): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x, y },
-        positionGrille: { x, y },
+        startingPosition: { x, y },
+        currentPosition: { x, y },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [] as string[],
     };
 }
 

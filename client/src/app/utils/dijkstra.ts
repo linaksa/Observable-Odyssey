@@ -1,39 +1,75 @@
-//Thank you to geeks for geeks for the djikstra algorithm : https://www.geeksforgeeks.org/dsa/dijkstras-shortest-path-algorithm-greedy-algo-7/
-
+import { Position } from '@common/character';
+import { DijkstraResult } from '@app/interfaces/dijkstra-result.interface';
 import { MinimumHeap } from './min-heap';
 
-export function dijkstra(adj: [number, number][][], src: number): number[] {
+export type { DijkstraResult };
+export enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+export const DIRECTION_DELTA: Record<Direction, Position> = {
+    [Direction.Up]: { x: 0, y: -1 },
+    [Direction.Down]: { x: 0, y: 1 },
+    [Direction.Left]: { x: -1, y: 0 },
+    [Direction.Right]: { x: 1, y: 0 },
+};
+
+//Code from https://www.geeksforgeeks.org/dsa/dijkstras-shortest-path-algorithm-greedy-algo-7/ adapted to our grid-based graph representation
+export function dijkstra(adj: [number, number][][], src: number): DijkstraResult {
     const V = adj.length;
-
-    // Min-heap (priority queue) storing pairs of (distance, node)
     const pq = new MinimumHeap<[number, number]>();
-
     const dist: number[] = Array(V).fill(Infinity);
+    const prev: (number | null)[] = Array(V).fill(null);
 
-    // Distance from source to itself is 0
     dist[src] = 0;
     pq.push([0, src]);
 
-    // Process the queue until all reachable vertices are finalized
     while (!pq.isEmpty()) {
         const top = pq.pop();
         if (!top) continue;
 
         const [d, u] = top;
-
-        // If this distance not the latest shortest one, skip it
         if (d > dist[u]) continue;
 
-        // Explore all neighbors of the current vertex
         for (const [v, w] of adj[u]) {
-            // If we found a shorter path to v through u, update it
             if (dist[u] + w < dist[v]) {
                 dist[v] = dist[u] + w;
+                prev[v] = u;
                 pq.push([dist[v], v]);
             }
         }
     }
 
-    // Return the final shortest distances from the source
-    return dist;
+    return { distances: dist, predecessors: prev };
+}
+
+// Reconstruct node indices from src to target, excluding target's own cell
+export function reconstructPath(predecessors: (number | null)[], src: number, target: number): number[] {
+    const path: number[] = [];
+    let current: number | null = target;
+
+    while (current !== null && current !== src) {
+        path.unshift(current);
+        current = predecessors[current];
+    }
+
+    // Remove the target's cell itself — stop adjacent
+    path.pop();
+
+    return path; // each entry is a flat grid index
+}
+
+export function indexToDirection(from: number, to: number, totalColumns: number): Direction {
+    const fromRow = Math.floor(from / totalColumns);
+    const fromCol = from % totalColumns;
+    const toRow = Math.floor(to / totalColumns);
+    const toCol = to % totalColumns;
+
+    if (toRow < fromRow) return Direction.Up;
+    if (toRow > fromRow) return Direction.Down;
+    if (toCol < fromCol) return Direction.Left;
+    return Direction.Right;
 }

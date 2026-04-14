@@ -14,13 +14,16 @@
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { FormPageComponent } from './form-page.component';
 
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
+import { ErrorCode } from '@common/error-codes';
 
 import { IActiveGame } from '@common/activeGame';
 import { CharacterFormData, ICharacter } from '@common/character';
@@ -34,13 +37,6 @@ import { IGame } from '@common/game';
 class MockCharacterFormComponent {
     @Output() submitForm = new EventEmitter<CharacterFormData>();
 }
-
-@Component({
-    selector: 'app-form-page-header',
-    standalone: true,
-    template: '',
-})
-class MockHeaderComponent {}
 
 @Component({
     selector: 'app-toast',
@@ -59,6 +55,7 @@ describe('FormPageComponent', () => {
     let toastServiceMock: jasmine.SpyObj<ToastService>;
     let localPlayerServiceMock: jasmine.SpyObj<LocalPlayerService>;
     let routerMock: jasmine.SpyObj<Router>;
+    let routeParamsSubject: BehaviorSubject<Record<string, string>>;
 
     beforeEach(async () => {
         characterFormServiceMock = jasmine.createSpyObj('CharacterFormService', ['createActiveGameWithCharacter'], {
@@ -69,10 +66,11 @@ describe('FormPageComponent', () => {
         toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
         localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
         routerMock = jasmine.createSpyObj('Router', ['navigate']);
+        routeParamsSubject = new BehaviorSubject<Record<string, string>>({ gameId: defaultGameId });
 
         const overrideInfo: MetadataOverride<Component> = {
             set: {
-                imports: [MockHeaderComponent, MockCharacterFormComponent, MockToastComponent],
+                imports: [NavButtonsComponent, PageTitleComponent, MockCharacterFormComponent, MockToastComponent],
             },
         };
 
@@ -91,7 +89,7 @@ describe('FormPageComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({ gameId: defaultGameId }),
+                        params: routeParamsSubject.asObservable(),
                     },
                 },
             ],
@@ -106,22 +104,21 @@ describe('FormPageComponent', () => {
         // Validate that the gameId is correctly get from the route
 
         fixture.detectChanges();
-        expect(component.gameId).toBe(defaultGameId);
+        expect(component['gameId']).toBe(defaultGameId);
     });
 
     it('should set gameId to null when route params do not include it', () => {
-        component.router = { params: of({}) } as ActivatedRoute;
+        fixture.detectChanges();
+        routeParamsSubject.next({});
 
-        component.ngOnInit();
-
-        expect(component.gameId).toBeNull();
+        expect(component['gameId']).toBeNull();
     });
 
     // Edge case: When gameId is missing on submit, show error.
     it('should show error if gameId is missing on submit', () => {
         // Edge case
         // Validate that the app shows an error toast if the gameId is missing when trying to submit the character form
-        component.gameId = null;
+        component['gameId'] = null;
         component.submitCharacterForm({} as CharacterFormData);
         expect(toastServiceMock.show).toHaveBeenCalled();
     });
@@ -143,6 +140,7 @@ describe('FormPageComponent', () => {
             organizerName: '',
             maxPlayerCount: 4,
             turnIsInPreparation: false,
+            hasFlagId: '',
 
             turnStartTimeStamp: 0,
             currentAttack: null,
@@ -155,7 +153,7 @@ describe('FormPageComponent', () => {
 
         characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(of(response));
 
-        component.gameId = defaultGameId;
+        component['gameId'] = defaultGameId;
 
         component.submitCharacterForm({} as CharacterFormData);
 
@@ -172,19 +170,19 @@ describe('FormPageComponent', () => {
         const error = {
             originalError: {
                 error: {
-                    message: 'creation failed',
+                    errorCodes: [ErrorCode.GameTitleMissing],
                 },
             },
         };
 
         characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
-        component.gameId = defaultGameId;
+        component['gameId'] = defaultGameId;
 
         component.submitCharacterForm({} as CharacterFormData);
 
         expect(characterFormServiceMock.isLoading()).toBeFalse();
-        expect(characterFormServiceMock.errors()).toBe('creation failed');
+        expect(characterFormServiceMock.errors()).toBe("Il n'y a pas de titre");
     });
 
     // Edge case: When required input data is missing, handle error with empty message.
@@ -199,7 +197,7 @@ describe('FormPageComponent', () => {
 
         characterFormServiceMock.createActiveGameWithCharacter.and.returnValue(throwError(() => error));
 
-        component.gameId = defaultGameId;
+        component['gameId'] = defaultGameId;
 
         component.submitCharacterForm({} as CharacterFormData);
 

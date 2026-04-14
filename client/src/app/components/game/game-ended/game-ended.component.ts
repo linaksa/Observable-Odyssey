@@ -1,29 +1,42 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { GAME_ENDED_HOST_BINDINGS } from '@app/constants/component-host-bindings';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { TEMPS_ECRAN_FIN_PARTIE } from '@common/constants';
+import { END_GAME_SCREEN_DURATION_MS } from '@common/constants';
 
 @Component({
     selector: 'app-game-ended',
     templateUrl: './game-ended.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    host: GAME_ENDED_HOST_BINDINGS,
 })
-export class GameEndedComponent {
-    private router = inject(Router);
-    private activeGameService = inject(ActiveGameService);
+export class GameEndedComponent implements OnInit, OnDestroy {
+    private readonly router = inject(Router);
+    private readonly activeGameService = inject(ActiveGameService);
+    private timeoutId?: ReturnType<typeof setTimeout>;
 
-    winner: string | null = this.activeGameService.activeGame?.winner ?? null;
-
-    constructor() {
-        setTimeout(() => {
-            this.router.navigate(['/']);
-        }, TEMPS_ECRAN_FIN_PARTIE);
+    protected get winner(): string | null {
+        return this.activeGameService.activeGame?.winner ?? null;
     }
 
-    navigateHome() {
-        this.router.navigate(['/']);
+    protected get isFinished(): boolean {
+        return this.activeGameService.activeGame?.isFinished ?? false;
     }
 
-    get isFinished() {
-        return this.activeGameService.activeGame?.isFinished;
+    ngOnInit(): void {
+        const activeGameId = this.activeGameService.activeGame?._id;
+        if (!this.isFinished || !activeGameId) {
+            return;
+        }
+
+        this.timeoutId = setTimeout(() => {
+            void this.router.navigate([`/end/${activeGameId}`]);
+        }, END_GAME_SCREEN_DURATION_MS);
+    }
+
+    ngOnDestroy(): void {
+        if (this.timeoutId) {
+            clearTimeout(this.timeoutId);
+        }
     }
 }

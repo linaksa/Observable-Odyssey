@@ -1,33 +1,31 @@
-import { Service } from 'typedi';
+import { AppError } from '@app/error-types/app-error';
+import {
+    FIGHT_SANCTUARY_BUFF_TURNS,
+    FIGHT_SANCTUARY_DOUBLE_BONUS,
+    FIGHT_SANCTUARY_STANDARD_BONUS,
+    LIFE_SANCTUARY_DOUBLE_HEAL_AMOUNT,
+    LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT,
+    SANCTUARY_ACTION_COST,
+    SANCTUARY_DOUBLE_CHANCE,
+} from '@app/constants/sanctuary';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter, Position } from '@common/character';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
-import { ISanctuaryInteractionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
+import { ISanctuaryInteractedResult, ISanctuaryInteractionData } from '@common/socket-payloads';
+import { StatusCodes } from 'http-status-codes';
+import { Service } from 'typedi';
 import {
-    SANCTUARY_COOLDOWN_TURN_STEPS,
     advanceSanctuaryCooldowns,
     deactivateSanctuary,
     isPositionAdjacentToSanctuary,
     isSanctuaryActive,
     isSanctuaryItem,
     sanctuaryCoversCell,
-} from '@app/services/gameplay/sanctuary-helpers';
-
-const SANCTUARY_ACTION_COST = 1;
-const LIFE_SANCTUARY_STANDARD_HEAL_AMOUNT = 2;
-const LIFE_SANCTUARY_DOUBLE_HEAL_AMOUNT = 4;
-const FIGHT_SANCTUARY_STANDARD_BONUS = 1;
-const FIGHT_SANCTUARY_DOUBLE_BONUS = 2;
-const FIGHT_SANCTUARY_BUFF_TURNS = 2;
-const SANCTUARY_DOUBLE_CHANCE = 0.5;
-
-type SanctuaryFightState = {
-    fightSanctuaryUsed?: boolean;
-    fightSanctuaryTurnsRemaining?: number;
-    fightSanctuaryBonus?: number;
-};
+} from '@app/utils/sanctuary';
 
 @Service()
 export class SanctuaryService {
@@ -86,8 +84,7 @@ export class SanctuaryService {
         player.fightSanctuaryTurnsRemaining = remainingTurns - 1;
 
         if (player.fightSanctuaryTurnsRemaining === 0) {
-            player.attackPoints = Math.max(0, player.attackPoints - bonus);
-            player.defensePoints = Math.max(0, player.defensePoints - bonus);
+            player.fightSanctuaryUsed = false;
             player.fightSanctuaryBonus = 0;
         }
     }
@@ -96,7 +93,7 @@ export class SanctuaryService {
         const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
 
         if (!activeGame) {
-            throw new Error(`activeGame introuvable pour id=${activeGameId}`);
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
         }
 
         return activeGame;
@@ -106,7 +103,7 @@ export class SanctuaryService {
         const player = this.getPlayerOrNull(activeGame, playerName);
 
         if (!player) {
-            throw new Error(`joueur '${playerName}' introuvable`);
+            throw new AppError([ErrorCode.PlayerNotFound], StatusCodes.NOT_FOUND);
         }
 
         return player;
@@ -119,42 +116,38 @@ export class SanctuaryService {
     private assertCanInteract(activeGame: IActiveGame, player: { actionsLeft: number }, playerName: string, position: Position): void {
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
 
-        this.throwIf(playerName !== currentPlayerName, `Ce n'est pas le tour de '${playerName}'`);
-        this.throwIf(activeGame.turnIsInPreparation, `Le tour de '${playerName}' n'a pas encore commencé`);
-        this.throwIf(
-            player.actionsLeft < SANCTUARY_ACTION_COST,
-            `Actions insuffisantes (restant: ${player.actionsLeft}, coût: ${SANCTUARY_ACTION_COST})`,
-        );
-        this.throwIf(!this.isPositionWithinBounds(position, activeGame), 'La case ciblée est invalide');
+        this.throwIf(playerName !== currentPlayerName, [ErrorCode.NotYourTurn]);
+        this.throwIf(activeGame.turnIsInPreparation, [ErrorCode.TurnNotStarted]);
+        this.throwIf(player.actionsLeft < SANCTUARY_ACTION_COST, [ErrorCode.InsufficientActions]);
+        this.throwIf(!this.isPositionWithinBounds(position, activeGame), [ErrorCode.InvalidSanctuaryTarget]);
     }
 
     private getSanctuaryOrThrow(activeGame: IActiveGame, position: Position): ILifeSanctuary | IFightSanctuary {
         const sanctuary = this.getSanctuaryAtPosition(activeGame, position);
 
         if (!sanctuary) {
-            throw new Error("La case ciblée n'est pas un sanctuaire");
+            throw new AppError([ErrorCode.InvalidSanctuaryTarget], StatusCodes.BAD_REQUEST);
         }
 
         if (!isSanctuaryItem(sanctuary)) {
-            throw new Error("La case ciblée n'est pas un sanctuaire");
+            throw new AppError([ErrorCode.InvalidSanctuaryTarget], StatusCodes.BAD_REQUEST);
         }
 
         return sanctuary;
     }
 
-    private assertAdjacentToSanctuary(player: { positionGrille: Position }, sanctuary: IItem): void {
-        this.throwIf(!isPositionAdjacentToSanctuary(player.positionGrille, sanctuary), 'Le joueur doit être adjacent au sanctuaire');
+    private assertAdjacentToSanctuary(player: { currentPosition: Position }, sanctuary: IItem): void {
+        this.throwIf(!isPositionAdjacentToSanctuary(player.currentPosition, sanctuary), [ErrorCode.SanctuaryAdjacencyRequired]);
     }
 
     private assertSanctuaryIsAvailable(sanctuary: IItem): void {
-        this.throwIf(!isSanctuaryActive(sanctuary), 'Le sanctuaire ciblé est temporairement inactif');
+        this.throwIf(!isSanctuaryActive(sanctuary), [ErrorCode.SanctuaryInactive]);
     }
 
-    private assertFightSanctuaryIsAvailable(player: SanctuaryFightState, sanctuary: IItem): void {
-        this.throwIf(
-            sanctuary.itemType === ItemType.FightSanctuary && this.hasFightSanctuaryAlreadyBeenUsed(player),
-            'Ce joueur a déjà utilisé un sanctuaire de combat',
-        );
+    private assertFightSanctuaryIsAvailable(player: ICharacter, sanctuary: IItem): void {
+        this.throwIf(sanctuary.itemType === ItemType.FightSanctuary && this.hasFightSanctuaryAlreadyBeenUsed(player), [
+            ErrorCode.FightSanctuaryAlreadyUsed,
+        ]);
     }
 
     private createBaseResult(
@@ -205,38 +198,25 @@ export class SanctuaryService {
         result.currentHealth = player.currentHealth;
     }
 
-    private applyFightSanctuary(
-        player: {
-            attackPoints: number;
-            defensePoints: number;
-            fightSanctuaryUsed?: boolean;
-            fightSanctuaryTurnsRemaining?: number;
-            fightSanctuaryBonus?: number;
-        },
-        choice: SanctuaryChoice,
-        result: ISanctuaryInteractedResult,
-    ): void {
+    private applyFightSanctuary(player: ICharacter, choice: SanctuaryChoice, result: ISanctuaryInteractedResult): void {
         const bonus = this.resolveSanctuaryEffect(choice, FIGHT_SANCTUARY_STANDARD_BONUS, FIGHT_SANCTUARY_DOUBLE_BONUS);
-
-        player.fightSanctuaryUsed = true;
+        player.fightSanctuaryUsed = bonus > 0;
         player.fightSanctuaryTurnsRemaining = bonus > 0 ? FIGHT_SANCTUARY_BUFF_TURNS : 0;
         player.fightSanctuaryBonus = bonus;
 
         if (bonus > 0) {
-            player.attackPoints += bonus;
-            player.defensePoints += bonus;
             result.succeeded = true;
         }
 
         result.attackPoints = player.attackPoints;
         result.defensePoints = player.defensePoints;
-        result.fightSanctuaryUsed = true;
+        result.fightSanctuaryUsed = player.fightSanctuaryUsed;
         result.fightSanctuaryTurnsRemaining = player.fightSanctuaryTurnsRemaining;
         result.fightSanctuaryBonus = player.fightSanctuaryBonus;
     }
 
     private resolveSanctuaryEffect(choice: SanctuaryChoice, standardAmount: number, doubleAmount: number): number {
-        if (choice === 'standard') {
+        if (choice === SanctuaryChoice.Standard) {
             return standardAmount;
         }
 
@@ -247,7 +227,7 @@ export class SanctuaryService {
         return Math.random() < SANCTUARY_DOUBLE_CHANCE ? amount : 0;
     }
 
-    private hasFightSanctuaryAlreadyBeenUsed(player: SanctuaryFightState): boolean {
+    private hasFightSanctuaryAlreadyBeenUsed(player: ICharacter): boolean {
         return (player.fightSanctuaryUsed ?? false) || (player.fightSanctuaryTurnsRemaining ?? 0) > 0 || (player.fightSanctuaryBonus ?? 0) > 0;
     }
 
@@ -265,9 +245,9 @@ export class SanctuaryService {
         return items.find((item) => sanctuaryCoversCell(item, position.y, position.x)) ?? null;
     }
 
-    private throwIf(condition: boolean, message: string): void {
+    private throwIf(condition: boolean, errorCodes: ErrorCode[]): void {
         if (condition) {
-            throw new Error(message);
+            throw new AppError(errorCodes, StatusCodes.BAD_REQUEST);
         }
     }
 }

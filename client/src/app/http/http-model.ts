@@ -1,3 +1,5 @@
+import { HttpError } from '@app/interfaces/http-error.interface';
+
 export enum ResponseType {
     Json = 'json',
     Text = 'text',
@@ -5,19 +7,7 @@ export enum ResponseType {
     ArrayBuffer = 'arraybuffer',
 }
 
-export interface HttpOptions {
-    headers?: Record<string, string>;
-    params?: Record<string, string | number | boolean>;
-    responseType?: ResponseType;
-    withCredentials?: boolean;
-}
-export interface HttpError {
-    status: number;
-    url: string;
-    message: string;
-    timestamp: Date;
-    originalError?: unknown;
-}
+export type { HttpError };
 export function isHttpError(error: unknown): error is HttpError {
     if (typeof error !== 'object' || error === null) {
         return false;

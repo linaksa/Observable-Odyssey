@@ -16,11 +16,13 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { Observable, Subject } from 'rxjs';
 import { WaitChatSidebarComponent } from './wait-chat-sidebar.component';
 
 @Component({
@@ -34,6 +36,7 @@ describe('WaitChatSidebarComponent', () => {
     let fixture: ComponentFixture<WaitChatSidebarComponent>;
     let socketServiceSpy: jasmine.SpyObj<SocketService>;
     let activeGameServiceStub: { activeGame: IActiveGame };
+    let startGameError$: Subject<IErrorResponse>;
     let organizer: ICharacter;
     let guest: ICharacter;
 
@@ -41,7 +44,15 @@ describe('WaitChatSidebarComponent', () => {
         organizer = createCharacter('Organizer');
         guest = createCharacter('Guest');
 
-        socketServiceSpy = jasmine.createSpyObj<SocketService>('SocketService', ['emit']);
+        socketServiceSpy = jasmine.createSpyObj<SocketService>('SocketService', ['emit', 'on']);
+        startGameError$ = new Subject<IErrorResponse>();
+        socketServiceSpy.on.and.callFake(<T>(_namespace: string, event: string): Observable<T> => {
+            if (event === SocketEvent.StartGameError) {
+                return startGameError$.asObservable() as Observable<T>;
+            }
+
+            return new Subject<T>().asObservable();
+        });
         activeGameServiceStub = {
             activeGame: {
                 _id: 'active-game-1',
@@ -106,6 +117,13 @@ describe('WaitChatSidebarComponent', () => {
 
         expect(socketServiceSpy.emit).not.toHaveBeenCalled();
     });
+
+    it('should show the start-game error message when the server rejects the start request', () => {
+        startGameError$.next({ errorCodes: [ErrorCode.StartGameRequiresAtLeastTwoPlayers] });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).toContain('La partie doit contenir au moins deux joueurs.');
+    });
 });
 
 function createCharacter(name: string): ICharacter {
@@ -123,7 +141,14 @@ function createCharacter(name: string): ICharacter {
         movementLeft: 4,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x: 0, y: 0 },
-        positionGrille: { x: 0, y: 0 },
+        startingPosition: { x: 0, y: 0 },
+        currentPosition: { x: 0, y: 0 },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }

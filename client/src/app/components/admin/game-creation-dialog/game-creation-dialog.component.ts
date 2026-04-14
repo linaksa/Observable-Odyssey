@@ -2,30 +2,13 @@ import { NgClass } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GridSize } from '@app/constants/grid-edition';
+import { GridSize } from '@app/constants/grid-editor';
+import { DimensionConfig, DimensionOption } from '@app/interfaces/game-creation-dialog.interface';
 import { GameService } from '@app/services/admin/game.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { Subject, takeUntil } from 'rxjs';
-
-enum DimensionSize {
-    Small = 'small',
-    Medium = 'medium',
-    Large = 'large',
-}
-
-interface DimensionConfig {
-    label: string;
-    displaySize: string;
-    numberOfPlayers: string;
-    size: number;
-}
-
-interface DimensionOption {
-    value: DimensionSize;
-    label: string;
-    displaySize: string;
-}
+import { DimensionSize } from './game-creation-dialog.types';
 
 @Component({
     selector: 'app-game-creation-dialog',
@@ -62,7 +45,7 @@ export class GameCreationDialogComponent implements OnInit, OnDestroy {
         // Initialize form with proper control names and default values
         this.form = this.fb.group({
             dimension: [this.defaultDimension, Validators.required],
-            isCTF: [{ value: this.defaultIsCTF, disabled: true }],
+            isCTF: [{ value: this.defaultIsCTF, disabled: false }],
         });
 
         // Subscribe to dimension changes

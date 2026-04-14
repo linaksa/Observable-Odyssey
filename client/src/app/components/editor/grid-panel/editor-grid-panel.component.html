@@ -1,0 +1,21 @@
+<div class="text-2xl text-white tracking-wider text-center">Grille de jeu</div>
+
+<div class="flex grow min-h-0 min-w-0">
+    <app-game-grid
+        #grid
+        class="flex grow min-h-0 w-full items-center justify-center"
+        [cells]="boardEditorService.gameCells"
+        [getObjectAt]="boardEditorService.getObjectAt"
+        [objects]="boardEditorService.objects"
+        [editable]="true"
+        [highlightedTiles]="highlightedTiles()"
+        [highlightedTileClass]="highlightedTileClass"
+        [showTooltip]="true"
+        [getTooltipText]="getTooltipText"
+        [placementPreview]="placementPreview()"
+        (cellMouseDown)="cellMouseDown.emit($event)"
+        (cellMouseEnter)="onCellMouseEnter($event)"
+        (cellMouseLeave)="onCellMouseLeave()"
+        gridClass="rounded-lg"
+    />
+</div>

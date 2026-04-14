@@ -1,0 +1,64 @@
+<div class="flex flex-col text-white gap-4">
+    <p class="text-2xl">Liste des joueurs</p>
+
+    <table class="text-center">
+        <thead>
+            <tr>
+                <th></th>
+                <th></th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NCombats)">
+                        <span class="tracking-wider">Combats</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NCombats)" />
+                    </button>
+                </th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NVictories)">
+                        <span class="tracking-wider">Victoires</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVictories)" />
+                    </button>
+                </th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDefeats)">
+                        <span class="tracking-wider">Défaites</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDefeats)" />
+                    </button>
+                </th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDamageTaken)">
+                        <span class="tracking-wider">PDV perdus</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageTaken)" />
+                    </button>
+                </th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NDamageDealt)">
+                        <span class="tracking-wider">Dommages totaux</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NDamageDealt)" />
+                    </button>
+                </th>
+                <th>
+                    <button class="flex cursor-pointer items-center" (click)="orderPlayers(availableStatOrderArgs.NVisitedCells)">
+                        <span class="tracking-wider">% tuiles visitées</span>
+                        <img class="w-4 h-4 ml-1" [src]="getOrderDirectionIconPath(availableStatOrderArgs.NVisitedCells)" />
+                    </button>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (player of orderedPlayers; track $index) {
+                <tr>
+                    <td>
+                        <img [src]="getAvatarUrl(player)" class="w-16 h-16 p-2 rounded-full bg-[#1e3a70] object-contain shrink-0" />
+                    </td>
+                    <td>{{ player.name }}</td>
+                    <td>{{ player.nCombats }}</td>
+                    <td>{{ player.nVictories }}</td>
+                    <td>{{ player.nDefeats }}</td>
+                    <td>{{ player.totalDamageReceived }}</td>
+                    <td>{{ player.totalDamageDealt }}</td>
+                    <td>{{ getPlayerVisitedTilesRatio(player) }}%</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

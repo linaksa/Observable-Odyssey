@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { SanctuaryPopupData, TileInfoPopupData } from '@common/info';
-import { CellType } from '@common/board';
-import { IItem, ItemType } from '@common/items';
 import { ICharacter } from '@common/character';
 import { TileInfoService } from '@app/services/ui/tile-info.service';
+import { CellType } from '@common/board';
+import { SanctuaryPopupData, TileInfoPopupData } from '@common/info';
+import { IItem, ItemType } from '@common/items';
 
 @Injectable({
     providedIn: 'root',
@@ -11,14 +11,14 @@ import { TileInfoService } from '@app/services/ui/tile-info.service';
 export class GamePopupStateService {
     private readonly tileInfoService = inject(TileInfoService);
 
-    isTileInfoVisible = false;
-    tileInfoTitle = '';
-    tileInfoDescription = '';
-    tileInfoMovementCost = '';
-    tileInfoItemTitle: string | null = null;
-    tileInfoItemDescription: string | null = null;
-    tileInfoPlayerName: string | null = null;
-    tileInfoPlayerAvatarUrl: string | null = null;
+    private isTileInfoVisible = false;
+    private tileInfoTitle = '';
+    private tileInfoDescription = '';
+    private tileInfoMovementCost = '';
+    private tileInfoItemTitle: string | null = null;
+    private tileInfoItemDescription: string | null = null;
+    private tileInfoPlayerName: string | null = null;
+    private tileInfoPlayerAvatarUrl: string | null = null;
 
     isSanctuaryPopupVisible = false;
     sanctuaryPopupTitle = '';
@@ -65,7 +65,7 @@ export class GamePopupStateService {
     openSanctuaryPopup(item: IItem, rowIndex: number, colIndex: number): void {
         const itemInfo = this.tileInfoService.getItemInfo(item);
         this.closeTileInfo();
-        this.sanctuaryPopupTitle = itemInfo?.title ?? 'Sanctuaire :';
+        this.sanctuaryPopupTitle = itemInfo?.title ?? 'Sanctuaire';
         this.sanctuaryPopupDescription = itemInfo?.description ?? 'Choisissez un bonus.';
         this.sanctuaryPopupEffectLabel = this.getSanctuaryEffectLabel(item);
         this.sanctuaryPopupPosition = { x: colIndex, y: rowIndex };

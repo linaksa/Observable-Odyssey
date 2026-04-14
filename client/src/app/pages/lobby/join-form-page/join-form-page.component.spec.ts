@@ -21,11 +21,14 @@ import { JoinFormPageComponent } from './join-form-page.component';
 
 import { GameService } from '@app/services/admin/game.service';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
+import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame, IActiveGameWithPlayer } from '@common/activeGame';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -61,6 +64,7 @@ const dummyActiveGame: IActiveGame = {
     organizerName: 'Dummy Organizer',
     maxPlayerCount: 4,
     turnIsInPreparation: false,
+    hasFlagId: '',
 
     turnStartTimeStamp: 0,
     currentAttack: null,
@@ -86,7 +90,7 @@ describe('JoinFormPageComponent', () => {
             errors: signal(null),
         });
 
-        socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect']);
+        socketServiceMock = jasmine.createSpyObj('SocketService', ['on', 'connect', 'disconnect']);
         gameServiceMock = jasmine.createSpyObj('GameService', ['getActiveGameById']);
         toastServiceMock = jasmine.createSpyObj('ToastService', ['show']);
         localPlayerServiceMock = jasmine.createSpyObj('LocalPlayerService', ['setLocalPlayer']);
@@ -97,7 +101,7 @@ describe('JoinFormPageComponent', () => {
         socketServiceMock.on.and.returnValue(socketSubject.asObservable());
 
         const overrideInfo: MetadataOverride<Component> = {
-            set: { imports: [MockCharacterFormComponent, MockToastComponent] },
+            set: { imports: [NavButtonsComponent, PageTitleComponent, MockCharacterFormComponent, MockToastComponent] },
         };
 
         TestBed.overrideComponent(JoinFormPageComponent, overrideInfo);
@@ -165,7 +169,7 @@ describe('JoinFormPageComponent', () => {
 
     it('should set activeGameId to null when route params are missing activeGameId', () => {
         const fetchSpy = spyOn(component, 'fetchAvailableAvatars').and.stub();
-        component.router = { params: of({}) } as ActivatedRoute;
+        component.route = { params: of({}) } as ActivatedRoute;
 
         component.ngOnInit();
 
@@ -197,8 +201,15 @@ describe('JoinFormPageComponent', () => {
                     movementLeft: 1,
                     victories: 0,
                     hasAbandoned: false,
-                    positionDepart: { x: 0, y: 0 },
-                    positionGrille: { x: 0, y: 0 },
+                    startingPosition: { x: 0, y: 0 },
+                    currentPosition: { x: 0, y: 0 },
+
+                    nCombats: 0,
+                    nVictories: 0,
+                    nDefeats: 0,
+                    totalDamageDealt: 0,
+                    totalDamageReceived: 0,
+                    visitedCells: [],
                 },
                 {
                     name: 'abandoned-player',
@@ -214,8 +225,15 @@ describe('JoinFormPageComponent', () => {
                     movementLeft: 1,
                     victories: 0,
                     hasAbandoned: true,
-                    positionDepart: { x: 0, y: 0 },
-                    positionGrille: { x: 0, y: 0 },
+                    startingPosition: { x: 0, y: 0 },
+                    currentPosition: { x: 0, y: 0 },
+
+                    nCombats: 0,
+                    nVictories: 0,
+                    nDefeats: 0,
+                    totalDamageDealt: 0,
+                    totalDamageReceived: 0,
+                    visitedCells: [],
                 },
             ],
         };
@@ -252,11 +270,9 @@ describe('JoinFormPageComponent', () => {
     it('should handle joinGameAsCharacter error', () => {
         // Error case
         // Validate that the app doesnt crash and shows an error toast when the join game request fails
-        const errorText = 'join failed';
-
         const error = {
             originalError: {
-                error: { message: errorText },
+                error: { errorCodes: [ErrorCode.AvatarAlreadyUsed] },
             },
         };
 
@@ -267,7 +283,7 @@ describe('JoinFormPageComponent', () => {
         component.joinGameAsCharacter({} as CharacterFormData);
 
         expect(toastServiceMock.show).toHaveBeenCalled();
-        expect(characterFormServiceMock.errors()).toBe(errorText);
+        expect(characterFormServiceMock.errors()).toBe('Avatar déjà utilisé par un autre joueur dans cette partie');
     });
 
     // Edge case: When required input data is missing, handle joinGameAsCharacter empty error.

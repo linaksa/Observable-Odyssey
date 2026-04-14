@@ -35,7 +35,7 @@ describe('AvatarPreviewComponent', () => {
     it('should build avatar image path from model', () => {
         const imagePath = component.getImageForAvatar(Avatar.Avatar2);
 
-        expect(imagePath).toBe('./assets/characters/brick.png');
+        expect(imagePath).toBe('./assets/characters/brick-portrait.png');
     });
 
     // Edge case: When no avatar is selected, show placeholder.
@@ -54,7 +54,7 @@ describe('AvatarPreviewComponent', () => {
 
         const image = (fixture.nativeElement as HTMLElement).querySelector('img');
 
-        expect(image?.getAttribute('src')).toBe('./assets/characters/cocoa.png');
+        expect(image?.getAttribute('src')).toBe('./assets/characters/cocoa-portrait.png');
         expect(image?.getAttribute('alt')).toBe(Avatar.Avatar4);
         expect(image?.className).toContain('[image-rendering:pixelated]');
     });

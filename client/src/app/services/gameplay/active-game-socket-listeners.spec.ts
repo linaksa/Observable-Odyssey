@@ -17,16 +17,16 @@ import { ActiveGameSocketContext, registerActiveGameSocketListeners } from '@app
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IGame, Visibility } from '@common/game';
+import { SanctuaryChoice } from '@common/info';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/playerMovedResult';
 import { SocketEvent } from '@common/socket-events';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/sanctuary';
-import { ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
+import { IFlagTransferRejectedPayload, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
@@ -40,8 +40,9 @@ describe('registerActiveGameSocketListeners', () => {
     let activeGame: IActiveGame | undefined;
     let currentPlayerIndex = signal(0);
     let hasChangedLocation = signal(false);
-    let hasAbandonned = signal(false);
+    let hasAbandoned = signal(false);
     let gameHasEnded = signal(false);
+    let hasPendingFlagActionRequest = false;
 
     const eventStreams = new Map<string, Subject<unknown>>();
 
@@ -66,13 +67,28 @@ describe('registerActiveGameSocketListeners', () => {
         setActiveGame: (newActiveGame: IActiveGame) => {
             activeGame = newActiveGame;
         },
+        setRoundOutcome: () => {
+            // no-op for this spec since combat outcomes aren't emitted by the tested listeners
+        },
         getPlayerByName: (playerName: string) => activeGame?.players.find((player) => player.name === playerName),
         currentPlayer: currentPlayerIndex,
         hasChangedLocation,
-        hasAbandonned,
+        hasAbandoned,
         gameHasEnded,
+        handleFlagActionRequest: jasmine.createSpy('handleFlagActionRequest'),
+        closeFlagActionRequestIfExpired: jasmine.createSpy('closeFlagActionRequestIfExpired'),
+        hasPendingFlagActionRequest: () => hasPendingFlagActionRequest,
+        clearPendingFlagActionRequest: jasmine.createSpy('clearPendingFlagActionRequest').and.callFake(() => {
+            hasPendingFlagActionRequest = false;
+        }),
         setCombatOutcome: () => {
             // no-op for this spec since combat outcomes aren't emitted by the tested listeners
+        },
+        setSanctuaryOutcome: () => {
+            // no-op for this spec since sanctuary outcomes aren't asserted here
+        },
+        bumpActionStatsVersion: () => {
+            // no-op for this socket listener spec
         },
     });
 
@@ -90,8 +106,9 @@ describe('registerActiveGameSocketListeners', () => {
         activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
         currentPlayerIndex = signal(activeGame.currentPlayerIndex);
         hasChangedLocation = signal(false);
-        hasAbandonned = signal(false);
+        hasAbandoned = signal(false);
         gameHasEnded = signal(false);
+        hasPendingFlagActionRequest = false;
     });
 
     it('should update movement and turn state from socket events', () => {
@@ -103,7 +120,7 @@ describe('registerActiveGameSocketListeners', () => {
             movementLeft: 1,
         });
 
-        expect(activeGame?.players[0].positionGrille).toEqual({ x: 1, y: 2 });
+        expect(activeGame?.players[0].currentPosition).toEqual({ x: 1, y: 2 });
         expect(activeGame?.players[0].movementLeft).toBe(1);
         expect(hasChangedLocation()).toBeTrue();
 
@@ -140,7 +157,7 @@ describe('registerActiveGameSocketListeners', () => {
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Bob' });
         expect(activeGame?.players.map((player) => player.name)).toEqual(['Alice']);
-        expect(hasChangedLocation()).toBeTrue();
+        expect(hasChangedLocation()).toBeFalse();
 
         emitEvent<{ playerId: string }>(SocketEvent.PlayerKicked, { playerId: 'Alice' });
         expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
@@ -153,23 +170,37 @@ describe('registerActiveGameSocketListeners', () => {
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
     });
 
-    it('should keep sanctuary cooldown state synchronized from the socket events', () => {
+    it('should keep abandoned players in the roster and refresh abandon state', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob'), createCharacter('Carol')], 'Alice');
+        registerActiveGameSocketListeners(context());
+
+        emitEvent<IPlayerAbandonedGame>(SocketEvent.PlayerAbandoned, {
+            playerName: 'Bob',
+            activeGame,
+        });
+
+        expect(activeGame?.players.map((player) => player.name)).toEqual(['Alice', 'Bob', 'Carol']);
+        expect(activeGame?.players[1].hasAbandoned).toBeTrue();
+        expect(hasAbandoned()).toBeTrue();
+    });
+
+    it('should release a sanctuary once its cooldown expires', () => {
         activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
-        activeGame.game.board.items = [createSanctuaryItem(false, SANCTUARY_COOLDOWN_TURN_STEPS)];
+        activeGame.game.board.items = [createSanctuaryItem(false, 1)];
         registerActiveGameSocketListeners(context());
 
         emitEvent<ISanctuaryInteractedResult>(SocketEvent.SanctuaryInteracted, {
             playerId: 'Alice',
             position: { x: 1, y: 1 },
             itemType: ItemType.LifeSanctuary,
-            choice: 'standard',
+            choice: SanctuaryChoice.Standard,
             succeeded: true,
             actionsLeft: 0,
             currentHealth: 6,
             attackPoints: 4,
             defensePoints: 4,
             sanctuaryActive: false,
-            sanctuaryInactiveTurnsRemaining: 3,
+            sanctuaryInactiveTurnsRemaining: 1,
             fightSanctuaryUsed: false,
             fightSanctuaryTurnsRemaining: 0,
             fightSanctuaryBonus: 0,
@@ -177,12 +208,80 @@ describe('registerActiveGameSocketListeners', () => {
 
         const sanctuary = activeGame.game.board.items[0];
         expect(sanctuary.active).toBeFalse();
-        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS);
+        expect(sanctuary.inactiveTurnsRemaining).toBe(1);
 
         emitEvent<{ player: string }>(SocketEvent.TurnPreparing, { player: 'Bob' });
 
-        expect(sanctuary.active).toBeFalse();
-        expect(sanctuary.inactiveTurnsRemaining).toBe(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
+        expect(sanctuary.active).toBeTrue();
+        expect(sanctuary.inactiveTurnsRemaining).toBe(0);
+    });
+
+    it('should store sanctuary interaction outcomes', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        const setSanctuaryOutcomeSpy = jasmine.createSpy('setSanctuaryOutcome');
+
+        registerActiveGameSocketListeners({
+            ...context(),
+            setSanctuaryOutcome: setSanctuaryOutcomeSpy,
+        });
+
+        emitEvent<ISanctuaryInteractedResult>(SocketEvent.SanctuaryInteracted, {
+            playerId: 'Alice',
+            position: { x: 1, y: 1 },
+            itemType: ItemType.FightSanctuary,
+            choice: SanctuaryChoice.Double,
+            succeeded: false,
+            actionsLeft: 0,
+            currentHealth: 6,
+            attackPoints: 4,
+            defensePoints: 4,
+            sanctuaryActive: false,
+            sanctuaryInactiveTurnsRemaining: 3,
+            fightSanctuaryUsed: true,
+            fightSanctuaryTurnsRemaining: 0,
+            fightSanctuaryBonus: 0,
+        });
+
+        expect(setSanctuaryOutcomeSpy).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+                playerId: 'Alice',
+                succeeded: false,
+            }),
+        );
+    });
+
+    it('should sync requester actions when a flag pickup resolves automatically', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        const socketContext = context();
+        hasPendingFlagActionRequest = true;
+        registerActiveGameSocketListeners(socketContext);
+
+        emitEvent(SocketEvent.FlagPickedUp, {
+            playerName: 'Bob',
+            requesterName: 'Alice',
+            requesterActionsLeft: 0,
+        });
+
+        expect(activeGame?.hasFlagId).toBe('Bob');
+        expect(activeGame?.players[0].actionsLeft).toBe(0);
+        expect(hasChangedLocation()).toBeTrue();
+        expect(socketContext.clearPendingFlagActionRequest as jasmine.Spy).toHaveBeenCalled();
+    });
+
+    it('should clear pending flag requests and notify requester when transfer is rejected', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        const socketContext = context();
+        hasPendingFlagActionRequest = true;
+        registerActiveGameSocketListeners(socketContext);
+
+        emitEvent<IFlagTransferRejectedPayload>(SocketEvent.FlagTransferRejected, {
+            gameId: activeGame._id,
+            requesterName: 'Alice',
+            targetPlayerName: 'Bob',
+        });
+
+        expect(socketContext.clearPendingFlagActionRequest as jasmine.Spy).toHaveBeenCalled();
+        expect(toastServiceSpy.show).toHaveBeenCalledWith('Le transfert du drapeau a été refusé.');
     });
 
     it('should ignore listener events when no active game is loaded', () => {
@@ -200,7 +299,7 @@ describe('registerActiveGameSocketListeners', () => {
         emitEvent<{ winner: string }>(SocketEvent.GameEnded, { winner: 'Alice' });
 
         expect(hasChangedLocation()).toBeFalse();
-        expect(hasAbandonned()).toBeFalse();
+        expect(hasAbandoned()).toBeFalse();
         expect(gameHasEnded()).toBeFalse();
         expect(localPlayerServiceSpy.clear).not.toHaveBeenCalled();
         expect(toastServiceSpy.show).not.toHaveBeenCalled();
@@ -242,6 +341,7 @@ function createActiveGame(players: ICharacter[], currentPlayerName?: string, id 
         organizerName: 'Organizer',
         maxPlayerCount: MAX_PLAYER_COUNT,
         turnIsInPreparation: false,
+        hasFlagId: '',
 
         turnStartTimeStamp: 0,
         currentAttack: null,
@@ -263,8 +363,15 @@ function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVE
         movementLeft,
         victories: 0,
         hasAbandoned: false,
-        positionDepart: { x, y },
-        positionGrille: { x, y },
+        startingPosition: { x, y },
+        currentPosition: { x, y },
+
+        nCombats: 0,
+        nVictories: 0,
+        nDefeats: 0,
+        totalDamageDealt: 0,
+        totalDamageReceived: 0,
+        visitedCells: [],
     };
 }
 
