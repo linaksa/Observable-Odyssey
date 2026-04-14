@@ -1,5 +1,5 @@
-import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
 import { FLAG_TRANSFER_REJECTED_TOAST } from '@app/constants/gameplay';
+import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
 import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
@@ -219,8 +219,7 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
             activeGame.winner = data.winner;
             activeGame.isFinished = true;
             context.clearPendingFlagActionRequest();
-
-            toggle(context.gameHasEnded);
+            context.gameHasEnded.update(() => true);
         }),
         context.socket.on<IGameCanceledPayload>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
             context.localPlayer.clear();
