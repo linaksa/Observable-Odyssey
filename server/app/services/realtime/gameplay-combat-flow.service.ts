@@ -4,7 +4,7 @@ import { ActionService } from '@app/services/gameplay/action-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
-import { AttackPosture } from '@common/attack-result';
+import { AttackPosture, CombatOutcome } from '@common/attack-result';
 import { COMBAT_TIME_MS } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { SocketEvent } from '@common/socket-events';
@@ -53,9 +53,9 @@ export class GameplayCombatFlowService {
                     return;
                 }
 
-                const combatResolved = await this.actionService.applyCombatTurn(gameId);
-                if (combatResolved) {
-                    await this.handlePostCombatEndScenario(attackerName, gameId, context.namespace);
+                const combatOutcome: CombatOutcome | null = await this.actionService.applyCombatTurn(gameId);
+                if (combatOutcome) {
+                    await this.handlePostCombatEndScenario(attackerName, gameId, combatOutcome, context.namespace);
                 }
             } catch (error) {
                 if (this.isNoOngoingAttackError(error)) {
@@ -106,14 +106,14 @@ export class GameplayCombatFlowService {
 
         this.turnService.clearCombatTimer(activeGame);
 
-        const combatResolved = await this.applyCombatTurn(activeGameId);
-        if (combatResolved === null) {
+        const combatOutcome: CombatOutcome | null = await this.applyCombatTurn(activeGameId);
+        if (!combatOutcome) {
             return;
         }
 
         const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
-        if (combatResolved && currentPlayerName) {
-            await this.handlePostCombatEndScenario(currentPlayerName, activeGameId, namespace);
+        if (combatOutcome && currentPlayerName) {
+            await this.handlePostCombatEndScenario(currentPlayerName, activeGameId, combatOutcome, namespace);
             return;
         }
     }
@@ -129,7 +129,7 @@ export class GameplayCombatFlowService {
         }
     }
 
-    private async applyCombatTurn(gameId: string): Promise<boolean | null> {
+    private async applyCombatTurn(gameId: string): Promise<CombatOutcome | null> {
         try {
             return await this.actionService.applyCombatTurn(gameId);
         } catch (error) {
@@ -140,13 +140,23 @@ export class GameplayCombatFlowService {
         }
     }
 
-    private async handlePostCombatEndScenario(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {
+    private async handlePostCombatEndScenario(
+        attackerName: string,
+        gameId: string,
+        combatOutcome: CombatOutcome,
+        namespace: Namespace,
+    ): Promise<void> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
         if (!activeGame) {
             return;
         }
 
         await this.gameplayTurnEndService.emitGameEndedIfNeeded(gameId, namespace);
+
+        if (combatOutcome.losers.includes(attackerName)) {
+            await this.turnService.endTurn(gameId);
+            return;
+        }
 
         const attackerIsVirtual = activeGame.players.find((player) => player.name === attackerName)?.virtualPlayerProfile;
         if (attackerIsVirtual) {
