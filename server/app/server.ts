@@ -1,4 +1,6 @@
 import { Application } from '@app/app';
+import { ACTIVE_GAME_SWEEP_GRACE_PERIOD_MS, ACTIVE_GAME_SWEEP_INTERVAL_MS } from '@app/constants/active-game-garbage-collection';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
@@ -26,7 +28,7 @@ export class Server {
     init(): void {
         this.application.app.set('port', Server.appPort);
 
-        this.server = http.createServer(this.application.app);
+        this.server = this.createHttpServer();
 
         // Avoid circular dependencies issues, as socketService needs httpServer
         const socketService = Container.get(SocketService);
@@ -46,9 +48,22 @@ export class Server {
         turnService.setVirtualPlayerTurnHandler((player, game) => virtualPlayerService.startTurn(player, game));
         turnService.setTurnEndedHandler((gameId) => gameplayRealtimeFlowService.clearPendingFlagRequest(gameId));
 
+        this.startActiveGameSweepTimer();
+
         this.server.listen(Server.appPort);
         this.server.on('error', (error: NodeJS.ErrnoException) => this.onError(error));
         this.server.on('listening', () => this.onListening());
+    }
+
+    private createHttpServer(): http.Server {
+        return http.createServer(this.application.app);
+    }
+
+    private startActiveGameSweepTimer(): void {
+        const activeGameGarbageCollectorService = Container.get(ActiveGameGarbageCollectorService);
+        setInterval(() => {
+            void activeGameGarbageCollectorService.sweepMarkedGames(ACTIVE_GAME_SWEEP_GRACE_PERIOD_MS).catch();
+        }, ACTIVE_GAME_SWEEP_INTERVAL_MS);
     }
 
     private onError(error: NodeJS.ErrnoException): void {

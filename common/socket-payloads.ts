@@ -9,6 +9,11 @@ export interface IJoinGamePayload {
     playerName?: string;
 }
 
+export interface IJoinChatPayload {
+    roomId: string;
+    playerName?: string;
+}
+
 export interface IPlayerMoveData {
     gameId: string;
     playerId: string;

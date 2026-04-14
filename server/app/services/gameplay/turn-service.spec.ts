@@ -1,4 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
@@ -14,6 +15,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { Container } from 'typedi';
 
 const SANCTUARY_BUFFED_STAT = 5;
 
@@ -160,7 +162,8 @@ describe('TurnService', () => {
 
 describe('VirtualPlayerTurnFinalizerService', () => {
     let activeGameService: { getActiveGameById: sinon.SinonStub };
-    let endGameService: { checkEndGame: sinon.SinonStub };
+    let activeGameGarbageCollectorService: { reevaluateFinishedGameMark: sinon.SinonStub };
+    let endGameService: { checkEndGame: sinon.SinonStub; getEndGameLogMessage: sinon.SinonStub };
     let gameplayLogService: { emitGameLogToRoom: sinon.SinonStub };
     let socketService: { getNamespace: sinon.SinonStub };
     let turnService: { endTurn: sinon.SinonStub };
@@ -169,8 +172,13 @@ describe('VirtualPlayerTurnFinalizerService', () => {
     let service: VirtualPlayerTurnFinalizerService;
 
     beforeEach(() => {
+        Container.reset();
         activeGameService = { getActiveGameById: sinon.stub() };
-        endGameService = { checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }) };
+        activeGameGarbageCollectorService = { reevaluateFinishedGameMark: sinon.stub().resolves() };
+        endGameService = {
+            checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }),
+            getEndGameLogMessage: sinon.stub().returns('Fin de partie.'),
+        };
         gameplayLogService = { emitGameLogToRoom: sinon.stub() };
         emitSpy = sinon.stub();
         namespaceSpy = {
@@ -178,6 +186,7 @@ describe('VirtualPlayerTurnFinalizerService', () => {
         };
         socketService = { getNamespace: sinon.stub().returns(namespaceSpy) };
         turnService = { endTurn: sinon.stub().resolves() };
+        Container.set(ActiveGameGarbageCollectorService, activeGameGarbageCollectorService as unknown as ActiveGameGarbageCollectorService);
 
         service = new VirtualPlayerTurnFinalizerService(
             endGameService as unknown as EndGameService,
@@ -190,6 +199,7 @@ describe('VirtualPlayerTurnFinalizerService', () => {
 
     afterEach(() => {
         sinon.restore();
+        Container.reset();
     });
 
     it('should end the turn when the virtual player is still active', async () => {
@@ -217,6 +227,19 @@ describe('VirtualPlayerTurnFinalizerService', () => {
         expect(turnService.endTurn.called).to.equal(false);
         expect(socketService.getNamespace.called).to.equal(false);
         expect(service.isTurnInProgress(activeGame._id)).to.equal(true);
+    });
+
+    it('should reevaluate the GC mark when virtual-player finalization ends the game', async () => {
+        const activeGame = createActiveGame();
+        endGameService.checkEndGame.resolves({ hasEnded: true, winner: 'Alice', reason: null, remainingPlayers: ['Alice'] });
+        activeGameService.getActiveGameById.onFirstCall().resolves({ ...activeGame, winner: 'Alice' });
+        activeGameService.getActiveGameById.onSecondCall().resolves(activeGame);
+
+        service.beginTurn(activeGame._id, 'Alice');
+
+        await service.finalizeTurn(activeGame._id);
+
+        expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.calledOnceWithExactly(activeGame._id)).to.equal(true);
     });
 });
 
