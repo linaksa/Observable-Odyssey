@@ -1,4 +1,4 @@
-<div #gridContainer data-testid="game-grid-container" class="relative flex h-full w-full min-h-0 min-w-0 items-center justify-center">
+<div #gridContainer data-testid="game-grid-container" class="relative flex h-full w-auto aspect-square min-h-0 min-w-0 items-center justify-center">
     <div [class]="resolvedGridClass()" [style.gridTemplateColumns]="gridTemplateColumns()" data-testid="game-grid">
         @for (row of cells(); track $index; let rowIndex = $index) {
             @for (cell of row; track $index; let colIndex = $index) {

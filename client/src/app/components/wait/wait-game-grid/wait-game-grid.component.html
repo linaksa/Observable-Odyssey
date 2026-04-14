@@ -28,6 +28,11 @@
 
         <div class="border-t border-white"></div>
 
-        <app-game-grid [cells]="table" [getObjectAt]="getObjectAt" gridClass="sm:w-1/2 rounded-lg mx-auto" />
+        <app-game-grid
+            class="flex grow min-h-0 w-full items-center justify-center"
+            [cells]="table"
+            [getObjectAt]="getObjectAt"
+            gridClass="rounded-lg"
+        />
     }
 </div>
