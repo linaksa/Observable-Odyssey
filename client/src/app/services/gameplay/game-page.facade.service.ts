@@ -3,8 +3,8 @@ import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { GamePopupStateService } from '@app/services/gameplay/game-popup-state.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
-import { GameLogService } from '@app/services/realtime/game-log.service';
 import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
+import { GameLogService } from '@app/services/realtime/game-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ICurrentAttack } from '@common/activeGame';
 import { ICharacter } from '@common/character';
@@ -45,7 +45,7 @@ export class GamePageFacadeService {
     }
 
     get isGameFinished(): boolean {
-        return this.activeGameService.activeGame?.isFinished ?? false;
+        return this.activeGameService.gameHasEnded() || (this.activeGameService.activeGame?.isFinished ?? false);
     }
 
     get turnStatusData(): TurnStatusData {
