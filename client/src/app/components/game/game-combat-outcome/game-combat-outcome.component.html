@@ -1,80 +1,84 @@
 @if (visibleOutcome(); as outcome) {
-    <div class="fixed inset-0 z-90 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-        <div class="w-full max-w-[340px]">
-            <section class="relative overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
-                <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
-                    <span class="text-[9px] font-bold uppercase tracking-widest text-[#a8c8ff]">Résultat du combat</span>
+    <section class="relative w-full max-w-[340px] overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
+        <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
+            <span class="text-[9px] font-bold uppercase tracking-widest text-[#a8c8ff]">Résultat du combat</span>
 
-                    <div class="flex items-center gap-2">
-                        @if (debugMode()) {
-                            <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
-                                <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
-                                <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
-                            </div>
-                        }
-
-                        <button
-                            type="button"
-                            (click)="closeOutcome()"
-                            class="flex h-7 w-7 items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-xs font-bold text-[#6b9ed4] transition-colors hover:border-[#4a7fd4] hover:text-[#a8c8ff]"
-                        >
-                            X
-                        </button>
+            <div class="flex items-center gap-2">
+                @if (debugMode()) {
+                    <div class="flex items-center gap-2 rounded-lg border-2 border-[#ffd84d] bg-[#c8a800] px-4 py-2 shadow-lg">
+                        <span class="text-[12px] font-bold uppercase tracking-wider text-black">DEBUG MODE</span>
+                        <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-black"></span>
                     </div>
-                </header>
+                }
 
-                <div class="p-6 flex flex-col items-center gap-4">
-                    @if (isWinner(outcome)) {
-                        <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#3d9e32] bg-[#2a4a1a]">
-                            <img src="assets/outcome-assets/crown.gif" alt="Victoire" class="h-14 w-14 object-contain" />
-                        </div>
+                <button
+                    type="button"
+                    (click)="closeOutcome()"
+                    class="flex h-7 w-7 items-center justify-center rounded-lg border-[1.5px] border-[#2d5199] bg-[#0d1f42] text-xs font-bold text-[#6b9ed4] transition-colors hover:border-[#4a7fd4] hover:text-[#a8c8ff]"
+                >
+                    X
+                </button>
+            </div>
+        </header>
 
-                        <div class="text-center">
-                            <div class="mb-1 text-2xl font-bold tracking-wide text-[#80ef74]">Victoire !</div>
-                            <div class="text-sm text-[#a8c8ff]">Vous avez remporté le combat</div>
+        <div class="p-6 flex flex-col items-center gap-4">
+            @if (isWinner(outcome)) {
+                <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#3d9e32] bg-[#2a4a1a]">
+                    <img src="assets/outcome-assets/crown.gif" alt="Victoire" class="h-14 w-14 object-contain" />
+                </div>
 
-                            @if (outcome.cancelled) {
-                                <div class="text-sm text-[#a8c8ff]">Votre adversaire a abandonné</div>
-                            }
-                        </div>
+                <div class="text-center">
+                    <div class="mb-1 text-2xl font-bold tracking-wide text-[#80ef74]">Victoire !</div>
+                    <div class="text-sm text-[#a8c8ff]">Vous avez remporté le combat</div>
+
+                    @if (outcome.cancelled) {
+                        <div class="text-sm text-[#a8c8ff]">Votre adversaire a abandonné</div>
+                    }
+                </div>
 
                         <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42]">
                             <div class="h-full animate-[timer-drain_3s_linear_forwards] rounded-full bg-[#3d9e32]"></div>
                         </div>
                     } @else if (isLoser(outcome)) {
-                        <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#9e3232] bg-[#3a0a0a]">
-                            <img src="assets/outcome-assets/skull-and-crossbones.gif" alt="Défaite" class="h-14 w-14 object-contain" />
-                        </div>
-
-                        <div class="text-center">
-                            <div class="mb-1 text-2xl font-bold tracking-wide text-[#ef7474]">Défaite</div>
-                            <div class="text-sm text-[#a8c8ff]">Vous avez perdu le combat</div>
-                        </div>
-
                         @if (outcome.winner) {
+                            <div
+                                class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[#9e3232] bg-[#3a0a0a]"
+                            >
+                                <img src="assets/outcome-assets/skull-and-crossbones.gif" alt="Défaite" class="h-14 w-14 object-contain" />
+                            </div>
+
+                            <div class="text-center">
+                                <div class="mb-1 text-2xl font-bold tracking-wide text-[#ef7474]">Défaite</div>
+                                <div class="text-sm text-[#a8c8ff]">Vous avez perdu le combat</div>
+                            </div>
+
                             <div class="w-full rounded-xl border-[1.5px] border-[#2d5199] bg-[#0d1f42] px-4 py-3 text-center">
                                 <div class="mb-1 text-[10px] uppercase tracking-[2px] text-[#5a7fad]">Vainqueur</div>
                                 <div class="text-sm font-bold text-[#e8f0ff]">{{ outcome.winner }}</div>
                             </div>
                         } @else {
+                            <div
+                                class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-b-yellow-400 bg-yellow-400"
+                            >
+                                <img src="assets/outcome-assets/handshake.gif" alt="Égalité" class="h-14 w-14 object-contain" />
+                            </div>
+
                             <div class="text-center">
                                 <div class="text-sm text-[#a8c8ff]">Le combat s'est terminé par une égalité</div>
                             </div>
                         }
 
-                        @if (debugMode()) {
-                            <div class="w-full rounded-xl border-[1.5px] border-[#c8a800] bg-[#0d1f42] px-4 py-3">
-                                <div class="mb-1 text-center text-[10px] uppercase tracking-[2px] text-[#ffd84d]">Mode débogage actif</div>
-                                <div class="text-center text-[9px] text-[#a8c8ff]">Dés max pour l'attaquant, dés min pour le défenseur</div>
-                            </div>
-                        }
+                @if (debugMode()) {
+                    <div class="w-full rounded-xl border-[1.5px] border-[#c8a800] bg-[#0d1f42] px-4 py-3">
+                        <div class="mb-1 text-center text-[10px] uppercase tracking-[2px] text-[#ffd84d]">Mode débogage actif</div>
+                        <div class="text-center text-[9px] text-[#a8c8ff]">Dés max pour l'attaquant, dés min pour le défenseur</div>
+                    </div>
+                }
 
-                        <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42]">
-                            <div class="h-full animate-[timer-drain_3s_linear_forwards] rounded-full bg-[#9e3232]"></div>
-                        </div>
-                    }
+                <div class="h-1 w-full overflow-hidden rounded-full bg-[#0d1f42]">
+                    <div class="h-full animate-[timer-drain_3s_linear_forwards] rounded-full bg-[#9e3232]"></div>
                 </div>
-            </section>
+            }
         </div>
-    </div>
+    </section>
 }

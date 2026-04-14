@@ -1,6 +1,6 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { MAX_PLAYER_ACTIONS, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
@@ -174,7 +174,7 @@ export class TurnService {
         const secondsRemaining = this.clearTimerFromMap(activeGame, this.turnTimers);
         activeGame.currentAttack.suspendedTurnTimer = secondsRemaining;
 
-        this.activeGameService.saveActiveGameById(gameId, activeGame);
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
 
     async continueTurn(gameId: string, timeLeft: number): Promise<void> {

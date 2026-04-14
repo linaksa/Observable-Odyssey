@@ -1,11 +1,25 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { Position } from '@common/character';
 import { MIN_PLAYER_COUNT, VICTORIES_TO_WIN } from '@common/constants';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
+
+export type EndGameReason =
+    | 'ctf-flag-returned'
+    | 'combat-victories'
+    | 'insufficient-active-players'
+    | 'no-human-players'
+    | 'ctf-team-eliminated';
+
+export interface EndGameCheckResult {
+    hasEnded: boolean;
+    winner: string | null;
+    reason: EndGameReason | null;
+    remainingPlayers: string[];
+}
 
 @Service()
 export class EndGameService {
@@ -15,8 +29,12 @@ export class EndGameService {
         private readonly positionValidatorService: PositionValidatorService,
     ) {}
 
-    async checkEndGame(gameId: string): Promise<boolean> {
+    async checkEndGame(gameId: string): Promise<EndGameCheckResult> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame || activeGame.isFinished) {
+            return this.buildNotEndedResult(activeGame);
+        }
+
         const winnerByCombat =
             activeGame.game.gameMode !== 'ctf'
                 ? activeGame.players.find((player) => {
@@ -31,7 +49,7 @@ export class EndGameService {
             activeGame.winner = flagHolder?.team ? `${flagHolder.team} team` : null;
             activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-            return true;
+            return this.buildEndedResult(activeGame, 'ctf-flag-returned');
         }
         // if a player has won enough combats, they win the game
         if (winnerByCombat) {
@@ -39,7 +57,7 @@ export class EndGameService {
             activeGame.winner = winnerByCombat.name;
             activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-            return true;
+            return this.buildEndedResult(activeGame, 'combat-victories');
         }
         // If only one active player remains, end the game
         const activePlayers = activeGame.players.filter((p) => !p.hasAbandoned);
@@ -48,16 +66,18 @@ export class EndGameService {
             activeGame.winner = null; // No clear winner, all other players have abandoned
             activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-            return true;
+            return this.buildEndedResult(activeGame, 'insufficient-active-players');
         }
 
         const hasOneRealPlayer = activePlayers.find((player) => !player.virtualPlayerProfile);
         if (!hasOneRealPlayer) {
             activeGame.isFinished = true;
+            activeGame.winner = null;
+            activeGame.endedAt = new Date();
             await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-            return true;
+            return this.buildEndedResult(activeGame, 'no-human-players');
         }
-        // si une des 2 équipes n'a plus de joueurs actifs, l'autre équipe gagne (mode ctf)
+        // si une des 2 equipes n'a plus de joueurs actifs, l'autre equipe gagne (mode ctf)
         if (activeGame.game.gameMode === 'ctf') {
             const redPlayers = activeGame.players.filter((p) => p.team === 'red' && !p.hasAbandoned);
             const bluePlayers = activeGame.players.filter((p) => p.team === 'blue' && !p.hasAbandoned);
@@ -66,17 +86,23 @@ export class EndGameService {
                 activeGame.winner = 'blue team';
                 activeGame.endedAt = new Date();
                 await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-                return true;
+                return this.buildEndedResult(activeGame, 'ctf-team-eliminated');
             }
             if (bluePlayers.length === 0) {
                 activeGame.isFinished = true;
                 activeGame.winner = 'red team';
                 activeGame.endedAt = new Date();
                 await this.activeGameService.saveActiveGameById(activeGame._id, activeGame);
-                return true;
+                return this.buildEndedResult(activeGame, 'ctf-team-eliminated');
             }
         }
-        return false;
+        return this.buildNotEndedResult(activeGame);
+    }
+
+    getEndGameLogMessage(result: EndGameCheckResult): string {
+        const reason = this.getReasonLabel(result);
+        const remainingPlayers = result.remainingPlayers.length > 0 ? result.remainingPlayers.join(', ') : 'aucun';
+        return `Fin de partie: ${reason}. Joueurs restants: ${remainingPlayers}.`;
     }
 
     private getCombatWins(player: IActiveGame['players'][number]): number {
@@ -93,13 +119,8 @@ export class EndGameService {
         if (!flagHolder) {
             return false;
         }
-        const isOnStartTile =
-            flagHolder.currentPosition.x === flagHolder.startingPosition.x && flagHolder.currentPosition.y === flagHolder.startingPosition.y;
 
-        if (isOnStartTile) {
-            return true;
-        }
-        return false;
+        return flagHolder.currentPosition.x === flagHolder.startingPosition.x && flagHolder.currentPosition.y === flagHolder.startingPosition.y;
     }
     async checkIfOrganizer(gameId: string, playerId: string): Promise<boolean> {
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
@@ -131,6 +152,45 @@ export class EndGameService {
         if (playerName === currentPlayerName) {
             await this.turnService.endTurn(gameId);
         }
+    }
+
+    private buildEndedResult(activeGame: IActiveGame, reason: EndGameReason): EndGameCheckResult {
+        return {
+            hasEnded: true,
+            winner: activeGame.winner ?? null,
+            reason,
+            remainingPlayers: this.getRemainingActivePlayerNames(activeGame),
+        };
+    }
+
+    private buildNotEndedResult(activeGame?: IActiveGame): EndGameCheckResult {
+        return {
+            hasEnded: false,
+            winner: activeGame?.winner ?? null,
+            reason: null,
+            remainingPlayers: activeGame ? this.getRemainingActivePlayerNames(activeGame) : [],
+        };
+    }
+
+    private getReasonLabel(result: EndGameCheckResult): string {
+        switch (result.reason) {
+            case 'ctf-flag-returned':
+                return 'le drapeau a ete ramene au point de depart';
+            case 'combat-victories':
+                return `${result.winner ?? 'Un joueur'} a atteint ${VICTORIES_TO_WIN} victoires de combat`;
+            case 'insufficient-active-players':
+                return 'il ne reste pas assez de joueurs actifs';
+            case 'no-human-players':
+                return 'il ne reste plus de joueurs humains';
+            case 'ctf-team-eliminated':
+                return `l'equipe adverse a ete eliminee${result.winner ? ` (${result.winner})` : ''}`;
+            default:
+                return 'la condition de fin est atteinte';
+        }
+    }
+
+    private getRemainingActivePlayerNames(activeGame: IActiveGame): string[] {
+        return activeGame.players.filter((player) => !player.hasAbandoned).map((player) => player.name);
     }
 
     private dropFlagIfCarrierAbandons(activeGame: IActiveGame, playerName: string, position: Position): void {

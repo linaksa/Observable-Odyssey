@@ -1,4 +1,4 @@
-import { IActiveGame } from './activeGame';
+import { IActiveGame } from './active-game';
 import { Position } from './character';
 
 export interface AttackResult {
@@ -26,6 +26,9 @@ export interface CombatTurnOutcome {
 
     attackerStats: AttackStats;
     defenderStats: AttackStats;
+
+    attackerDealtDamage: number;
+    defenderDealtDamage: number;
 
     attackerReceivedDamage: number;
     defenderReceivedDamage: number;

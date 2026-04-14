@@ -7,6 +7,8 @@
                         <app-game-combat-turn-result
                             label="Défenseur"
                             [turnStats]="roundOutcome()?.defenderStats ?? combatTurnResultPlaceholderStats"
+                            [opponentStats]="roundOutcome()?.attackerStats ?? combatTurnResultPlaceholderStats"
+                            [dealtDamage]="roundOutcome()?.defenderDealtDamage ?? 0"
                             [receivedDamage]="roundOutcome()?.defenderReceivedDamage ?? 0"
                         />
                     </div>
@@ -122,7 +124,7 @@
                                     Défensif
                                 </span>
 
-                                <span class="text-sm font-semibold opacity-80">+DEF &amp; -ATK</span>
+                                <span class="text-sm font-semibold opacity-80">+DEF</span>
                             </button>
 
                             <button
@@ -143,7 +145,7 @@
                                     Offensif
                                 </span>
 
-                                <span class="text-sm font-semibold opacity-80">+ATK &amp; -DEF</span>
+                                <span class="text-sm font-semibold opacity-80">+ATK</span>
                             </button>
                         </div>
 
@@ -170,6 +172,8 @@
                         <app-game-combat-turn-result
                             label="Attaquant"
                             [turnStats]="roundOutcome()?.attackerStats ?? combatTurnResultPlaceholderStats"
+                            [opponentStats]="roundOutcome()?.defenderStats ?? combatTurnResultPlaceholderStats"
+                            [dealtDamage]="roundOutcome()?.attackerDealtDamage ?? 0"
                             [receivedDamage]="roundOutcome()?.attackerReceivedDamage ?? 0"
                         />
                     </div>

@@ -2,12 +2,12 @@ import { FLAG_TRANSFER_REJECTED_TOAST } from '@app/constants/gameplay';
 import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
 import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
 import { advanceSanctuaryCooldowns, sanctuaryCoversCell } from '@app/utils/sanctuary';
-import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
-import { CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/active-game';
+import { CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { ICharacter } from '@common/character';
 import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
-import { PlayerMovedResult } from '@common/playerMovedResult';
+import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
 import {
     IDoorToggledResult,

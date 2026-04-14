@@ -1,6 +1,6 @@
 import { GameSocketConnectionService } from '@app/services/realtime/game-socket-connection.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';

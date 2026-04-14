@@ -10,7 +10,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { dijkstra } from '@app/utils/dijkstra';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice } from '@common/info';
 import { IMessage } from '@common/message';
@@ -34,7 +34,7 @@ import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
-import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
+import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { ItemType } from '@common/items';
 import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
 
@@ -100,6 +100,15 @@ export class ActiveGameService implements OnDestroy {
                 clearPendingFlagActionRequest: () => this.clearPendingFlagActionRequest(),
             }),
         );
+    }
+
+    resetTransientUiState(): void {
+        this.pendingFlagRequest.set(null);
+        this.combatOutcome.set(null);
+        this.sanctuaryOutcome.set(null);
+        this.roundOutcome.set(null);
+        this.actionMode.set(false);
+        this.gameHasEnded.set(false);
     }
 
     private toggle(signalRef: ToggleSignalRef): void {

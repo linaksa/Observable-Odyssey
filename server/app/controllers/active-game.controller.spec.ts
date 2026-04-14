@@ -19,7 +19,7 @@ import { AppError } from '@app/error-types/app-error';
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { IBoard } from '@common/board';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

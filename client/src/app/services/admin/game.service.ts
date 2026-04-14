@@ -3,7 +3,7 @@ import { ErrorHandler, inject, Injectable } from '@angular/core';
 import { HttpClientPort } from '@app/http/http-client-port';
 import { HTTP_CLIENT } from '@app/http/http-interface';
 import { ResponseType } from '@app/http/http-model';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';

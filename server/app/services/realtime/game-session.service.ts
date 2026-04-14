@@ -3,8 +3,8 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
-import { IActiveGame, IPlayerAbandonedGame } from '@common/activeGame';
-import { CombatOutcome } from '@common/attackResult';
+import { IActiveGame, IPlayerAbandonedGame } from '@common/active-game';
+import { CombatOutcome } from '@common/attack-result';
 import { SocketEvent } from '@common/socket-events';
 import { IAbandonData, IDebugToggleState, IGameEndedPayload, IJoinGamePayload, IPlayerIdPayload, ISocketData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
@@ -108,11 +108,11 @@ export class GameSessionService {
         await this.disableDebugModeIfOrganizerLeft(gameId, playerId, refreshedGame, namespace, emitGameLog);
 
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
-        const gameEnded = await this.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
-            const gameEndedPayload: IGameEndedPayload = { winner: null };
+        const endGameResult = await this.endGameService.checkEndGame(gameId);
+        if (endGameResult.hasEnded) {
+            const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
             namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
-            emitGameLog(gameId, `Fin de partie: il ne reste pas assez de joueurs. Joueurs actifs: ${this.getActivePlayerNames(refreshedGame)}.`);
+            emitGameLog(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
             // await this.activeGameService.deleteGameById(gameId);
         }
         if (combatOutcome && combatAttackerName) {
@@ -188,11 +188,6 @@ export class GameSessionService {
         if (Object.keys(data.playerNamesByGameId).length === 0) {
             delete data.playerNamesByGameId;
         }
-    }
-
-    private getActivePlayerNames(activeGame: IActiveGame): string {
-        const activePlayerNames = activeGame.players.filter((player) => !player.hasAbandoned).map((player) => player.name);
-        return activePlayerNames.length > 0 ? activePlayerNames.join(', ') : 'aucun';
     }
 
     private getGameplayActionService(): GameplayActionService {

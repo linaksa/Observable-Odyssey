@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { AttackStats } from '@common/attackResult';
+import { AttackStats } from '@common/attack-result';
 
 @Component({
     selector: 'app-game-combat-turn-result',
@@ -10,5 +10,7 @@ import { AttackStats } from '@common/attackResult';
 export class GameCombatTurnResultComponent {
     readonly label = input.required<string>();
     readonly turnStats = input.required<AttackStats>();
+    readonly opponentStats = input.required<AttackStats>();
+    readonly dealtDamage = input.required<number>();
     readonly receivedDamage = input.required<number>();
 }

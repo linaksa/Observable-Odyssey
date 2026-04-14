@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { IItem } from '@common/items';
 

@@ -3,7 +3,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { isPositionAdjacentToSanctuary, isSanctuaryActive, isSanctuaryItem } from '@app/utils/sanctuary';
-import { CombatOutcome } from '@common/attackResult';
+import { CombatOutcome } from '@common/attack-result';
 import { ErrorCode } from '@common/error-codes';
 import { IFlagActionData } from '@common/socket-payloads';
 import { StatusCodes } from 'http-status-codes';

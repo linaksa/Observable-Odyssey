@@ -6,7 +6,7 @@ import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
 import { GameLogService } from '@app/services/realtime/game-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { ICurrentAttack } from '@common/activeGame';
+import { ICurrentAttack } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { TurnStatusData } from '@common/info';
 import { Namespaces } from '@common/namespaces';
@@ -71,6 +71,7 @@ export class GamePageFacadeService {
 
     closeAllPopups(): void {
         this.popupStateService.closeAllPopups();
+        this.activeGameService.resetTransientUiState();
     }
 
     resolveActiveGameId(routeActiveGameId?: string): string | undefined {

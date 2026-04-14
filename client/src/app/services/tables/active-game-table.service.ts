@@ -1,7 +1,7 @@
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
-import { IActiveGame } from '@common/activeGame';
-import { Subscription } from 'rxjs';
 import { GameService } from '@app/services/admin/game.service';
+import { IActiveGame } from '@common/active-game';
+import { Subscription } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',

@@ -1,5 +1,5 @@
 import { inMemoryDb } from '@app/database';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { MILLISECONDS_PER_SECOND } from '@common/constants';
 import { Schema } from 'mongoose';
 import { currentAttackSchema } from './attack';
