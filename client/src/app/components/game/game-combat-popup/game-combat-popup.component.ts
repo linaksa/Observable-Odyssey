@@ -103,6 +103,16 @@ export class GameCombatPopupComponent {
         this.combatTimeLeftSeconds();
         return this.activeGameService.activeGame?.currentAttack ?? null;
     });
+    protected readonly allPlayersVirtual = computed(() => {
+        const attacker = this.attackerCharacter;
+        const defender = this.defenderCharacter;
+
+        if (!attacker || !defender) {
+            return false;
+        }
+
+        return attacker.virtualPlayerProfile && defender.virtualPlayerProfile;
+    });
     protected readonly combatTimeLeftSeconds = this.gameTurnService.combatTimeLeftSeconds;
     protected get selectedMode(): AttackPosture | null {
         return this.selectedModeState();

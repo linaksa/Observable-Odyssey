@@ -142,4 +142,12 @@ export class ActionService {
     async applyCombatTurn(gameId: string): Promise<boolean> {
         return await this.combatService.applyCombatTurn(gameId);
     }
+
+    async autoChooseVirtualPostures(gameId: string): Promise<void> {
+        return await this.combatService.autoChooseVirtualPostures(gameId);
+    }
+
+    async combatTurnCanBeApplied(gameId: string): Promise<boolean> {
+        return await this.combatService.combatTurnCanBeApplied(gameId);
+    }
 }

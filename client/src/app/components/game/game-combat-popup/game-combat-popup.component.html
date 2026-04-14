@@ -1,4 +1,4 @@
-@if (combatActive()) {
+@if (combatActive() && !allPlayersVirtual()) {
     <div class="absolute inset-0 z-1000 flex items-center justify-center overflow-y-auto rounded-lg bg-black/70 p-4 backdrop-blur-sm">
         @if (isFullCombatView()) {
             <section class="flex w-full max-w-[1440px] items-center justify-center gap-4">
