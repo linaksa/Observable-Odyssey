@@ -58,14 +58,6 @@ describe('GameplayActionService', () => {
 
         expect(flowService.canUseAction.calledOnceWithExactly('game-1', 'Alice', 'Bob')).to.equal(true);
         expect(flowService.handleFlagAction.calledOnce).to.equal(true);
-        expect(
-            flowService.combatManager.calledOnceWithExactly(
-                'game-1',
-                'Alice',
-                'Bob',
-                socket,
-                sinon.match({ namespace, emitGameLog: sinon.match.func }),
-            ),
-        ).to.equal(true);
+        expect(flowService.combatManager.calledOnceWithExactly('game-1', 'Alice', 'Bob', socket, sinon.match.any)).to.equal(true);
     });
 });

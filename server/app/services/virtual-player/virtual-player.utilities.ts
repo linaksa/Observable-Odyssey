@@ -3,6 +3,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { ClosestPlayerResult } from '@app/services/interfaces/closest-player-result';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { dijkstra, DIRECTION_DELTA, indexToDirection, reconstructPath } from '@app/utils/dijkstra';
 import { buildGraph } from '@app/utils/pathfinding';
@@ -25,6 +26,7 @@ export class VirtualPlayerUtilitiesService {
         private readonly socketService: SocketService,
         private readonly movementService: MovementService,
         private readonly gameplayActionService: GameplayActionService,
+        private readonly gameplayLogService: GameplayLogService,
         private readonly activeGameService: ActiveGameService,
     ) {}
 
@@ -214,7 +216,7 @@ export class VirtualPlayerUtilitiesService {
                     doorToggleData,
                     null,
                     namespace,
-                    (gameId: string, message: string) => this.gameplayActionService.emitGameLogToRoom(gameId, message, namespace),
+                    (gameId: string, message: string) => this.gameplayLogService.emitGameLogToRoom(gameId, message),
                 );
                 activeGame = await this.activeGameService.getActiveGameById(activeGame._id);
                 await sleep();

@@ -2,6 +2,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { StartGameService } from '@app/services/gameplay/start-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameSessionService } from '@app/services/realtime/game-session.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { GameplayRealtimeFlowService } from '@app/services/realtime/gameplay-realtime-flow.service';
 import { ErrorCode } from '@common/error-codes';
 import {
@@ -16,10 +17,13 @@ import {
 } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
-import { Service } from 'typedi';
+import { Inject, Service } from 'typedi';
 
 @Service()
 export class GameplayActionService {
+    @Inject(() => GameplayLogService)
+    private readonly gameplayLogService!: GameplayLogService;
+
     constructor(
         private readonly turnService: TurnService,
         private readonly startGameService: StartGameService,
@@ -35,7 +39,12 @@ export class GameplayActionService {
     }
 
     async handlePlayerAbandon(data: IAbandonData, namespace: Namespace, socket: Socket): Promise<void> {
-        await this.gameSessionService.handlePlayerAbandon(data, namespace, socket, this.emitGameLogToRoom.bind(this));
+        await this.gameSessionService.handlePlayerAbandon(
+            data,
+            namespace,
+            socket,
+            this.gameplayLogService.emitGameLogToRoom.bind(this.gameplayLogService),
+        );
         const activeGame = await this.activeGameService.getActiveGameById(data.gameId);
         if (!activeGame) {
             return;
@@ -71,7 +80,7 @@ export class GameplayActionService {
     async combatManager(gameId: string, attackerName: string, defenderName: string, socket: Socket | null, namespace: Namespace): Promise<void> {
         await this.gameplayRealtimeFlowService.combatManager(gameId, attackerName, defenderName, socket, {
             namespace,
-            emitGameLog: (targetGameId, message) => this.emitGameLogToRoom(targetGameId, message, namespace),
+            emitGameLog: (targetGameId, message) => this.gameplayLogService.emitGameLogToRoom(targetGameId, message),
         });
     }
 
@@ -85,7 +94,7 @@ export class GameplayActionService {
         }
 
         const handledAsFlagAction = await this.gameplayRealtimeFlowService.handleFlagAction(data, namespace, (targetGameId, message) =>
-            this.emitGameLogToRoom(targetGameId, message, namespace),
+            this.gameplayLogService.emitGameLogToRoom(targetGameId, message),
         );
         if (handledAsFlagAction) {
             return;
@@ -95,19 +104,19 @@ export class GameplayActionService {
 
     async handleFlagTaken(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
         await this.gameplayRealtimeFlowService.handleFlagTaken(data, namespace, (targetGameId, message) =>
-            this.emitGameLogToRoom(targetGameId, message, namespace),
+            this.gameplayLogService.emitGameLogToRoom(targetGameId, message),
         );
     }
 
     async handleFlagGiven(data: IFlagDecisionData, namespace: Namespace): Promise<void> {
         await this.gameplayRealtimeFlowService.handleFlagGiven(data, namespace, (targetGameId, message) =>
-            this.emitGameLogToRoom(targetGameId, message, namespace),
+            this.gameplayLogService.emitGameLogToRoom(targetGameId, message),
         );
     }
 
     async handleFlagTransferRejected(data: IFlagTransferRejectionData, namespace: Namespace): Promise<void> {
         await this.gameplayRealtimeFlowService.handleFlagTransferRejected(data, namespace, (targetGameId, message) =>
-            this.emitGameLogToRoom(targetGameId, message, namespace),
+            this.gameplayLogService.emitGameLogToRoom(targetGameId, message),
         );
     }
 
@@ -142,11 +151,6 @@ export class GameplayActionService {
         this.turnService.startTurn(activeGameId);
         return true;
     }
-
-    emitGameLogToRoom(gameId: string, message: string, namespace?: Namespace): void {
-        this.gameplayRealtimeFlowService.emitGameLogToRoom(gameId, message, namespace);
-    }
-
     async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
         await this.gameplayRealtimeFlowService.checkEndTurnIfNoMovesLeft(gameId, playerId);
     }
