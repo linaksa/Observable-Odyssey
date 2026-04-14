@@ -32,7 +32,7 @@ export class GameplayInteractionFlowService {
             const result: IDoorToggledResult = await this.doorService.toggleDoor(playerId, gameId, position);
             await this.trackManipulatedDoor(gameId, result.position.x, result.position.y);
             namespace.to(gameId).emit(SocketEvent.DoorToggled, result);
-            emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'ferme'} une porte.`);
+            emitGameLog(gameId, `${playerId} a ${result.cellType === CellType.OpenDoor ? 'ouvert' : 'fermé'} une porte.`);
             await this.gameplayTurnEndService.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
             socket?.emit(SocketEvent.DoorToggleError, toSocketError(error, ErrorCode.InvalidDoorTarget));
@@ -54,7 +54,7 @@ export class GameplayInteractionFlowService {
             await this.trackUsedSanctuary(gameId, position.x, position.y);
             namespace.to(gameId).emit(SocketEvent.SanctuaryInteracted, result);
             const sanctuaryKind = result.itemType === ItemType.LifeSanctuary ? 'vie' : 'combat';
-            emitGameLog(gameId, `${playerId} a utilise un sanctuaire de ${sanctuaryKind}.`);
+            emitGameLog(gameId, `${playerId} a utilisé un sanctuaire de ${sanctuaryKind}.`);
             await this.gameplayTurnEndService.checkEndTurnIfNoMovesLeft(gameId, playerId);
         } catch (error) {
             socket?.emit(SocketEvent.SanctuaryInteractionError, toSocketError(error, ErrorCode.InvalidSanctuaryTarget));

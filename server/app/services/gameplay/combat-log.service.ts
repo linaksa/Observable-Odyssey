@@ -82,7 +82,7 @@ export class CombatLogService {
     }
 
     private buildDefenseLogLine(playerName: string): string {
-        return `${playerName} defense:`;
+        return `${playerName} défense:`;
     }
 
     private buildStatBreakdownLine(data: StatBreakdownData): string {
@@ -92,7 +92,7 @@ export class CombatLogService {
         const signedIceMalus = this.formatSignedValue(data.iceMalus);
         return [
             `Base=${data.base}`,
-            `de=${signedDiceBonus}`,
+            `dé=${signedDiceBonus}`,
             `posture=${signedPostureBonus}`,
             `sanctuaire=${signedSanctuaryBonus}`,
             `glace=${signedIceMalus}`,
@@ -101,11 +101,11 @@ export class CombatLogService {
     }
 
     private buildDifferenceLine(attackTotal: number, defenseTotal: number, difference: number): string {
-        return `Difference ${attackTotal}-${defenseTotal}=${difference}`;
+        return `Différence ${attackTotal}-${defenseTotal}=${difference}`;
     }
 
     private buildDamageLine(damage: number): string {
-        return `Degats ${damage}`;
+        return `Dégâts ${damage}`;
     }
 
     private buildCombatExchangeMessage(data: CombatExchangeLogData): string {

@@ -33,7 +33,7 @@ export class DebugSocketService {
                 socket.to(activeGameId).emit(SocketEvent.DebugToggle, payload);
                 socket.emit(SocketEvent.DebugToggle, payload);
 
-                const statusLabel = activeGame.isDebugMode ? 'active' : 'desactive';
+                const statusLabel = activeGame.isDebugMode ? 'activé' : 'désactivé';
                 this.gameplayLogService.emitGameLogToRoom(activeGameId, `Mode debug ${statusLabel} par ${playerName}.`);
                 await this.activeGameService.saveActiveGameById(activeGameId, activeGame);
             } catch {

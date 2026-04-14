@@ -137,7 +137,7 @@ export class MovementService {
             namespace.to(gameId).emit(SocketEvent.FlagPickedUp, {
                 playerName: player.name,
             });
-            this.gameplayLogService.emitGameLogToRoom(gameId, `${player.name} a ramasse un drapeau.`);
+            this.gameplayLogService.emitGameLogToRoom(gameId, `${player.name} a ramassé un drapeau.`);
         }
     }
 

@@ -104,7 +104,7 @@ export class TurnService {
             timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
-        this.gameplayLogService.emitGameLogToRoom(gameId, `Debut du tour de ${player.name}.`);
+        this.gameplayLogService.emitGameLogToRoom(gameId, `Début du tour de ${player.name}.`);
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
