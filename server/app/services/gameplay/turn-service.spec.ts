@@ -1,6 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
@@ -30,6 +31,9 @@ describe('TurnService', () => {
     };
     let emitSpy: sinon.SinonStub;
     let sanctuaryService: SanctuaryService;
+    let gameplayLogService: {
+        emitGameLogToRoom: sinon.SinonStub;
+    };
 
     beforeEach(() => {
         activeGameService = {
@@ -46,11 +50,15 @@ describe('TurnService', () => {
             getNamespace: sinon.stub().returns(namespaceSpy),
         };
         sanctuaryService = new SanctuaryService(activeGameService as unknown as ActiveGameService);
+        gameplayLogService = {
+            emitGameLogToRoom: sinon.stub(),
+        };
 
         turnService = new TurnService(
             socketService as unknown as SocketService,
             activeGameService as unknown as ActiveGameService,
             sanctuaryService as unknown as SanctuaryService,
+            gameplayLogService as unknown as GameplayLogService,
         );
     });
 

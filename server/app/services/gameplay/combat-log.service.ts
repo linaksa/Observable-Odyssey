@@ -1,16 +1,14 @@
-﻿import { SocketService } from '@app/services/realtime/socket.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { CombatExchangeLogData, CombatTurnLogData, DEFENSE_SANCTUARY_BONUS, StatBreakdownData } from '@common/combat-log';
-import { Namespaces } from '@common/namespaces';
-import { SocketEvent } from '@common/socket-events';
-import { IGameLogPayload, ISocketData } from '@common/socket-payloads';
 import { Service } from 'typedi';
 
 @Service()
 export class CombatLogService {
-    constructor(private readonly socketService: SocketService) {}
+    constructor(private readonly gameplayLogService: GameplayLogService) {}
 
     emitPrivateCombatTurnLogs(data: CombatTurnLogData): void {
-        const { gameId, attackerName, defenderName, combatTurnNumber, attackerStats, defenderStats, attackerDealtDamage, defenderDealtDamage } = data;
+        const { gameId, attackerName, defenderName, combatTurnNumber, attackerStats, defenderStats, attackerDealtDamage, defenderDealtDamage } =
+            data;
 
         const attackerDifference = attackerStats.totalAttackPoints - defenderStats.totalDefensePoints;
         const defenderDifference = defenderStats.totalAttackPoints - attackerStats.totalDefensePoints;
@@ -70,44 +68,13 @@ export class CombatLogService {
         });
 
         const targetPlayers = [attackerName, defenderName];
-        this.emitPrivateLogToPlayers(gameId, targetPlayers, `Tour de combat #${combatTurnNumber}`);
-        this.emitPrivateLogToPlayers(gameId, targetPlayers, firstExchangeLog);
-        this.emitPrivateLogToPlayers(gameId, targetPlayers, secondExchangeLog);
+        this.gameplayLogService.emitPrivateGameLogToPlayers(gameId, targetPlayers, `Tour de combat #${combatTurnNumber}`);
+        this.gameplayLogService.emitPrivateGameLogToPlayers(gameId, targetPlayers, firstExchangeLog);
+        this.gameplayLogService.emitPrivateGameLogToPlayers(gameId, targetPlayers, secondExchangeLog);
     }
 
     emitPublicGameLog(gameId: string, message: string): void {
-        if (!gameId || !message.trim()) {
-            return;
-        }
-
-        this.socketService.getNamespace(Namespaces.Game).to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
-    }
-
-    private createGameLogPayload(message: string): IGameLogPayload {
-        return {
-            message,
-            postedAt: new Date().toISOString(),
-        };
-    }
-
-    private emitPrivateLogToPlayers(gameId: string, playerNames: string[], message: string): void {
-        const namespace = this.socketService.getNamespace(Namespaces.Game);
-        const targetPlayerNames = new Set(playerNames);
-        const payload = this.createGameLogPayload(message);
-
-        namespace.sockets.forEach((playerSocket) => {
-            if (!playerSocket.rooms.has(gameId)) {
-                return;
-            }
-
-            const socketData = playerSocket.data as ISocketData;
-            const socketPlayerName = socketData.playerNamesByGameId?.[gameId];
-            if (!socketPlayerName || !targetPlayerNames.has(socketPlayerName)) {
-                return;
-            }
-
-            playerSocket.emit(SocketEvent.GameLogPrivate, payload);
-        });
+        this.gameplayLogService.emitGameLogToRoom(gameId, message);
     }
 
     private buildAttackLogLine(playerName: string): string {
@@ -115,7 +82,7 @@ export class CombatLogService {
     }
 
     private buildDefenseLogLine(playerName: string): string {
-        return `${playerName} défense:`;
+        return `${playerName} defense:`;
     }
 
     private buildStatBreakdownLine(data: StatBreakdownData): string {
@@ -125,7 +92,7 @@ export class CombatLogService {
         const signedIceMalus = this.formatSignedValue(data.iceMalus);
         return [
             `Base=${data.base}`,
-            `dé=${signedDiceBonus}`,
+            `de=${signedDiceBonus}`,
             `posture=${signedPostureBonus}`,
             `sanctuaire=${signedSanctuaryBonus}`,
             `glace=${signedIceMalus}`,
@@ -134,11 +101,11 @@ export class CombatLogService {
     }
 
     private buildDifferenceLine(attackTotal: number, defenseTotal: number, difference: number): string {
-        return `Différence ${attackTotal}-${defenseTotal}=${difference}`;
+        return `Difference ${attackTotal}-${defenseTotal}=${difference}`;
     }
 
     private buildDamageLine(damage: number): string {
-        return `Dégâts ${damage}`;
+        return `Degats ${damage}`;
     }
 
     private buildCombatExchangeMessage(data: CombatExchangeLogData): string {

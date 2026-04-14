@@ -1,15 +1,17 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { IAbandonData, IGameLogPayload, IJoinGamePayload } from '@common/socket-payloads';
+import { IAbandonData, IJoinGamePayload } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
 import { GameSessionService } from './game-session.service';
+import { GameplayLogService } from './gameplay-log.service';
 
 @Service()
 export class GameSocketSessionEventsService {
     constructor(
         private readonly activeGameService: ActiveGameService,
         private readonly gameSessionService: GameSessionService,
+        private readonly gameplayLogService: GameplayLogService,
     ) {}
 
     register(socket: Socket, namespace: Namespace): void {
@@ -53,14 +55,7 @@ export class GameSocketSessionEventsService {
     }
 
     private emitGameLog(namespace: Namespace, gameId: string, message: string): void {
-        if (!gameId || !message.trim()) {
-            return;
-        }
-
-        namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(message));
-    }
-
-    private createGameLogPayload(message: string): IGameLogPayload {
-        return { message, postedAt: new Date().toISOString() };
+        void namespace;
+        this.gameplayLogService.emitGameLogToRoom(gameId, message);
     }
 }

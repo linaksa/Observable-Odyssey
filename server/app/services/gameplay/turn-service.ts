@@ -1,11 +1,12 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { ICharacter } from '@common/character';
 import { MAX_PLAYER_ACTIONS, TURN_PREPARATION_TIME_MS, TURN_TIME_MS } from '@common/constants';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { IGameLogPayload, ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
+import { ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 import { SanctuaryService } from './sanctuary-service';
 
@@ -24,6 +25,7 @@ export class TurnService {
         private readonly socketService: SocketService,
         private readonly activeGameService: ActiveGameService,
         private readonly sanctuaryService: SanctuaryService,
+        private readonly gameplayLogService: GameplayLogService,
     ) {}
 
     setVirtualPlayerTurnHandler(handler: VirtualPlayerTurnHandler): void {
@@ -102,7 +104,7 @@ export class TurnService {
             timeLeft: null,
         };
         namespace.to(gameId).emit(SocketEvent.TurnStarted, turnStartedPayload);
-        namespace.to(gameId).emit(SocketEvent.GameLog, this.createGameLogPayload(`Debut du tour de ${player.name}.`));
+        this.gameplayLogService.emitGameLogToRoom(gameId, `Debut du tour de ${player.name}.`);
 
         const timer = setTimeout(() => {
             this.turnTimers.delete(gameId);
@@ -234,12 +236,5 @@ export class TurnService {
         clearTimeout(timer);
         map.delete(stringGameId);
         return secondsRemaining;
-    }
-
-    private createGameLogPayload(message: string): IGameLogPayload {
-        return {
-            message,
-            postedAt: new Date().toISOString(),
-        };
     }
 }
