@@ -1,6 +1,6 @@
 import { Component, inject, Input } from '@angular/core';
 import { GlobalStatsService } from '@app/services/end/global-stats.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { HUNDRED_PERCENT, MILLISECONDS_PER_SECOND, SECONDS_PER_MINUTE } from '@common/constants';
 import { ItemType } from '@common/items';
 

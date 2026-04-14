@@ -1,7 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';

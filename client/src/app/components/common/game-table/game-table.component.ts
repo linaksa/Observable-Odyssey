@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, InputSignal, OnInit, TemplateRef, ViewChild, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, inject, input, InputSignal, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
 import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import {
@@ -10,7 +10,7 @@ import {
 } from '@app/constants/tooltip';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { computeTooltipPosition, TooltipPosition } from '@app/utils/tooltip-position.utils';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { IExistingGame, IGame } from '@common/game';
 import { IItem } from '@common/items';
 

@@ -1,4 +1,3 @@
-import { AppError } from '@app/error-types/app-error';
 import {
     FIGHT_SANCTUARY_BUFF_TURNS,
     FIGHT_SANCTUARY_DOUBLE_BONUS,
@@ -8,16 +7,8 @@ import {
     SANCTUARY_ACTION_COST,
     SANCTUARY_DOUBLE_CHANCE,
 } from '@app/constants/sanctuary';
+import { AppError } from '@app/error-types/app-error';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { IActiveGame } from '@common/activeGame';
-import { ICharacter, Position } from '@common/character';
-import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
-import { ErrorCode } from '@common/error-codes';
-import { SanctuaryChoice } from '@common/info';
-import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
-import { ISanctuaryInteractedResult, ISanctuaryInteractionData } from '@common/socket-payloads';
-import { StatusCodes } from 'http-status-codes';
-import { Service } from 'typedi';
 import {
     advanceSanctuaryCooldowns,
     deactivateSanctuary,
@@ -26,6 +17,15 @@ import {
     isSanctuaryItem,
     sanctuaryCoversCell,
 } from '@app/utils/sanctuary';
+import { IActiveGame } from '@common/active-game';
+import { ICharacter, Position } from '@common/character';
+import { SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
+import { SanctuaryChoice } from '@common/info';
+import { IFightSanctuary, IItem, ILifeSanctuary, ItemType } from '@common/items';
+import { ISanctuaryInteractedResult, ISanctuaryInteractionData } from '@common/socket-payloads';
+import { StatusCodes } from 'http-status-codes';
+import { Service } from 'typedi';
 
 @Service()
 export class SanctuaryService {

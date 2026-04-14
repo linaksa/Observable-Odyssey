@@ -1,4 +1,4 @@
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter, VirtualPlayerProfile } from '@common/character';
 import { Service } from 'typedi';
 import { AgressivePlayerService } from './agressive-player.service';

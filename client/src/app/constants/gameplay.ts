@@ -1,5 +1,5 @@
+import { AttackStats } from '@common/attack-result';
 import { COMBAT_TIME_MS, MILLISECONDS_PER_SECOND } from '@common/constants';
-import { AttackStats } from '@common/attackResult';
 
 export const GAME_PAGE_RETURN_BUTTON_DELAY_MS = 3000;
 export const GAME_COMBAT_OUTCOME_AUTO_CLOSE_MS = 3000;

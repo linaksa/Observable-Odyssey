@@ -1,5 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter, Position, Team } from '@common/character';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';

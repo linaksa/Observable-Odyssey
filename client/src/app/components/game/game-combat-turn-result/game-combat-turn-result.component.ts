@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { AttackStats } from '@common/attackResult';
+import { AttackStats } from '@common/attack-result';
 
 @Component({
     selector: 'app-game-combat-turn-result',

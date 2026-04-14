@@ -2,8 +2,8 @@ import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
-import { CombatTurnOutcome } from '@common/attackResult';
+import { IActiveGame } from '@common/active-game';
+import { CombatTurnOutcome } from '@common/attack-result';
 import {
     COMBAT_TIME_MS,
     COUNTDOWN_MIN_REMAINING_MS,

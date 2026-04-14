@@ -14,7 +14,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';

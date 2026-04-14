@@ -10,10 +10,10 @@ import {
     RANDOM_NUMBER_SCALE,
     RANDOM_PLAYER_NAME_PREFIX,
 } from '@app/constants/character-form';
-import { RandomCharacterData } from '@app/interfaces/random-character-data.interface';
 import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
 import { ResponseType } from '@app/http/http-model';
-import { IActiveGameWithPlayer } from '@common/activeGame';
+import { RandomCharacterData } from '@app/interfaces/random-character-data.interface';
+import { IActiveGameWithPlayer } from '@common/active-game';
 import { CharacterFormData, VirtualPlayerProfile } from '@common/character';
 import {
     Avatar,

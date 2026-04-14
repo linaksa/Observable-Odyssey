@@ -1,7 +1,7 @@
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Namespaces } from '@common/namespaces';

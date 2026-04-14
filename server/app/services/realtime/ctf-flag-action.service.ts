@@ -1,5 +1,5 @@
 import { ActionService } from '@app/services/gameplay/action-service';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { SocketEvent } from '@common/socket-events';
 import { IActionData } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';

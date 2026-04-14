@@ -4,7 +4,7 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
 import { VirtualPlayerSanctuaryService } from '@app/services/virtual-player/virtual-player-sanctuary.service';
 import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
-import { IActiveGame } from '@common/activeGame';
+import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter, Team, VirtualPlayerProfile } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
