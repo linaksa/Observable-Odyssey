@@ -5,10 +5,10 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CombatTurnOutcome } from '@common/attackResult';
 import {
+    COMBAT_TIME_MS,
     COUNTDOWN_MIN_REMAINING_MS,
     COUNTDOWN_TICK_INTERVAL_MS,
     MILLISECONDS_PER_SECOND,
-    COMBAT_TIME_MS,
     TURN_PREPARATION_TIME_MS,
     TURN_TIME_MS,
 } from '@common/constants';

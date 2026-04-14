@@ -5,7 +5,6 @@ import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 import { AttackPosture } from '@common/attackResult';
-import { ICharacter, VirtualPlayerProfile } from '@common/character';
 import { COMBAT_TIME_MS } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { SocketEvent } from '@common/socket-events';
@@ -47,7 +46,7 @@ export class GameplayCombatFlowService {
 
         context.emitGameLog(gameId, `Début du combat entre ${attackerName} et ${defenderName}.`);
 
-        this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, async () => {
+        const processCombatTurn = async () => {
             try {
                 const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
                 if (!refreshedGame || refreshedGame.isFinished || !refreshedGame.currentAttack) {
@@ -65,11 +64,18 @@ export class GameplayCombatFlowService {
 
                 throw error;
             }
-        });
+        };
+
+        this.turnService.startCombatTimer(COMBAT_TIME_MS, activeGame, processCombatTurn);
 
         context.namespace.to(gameId).emit(SocketEvent.CombatStarted, result);
         context.namespace.to(gameId).emit(SocketEvent.CombatTurnStart, result);
-        await this.autoChooseVirtualPostures(gameId, context.namespace);
+
+        await this.actionService.autoChooseVirtualPostures(gameId);
+        if (await this.actionService.combatTurnCanBeApplied(gameId)) {
+            this.turnService.clearCombatTimer(activeGame);
+            await processCombatTurn();
+        }
     }
 
     async canUseAction(gameId: string, attackerName: string, defenderName: string): Promise<boolean> {
@@ -83,26 +89,33 @@ export class GameplayCombatFlowService {
             return;
         }
 
-        const combatReady = updatedActiveGame.currentAttack?.attackerPosture && updatedActiveGame.currentAttack?.defenderPosture;
-        if (!combatReady) {
-            namespace.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+        await this.checkCombatReadyCondition(gameId, namespace);
+    }
+
+    private async checkCombatReadyCondition(activeGameId: string, namespace: Namespace): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(activeGameId);
+        if (!activeGame) {
             return;
         }
 
-        this.turnService.clearCombatTimer(updatedActiveGame);
+        const combatReady = activeGame.currentAttack?.attackerPosture && activeGame.currentAttack?.defenderPosture;
+        if (!combatReady) {
+            //namespace.to(gameId).emit(SocketEvent.AttackPostureChosen, data);
+            return;
+        }
 
-        const combatResolved = await this.applyCombatTurn(gameId);
+        this.turnService.clearCombatTimer(activeGame);
+
+        const combatResolved = await this.applyCombatTurn(activeGameId);
         if (combatResolved === null) {
             return;
         }
 
-        const currentPlayerName = updatedActiveGame.turnOrder[updatedActiveGame.currentPlayerIndex];
+        const currentPlayerName = activeGame.turnOrder[activeGame.currentPlayerIndex];
         if (combatResolved && currentPlayerName) {
-            await this.handlePostCombatEndScenario(currentPlayerName, gameId, namespace);
+            await this.handlePostCombatEndScenario(currentPlayerName, activeGameId, namespace);
             return;
         }
-
-        await this.autoChooseVirtualPostures(gameId, namespace);
     }
 
     private async choosePosture(gameId: string, playerName: string, posture: AttackPosture) {
@@ -125,48 +138,6 @@ export class GameplayCombatFlowService {
             }
             throw error;
         }
-    }
-
-    private async autoChooseVirtualPostures(gameId: string, namespace: Namespace): Promise<void> {
-        const activeGame = await this.activeGameService.getActiveGameById(gameId);
-        const currentAttack = activeGame?.currentAttack;
-        if (!activeGame || !currentAttack) {
-            return;
-        }
-
-        const attacker = activeGame.players.find((player) => player.name === currentAttack.attacker);
-        if (attacker && !currentAttack.attackerPosture && attacker.virtualPlayerProfile) {
-            await this.handleChooseAttackPosture(
-                {
-                    gameId,
-                    playerName: attacker.name,
-                    posture: this.getVirtualPosture(attacker),
-                },
-                namespace,
-            );
-        }
-
-        const refreshedGame = await this.activeGameService.getActiveGameById(gameId);
-        const refreshedAttack = refreshedGame?.currentAttack;
-        if (!refreshedGame || !refreshedAttack) {
-            return;
-        }
-
-        const refreshedDefender = refreshedGame.players.find((player) => player.name === refreshedAttack.defender);
-        if (refreshedDefender && !refreshedAttack.defenderPosture && refreshedDefender.virtualPlayerProfile) {
-            await this.handleChooseAttackPosture(
-                {
-                    gameId,
-                    playerName: refreshedDefender.name,
-                    posture: this.getVirtualPosture(refreshedDefender),
-                },
-                namespace,
-            );
-        }
-    }
-
-    private getVirtualPosture(player: ICharacter): AttackPosture {
-        return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
     }
 
     private async handlePostCombatEndScenario(attackerName: string, gameId: string, namespace: Namespace): Promise<void> {

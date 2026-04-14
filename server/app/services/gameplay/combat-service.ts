@@ -7,7 +7,7 @@ import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { AttackPosture, AttackStats, CombatOutcome, CombatTurnOutcome } from '@common/attackResult';
 import { CellType } from '@common/board';
-import { ICharacter, Position } from '@common/character';
+import { ICharacter, Position, VirtualPlayerProfile } from '@common/character';
 import {
     COMBAT_TIME_MS,
     COMBAT_TURN_FEEDBACK_DURATION_MS,
@@ -119,9 +119,50 @@ export class CombatService {
 
                 namespace.to(activeGameId).emit(SocketEvent.CombatTurnStart, updatedGame);
                 this.turnService.startCombatTimer(COMBAT_TIME_MS, currentActiveGame, () => this.applyCombatTurn(activeGameId));
+
+                // At the begining of each turn, virtual players chose their postures
+                await this.autoChooseVirtualPostures(activeGameId);
+
+                if (await this.combatTurnCanBeApplied(activeGameId)) {
+                    this.turnService.clearCombatTimer(currentActiveGame);
+                    await this.applyCombatTurn(activeGameId);
+                }
                 return resolve(false);
             }, turnFeedbackDuration);
         });
+    }
+
+    async combatTurnCanBeApplied(gameId: string): Promise<boolean> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        if (!activeGame || !activeGame.currentAttack) {
+            throw new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND);
+        }
+
+        const currentAttack = activeGame.currentAttack;
+        return !!currentAttack.attackerPosture && !!currentAttack.defenderPosture;
+    }
+
+    async autoChooseVirtualPostures(gameId: string): Promise<void> {
+        const activeGame = await this.activeGameService.getActiveGameById(gameId);
+        const currentAttack = activeGame?.currentAttack;
+        if (!activeGame || !currentAttack) {
+            return;
+        }
+
+        const attacker = activeGame.players.find((player) => player.name === currentAttack.attacker);
+        const defender = activeGame.players.find((player) => player.name === currentAttack.defender);
+
+        if (attacker && !currentAttack.attackerPosture && attacker.virtualPlayerProfile) {
+            await this.activeGameService.choosePosture(gameId, attacker.name, this.getVirtualPosture(attacker));
+        }
+
+        if (defender && !currentAttack.defenderPosture && defender.virtualPlayerProfile) {
+            await this.activeGameService.choosePosture(gameId, defender.name, this.getVirtualPosture(defender));
+        }
+    }
+
+    private getVirtualPosture(player: ICharacter): AttackPosture {
+        return player.virtualPlayerProfile === VirtualPlayerProfile.Defensive ? AttackPosture.Defensive : AttackPosture.Offensive;
     }
 
     // applies combat consequences: returns an object containing the attacker's victory count and the defender's new position
