@@ -4,16 +4,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
-import { GAME_PAGE_HOST_BINDINGS } from '@app/constants/component-host-bindings';
-import { GAME_PAGE_RETURN_BUTTON_DELAY_MS } from '@app/constants/gameplay';
 import { GameActionPanelComponent } from '@app/components/game/game-action-panel/game-action-panel.component';
 import { GameCombatOutcomeComponent } from '@app/components/game/game-combat-outcome/game-combat-outcome.component';
 import { GameEndedComponent } from '@app/components/game/game-ended/game-ended.component';
 import { GameGridPanelComponent } from '@app/components/game/game-grid-panel/game-grid-panel.component';
 import { GameInfoPanelComponent } from '@app/components/game/game-info-panel/game-info-panel.component';
+import { GAME_PAGE_HOST_BINDINGS } from '@app/constants/component-host-bindings';
+import { GAME_PAGE_RETURN_BUTTON_DELAY_MS } from '@app/constants/gameplay';
 import { GamePageFacadeService } from '@app/services/gameplay/game-page.facade.service';
 import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
+import { CombatOutcome } from '@common/attack-result';
 import { ICharacter } from '@common/character';
 import { Subscription } from 'rxjs';
 
@@ -52,6 +53,17 @@ export class GamePageComponent implements OnInit, OnDestroy {
     private buttonTimeoutId?: ReturnType<typeof setTimeout>;
     private routeSubscription?: Subscription;
     private playersSubscription?: Subscription;
+
+    protected readonly visibleOutcome = computed<CombatOutcome | null>(() => {
+        const outcome = this.activeGameService.combatOutcome();
+        const player = this.facade.getLocalPlayer();
+
+        if (!outcome || !player) {
+            return null;
+        }
+
+        return outcome.winner === player.name || outcome.losers.includes(player.name) ? outcome : null;
+    });
 
     ngOnInit(): void {
         this.facade.closeAllPopups();
