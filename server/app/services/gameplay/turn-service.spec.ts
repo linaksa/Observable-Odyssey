@@ -1,6 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/activeGame';
 import { CellType } from '@common/board';
@@ -153,6 +154,7 @@ describe('TurnService', () => {
 describe('VirtualPlayerTurnFinalizerService', () => {
     let activeGameService: { getActiveGameById: sinon.SinonStub };
     let endGameService: { checkEndGame: sinon.SinonStub };
+    let gameplayLogService: { emitGameLogToRoom: sinon.SinonStub };
     let socketService: { getNamespace: sinon.SinonStub };
     let turnService: { endTurn: sinon.SinonStub };
     let namespaceSpy: { to: sinon.SinonStub };
@@ -161,7 +163,8 @@ describe('VirtualPlayerTurnFinalizerService', () => {
 
     beforeEach(() => {
         activeGameService = { getActiveGameById: sinon.stub() };
-        endGameService = { checkEndGame: sinon.stub().resolves(false) };
+        endGameService = { checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }) };
+        gameplayLogService = { emitGameLogToRoom: sinon.stub() };
         emitSpy = sinon.stub();
         namespaceSpy = {
             to: sinon.stub().returns({ emit: emitSpy }),
@@ -174,6 +177,7 @@ describe('VirtualPlayerTurnFinalizerService', () => {
             activeGameService as unknown as ActiveGameService,
             socketService as unknown as SocketService,
             turnService as unknown as TurnService,
+            gameplayLogService as unknown as GameplayLogService,
         );
     });
 
