@@ -27,6 +27,9 @@ export interface CombatTurnOutcome {
     attackerStats: AttackStats;
     defenderStats: AttackStats;
 
+    attackerDealtDamage: number;
+    defenderDealtDamage: number;
+
     attackerReceivedDamage: number;
     defenderReceivedDamage: number;
 }
