@@ -25,21 +25,18 @@
         <app-nav-buttons />
         <app-page-title title="Vue d'attente" />
 
-        <section class="flex min-h-0 flex-col justify-center gap-4 lg:h-[calc(100vh-14rem)] lg:min-h-136 lg:flex-row">
+        <section class="flex flex-col lg:flex-row justify-center gap-4">
             <app-wait-player-list
-                class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4"
+                class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
                 [players]="activeGameService.activeGame.players"
                 [localPlayer]="localPlayer"
                 [organizerName]="activeGameService.activeGame.organizerName"
                 (openVirtualPlayerDialog)="isVirtualPlayerDialogOpen.set(true)"
             />
 
-            <app-wait-game-grid class="flex min-h-0 flex-2 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4" />
+            <app-wait-game-grid class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-2 gap-4 p-4" />
 
-            <app-wait-chat-sidebar
-                class="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg bg-[#233f74] p-4"
-                [localPlayer]="localPlayer"
-            />
+            <app-wait-chat-sidebar class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4" [localPlayer]="localPlayer" />
         </section>
     }
 </div>

@@ -2,7 +2,7 @@
     <div class="absolute inset-0 z-1000 flex items-center justify-center overflow-y-auto rounded-lg bg-black/70 p-4 backdrop-blur-sm">
         @if (isFullCombatView()) {
             <section class="flex w-full max-w-[1440px] items-center justify-center gap-4">
-                <aside class="hidden w-40 shrink-0 flex-col lg:flex">
+                <aside class="hidden w-40 shrink-0 flex-col xl:flex">
                     <div class="combat-side-card rounded-xl border border-[#2d5199] bg-[#0f2248] p-3 shadow-2xl" [class.invisible]="!roundOutcome()">
                         <app-game-combat-turn-result
                             label="Défenseur"
@@ -165,7 +165,7 @@
                     </div>
                 </div>
 
-                <aside class="hidden w-40 shrink-0 flex-col lg:flex">
+                <aside class="hidden w-40 shrink-0 flex-col xl:flex">
                     <div class="combat-side-card rounded-xl border border-[#e8a832] bg-[#1a1000] p-3 shadow-2xl" [class.invisible]="!roundOutcome()">
                         <app-game-combat-turn-result
                             label="Attaquant"
