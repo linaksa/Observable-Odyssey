@@ -98,6 +98,9 @@ export class CombatService {
             attackerStats,
             defenderStats,
 
+            attackerDealtDamage,
+            defenderDealtDamage,
+
             attackerReceivedDamage: defenderDealtDamage,
             defenderReceivedDamage: attackerDealtDamage,
         };
