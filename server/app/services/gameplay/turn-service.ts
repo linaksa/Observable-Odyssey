@@ -176,7 +176,7 @@ export class TurnService {
         const secondsRemaining = this.clearTimerFromMap(activeGame, this.turnTimers);
         activeGame.currentAttack.suspendedTurnTimer = secondsRemaining;
 
-        this.activeGameService.saveActiveGameById(gameId, activeGame);
+        await this.activeGameService.saveActiveGameById(gameId, activeGame);
     }
 
     async continueTurn(gameId: string, timeLeft: number): Promise<void> {

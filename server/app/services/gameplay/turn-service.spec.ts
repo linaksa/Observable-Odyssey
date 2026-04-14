@@ -161,6 +161,7 @@ describe('TurnService', () => {
 describe('VirtualPlayerTurnFinalizerService', () => {
     let activeGameService: { getActiveGameById: sinon.SinonStub };
     let endGameService: { checkEndGame: sinon.SinonStub };
+    let gameplayLogService: { emitGameLogToRoom: sinon.SinonStub };
     let socketService: { getNamespace: sinon.SinonStub };
     let turnService: { endTurn: sinon.SinonStub };
     let namespaceSpy: { to: sinon.SinonStub };
@@ -169,7 +170,8 @@ describe('VirtualPlayerTurnFinalizerService', () => {
 
     beforeEach(() => {
         activeGameService = { getActiveGameById: sinon.stub() };
-        endGameService = { checkEndGame: sinon.stub().resolves(false) };
+        endGameService = { checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }) };
+        gameplayLogService = { emitGameLogToRoom: sinon.stub() };
         emitSpy = sinon.stub();
         namespaceSpy = {
             to: sinon.stub().returns({ emit: emitSpy }),
@@ -182,6 +184,7 @@ describe('VirtualPlayerTurnFinalizerService', () => {
             activeGameService as unknown as ActiveGameService,
             socketService as unknown as SocketService,
             turnService as unknown as TurnService,
+            gameplayLogService as unknown as GameplayLogService,
         );
     });
 

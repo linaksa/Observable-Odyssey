@@ -102,6 +102,15 @@ export class ActiveGameService implements OnDestroy {
         );
     }
 
+    resetTransientUiState(): void {
+        this.pendingFlagRequest.set(null);
+        this.combatOutcome.set(null);
+        this.sanctuaryOutcome.set(null);
+        this.roundOutcome.set(null);
+        this.actionMode.set(false);
+        this.gameHasEnded.set(false);
+    }
+
     private toggle(signalRef: ToggleSignalRef): void {
         signalRef.update((current) => !current);
     }

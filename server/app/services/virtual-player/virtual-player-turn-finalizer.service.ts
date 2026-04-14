@@ -1,6 +1,7 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
@@ -16,6 +17,7 @@ export class VirtualPlayerTurnFinalizerService {
         private readonly activeGameService: ActiveGameService,
         private readonly socketService: SocketService,
         private readonly turnService: TurnService,
+        private readonly gameplayLogService: GameplayLogService,
     ) {}
 
     beginTurn(gameId: string, playerName: string): void {
@@ -33,10 +35,12 @@ export class VirtualPlayerTurnFinalizerService {
     }
 
     async finalizeTurn(gameId: string): Promise<void> {
-        const gameEnded = await this.endGameService.checkEndGame(gameId);
-        if (gameEnded) {
+        const endGameResult = await this.endGameService.checkEndGame(gameId);
+        if (endGameResult.hasEnded) {
             const endedGame = await this.activeGameService.getActiveGameById(gameId);
-            this.socketService.getNamespace(Namespaces.Game).to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            const gameNamespace = this.socketService.getNamespace(Namespaces.Game);
+            gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult), gameNamespace);
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);

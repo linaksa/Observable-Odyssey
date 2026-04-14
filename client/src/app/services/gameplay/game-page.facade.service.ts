@@ -71,6 +71,7 @@ export class GamePageFacadeService {
 
     closeAllPopups(): void {
         this.popupStateService.closeAllPopups();
+        this.activeGameService.resetTransientUiState();
     }
 
     resolveActiveGameId(routeActiveGameId?: string): string | undefined {
