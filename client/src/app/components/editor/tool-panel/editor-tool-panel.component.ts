@@ -22,6 +22,7 @@ export class EditorToolPanelComponent {
     protected readonly gameEditFormService = inject(GameEditFormService);
 
     readonly toolDescriptions = input.required<Readonly<Record<ToolOption, string>>>();
+    readonly toolIcons = input.required<Readonly<Record<ToolOption, string>>>();
 
     readonly toolSelected = output<ToolOption>();
     readonly materialSelected = output<CellType>();

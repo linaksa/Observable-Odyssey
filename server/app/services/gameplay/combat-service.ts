@@ -193,6 +193,11 @@ export class CombatService {
             losers = [attacker, defender];
         }
 
+        const log =
+            `Fin du combat entre ${attacker.name} et ${defender.name}. ` +
+            (winner ? `Le gagnant est ${winner.name}.` : "Le combat s'est terminé sur un match nul.");
+        this.combatLogService.emitPublicGameLog(currentActiveGame._id.toString(), log);
+
         return this.endAndCleanupCombat(currentActiveGame, winner, losers, false);
     }
 
@@ -398,6 +403,9 @@ export class CombatService {
         const winnerCharacter = activeGame.players.find((p) => p.name === winner);
 
         const loser = activeGame.players.find((p) => p.name === abandonedPlayerId) as ICharacter;
+
+        const log = `Annulation du combat entre ${attacker} et ${defender}. ` + `Le gagnant est ${winner}.`;
+        this.combatLogService.emitPublicGameLog(activeGame._id.toString(), log);
 
         return this.endAndCleanupCombat(activeGame, winnerCharacter || null, [loser], true);
     }

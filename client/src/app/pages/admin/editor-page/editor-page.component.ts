@@ -6,7 +6,7 @@ import { PageTitleComponent } from '@app/components/common/page-title/page-title
 import { EditorFormPanelComponent } from '@app/components/editor/form-panel/editor-form-panel.component';
 import { EditorGridPanelComponent } from '@app/components/editor/grid-panel/editor-grid-panel.component';
 import { EditorToolPanelComponent } from '@app/components/editor/tool-panel/editor-tool-panel.component';
-import { EDITION_PAGE_BUTTON_TIMEOUT_MS, TOOL_DESC_TOOL_TIP } from '@app/constants/editor-page';
+import { EDITION_PAGE_BUTTON_TIMEOUT_MS, TOOL_DESC_TOOL_TIP, TOOL_ICON } from '@app/constants/editor-page';
 import { GridSize, ToolOption } from '@app/constants/grid-editor';
 import { GameService } from '@app/services/admin/game.service';
 import { BoardEditorService } from '@app/services/editor/editor.service';
@@ -42,6 +42,7 @@ export class EditorPageComponent implements OnInit, OnDestroy {
     protected readonly isLoading: WritableSignal<boolean> = signal(false);
     protected readonly isSubmittingFlag = this.gameEditFormService.isSubmitting.asReadonly();
     protected readonly toolDescToolTip = TOOL_DESC_TOOL_TIP;
+    protected readonly toolIcons = TOOL_ICON;
 
     editedGame: IExistingGame | null = null;
     previousVersion!: IExistingGame;

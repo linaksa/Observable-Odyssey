@@ -59,6 +59,10 @@ describe('EditorToolPanelComponent', () => {
             [ToolOption.Placement]: 'Placement',
             [ToolOption.Objects]: 'Objects',
         });
+        fixture.componentRef.setInput('toolIcons', {
+            [ToolOption.Placement]: 'assets/editor/tile.svg',
+            [ToolOption.Objects]: 'assets/editor/cube.svg',
+        });
         fixture.detectChanges();
     });
 
