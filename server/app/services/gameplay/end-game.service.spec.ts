@@ -4,7 +4,7 @@ import { PositionValidatorService } from '@app/services/gameplay/position-valida
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
-import { ICharacter } from '@common/character';
+import { ICharacter, Team, VirtualPlayerProfile } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, Visibility } from '@common/game';
 import { expect } from 'chai';
@@ -68,9 +68,64 @@ describe('EndGameService', () => {
         expect(activeGame.players[1].hasAbandoned).to.equal(true);
         expect(turnService.endTurn.called).to.equal(false);
     });
+
+    it('should cancel a classic game when only one active player remains', async () => {
+        const activeGame = createActiveGame(['Alice', 'Bob'], 0, GameType.Classic);
+        activeGame.players[1].hasAbandoned = true;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await endGameService.checkEndGame(activeGame._id);
+
+        expect(result.hasEnded).to.equal(true);
+        expect(result.completionType).to.equal('canceled');
+        expect(result.reason).to.equal('insufficient-active-players');
+        expect(result.winner).to.equal(null);
+    });
+
+    it('should cancel the game when no human players remain', async () => {
+        const activeGame = createActiveGame(['Bot-1', 'Bot-2'], 0, GameType.Classic);
+        activeGame.players[0].virtualPlayerProfile = VirtualPlayerProfile.Agressive;
+        activeGame.players[1].virtualPlayerProfile = VirtualPlayerProfile.Defensive;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await endGameService.checkEndGame(activeGame._id);
+
+        expect(result.hasEnded).to.equal(true);
+        expect(result.completionType).to.equal('canceled');
+        expect(result.reason).to.equal('no-human-players');
+        expect(result.winner).to.equal(null);
+    });
+
+    it('should cancel ctf game when one team has no active player', async () => {
+        const activeGame = createActiveGame(['Alice', 'Bob'], 0, GameType.Ctf);
+        activeGame.players[0].team = Team.RED;
+        activeGame.players[1].team = Team.BLUE;
+        activeGame.players[0].hasAbandoned = true;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await endGameService.checkEndGame(activeGame._id);
+
+        expect(result.hasEnded).to.equal(true);
+        expect(result.completionType).to.equal('canceled');
+        expect(result.reason).to.equal('ctf-team-eliminated');
+        expect(result.winner).to.equal(null);
+    });
+
+    it('should end the game with a winner when combat victories threshold is reached', async () => {
+        const activeGame = createActiveGame(['Alice', 'Bob'], 0, GameType.Classic);
+        activeGame.players[0].victories = 3;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        const result = await endGameService.checkEndGame(activeGame._id);
+
+        expect(result.hasEnded).to.equal(true);
+        expect(result.completionType).to.equal('victory');
+        expect(result.reason).to.equal('combat-victories');
+        expect(result.winner).to.equal('Alice');
+    });
 });
 
-function createActiveGame(playerNames: string[], currentPlayerIndex: number): IActiveGame {
+function createActiveGame(playerNames: string[], currentPlayerIndex: number, gameMode: GameType = GameType.Classic): IActiveGame {
     const players = playerNames.map((name) => createCharacter(name));
 
     return {
@@ -78,7 +133,7 @@ function createActiveGame(playerNames: string[], currentPlayerIndex: number): IA
         game: {
             gameTitle: 'Arena',
             description: '',
-            gameMode: GameType.Classic,
+            gameMode,
             dateCreated: new Date('2026-01-01T00:00:00.000Z'),
             lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
             visibility: Visibility.Viewable,

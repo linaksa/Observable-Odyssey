@@ -1,4 +1,3 @@
-nt
 @if (isFinished) {
     <section class="w-full max-w-[420px] overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
         <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
@@ -29,7 +28,7 @@ nt
 
                 <div class="text-center">
                     <div class="mb-1 text-2xl font-bold tracking-wide text-[#ffd84d]">Partie terminée</div>
-                    <div class="text-sm text-[#a8c8ff]">Pas de gagnant clair. Tous les joueurs ont abandonnés</div>
+                    <div class="text-sm text-[#a8c8ff]">{{ cancellationMessage }}</div>
                 </div>
             }
 
@@ -37,7 +36,7 @@ nt
                 <div class="h-full rounded-full animate-[timer-drain_5s_linear_forwards] bg-[#3d9e32]"></div>
             </div>
 
-            <p class="text-[10px] uppercase tracking-[0.24em] text-[#8fb7ff]">Redirection automatique vers les statistiques de fin de partie</p>
+            <p class="text-[10px] uppercase tracking-[0.24em] text-[#8fb7ff]">{{ redirectMessage }}</p>
         </div>
     </section>
 }

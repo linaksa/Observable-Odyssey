@@ -61,7 +61,7 @@ describe('GameSessionService', () => {
         };
         endGameService = {
             handlePlayerAbandon: sinon.stub().resolves(),
-            checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, remainingPlayers: [] }),
+            checkEndGame: sinon.stub().resolves({ hasEnded: false, winner: null, reason: null, completionType: null, remainingPlayers: [] }),
             checkIfOrganizer: sinon.stub().resolves(false),
             getEndGameLogMessage: sinon.stub().returns('Fin de partie: test. Joueurs restants: Alice.'),
         };
@@ -129,7 +129,7 @@ describe('GameSessionService', () => {
         expect(namespaceEmitStub.calledWithExactly(SocketEvent.CombatResolved, combatOutcome)).to.equal(true);
     });
 
-    it('logs end-game reason and remaining players when disconnect ends the game', async () => {
+    it('logs cancellation reason and remaining players when disconnect cancels the game', async () => {
         const activeGame = createActiveGame(['Alice', 'Bob'], 0, null);
         const refreshedGame = createActiveGame(['Alice', 'Bob'], 0, null, ['Bob']);
         const emitGameLog = sinon.stub();
@@ -138,8 +138,9 @@ describe('GameSessionService', () => {
         activeGameService.getActiveGameById.onSecondCall().resolves(refreshedGame);
         endGameService.checkEndGame.resolves({
             hasEnded: true,
-            winner: 'Alice',
+            winner: null,
             reason: 'insufficient-active-players',
+            completionType: 'canceled',
             remainingPlayers: ['Alice'],
         });
 
@@ -147,6 +148,25 @@ describe('GameSessionService', () => {
 
         expect(endGameService.getEndGameLogMessage.calledOnce).to.equal(true);
         expect(emitGameLog.calledWithExactly(activeGame._id, 'Fin de partie: test. Joueurs restants: Alice.')).to.equal(true);
+        expect(namespaceEmitStub.calledWithExactly(SocketEvent.GameCanceled, { reason: 'insufficient-active-players' })).to.equal(true);
+    });
+
+    it('emits GameEnded when disconnect reaches a victory condition', async () => {
+        const activeGame = createActiveGame(['Alice', 'Bob'], 0, null);
+        const refreshedGame = createActiveGame(['Alice', 'Bob'], 0, null, ['Bob']);
+
+        activeGameService.getActiveGameById.onFirstCall().resolves(activeGame);
+        activeGameService.getActiveGameById.onSecondCall().resolves(refreshedGame);
+        endGameService.checkEndGame.resolves({
+            hasEnded: true,
+            winner: 'Alice',
+            reason: 'combat-victories',
+            completionType: 'victory',
+            remainingPlayers: ['Alice'],
+        });
+
+        await service.handleActiveGameDisconnect(activeGame._id, 'Bob', namespace, sinon.stub());
+
         expect(namespaceEmitStub.calledWithExactly(SocketEvent.GameEnded, { winner: 'Alice' })).to.equal(true);
     });
 });
