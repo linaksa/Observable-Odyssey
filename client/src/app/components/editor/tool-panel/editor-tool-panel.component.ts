@@ -60,6 +60,6 @@ export class EditorToolPanelComponent {
     });
 
     protected toolButtonClass(tool: ToolOption): string {
-        return this.boardEditorService.activeTool === tool ? 'btn flex-1 btn-blue' : 'btn flex-1';
+        return this.boardEditorService.activeTool === tool ? 'btn btn-blue' : 'btn';
     }
 }
