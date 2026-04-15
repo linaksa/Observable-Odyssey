@@ -20,6 +20,7 @@
             <app-editor-tool-panel
                 class="flex flex-col overflow-hidden bg-[#233f74] rounded-lg flex-1 gap-4 p-4"
                 [toolDescriptions]="toolDescToolTip"
+                [toolIcons]="toolIcons"
                 (toolSelected)="boardEditorService.activeTool = $event"
                 (materialSelected)="boardEditorService.selectedMaterial = $event"
                 (objectSelected)="boardEditorService.selectedObject = $event"

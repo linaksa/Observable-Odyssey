@@ -17,6 +17,7 @@
 <div class="flex shrink flex-col justify-center gap-2">
     @for (tool of boardEditorService.availableTools; track tool) {
         <button type="button" [class]="toolButtonClass(tool)" (click)="toolSelected.emit(tool)">
+            <img [src]="toolIcons()[tool]" [alt]="toolDescriptions()[tool]" class="w-8 h-8 object-contain" />
             {{ toolDescriptions()[tool] }}
         </button>
     }
