@@ -114,6 +114,13 @@ export class CombatService {
 
         return new Promise((resolve) => {
             setTimeout(async () => {
+                // Prevent the combat from continuing if the combat gets canceled during this delay
+                const refreshedActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
+                if (!refreshedActiveGame || !refreshedActiveGame.currentAttack) {
+                    return resolve(null);
+                }
+                // end of security check
+
                 if (combatIsDone) {
                     const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
                     namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
@@ -326,7 +333,7 @@ export class CombatService {
             attackDiceBonus = this.getMaxDice(character.attackBonusDiceType, character.name, activeGame);
         }
 
-        const fightSanctuaryBonus = character.fightSanctuaryUsed ? character.fightSanctuaryBonus || 0 : 0;
+        const attackFightSanctuaryBonus = character.fightSanctuaryUsed ? character.fightSanctuaryBonus || 0 : 0;
 
         const attackPostureBonus = posture === AttackPosture.Offensive ? POSTURE_BONUS : 0;
         const attackIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
@@ -335,25 +342,31 @@ export class CombatService {
 
         const defensePostureBonus = posture === AttackPosture.Defensive ? POSTURE_BONUS : 0;
         const defenseIceMalus = cell === CellType.Ice ? ICE_CELL_MALUS : 0;
+
+        const defenseFightSanctuaryBonus = character.fightSanctuaryUsed ? character.fightSanctuaryBonus || 0 : 0;
         let defenseDiceBonus: number;
         if (!activeGame.isDebugMode) {
             defenseDiceBonus = this.rollDice(character.defenseBonusDiceType);
         } else {
             defenseDiceBonus = this.getMaxDice(character.defenseBonusDiceType, character.name, activeGame);
         }
-        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + fightSanctuaryBonus + attackIceMalus, 0);
-        const totalDefensePoints = Math.max(baseDefensePoints + defenseDiceBonus + defensePostureBonus + defenseIceMalus, 0);
+        const totalAttackPoints = Math.max(baseAttackPoints + attackDiceBonus + attackPostureBonus + attackFightSanctuaryBonus + attackIceMalus, 0);
+        const totalDefensePoints = Math.max(
+            baseDefensePoints + defenseDiceBonus + defensePostureBonus + defenseFightSanctuaryBonus + defenseIceMalus,
+            0,
+        );
 
         return {
             baseAttackPoints,
             attackDiceBonus,
-            fightSanctuaryBonus,
+            attackFightSanctuaryBonus,
             postureAttackBonus: attackPostureBonus,
             attackIceMalus,
             totalAttackPoints,
 
             baseDefensePoints,
             defenseDiceBonus,
+            defenseFightSanctuaryBonus,
             postureDefenseBonus: defensePostureBonus,
             defenseIceMalus,
             totalDefensePoints,

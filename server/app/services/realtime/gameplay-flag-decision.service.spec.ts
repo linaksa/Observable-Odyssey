@@ -132,6 +132,32 @@ describe('GameplayFlagDecisionService', () => {
         await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, emitGameLog);
         expect(namespaceEmitStub.called).to.equal(false);
     });
+
+    it('should broadcast rejection when the recipient refuses a give transfer', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'give',
+            });
+            return true;
+        });
+        const emitGameLog = sinon.stub();
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, emitGameLog);
+        await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, emitGameLog);
+
+        expect(
+            namespaceEmitStub.calledOnceWithExactly(SocketEvent.FlagTransferRejected, {
+                gameId: activeGame._id,
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+            }),
+        ).to.equal(true);
+        expect(emitGameLog.calledOnce).to.equal(true);
+    });
 });
 
 function createActiveGame(): IActiveGame {

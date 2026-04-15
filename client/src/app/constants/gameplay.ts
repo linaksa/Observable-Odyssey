@@ -8,6 +8,7 @@ export const FLAG_TRANSFER_POPUP_HEADER_LABEL = '⚑ Drapeau';
 export const FLAG_TRANSFER_POPUP_WAITING_SUBTITLE = 'En attente de la réponse';
 export const FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX = 'En attente de la décision de';
 export const FLAG_TRANSFER_ACCEPT_BUTTON_LABEL = 'Donner le drapeau';
+export const FLAG_TRANSFER_ACCEPT_TAKE_BUTTON_LABEL = 'Prendre le drapeau';
 export const FLAG_TRANSFER_ACCEPT_BUTTON_HINT = 'Le drapeau change de porteur';
 export const FLAG_TRANSFER_REJECT_BUTTON_LABEL = 'Refuser';
 export const FLAG_TRANSFER_REJECT_BUTTON_HINT = 'Le drapeau reste au porteur actuel';
@@ -27,7 +28,8 @@ export const GAME_COMBAT_TURN_RESULT_PLACEHOLDER_STATS: AttackStats = {
     defenseDiceBonus: 0,
     postureAttackBonus: 0,
     postureDefenseBonus: 0,
-    fightSanctuaryBonus: 0,
+    attackFightSanctuaryBonus: 0,
+    defenseFightSanctuaryBonus: 0,
     attackIceMalus: 0,
     defenseIceMalus: 0,
     totalAttackPoints: 0,

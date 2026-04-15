@@ -1,5 +1,5 @@
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
-import { CombatExchangeLogData, CombatTurnLogData, DEFENSE_SANCTUARY_BONUS, StatBreakdownData } from '@common/combat-log';
+import { CombatExchangeLogData, CombatTurnLogData, StatBreakdownData } from '@common/combat-log';
 import { Service } from 'typedi';
 
 @Service()
@@ -19,7 +19,7 @@ export class CombatLogService {
                 base: attackerStats.baseAttackPoints,
                 diceBonus: attackerStats.attackDiceBonus,
                 postureBonus: attackerStats.postureAttackBonus,
-                sanctuaryBonus: attackerStats.fightSanctuaryBonus,
+                sanctuaryBonus: attackerStats.attackFightSanctuaryBonus,
                 iceMalus: attackerStats.attackIceMalus,
                 total: attackerStats.totalAttackPoints,
             },
@@ -27,7 +27,7 @@ export class CombatLogService {
                 base: defenderStats.baseDefensePoints,
                 diceBonus: defenderStats.defenseDiceBonus,
                 postureBonus: defenderStats.postureDefenseBonus,
-                sanctuaryBonus: DEFENSE_SANCTUARY_BONUS,
+                sanctuaryBonus: defenderStats.defenseFightSanctuaryBonus,
                 iceMalus: defenderStats.defenseIceMalus,
                 total: defenderStats.totalDefensePoints,
             },
@@ -46,7 +46,7 @@ export class CombatLogService {
                 base: defenderStats.baseAttackPoints,
                 diceBonus: defenderStats.attackDiceBonus,
                 postureBonus: defenderStats.postureAttackBonus,
-                sanctuaryBonus: defenderStats.fightSanctuaryBonus,
+                sanctuaryBonus: defenderStats.attackFightSanctuaryBonus,
                 iceMalus: defenderStats.attackIceMalus,
                 total: defenderStats.totalAttackPoints,
             },
@@ -54,7 +54,7 @@ export class CombatLogService {
                 base: attackerStats.baseDefensePoints,
                 diceBonus: attackerStats.defenseDiceBonus,
                 postureBonus: attackerStats.postureDefenseBonus,
-                sanctuaryBonus: DEFENSE_SANCTUARY_BONUS,
+                sanctuaryBonus: attackerStats.defenseFightSanctuaryBonus,
                 iceMalus: attackerStats.defenseIceMalus,
                 total: attackerStats.totalDefensePoints,
             },
