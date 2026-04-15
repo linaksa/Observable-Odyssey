@@ -1,4 +1,5 @@
 import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { CombatService } from '@app/services/gameplay/combat-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
@@ -94,7 +95,13 @@ export class GameSessionService {
 
         const currentAttack = activeGame.currentAttack;
         const combatAttackerName = currentAttack?.attacker;
-        const combatOutcome = await this.resolveCombatIfNeeded(activeGame, playerId, gameId, namespace);
+        let combatOutcome: CombatOutcome | null = null;
+        if (currentAttack && (currentAttack.attacker === playerId || currentAttack.defender === playerId)) {
+            combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
+            if (combatOutcome) {
+                namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
+            }
+        }
 
         await this.endGameService.handlePlayerAbandon(playerId, gameId);
         emitGameLog(gameId, `Abandon de partie: ${playerId}.`);
@@ -112,8 +119,23 @@ export class GameSessionService {
 
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
         const endGameResult = await this.endGameService.checkEndGame(gameId);
-        this.emitEndGameTransitionIfNeeded(gameId, namespace, endGameResult, emitGameLog);
-        await this.checkSurvivingAttackerEndTurn(gameId, refreshedGame, combatOutcome, combatAttackerName);
+        if (endGameResult.hasEnded) {
+            if (endGameResult.completionType === 'canceled') {
+                const gameCanceledPayload: IGameCanceledPayload = { reason: toGameCanceledReason(endGameResult.reason) };
+                namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
+            } else {
+                const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
+                namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
+            }
+            emitGameLog(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
+        }
+        if (combatOutcome && combatAttackerName) {
+            const survivingAttacker = refreshedGame.players.find((currentPlayer) => currentPlayer.name === combatAttackerName);
+            if (survivingAttacker && !survivingAttacker.hasAbandoned) {
+                await this.getGameplayActionService().checkEndTurnIfNoMovesLeft(gameId, combatAttackerName);
+            }
+        }
         if (isCurrentPlayer) {
             await this.turnService.endTurn(gameId);
         }
@@ -141,6 +163,7 @@ export class GameSessionService {
         }
         this.activeGameListSocketService.emitJoinableGamesUpdated(gameId);
         this.unregisterSocketFromGame(socket, gameId);
+        await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
     }
 
     async handlePlayerAbandon(
@@ -152,6 +175,7 @@ export class GameSessionService {
         const { gameId, playerId } = data;
         await this.handleActiveGameDisconnect(gameId, playerId, namespace, emitGameLog);
         this.unregisterSocketFromGame(socket, gameId);
+        await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
     }
 
     async handleDisconnect(socket: Socket, namespace: Namespace, emitGameLog: (gameId: string, message: string) => void): Promise<void> {
@@ -169,6 +193,8 @@ export class GameSessionService {
             } else {
                 await this.handleWaitingRoomDisconnect(gameId, playerId, namespace);
             }
+
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
         }
     }
 
@@ -187,60 +213,8 @@ export class GameSessionService {
     private getGameplayActionService(): GameplayActionService {
         return Container.get(GameplayActionService);
     }
-
-    private async resolveCombatIfNeeded(
-        activeGame: IActiveGame,
-        playerId: string,
-        gameId: string,
-        namespace: Namespace,
-    ): Promise<CombatOutcome | null> {
-        const currentAttack = activeGame.currentAttack;
-        if (!currentAttack || (currentAttack.attacker !== playerId && currentAttack.defender !== playerId)) {
-            return null;
-        }
-
-        const combatOutcome = await this.combatService.cancelCombat(activeGame, playerId);
-        if (combatOutcome) {
-            namespace.to(gameId).emit(SocketEvent.CombatResolved, combatOutcome);
-        }
-        return combatOutcome;
-    }
-
-    private emitEndGameTransitionIfNeeded(
-        gameId: string,
-        namespace: Namespace,
-        endGameResult: Awaited<ReturnType<EndGameService['checkEndGame']>>,
-        emitGameLog: (gameId: string, message: string) => void,
-    ): void {
-        if (!endGameResult.hasEnded) {
-            return;
-        }
-
-        if (endGameResult.completionType === 'canceled') {
-            const gameCanceledPayload: IGameCanceledPayload = { reason: toGameCanceledReason(endGameResult.reason) };
-            namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
-        } else {
-            const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
-            namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
-        }
-
-        emitGameLog(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
-    }
-
-    private async checkSurvivingAttackerEndTurn(
-        gameId: string,
-        refreshedGame: IActiveGame,
-        combatOutcome: CombatOutcome | null,
-        combatAttackerName?: string,
-    ): Promise<void> {
-        if (!combatOutcome || !combatAttackerName) {
-            return;
-        }
-
-        const survivingAttacker = refreshedGame.players.find((currentPlayer) => currentPlayer.name === combatAttackerName);
-        if (survivingAttacker && !survivingAttacker.hasAbandoned) {
-            await this.getGameplayActionService().checkEndTurnIfNoMovesLeft(gameId, combatAttackerName);
-        }
+    private getActiveGameGarbageCollectorService(): ActiveGameGarbageCollectorService {
+        return Container.get(ActiveGameGarbageCollectorService);
     }
 
     private async disableDebugModeIfOrganizerLeft(

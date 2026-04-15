@@ -50,6 +50,7 @@ export class ActiveGameService {
             createdAt: new Date(),
             startedAt: null as Date | null,
             endedAt: null as Date | null,
+            markedForDeletionAt: null as Date | null,
             players: [playerCharacter],
             turnOrder: [] as string[],
             currentPlayerIndex: 0,

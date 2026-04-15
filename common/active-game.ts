@@ -9,6 +9,7 @@ export interface IActiveGame {
     createdAt?: Date;
     startedAt?: Date | null;
     endedAt?: Date | null;
+    markedForDeletionAt?: Date | null;
     players: ICharacter[];
     currentPlayerIndex: number;
     turnOrder: string[]; // List of player names in turn order

@@ -1,4 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { IAbandonData, IJoinGamePayload } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
@@ -12,6 +13,7 @@ export class GameSocketSessionEventsService {
         private readonly activeGameService: ActiveGameService,
         private readonly gameSessionService: GameSessionService,
         private readonly gameplayLogService: GameplayLogService,
+        private readonly activeGameGarbageCollectorService: ActiveGameGarbageCollectorService,
     ) {}
 
     register(socket: Socket, namespace: Namespace): void {
@@ -26,6 +28,8 @@ export class GameSocketSessionEventsService {
             if (playerName) {
                 this.gameSessionService.setSocketPlayerName(socket, activeGameId, playerName);
             }
+
+            await this.activeGameGarbageCollectorService.reevaluateFinishedGameMark(activeGameId);
 
             try {
                 const activeGame = await this.activeGameService.getActiveGameById(activeGameId);

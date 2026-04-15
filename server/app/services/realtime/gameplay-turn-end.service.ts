@@ -1,4 +1,5 @@
 import { ActionService } from '@app/services/gameplay/action-service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
@@ -15,6 +16,7 @@ export class GameplayTurnEndService {
         private readonly actionService: ActionService,
         private readonly turnService: TurnService,
         private readonly endGameService: EndGameService,
+        private readonly activeGameGarbageCollectorService: ActiveGameGarbageCollectorService,
     ) {}
 
     async checkEndTurnIfNoMovesLeft(gameId: string, playerId: string): Promise<void> {
@@ -47,6 +49,7 @@ export class GameplayTurnEndService {
             postedAt: new Date().toISOString(),
         };
         namespace.to(gameId).emit(SocketEvent.GameLog, logPayload);
+        await this.activeGameGarbageCollectorService.reevaluateFinishedGameMark(gameId);
         return true;
     }
 }

@@ -150,6 +150,7 @@ describe('ActiveGameService', () => {
             expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryUsed).to.equal(false);
             expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryTurnsRemaining).to.equal(0);
             expect(activeGameCreateStub.firstCall.args[0].players[0].fightSanctuaryBonus).to.equal(0);
+            expect(activeGameCreateStub.firstCall.args[0].markedForDeletionAt).to.equal(null);
         });
     });
 

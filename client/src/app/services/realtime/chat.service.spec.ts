@@ -20,6 +20,7 @@ import { Avatar, DiceType } from '@common/constants';
 import { IMessage, INewMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { IJoinChatPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 import { ChatService } from './chat.service';
 import { SocketService } from './socket.service';
@@ -77,10 +78,26 @@ describe('ChatService', () => {
         expect(socketServiceSpy.emit).toHaveBeenCalledWith(
             Namespaces.Game,
             SocketEvent.JoinChat,
-            activeGameServiceStub.activeGame._id,
+            {
+                roomId: activeGameServiceStub.activeGame._id,
+                playerName: 'Alice',
+            },
             jasmine.any(Function),
         );
         expect(activeGameServiceStub.activeGame.messages).toEqual(expectedMessages);
+    });
+
+    // Edge case: When no local player is available, only roomId should be emitted.
+    it('should emit join chat payload without playerName when local player is unavailable', () => {
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
+
+        service.connect();
+
+        const emittedPayload = socketServiceSpy.emit.calls.mostRecent().args[2] as IJoinChatPayload;
+        expect(emittedPayload).toEqual({
+            roomId: activeGameServiceStub.activeGame._id,
+        });
+        expect(emittedPayload.playerName).toBeUndefined();
     });
 
     // Edge case: When reconnecting, unsubscribe previous chat stream.

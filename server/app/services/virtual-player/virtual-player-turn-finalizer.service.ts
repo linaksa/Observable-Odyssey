@@ -1,4 +1,5 @@
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
+import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
@@ -7,7 +8,7 @@ import { toGameCanceledReason } from '@app/utils/game-cancellation';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IGameCanceledPayload } from '@common/socket-payloads';
-import { Service } from 'typedi';
+import { Container, Service } from 'typedi';
 
 @Service()
 export class VirtualPlayerTurnFinalizerService {
@@ -46,10 +47,10 @@ export class VirtualPlayerTurnFinalizerService {
                 };
                 gameNamespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
             } else {
-                const endedGame = await this.activeGameService.getActiveGameById(gameId);
-                gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+                gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endGameResult.winner });
             }
             this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
+            await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
         }
 
         const activeGame = await this.activeGameService.getActiveGameById(gameId);
@@ -64,5 +65,9 @@ export class VirtualPlayerTurnFinalizerService {
         }
 
         await this.turnService.endTurn(gameId);
+    }
+
+    private getActiveGameGarbageCollectorService(): ActiveGameGarbageCollectorService {
+        return Container.get(ActiveGameGarbageCollectorService);
     }
 }
