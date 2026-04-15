@@ -44,7 +44,8 @@ export interface AttackStats {
     postureAttackBonus: number;
     postureDefenseBonus: number;
 
-    fightSanctuaryBonus: number;
+    attackFightSanctuaryBonus: number;
+    defenseFightSanctuaryBonus: number;
 
     attackIceMalus: number;
     defenseIceMalus: number;
