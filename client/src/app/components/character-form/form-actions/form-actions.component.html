@@ -1,5 +1,12 @@
+@if (characterFormService.errors(); as errorMessage) {
+    <div class="bg-red-900/30 border border-red-500 text-red-500 text-sm p-2 text-center">
+        <p>{{ errorMessage }}</p>
+    </div>
+}
+
 <div class="flex shrink flex-col gap-2">
     <button class="btn" (click)="generateRandom()">Générer un personnage aléatoire</button>
+
     <button
         class="btn btn-green h-12 inline-flex items-center gap-2"
         type="submit"
@@ -16,7 +23,4 @@
         }
         <span>Confirmer</span>
     </button>
-    @if (characterFormService.errors()) {
-        <p class="text-red-500">{{ characterFormService.errors() }}</p>
-    }
 </div>
