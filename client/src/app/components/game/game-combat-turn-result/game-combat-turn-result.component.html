@@ -23,7 +23,7 @@
     <div class="flex justify-between gap-4">
         <span>Sanctuaire</span>
         <span>
-            {{ turnStats().fightSanctuaryBonus || 0 }}
+            {{ turnStats().attackFightSanctuaryBonus || 0 }}
         </span>
     </div>
 
@@ -59,6 +59,13 @@
         <span>Posture</span>
         <span>
             {{ turnStats().postureDefenseBonus }}
+        </span>
+    </div>
+
+    <div class="flex justify-between gap-4">
+        <span>Sanctuaire</span>
+        <span>
+            {{ turnStats().defenseFightSanctuaryBonus || 0 }}
         </span>
     </div>
 
