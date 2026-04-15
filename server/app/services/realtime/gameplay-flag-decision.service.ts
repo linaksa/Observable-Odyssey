@@ -3,7 +3,7 @@ import { ActionService } from '@app/services/gameplay/action-service';
 import { CtfFlagActionService, PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
 import { GameplayTurnEndService } from '@app/services/realtime/gameplay-turn-end.service';
 import { SocketEvent } from '@common/socket-events';
-import { IActionData, IFlagDecisionData, IFlagTransferRejectionData, IFlagTransferRejectedPayload } from '@common/socket-payloads';
+import { IActionData, IFlagDecisionData, IFlagTransferRejectedPayload, IFlagTransferRejectionData } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -68,7 +68,7 @@ export class GameplayFlagDecisionService {
             return;
         }
 
-        const expectedResponderName = pendingRequest.transferMode === 'take' ? pendingRequest.targetPlayerName : pendingRequest.requesterName;
+        const expectedResponderName = pendingRequest.targetPlayerName;
         if (data.responderName !== expectedResponderName) {
             return;
         }

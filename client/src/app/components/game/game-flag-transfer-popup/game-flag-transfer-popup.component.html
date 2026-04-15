@@ -26,7 +26,7 @@
                             data-testid="flag-transfer-accept"
                             (click)="decision.emit(true)"
                         >
-                            <span class="text-base font-bold tracking-wide text-[#e8f0ff]">{{ acceptButtonLabel }}</span>
+                            <span class="text-base font-bold tracking-wide text-[#e8f0ff]">{{ acceptButtonLabel() }}</span>
                             <span class="text-sm font-semibold opacity-80">{{ acceptButtonHint }}</span>
                         </button>
 
