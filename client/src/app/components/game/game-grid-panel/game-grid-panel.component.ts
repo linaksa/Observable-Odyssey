@@ -235,12 +235,7 @@ export class GameGridPanelComponent {
         }
 
         this.totalColumns = board[0].length;
-        this.graph = buildGraph(
-            board,
-            this.activeGameService.getCurrentPlayer()?.actionsLeft,
-            this.activeGameService.activeGame.game.board.items,
-            this.activeGameService.activeGame.players,
-        );
+        this.graph = buildGraph(board, this.activeGameService.activeGame.game.board.items, this.activeGameService.activeGame.players);
     }
 
     private updateTitleTooltipPosition(event: MouseEvent): void {

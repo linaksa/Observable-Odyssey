@@ -58,6 +58,10 @@ export class EditorGridPanelComponent {
                 return null;
             }
 
+            if (this.boardEditorService.getRemainingObjectCount(this.boardEditorService.selectedObject) <= 0) {
+                return null;
+            }
+
             if (!this.boardEditorService.isSelectedObjectPlacementPositionValid(this.currentHoverRow(), this.currentHoverCol())) {
                 return null;
             }

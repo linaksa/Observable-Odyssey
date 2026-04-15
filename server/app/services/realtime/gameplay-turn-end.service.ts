@@ -2,8 +2,9 @@ import { ActionService } from '@app/services/gameplay/action-service';
 import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { TurnService } from '@app/services/gameplay/turn-service';
+import { toGameCanceledReason } from '@app/utils/game-cancellation';
 import { SocketEvent } from '@common/socket-events';
-import { IGameLogPayload } from '@common/socket-payloads';
+import { IGameCanceledPayload, IGameLogPayload } from '@common/socket-payloads';
 import { Namespace } from 'socket.io';
 import { Service } from 'typedi';
 
@@ -32,7 +33,14 @@ export class GameplayTurnEndService {
             return false;
         }
 
-        namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endGameResult.winner });
+        if (endGameResult.completionType === 'canceled') {
+            const gameCanceledPayload: IGameCanceledPayload = {
+                reason: toGameCanceledReason(endGameResult.reason),
+            };
+            namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
+        } else {
+            namespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endGameResult.winner });
+        }
 
         const logPayload: IGameLogPayload = {
             message: this.endGameService.getEndGameLogMessage(endGameResult),

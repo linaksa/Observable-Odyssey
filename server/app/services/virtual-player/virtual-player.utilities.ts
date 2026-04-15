@@ -212,11 +212,8 @@ export class VirtualPlayerUtilitiesService {
                     playerId: from.name,
                     position: newPosition,
                 };
-                await this.gameplayActionService.handleToggleDoor(
-                    doorToggleData,
-                    null,
-                    namespace,
-                    (gameId: string, message: string) => this.gameplayLogService.emitGameLogToRoom(gameId, message),
+                await this.gameplayActionService.handleToggleDoor(doorToggleData, null, namespace, (gameId: string, message: string) =>
+                    this.gameplayLogService.emitGameLogToRoom(gameId, message),
                 );
                 activeGame = await this.activeGameService.getActiveGameById(activeGame._id);
                 await sleep();

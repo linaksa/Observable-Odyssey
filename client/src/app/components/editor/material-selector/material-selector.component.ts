@@ -1,4 +1,4 @@
-import { afterEveryRender, ChangeDetectionStrategy, Component, ElementRef, inject, output, ViewChild } from '@angular/core';
+import { afterEveryRender, ChangeDetectionStrategy, Component, ElementRef, HostListener, inject, output, ViewChild } from '@angular/core';
 import { CursorFollowingTooltipController } from '@app/components/common/tooltip/cursor-following-tooltip.controller';
 import { CELL_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
 import { BoardEditorService } from '@app/services/editor/editor.service';
@@ -32,6 +32,11 @@ export class EditorItemSelectorMaterialComponent {
         afterEveryRender({
             read: () => this.tooltipController.syncTooltipPosition(this.hoveredMaterial !== null),
         });
+    }
+
+    @HostListener('window:blur')
+    protected handleWindowBlur(): void {
+        this.hideTooltip();
     }
 
     protected selectMaterial(type: CellType): void {

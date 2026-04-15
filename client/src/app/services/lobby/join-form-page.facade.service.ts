@@ -1,4 +1,6 @@
 import { inject, Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { GameService } from '@app/services/admin/game.service';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -7,8 +9,6 @@ import { extractErrorCodes, mapErrorCodesToMessage } from '@app/utils/error-code
 import { CharacterFormData } from '@common/character';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
-import { Router } from '@angular/router';
-import { GameService } from '@app/services/admin/game.service';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -64,7 +64,7 @@ export class JoinFormPageFacadeService {
             },
             error: (error) => {
                 this.characterFormService.isLoading.set(false);
-                this.toastService.show('Erreur lors de la tentative de rejoindre la partie.');
+                this.toastService.show('Erreur, veuillez quitter ou réessayer plus tard');
                 this.characterFormService.errors.set(
                     mapErrorCodesToMessage(extractErrorCodes(error), 'Il y a eu un problème lors de la création du personnage.'),
                 );

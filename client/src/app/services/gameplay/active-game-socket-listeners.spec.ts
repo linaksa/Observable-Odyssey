@@ -26,7 +26,7 @@ import { SanctuaryChoice } from '@common/info';
 import { ItemType } from '@common/items';
 import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
-import { IFlagTransferRejectedPayload, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
+import { type GameCanceledReason, IFlagTransferRejectedPayload, ISanctuaryInteractedResult, ITurnStartedPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 
 const DEFAULT_MOVEMENT_LEFT = 3;
@@ -43,6 +43,7 @@ describe('registerActiveGameSocketListeners', () => {
     let hasAbandoned = signal(false);
     let gameHasEnded = signal(false);
     let hasPendingFlagActionRequest = false;
+    let gameCanceledReason: GameCanceledReason | null = null;
 
     const eventStreams = new Map<string, Subject<unknown>>();
 
@@ -87,6 +88,9 @@ describe('registerActiveGameSocketListeners', () => {
         setSanctuaryOutcome: () => {
             // no-op for this spec since sanctuary outcomes aren't asserted here
         },
+        setGameCanceledReason: (reason: GameCanceledReason | null) => {
+            gameCanceledReason = reason;
+        },
         bumpActionStatsVersion: () => {
             // no-op for this socket listener spec
         },
@@ -109,6 +113,7 @@ describe('registerActiveGameSocketListeners', () => {
         hasAbandoned = signal(false);
         gameHasEnded = signal(false);
         hasPendingFlagActionRequest = false;
+        gameCanceledReason = null;
     });
 
     it('should update movement and turn state from socket events', () => {
@@ -164,8 +169,23 @@ describe('registerActiveGameSocketListeners', () => {
         expect(toastServiceSpy.show).toHaveBeenCalledWith('Vous avez été expulsé de la partie');
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/']);
 
-        emitEvent<{ winner: string }>(SocketEvent.GameCanceled, { winner: '' });
-        expect(localPlayerServiceSpy.clear).toHaveBeenCalledTimes(2);
+        emitEvent(SocketEvent.GameCanceled, { reason: 'insufficient-active-players' });
+        expect(localPlayerServiceSpy.clear).toHaveBeenCalledTimes(1);
+        expect(activeGame?.isFinished).toBeTrue();
+        expect(activeGame?.winner).toBeNull();
+        expect(gameHasEnded()).toBeTrue();
+        expect(gameCanceledReason).toBe('insufficient-active-players');
+        expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/home']);
+    });
+
+    it('should redirect home immediately on waiting-room cancellation', () => {
+        activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+        activeGame.turnOrder = [];
+        registerActiveGameSocketListeners(context());
+
+        emitEvent(SocketEvent.GameCanceled, { reason: 'organizer-left-waiting-room' });
+
+        expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
         expect(toastServiceSpy.show).toHaveBeenCalledWith("L'organiseur a annulé la partie.");
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
     });

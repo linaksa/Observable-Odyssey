@@ -3,8 +3,10 @@ import { EndGameService } from '@app/services/gameplay/end-game.service';
 import { TurnService } from '@app/services/gameplay/turn-service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 import { SocketService } from '@app/services/realtime/socket.service';
+import { toGameCanceledReason } from '@app/utils/game-cancellation';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
+import { IGameCanceledPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
 
 @Service()
@@ -37,9 +39,16 @@ export class VirtualPlayerTurnFinalizerService {
     async finalizeTurn(gameId: string): Promise<void> {
         const endGameResult = await this.endGameService.checkEndGame(gameId);
         if (endGameResult.hasEnded) {
-            const endedGame = await this.activeGameService.getActiveGameById(gameId);
             const gameNamespace = this.socketService.getNamespace(Namespaces.Game);
-            gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            if (endGameResult.completionType === 'canceled') {
+                const gameCanceledPayload: IGameCanceledPayload = {
+                    reason: toGameCanceledReason(endGameResult.reason),
+                };
+                gameNamespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
+            } else {
+                const endedGame = await this.activeGameService.getActiveGameById(gameId);
+                gameNamespace.to(gameId).emit(SocketEvent.GameEnded, { winner: endedGame.winner });
+            }
             this.gameplayLogService.emitGameLogToRoom(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
         }
 

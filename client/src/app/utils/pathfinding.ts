@@ -1,12 +1,12 @@
 import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
-import { WATER_MOVEMENT_COST, ICE_MOVEMENT_COST, GRASS_OR_DOOR_MOVEMENT_COST } from '@common/constants';
+import { GRASS_OR_DOOR_MOVEMENT_COST, ICE_MOVEMENT_COST, WATER_MOVEMENT_COST } from '@common/constants';
 import { IItem } from '@common/items';
 
-export function buildGraph(board: CellType[][], actionPoints: number = 0, items: IItem[] = [], players: ICharacter[] = []): [number, number][][] {
+export function buildGraph(board: CellType[][], items: IItem[] = [], players: ICharacter[] = []): [number, number][][] {
     const blockedCells = buildBlockedCells(items, players);
-    return buildAdjacencyGraph(board, blockedCells, actionPoints);
+    return buildAdjacencyGraph(board, blockedCells);
 }
 
 function buildBlockedCells(items: IItem[], players: ICharacter[]): Set<string> {
@@ -41,7 +41,7 @@ function addPlayerBlockedCells(blockedCells: Set<string>, players: ICharacter[])
     }
 }
 
-function buildAdjacencyGraph(board: CellType[][], blockedCells: Set<string>, actionPoints: number): [number, number][][] {
+function buildAdjacencyGraph(board: CellType[][], blockedCells: Set<string>): [number, number][][] {
     const totalRows = board.length;
     const totalColumns = board[0].length;
 
@@ -70,7 +70,7 @@ function buildAdjacencyGraph(board: CellType[][], blockedCells: Set<string>, act
                     continue;
                 }
 
-                const tileWeight = getTileCost(board[neighborRow][neighborColumn], neighborRow, neighborColumn, blockedCells, actionPoints);
+                const tileWeight = getTileCost(board[neighborRow][neighborColumn], neighborRow, neighborColumn, blockedCells);
 
                 if (!isFinite(tileWeight)) {
                     continue;
@@ -84,7 +84,7 @@ function buildAdjacencyGraph(board: CellType[][], blockedCells: Set<string>, act
     return graph;
 }
 
-function getTileCost(tileType: CellType, row: number, col: number, blockedCells: Set<string>, actionPoints: number): number {
+function getTileCost(tileType: CellType, row: number, col: number, blockedCells: Set<string>): number {
     if (blockedCells.has(`${row},${col}`)) {
         return Infinity;
     }
@@ -99,7 +99,7 @@ function getTileCost(tileType: CellType, row: number, col: number, blockedCells:
         case CellType.OpenDoor:
             return GRASS_OR_DOOR_MOVEMENT_COST;
         case CellType.ClosedDoor:
-            return actionPoints > 0 ? GRASS_OR_DOOR_MOVEMENT_COST : Infinity;
+            return Infinity;
 
         case CellType.Water:
             return WATER_MOVEMENT_COST;
