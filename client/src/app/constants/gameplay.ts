@@ -8,6 +8,7 @@ export const FLAG_TRANSFER_POPUP_HEADER_LABEL = '⚑ Drapeau';
 export const FLAG_TRANSFER_POPUP_WAITING_SUBTITLE = 'En attente de la réponse';
 export const FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX = 'En attente de la décision de';
 export const FLAG_TRANSFER_ACCEPT_BUTTON_LABEL = 'Donner le drapeau';
+export const FLAG_TRANSFER_ACCEPT_TAKE_BUTTON_LABEL = 'Prendre le drapeau';
 export const FLAG_TRANSFER_ACCEPT_BUTTON_HINT = 'Le drapeau change de porteur';
 export const FLAG_TRANSFER_REJECT_BUTTON_LABEL = 'Refuser';
 export const FLAG_TRANSFER_REJECT_BUTTON_HINT = 'Le drapeau reste au porteur actuel';

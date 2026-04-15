@@ -30,7 +30,15 @@ describe('GameFlagTransferPopupComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Veuillez patienter');
     });
 
-    function createRequest(canRespond: boolean) {
+    it('should show "Prendre le drapeau" when current player wants to give the flag', () => {
+        fixture.componentRef.setInput('request', createRequest(true, SocketEvent.GiveFlag));
+        fixture.detectChanges();
+
+        const acceptButton = queryByTestId(fixture, 'flag-transfer-accept');
+        expect(acceptButton?.textContent).toContain('Prendre le drapeau');
+    });
+
+    function createRequest(canRespond: boolean, acceptEvent: SocketEvent.TakeFlag | SocketEvent.GiveFlag = SocketEvent.TakeFlag) {
         return {
             data: {
                 gameId: 'game-1',
@@ -38,7 +46,7 @@ describe('GameFlagTransferPopupComponent', () => {
                 currentPlayerActionsLeft: 0,
                 targetPlayerName: 'Bob',
             },
-            acceptEvent: SocketEvent.TakeFlag,
+            acceptEvent,
             question: canRespond ? 'Alice veut prendre votre drapeau. Voulez-vous le lui donner ?' : 'En attente de la décision de Bob.',
             canRespond,
         };
