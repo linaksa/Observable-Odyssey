@@ -114,6 +114,13 @@ export class CombatService {
 
         return new Promise((resolve) => {
             setTimeout(async () => {
+                // Prevent the combat from continuing if the combat gets canceled during this delay
+                const refreshedActiveGame = await this.activeGameService.getActiveGameById(activeGameId);
+                if (!refreshedActiveGame || !refreshedActiveGame.currentAttack) {
+                    return resolve(null);
+                }
+                // end of security check
+
                 if (combatIsDone) {
                     const combatOutcome = await this.resolveCombat(updatedGame, attacker.name, defender.name);
                     namespace.to(activeGameId).emit(SocketEvent.CombatResolved, combatOutcome);
