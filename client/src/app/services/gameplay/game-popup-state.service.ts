@@ -55,8 +55,8 @@ export class GamePopupStateService {
         this.tileInfoMovementCost = tileInfo.movementCost;
 
         const itemInfo = this.tileInfoService.getItemInfo(item);
-        this.tileInfoItemTitle = this.resolveSpawnPointItemTitle(item, itemInfo, spawnPointOwnerName);
-        this.tileInfoItemDescription = item?.itemType === ItemType.StartingPosition ? (itemInfo?.description ?? null) : null;
+        this.tileInfoItemTitle = this.resolveItemTitle(item, itemInfo, spawnPointOwnerName);
+        this.tileInfoItemDescription = itemInfo?.description ?? null;
 
         const playerInfo = this.tileInfoService.getPlayerInfo(player);
         this.tileInfoPlayerName = playerInfo?.name ?? null;
@@ -103,15 +103,15 @@ export class GamePopupStateService {
         return 'Ajoute +1 ATQ / +1 DEF, ou +2 / +2 si le 2x réussit.';
     }
 
-    private resolveSpawnPointItemTitle(item: IItem | null, itemInfo: { title: string } | null, spawnPointOwnerName: string | null): string | null {
-        if (item?.itemType !== ItemType.StartingPosition) {
-            return null;
-        }
-
+    private resolveItemTitle(item: IItem | null, itemInfo: { title: string } | null, spawnPointOwnerName: string | null): string | null {
         if (!itemInfo?.title) {
             return null;
         }
 
-        return spawnPointOwnerName ? `${itemInfo.title} (${spawnPointOwnerName})` : itemInfo.title;
+        if (item?.itemType === ItemType.StartingPosition && spawnPointOwnerName) {
+            return `${itemInfo.title} (${spawnPointOwnerName})`;
+        }
+
+        return itemInfo.title;
     }
 }
