@@ -67,7 +67,9 @@ describe('EditorToolPanelComponent', () => {
     });
 
     it('should render the provided tool descriptions and emit selected tools', () => {
-        const buttons = fixture.nativeElement.querySelectorAll('button.btn.flex-1') as NodeListOf<HTMLButtonElement>;
+        const buttons = fixture.nativeElement.querySelectorAll(
+            'div.flex.shrink.flex-col.justify-center.gap-2 > button',
+        ) as NodeListOf<HTMLButtonElement>;
         const emitted: ToolOption[] = [];
 
         component.toolSelected.subscribe((tool) => emitted.push(tool));

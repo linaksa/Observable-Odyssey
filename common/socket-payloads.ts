@@ -132,8 +132,15 @@ export interface IGameEndedPayload {
     winner: string | null;
 }
 
+export type GameCanceledReason =
+    | 'organizer-left-waiting-room'
+    | 'insufficient-active-players'
+    | 'no-human-players'
+    | 'ctf-team-eliminated';
+
 export interface IGameCanceledPayload {
     playerId?: string;
+    reason?: GameCanceledReason;
 }
 
 export interface IFlagPickedUpPayload {

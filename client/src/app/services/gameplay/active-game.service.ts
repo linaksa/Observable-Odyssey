@@ -20,6 +20,7 @@ import { SocketEvent } from '@common/socket-events';
 import {
     IActionData,
     IAttackPostureData,
+    type GameCanceledReason,
     IDebugTeleportData,
     IDebugToggleState,
     IDoorToggleData,
@@ -60,6 +61,7 @@ export class ActiveGameService implements OnDestroy {
     hasChangedLocation = signal(false);
     hasAbandoned = signal(false);
     gameHasEnded = signal(false);
+    gameCanceledReason = signal<GameCanceledReason | null>(null);
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
@@ -94,6 +96,7 @@ export class ActiveGameService implements OnDestroy {
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandoned: this.hasAbandoned,
                 gameHasEnded: this.gameHasEnded,
+                setGameCanceledReason: (reason: GameCanceledReason | null) => this.gameCanceledReason.set(reason),
                 handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
                 closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
                 hasPendingFlagActionRequest: () => this.hasPendingFlagActionRequest(),
@@ -109,6 +112,7 @@ export class ActiveGameService implements OnDestroy {
         this.roundOutcome.set(null);
         this.actionMode.set(false);
         this.gameHasEnded.set(false);
+        this.gameCanceledReason.set(null);
     }
 
     private toggle(signalRef: ToggleSignalRef): void {
@@ -173,6 +177,7 @@ export class ActiveGameService implements OnDestroy {
     setActiveGame(id: string): void {
         this.isLoading.set(true);
         this.gameHasEnded.set(false);
+        this.gameCanceledReason.set(null);
         this.setActiveGameSubscription?.unsubscribe();
 
         const subscription = this.gameService

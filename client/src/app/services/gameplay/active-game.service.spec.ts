@@ -282,7 +282,20 @@ describe('ActiveGameService', () => {
         expect(service.activeGame.isFinished).toBeTrue();
         expect(service.activeGame.winner).toBe('Alice');
 
-        getEventStream<{ winner: string }>(SocketEvent.GameCanceled).next({ winner: '' });
+        getEventStream(SocketEvent.GameCanceled).next({ reason: 'insufficient-active-players' });
+        expect(service.activeGame.isFinished).toBeTrue();
+        expect(service.activeGame.winner).toBeNull();
+        expect(service.gameHasEnded()).toBeTrue();
+        expect(service.gameCanceledReason()).toBe('insufficient-active-players');
+        expect(localPlayerServiceSpy.clear).not.toHaveBeenCalled();
+        expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/home']);
+    });
+
+    it('should redirect instantly on waiting-room cancellation', () => {
+        service.activeGame.turnOrder = [];
+
+        getEventStream(SocketEvent.GameCanceled).next({ reason: 'organizer-left-waiting-room' });
+
         expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
         expect(toastServiceSpy.show).toHaveBeenCalledWith("L'organiseur a annulé la partie.");
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);

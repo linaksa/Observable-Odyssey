@@ -6,7 +6,7 @@ import { IActiveGame } from '@common/active-game';
 import { CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { ICharacter } from '@common/character';
 import { SocketEvent } from '@common/socket-events';
-import { IFlagActionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
+import { type GameCanceledReason, IFlagActionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
 
 export interface BooleanSignal {
     update(updater: (current: boolean) => boolean): void;
@@ -34,4 +34,5 @@ export interface ActiveGameSocketContext {
     closeFlagActionRequestIfExpired: (currentTurnPlayerName: string) => void;
     hasPendingFlagActionRequest: () => boolean;
     clearPendingFlagActionRequest: () => void;
+    setGameCanceledReason: (reason: GameCanceledReason | null) => void;
 }
