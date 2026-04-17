@@ -2,13 +2,14 @@
  * Testing strategy — ActiveGameGarbageCollectorService
  *
  * Approach:
- * - Stub ActiveGameService, SocketService, and activeGameModel.deleteMany to isolate GC logic.
- * - Use fake timers for deterministic mark/sweep timestamp assertions.
+ * - Drive reevaluateFinishedGameMark() with explicit active-game snapshots and namespace socket maps.
+ * - Stub deleteMany() and freeze time to validate sweep cutoff calculations deterministically.
  *
  * Edge cases covered:
- * - Missing active game should be a no-op.
- * - Already marked finished game with no real players should remain unchanged.
- * - Connected virtual players should never count as connected real players.
+ * - Missing game, unfinished game, and already-marked finished game no-op branches.
+ * - Missing active games, empty real-player sets, and missing namespaces return 0 connections.
+ * - Connected virtual players are excluded from the real-player connection count.
+ * - Negative grace periods clamp to "now" for sweep queries.
  */
 import { activeGameModel } from '@app/schemas/active-game';
 import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
@@ -63,8 +64,8 @@ describe('ActiveGameGarbageCollectorService', () => {
         sinon.restore();
     });
 
+    // Nominal case: only distinct connected real players should be counted once.
     it('counts only unique connected real players for a game', async () => {
-        // Nominal case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 players: [createCharacter('Alice'), createCharacter('Bob'), createCharacter('Bot', VirtualPlayerProfile.Defensive)],
@@ -85,8 +86,47 @@ describe('ActiveGameGarbageCollectorService', () => {
         expect(connectedCount).to.equal(1);
     });
 
+    // Edge case: a missing active game cannot have connected players.
+    it('returns zero connected players when the game is missing', async () => {
+        activeGameService.getActiveGameById.resolves(null);
+
+        const connectedCount = await service.countConnectedRealPlayers(gameId);
+
+        expect(connectedCount).to.equal(0);
+    });
+
+    // Edge case: without the game namespace, no connections should be counted.
+    it('returns zero connected players when no namespace exists', async () => {
+        activeGameService.getActiveGameById.resolves(createActiveGame({ players: [createCharacter('Alice')] }));
+        socketService.hasNamespace.returns(false);
+
+        const connectedCount = await service.countConnectedRealPlayers(gameId);
+
+        expect(connectedCount).to.equal(0);
+    });
+
+    // Edge case: virtual players are not counted as connected real players.
+    it('returns zero connected players when only virtual players exist', async () => {
+        activeGameService.getActiveGameById.resolves(createActiveGame({ players: [createCharacter('Bot', VirtualPlayerProfile.Defensive)] }));
+        socketService.hasNamespace.returns(true);
+        socketService.getNamespace.returns(createNamespace({ socketOne: { playerNamesByGameId: { [gameId]: 'Bot' } } }));
+
+        const connectedCount = await service.countConnectedRealPlayers(gameId);
+
+        expect(connectedCount).to.equal(0);
+    });
+
+    // Edge case: a deleteMany result without deletedCount should normalize to zero.
+    it('returns zero deleted games when the database omits deletedCount', async () => {
+        deleteManyStub.resolves({} as never);
+
+        const deletedCount = await service.sweepMarkedGames(gracePeriodMs);
+
+        expect(deletedCount).to.equal(0);
+    });
+
+    // Edge case: reevaluating a missing game should be a no-op.
     it('does nothing when reevaluating a missing game', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(null);
 
         await service.reevaluateFinishedGameMark(gameId);
@@ -95,7 +135,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('marks a finished game when no real players are connected', async () => {
-        // Nominal case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 isFinished: true,
@@ -114,7 +153,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('clears the deletion mark when at least one real player is connected', async () => {
-        // Nominal case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 isFinished: true,
@@ -131,7 +169,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('clears stale deletion mark for unfinished games', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(createActiveGame({ isFinished: false, markedForDeletionAt: previousMark }));
 
         await service.reevaluateFinishedGameMark(gameId);
@@ -140,7 +177,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('does not update an unfinished game that is not marked', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(createActiveGame({ isFinished: false, markedForDeletionAt: null }));
 
         await service.reevaluateFinishedGameMark(gameId);
@@ -149,7 +185,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('does not update a finished game that is already marked and still empty', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 isFinished: true,
@@ -166,7 +201,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('does not mark a finished game when a real player is connected and no mark exists', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 isFinished: true,
@@ -183,7 +217,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('marks a finished game when only virtual players are connected', async () => {
-        // Edge case
         activeGameService.getActiveGameById.resolves(
             createActiveGame({
                 isFinished: true,
@@ -202,7 +235,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('sweeps only finished games marked before the grace-period cutoff', async () => {
-        // Nominal case
         deleteManyStub.resolves({ deletedCount: 2 });
 
         const deletedCount = await service.sweepMarkedGames(gracePeriodMs);
@@ -217,7 +249,6 @@ describe('ActiveGameGarbageCollectorService', () => {
     });
 
     it('normalizes negative grace period to sweep up to now', async () => {
-        // Edge case
         await service.sweepMarkedGames(-gracePeriodMs);
 
         expect(deleteManyStub.calledOnce).to.equal(true);

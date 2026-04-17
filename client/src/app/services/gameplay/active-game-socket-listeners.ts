@@ -1,3 +1,4 @@
+import { GAME_CANCELED_DEFAULT_TOAST, GAME_CANCELED_TOAST_BY_REASON } from '@app/constants/game-cancellation';
 import { FLAG_TRANSFER_REJECTED_TOAST } from '@app/constants/gameplay';
 import { ActiveGameSocketContext, BooleanSignal } from '@app/interfaces/active-game-socket.interface';
 import { mapErrorCodeToMessage, mapErrorCodesToMessage } from '@app/utils/error-codes';
@@ -22,8 +23,6 @@ import {
     ITurnStartedPayload,
 } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
-
-export type { ActiveGameSocketContext };
 
 export function registerActiveGameSocketListeners(context: ActiveGameSocketContext): Subscription[] {
     return [
@@ -218,12 +217,27 @@ export function registerActiveGameSocketListeners(context: ActiveGameSocketConte
 
             activeGame.winner = data.winner;
             activeGame.isFinished = true;
+            context.setGameCanceledReason(null);
             context.clearPendingFlagActionRequest();
             context.gameHasEnded.update(() => true);
         }),
-        context.socket.on<IGameCanceledPayload>(Namespaces.Game, SocketEvent.GameCanceled).subscribe(() => {
+        context.socket.on<IGameCanceledPayload>(Namespaces.Game, SocketEvent.GameCanceled).subscribe((data) => {
+            const activeGame = context.getActiveGame();
+            const gameHasStarted = !!activeGame && activeGame.turnOrder.length > 0;
+            const cancellationReason = data?.reason;
+
+            if (activeGame && gameHasStarted) {
+                activeGame.winner = null;
+                activeGame.isFinished = true;
+                context.setGameCanceledReason(cancellationReason ?? null);
+                context.clearPendingFlagActionRequest();
+                context.gameHasEnded.update(() => true);
+                return;
+            }
+
             context.localPlayer.clear();
-            context.toastService.show("L'organiseur a annulé la partie.");
+            const cancellationToast = cancellationReason ? GAME_CANCELED_TOAST_BY_REASON[cancellationReason] : GAME_CANCELED_DEFAULT_TOAST;
+            context.toastService.show(cancellationToast);
             context.router.navigate(['/home']);
         }),
 

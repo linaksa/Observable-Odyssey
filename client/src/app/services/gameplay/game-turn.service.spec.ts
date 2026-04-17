@@ -1,20 +1,22 @@
-/* eslint-disable @typescript-eslint/no-magic-numbers -- test fixture values */
+/* eslint-disable @typescript-eslint/no-magic-numbers -- To make the spec file easier to read */
+/* eslint-disable max-lines -- This spec covers multiple interaction branches and edge cases in one suite. */
 /**
  * Testing strategy — Game Turn Service
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Feed deterministic socket-event streams to validate turn/combat state transitions and countdown behavior.
+ * - Use signal-backed active-game stubs to assert player-index synchronization, action-mode resets, and debug guards.
+ * - Verify command-style side effects (`endTurn`, lifecycle destroy) through explicit namespace/event emissions and teardown checks.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Missing players, empty turn orders, or unknown incoming players keep current-turn resolution safe.
+ * - End-turn emission is blocked when prerequisites (local player, game id, non-combat state) are not met.
+ * - After `destroy`, subsequent socket events no longer mutate service state.
  */
 import { signal } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
+import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame, ICurrentAttack } from '@common/active-game';
@@ -25,7 +27,6 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subject } from 'rxjs';
-import { GameTurnService } from './game-turn.service';
 
 describe('GameTurnService', () => {
     let service: GameTurnService;
@@ -331,6 +332,98 @@ describe('GameTurnService', () => {
         });
 
         expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeFalse();
+    });
+
+    it('should use provided turn timeLeft when turn starts', () => {
+        service.initializeTurnListeners();
+
+        getEventStream<{ player: string; movementLeft: number; actionLeft: number; timeLeft: number }>(SocketEvent.TurnStarted).next({
+            player: 'Alice',
+            movementLeft: 4,
+            actionLeft: 1,
+            timeLeft: 2500,
+        });
+
+        expect(service.turnTimeLeftSeconds()).toBe(Math.ceil(2500 / MILLISECONDS_PER_SECOND));
+    });
+
+    it('should allow organizer to end turn in debug mode when not preparing and not in combat', () => {
+        activeGameServiceStub.isDebugMode.and.returnValue(true);
+        activeGameServiceStub.activeGame.organizerName = 'Organizer';
+        localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Organizer'));
+        service.initializeTurnListeners();
+
+        getEventStream<{ player: string; movementLeft: number; actionLeft: number }>(SocketEvent.TurnStarted).next({
+            player: 'Alice',
+            movementLeft: 4,
+            actionLeft: 1,
+        });
+
+        expect(service.canEndTurn).toBeTrue();
+    });
+
+    it('should initialize listeners only once', () => {
+        service.initializeTurnListeners();
+        const firstRegistrationCount = socketServiceSpy.on.calls.count();
+
+        service.initializeTurnListeners();
+
+        expect(socketServiceSpy.on.calls.count()).toBe(firstRegistrationCount);
+    });
+
+    it('should ignore combat start and combat turn start events without current attack', () => {
+        service.initializeTurnListeners();
+        (activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>).set(true);
+
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: null,
+        });
+        getEventStream<IActiveGame>(SocketEvent.CombatTurnStart).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: null,
+        });
+
+        expect(service.isCombatActive()).toBeFalse();
+        expect((activeGameServiceStub.actionMode as ReturnType<typeof signal<boolean>>)()).toBeTrue();
+        expect(service.combatTimeLeftSeconds()).toBeNull();
+    });
+
+    it('should stop combat countdown when combat turn is applied', () => {
+        service.initializeTurnListeners();
+        getEventStream<IActiveGame>(SocketEvent.CombatStarted).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 2),
+        });
+
+        expect(service.combatTimeLeftSeconds()).not.toBeNull();
+
+        getEventStream<{ updatedActiveGame: IActiveGame }>(SocketEvent.CombatTurnApplied).next({
+            updatedActiveGame: activeGameServiceStub.activeGame,
+        });
+
+        expect(service.combatTimeLeftSeconds()).toBeNull();
+    });
+
+    it('should start combat countdown when a combat turn starts with an active attack', () => {
+        // This verifies the explicit CombatTurnStart branch with a valid current attack.
+        service.initializeTurnListeners();
+
+        getEventStream<IActiveGame>(SocketEvent.CombatTurnStart).next({
+            ...activeGameServiceStub.activeGame,
+            currentAttack: createAttack('Alice', 'Bob', 2),
+        });
+
+        expect(service.isCombatActive()).toBeTrue();
+        expect(service.combatTimeLeftSeconds()).toBe(Math.ceil(COMBAT_TIME_MS / MILLISECONDS_PER_SECOND));
+    });
+
+    it('should delegate ngOnDestroy to destroy', () => {
+        const destroySpy = spyOn(service, 'destroy').and.callThrough();
+
+        service.ngOnDestroy();
+
+        expect(destroySpy).toHaveBeenCalled();
     });
 });
 

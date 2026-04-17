@@ -1,27 +1,20 @@
 /**
  * Testing strategy — GameTableService
  *
- * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
- * The test data intentionally contains a visible game and a hidden game
- * to allow testing of visibility filtering.
+ * Approach:
+ * - Mock GameService streams and verify table population for all-games and visible-only fetch modes.
+ * - Assert loading and data normalization behavior from service outputs.
  *
  * Edge cases covered:
- * - Empty response (empty array): fetchGames() with or without visibility filter
- *   should return an empty tableData without error.
- * - Null response: the server may theoretically return null in case of anomaly;
- *   fetchGames() should normalize this value to an empty array to protect
- *   tableData consumers.
- * - Visibility filter disabled (false): all games, including hidden ones,
- *   should appear in tableData.
- * - Visibility filter enabled (true): only games with Visibility.Viewable
- *   should be retained.
+ * - Empty or null responses normalize to an empty table safely.
+ * - Visibility filtering keeps hidden games out only when `showOnlyVisibleGames` is enabled.
  */
 import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import SpyObj = jasmine.SpyObj;
 
 import { GameType, IExistingGame, Visibility } from '@common/game';
-import { GameTableService } from './game-table.service';
+import { GameTableService } from '@app/services/tables/game-table.service';
 import { GameService } from '@app/services/admin/game.service';
 
 describe('GameTableService', () => {

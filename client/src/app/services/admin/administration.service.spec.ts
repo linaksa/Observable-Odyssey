@@ -1,22 +1,20 @@
 /**
  * Testing strategy — AdministrationService
  *
- * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
- * Both boolean values (true/false) are tested separately to
- * verify boolean → Visibility enum conversion.
+ * Approach:
+ * - Mock `GameService` and call `changeGameVisibility` through the public API.
+ * - Assert boolean input conversion to shared `Visibility` enum values before delegation.
  *
  * Edge cases covered:
- * - Passing true: should map to Visibility.Viewable (public status).
- * - Passing false: should map to Visibility.Hidden (private status).
- *   These are the only possible states; testing both prevents accidental
- *   inversion of the conversion logic.
+ * - `true` maps to `Visibility.Viewable`.
+ * - `false` maps to `Visibility.Hidden`, preventing accidental inversion.
  */
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Visibility } from '@common/game';
 import { of } from 'rxjs';
-import { AdministrationService } from './administration.service';
-import { GameService } from './game.service';
+import { AdministrationService } from '@app/services/admin/administration.service';
+import { GameService } from '@app/services/admin/game.service';
 import SpyObj = jasmine.SpyObj;
 
 describe('AdministrationService', () => {

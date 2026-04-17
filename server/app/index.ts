@@ -6,7 +6,7 @@ import { Server } from '@app/server';
 import { Container } from 'typedi';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { dbServer, inMemoryDb } from './database';
+import { dbServer, inMemoryDb } from '@app/database';
 
 async function startServer() {
     const atlasConnectionString = process.env.DATABASE_CONNECTION_STRING;

@@ -30,7 +30,7 @@ import { IGame } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subject } from 'rxjs';
-import { JoinPageComponent } from './join-page.component';
+import { JoinPageComponent } from '@app/pages/lobby/join-page/join-page.component';
 import SpyObj = jasmine.SpyObj;
 
 describe('JoinPageComponent', () => {

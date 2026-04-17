@@ -8,7 +8,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { ITurnPreparingPayload, ITurnStartedPayload } from '@common/socket-payloads';
 import { Service } from 'typedi';
-import { SanctuaryService } from './sanctuary-service';
+import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
 
 export type VirtualPlayerTurnHandler = (player: ICharacter, activeGame: IActiveGame) => Promise<void>;
 export type TurnEndedHandler = (gameId: string) => Promise<void> | void;

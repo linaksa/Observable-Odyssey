@@ -7,10 +7,19 @@ import { TurnService } from '@app/services/gameplay/turn-service';
 import { IActiveGame, IPlayerAbandonedGame } from '@common/active-game';
 import { CombatOutcome } from '@common/attack-result';
 import { SocketEvent } from '@common/socket-events';
-import { IAbandonData, IDebugToggleState, IGameEndedPayload, IJoinGamePayload, IPlayerIdPayload, ISocketData } from '@common/socket-payloads';
+import {
+    IAbandonData,
+    IDebugToggleState,
+    IGameCanceledPayload,
+    IGameEndedPayload,
+    IJoinGamePayload,
+    IPlayerIdPayload,
+    ISocketData,
+} from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Container, Service } from 'typedi';
-import { GameplayActionService } from './gameplay-action.service';
+import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
+import { toGameCanceledReason } from '@app/utils/game-cancellation';
 
 @Service()
 export class GameSessionService {
@@ -57,7 +66,7 @@ export class GameSessionService {
     async handleWaitingRoomDisconnect(gameId: string, playerId: string, namespace: Namespace): Promise<void> {
         const isOrganizer = await this.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {
-            const gameCanceledPayload: IPlayerIdPayload = { playerId };
+            const gameCanceledPayload: IGameCanceledPayload = { playerId, reason: 'organizer-left-waiting-room' };
             namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
             await this.activeGameService.deleteGameById(gameId);
         } else {
@@ -111,11 +120,15 @@ export class GameSessionService {
         const isCurrentPlayer = refreshedGame.turnOrder[refreshedGame.currentPlayerIndex] === playerId;
         const endGameResult = await this.endGameService.checkEndGame(gameId);
         if (endGameResult.hasEnded) {
-            const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
-            namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
+            if (endGameResult.completionType === 'canceled') {
+                const gameCanceledPayload: IGameCanceledPayload = { reason: toGameCanceledReason(endGameResult.reason) };
+                namespace.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
+            } else {
+                const gameEndedPayload: IGameEndedPayload = { winner: endGameResult.winner };
+                namespace.to(gameId).emit(SocketEvent.GameEnded, gameEndedPayload);
+            }
             emitGameLog(gameId, this.endGameService.getEndGameLogMessage(endGameResult));
             await this.getActiveGameGarbageCollectorService().reevaluateFinishedGameMark(gameId);
-            // await this.activeGameService.deleteGameById(gameId);
         }
         if (combatOutcome && combatAttackerName) {
             const survivingAttacker = refreshedGame.players.find((currentPlayer) => currentPlayer.name === combatAttackerName);
@@ -140,7 +153,8 @@ export class GameSessionService {
         const { gameId, playerId } = data;
         const isOrganizer = await this.endGameService.checkIfOrganizer(gameId, playerId);
         if (isOrganizer) {
-            socket.to(gameId).emit(SocketEvent.GameCanceled);
+            const gameCanceledPayload: IGameCanceledPayload = { playerId, reason: 'organizer-left-waiting-room' };
+            socket.to(gameId).emit(SocketEvent.GameCanceled, gameCanceledPayload);
             await this.activeGameService.deleteGameById(gameId);
         } else {
             await this.activeGameService.removePlayer(gameId, playerId);
@@ -199,7 +213,6 @@ export class GameSessionService {
     private getGameplayActionService(): GameplayActionService {
         return Container.get(GameplayActionService);
     }
-
     private getActiveGameGarbageCollectorService(): ActiveGameGarbageCollectorService {
         return Container.get(ActiveGameGarbageCollectorService);
     }

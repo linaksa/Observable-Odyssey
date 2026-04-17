@@ -2,21 +2,19 @@
  * Testing strategy — TileInfoService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Query tile, item, and player info helpers with known and unknown identifiers.
+ * - Assert metadata mapping contracts consumed by gameplay tooltip/popups.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Unknown or null item/player inputs return safe null fallbacks.
+ * - Unknown tile types resolve to the shared fallback tile metadata.
  */
 import { TestBed } from '@angular/core/testing';
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE, UNKNOWN_TILE_INFO } from '@app/constants/tile-info';
 import { CellType } from '@common/board';
 import { Avatar, DiceType } from '@common/constants';
 import { ItemType } from '@common/items';
-import { TileInfoService } from './tile-info.service';
+import { TileInfoService } from '@app/services/ui/tile-info.service';
 
 describe('TileInfoService', () => {
     let service: TileInfoService;

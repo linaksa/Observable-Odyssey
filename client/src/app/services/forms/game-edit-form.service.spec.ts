@@ -1,26 +1,24 @@
 /**
  * Testing strategy — GameEditFormService
  *
- * Approach: Angular unit tests with GameService replaced by a Jasmine spy.
- * The reactive form object is inspected directly to validate initial values
- * and transformations. The submit flow is exercised for both save and create
- * paths, as well as for service failures.
+ * Approach:
+ * - Inspect reactive-form state directly while mocking `GameService` save/create calls.
+ * - Exercise initialization, save mode, and create mode submit flows to validate payload mapping.
  *
  * Edge cases covered:
- * - Save and create failures should set `formValid` to false, populate errors,
- *   and reset the submission flag.
- * - The form should reset to the provided values without requiring any extra
- *   DOM capture step.
+ * - Save/create failures populate `errors`, mark `formValid` false, and release submission state.
+ * - Editing initialization keeps provided game values without mutating original fixtures.
  */
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { IBoard } from '@common/board';
+import { CellType, IBoard } from '@common/board';
 import { ErrorCode } from '@common/error-codes';
 import { EditGameFormData, GameType, IExistingGame, Visibility } from '@common/game';
+import { IItem } from '@common/items';
 import { GameService } from '@app/services/admin/game.service';
-import { GameEditFormService } from './game-edit-form.service';
+import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 
 describe('GameEditFormService', () => {
     let service: GameEditFormService;
@@ -153,3 +151,41 @@ describe('GameEditFormService', () => {
         expect(service.form.get('description')?.value).toBe(randomGame.description);
     });
 });
+/* Merged from game-edit-form.service.extra.spec.ts */
+
+(() => {
+    const BAD_REQUEST_STATUS = 400;
+    const EMPTY_CELLS: CellType[][] = [[]];
+    const EMPTY_ITEMS: IItem[] = [];
+
+    describe('GameEditFormService (extra)', () => {
+        let service: GameEditFormService;
+        let gameServiceSpy: jasmine.SpyObj<GameService>;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({});
+            gameServiceSpy = jasmine.createSpyObj('GameService', ['saveGame', 'createGame']);
+            TestBed.overrideProvider(GameService, { useValue: gameServiceSpy });
+            service = TestBed.inject(GameEditFormService);
+        });
+
+        it('keeps formErrors empty when mapped server errors resolve to an empty message', async () => {
+            gameServiceSpy.createGame.and.returnValue(
+                throwError(
+                    () =>
+                        new HttpErrorResponse({
+                            status: BAD_REQUEST_STATUS,
+                            error: { errorCodes: [ErrorCode.GameTitleMissing] },
+                        }),
+                ),
+            );
+
+            await expectAsync(service.submitForm('', GameType.Classic, EMPTY_CELLS, EMPTY_ITEMS)).toBeRejected();
+
+            expect(service.formValid).toBeFalse();
+            expect(service.validationErrorCodes()).toEqual([ErrorCode.GameTitleMissing]);
+            expect(service.formErrors()).toEqual([]);
+            expect(service.isSubmitting()).toBeFalse();
+        });
+    });
+})();

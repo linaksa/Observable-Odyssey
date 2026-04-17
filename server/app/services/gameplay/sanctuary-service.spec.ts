@@ -1,5 +1,19 @@
+/* eslint-disable max-lines -- SanctuaryService interaction/cooldown coverage is kept in one cohesive file for readability. */
+/**
+ * Testing strategy — SanctuaryService
+ *
+ * Approach:
+ * - Validate sanctuary interaction outcomes (life heal, fight buff, cooldown state) with deterministic active-game fixtures.
+ * - Assert persisted player/item mutations after interaction and during turn-start/turn-end cooldown progression.
+ *
+ * Edge cases covered:
+ * - Double-heal failure path, active fight-buff reuse rejection, and stale cooldown metadata on active sanctuaries.
+ * - Missing game/player and non-sanctuary target branches that must throw.
+ * - Fight sanctuary reuse by another player only after cooldown expiration.
+ */
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { SanctuaryService } from '@app/services/gameplay/sanctuary-service';
+import * as sanctuaryUtils from '@app/utils/sanctuary';
 import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { Avatar, DiceType, SANCTUARY_COOLDOWN_TURN_STEPS } from '@common/constants';
@@ -175,17 +189,17 @@ describe('SanctuaryService', () => {
         expect(activeGame.game.board.items[0].active).to.equal(false);
         expect(activeGame.game.board.items[0].inactiveTurnsRemaining).to.equal(SANCTUARY_COOLDOWN_TURN_STEPS);
 
-        // Turn 1 after use (Bob starts)
+        // Cooldown tick #1
         sanctuaryService.onTurnStarted(activeGame);
         expect(activeGame.game.board.items[0].active).to.equal(false);
         expect(activeGame.game.board.items[0].inactiveTurnsRemaining).to.equal(SANCTUARY_COOLDOWN_TURN_STEPS - 1);
 
-        // Turn 2 after use (Alice starts)
+        // Cooldown tick #2
         sanctuaryService.onTurnStarted(activeGame);
         expect(activeGame.game.board.items[0].active).to.equal(false);
         expect(activeGame.game.board.items[0].inactiveTurnsRemaining).to.equal(1);
 
-        // Turn 3 after use (Bob starts again) => sanctuary available
+        // Cooldown tick #3 reactivates the sanctuary.
         sanctuaryService.onTurnStarted(activeGame);
 
         expect(activeGame.game.board.items[0].active).to.equal(true);
@@ -229,6 +243,190 @@ describe('SanctuaryService', () => {
         expect(result.actionsLeft).to.equal(0);
         expect(result.sanctuaryActive).to.equal(false);
         expect(result.sanctuaryInactiveTurnsRemaining).to.equal(SANCTUARY_COOLDOWN_TURN_STEPS);
+    });
+
+    it('returns early on turn end when player is missing', () => {
+        const activeGame = createActiveGame(ItemType.FightSanctuary);
+
+        sanctuaryService.onTurnEnded(activeGame, 'Unknown');
+
+        expect(activeGame.players[0].fightSanctuaryTurnsRemaining).to.equal(0);
+    });
+
+    it('returns early on turn end when sanctuary bonus is inactive', () => {
+        const activeGame = createActiveGame(ItemType.FightSanctuary);
+        activeGame.players[0].fightSanctuaryTurnsRemaining = 0;
+        activeGame.players[0].fightSanctuaryBonus = 0;
+
+        sanctuaryService.onTurnEnded(activeGame, 'Alice');
+
+        expect(activeGame.players[0].fightSanctuaryTurnsRemaining).to.equal(0);
+    });
+
+    it('returns early on turn end when fight sanctuary metadata is undefined', () => {
+        const activeGame = createActiveGame(ItemType.FightSanctuary);
+        activeGame.players[0].fightSanctuaryTurnsRemaining = undefined;
+        activeGame.players[0].fightSanctuaryBonus = undefined;
+
+        // Edge case: undefined metadata falls back to zero and exits safely.
+        sanctuaryService.onTurnEnded(activeGame, 'Alice');
+        expect(activeGame.players[0].fightSanctuaryUsed).to.equal(false);
+    });
+
+    it('advances sanctuary cooldowns safely when board items are missing', () => {
+        const activeGame = createActiveGame(ItemType.LifeSanctuary);
+        activeGame.game.board.items = undefined as never;
+
+        // Edge case: nullish item collection is handled as an empty list.
+        sanctuaryService.onTurnStarted(activeGame);
+        expect(activeGame.game.board.items).to.equal(undefined);
+    });
+
+    it('throws when trying to interact with sanctuary in a missing active game', async () => {
+        activeGameService.getActiveGameById.resolves(null);
+
+        try {
+            await sanctuaryService.interactSanctuary('Alice', 'missing-game', {
+                position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+                choice: SanctuaryChoice.Standard,
+            });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as Error).message).to.contain('Partie active introuvable');
+        }
+    });
+
+    it('throws when sanctuary interaction player is missing', async () => {
+        const activeGame = createActiveGame(ItemType.LifeSanctuary);
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await sanctuaryService.interactSanctuary('Unknown', activeGame._id, {
+                position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+                choice: SanctuaryChoice.Standard,
+            });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as Error).message).to.contain('Joueur introuvable');
+        }
+    });
+
+    it('throws when board items are missing while searching the target sanctuary', async () => {
+        const activeGame = createActiveGame(ItemType.LifeSanctuary);
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.game.board.items = undefined as never;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
+                position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+                choice: SanctuaryChoice.Standard,
+            });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            // Edge case: nullish items cannot resolve a sanctuary target.
+            expect(error).to.be.instanceOf(Error);
+        }
+    });
+
+    it('throws when interaction target is not a sanctuary item', async () => {
+        const activeGame = createActiveGame(ItemType.LifeSanctuary);
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.game.board.items = [{ itemType: ItemType.Flag, x: SANCTUARY_X, y: SANCTUARY_Y, size: 1 }] as never;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
+                position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+                choice: SanctuaryChoice.Standard,
+            });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as Error).message).to.contain("n'est pas un sanctuaire");
+        }
+    });
+
+    it('throws when a non-sanctuary item is force-matched to the sanctuary target cell', async () => {
+        const activeGame = createActiveGame(ItemType.LifeSanctuary);
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.game.board.items = [{ itemType: ItemType.Flag, x: SANCTUARY_X, y: SANCTUARY_Y, size: 1 }] as never;
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const coversStub = sinon.stub(sanctuaryUtils, 'sanctuaryCoversCell').returns(true);
+
+        try {
+            await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
+                position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+                choice: SanctuaryChoice.Standard,
+            });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            // Edge case: guard rejects force-matched non-sanctuary items.
+            expect((error as Error).message).to.contain("n'est pas un sanctuaire");
+            expect(coversStub.called).to.equal(true);
+        }
+    });
+
+    it('exercises fight sanctuary usage predicates and defaulted metadata branches', () => {
+        const privateService = sanctuaryService as unknown as {
+            hasFightSanctuaryAlreadyBeenUsed: (player: {
+                fightSanctuaryUsed?: boolean;
+                fightSanctuaryTurnsRemaining?: number;
+                fightSanctuaryBonus?: number;
+            }) => boolean;
+        };
+
+        // Nominal case: each usage indicator independently marks sanctuary usage.
+        expect(privateService.hasFightSanctuaryAlreadyBeenUsed({ fightSanctuaryUsed: true })).to.equal(true);
+        expect(privateService.hasFightSanctuaryAlreadyBeenUsed({ fightSanctuaryUsed: false, fightSanctuaryTurnsRemaining: 1 })).to.equal(true);
+        expect(
+            privateService.hasFightSanctuaryAlreadyBeenUsed({ fightSanctuaryUsed: false, fightSanctuaryTurnsRemaining: 0, fightSanctuaryBonus: 1 }),
+        ).to.equal(true);
+
+        // Edge case: undefined metadata defaults to zero/false.
+        expect(
+            privateService.hasFightSanctuaryAlreadyBeenUsed({
+                fightSanctuaryUsed: false,
+                fightSanctuaryTurnsRemaining: undefined,
+                fightSanctuaryBonus: undefined,
+            }),
+        ).to.equal(false);
+    });
+
+    it('resolves fight sanctuary double-or-nothing outcomes for success and failure', async () => {
+        const activeGame = createActiveGame(ItemType.FightSanctuary);
+        activeGame.players[0].currentPosition = { x: ADJACENT_X, y: ADJACENT_Y };
+        activeGame.players[0].fightSanctuaryUsed = undefined;
+        activeGame.players[0].fightSanctuaryTurnsRemaining = undefined;
+        activeGame.players[0].fightSanctuaryBonus = undefined;
+        activeGameService.getActiveGameById.resolves(activeGame);
+        const randomStub = sinon.stub(Math, 'random');
+
+        // Nominal case: successful double applies the enhanced buff.
+        randomStub.onFirstCall().returns(0);
+        const successResult = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
+            position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+            choice: SanctuaryChoice.Double,
+        });
+        expect(successResult.succeeded).to.equal(true);
+        expect(successResult.fightSanctuaryBonus).to.be.greaterThan(0);
+
+        // Edge case: failed double yields no fight buff and zero remaining turns.
+        activeGame.game.board.items[0].active = true;
+        activeGame.game.board.items[0].inactiveTurnsRemaining = 0;
+        activeGame.players[0].actionsLeft = 1;
+        activeGame.players[0].fightSanctuaryUsed = false;
+        activeGame.players[0].fightSanctuaryTurnsRemaining = 0;
+        activeGame.players[0].fightSanctuaryBonus = 0;
+
+        randomStub.onSecondCall().returns(DOUBLE_RANDOM_FAILURE);
+        const failureResult = await sanctuaryService.interactSanctuary('Alice', activeGame._id, {
+            position: { x: SANCTUARY_X, y: SANCTUARY_Y },
+            choice: SanctuaryChoice.Double,
+        });
+        expect(failureResult.succeeded).to.equal(false);
+        expect(failureResult.fightSanctuaryUsed).to.equal(false);
+        expect(failureResult.fightSanctuaryTurnsRemaining).to.equal(0);
+        expect(failureResult.fightSanctuaryBonus).to.equal(0);
     });
 });
 

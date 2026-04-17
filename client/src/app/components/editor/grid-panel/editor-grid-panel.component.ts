@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, computed, inject, output, signal } from '@angular/core';
-import { GameGridCellEvent, GameGridComponent, PlacementPreview } from '@app/components/common/game-grid/game-grid.component';
+import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { ToolOption } from '@app/constants/grid-editor';
+import { GameGridCellEvent, PlacementPreview } from '@app/interfaces/game-grid.interface';
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
 import { buildEditorTooltipText } from '@app/utils/editor-tooltip';
@@ -55,6 +56,10 @@ export class EditorGridPanelComponent {
 
         if (activeTool === ToolOption.Objects && this.boardEditorService.selectedObject) {
             if (this.currentHoverRow() < 0 || this.currentHoverCol() < 0) {
+                return null;
+            }
+
+            if (this.boardEditorService.getRemainingObjectCount(this.boardEditorService.selectedObject) <= 0) {
                 return null;
             }
 

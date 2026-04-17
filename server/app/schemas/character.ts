@@ -1,6 +1,6 @@
 import { ICharacter, Team } from '@common/character';
 import { Schema } from 'mongoose';
-import { positionSchema } from './position';
+import { positionSchema } from '@app/schemas/position';
 
 export const characterSchema = new Schema<ICharacter>(
     {

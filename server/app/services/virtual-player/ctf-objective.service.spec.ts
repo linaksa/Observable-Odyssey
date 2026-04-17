@@ -1,3 +1,16 @@
+/**
+ * Testing strategy — CtfObjectiveService CTF turn objectives
+ *
+ * Approach:
+ * - Isolate handleTurnObjective() with stubbed movement and aggressive-player collaborators.
+ * - Cover objective priority: return carried flag, contest blocked spawn, then collect free flag.
+ * - Verify both handling decisions and exact delegated calls for each branch.
+ *
+ * Edge cases covered:
+ * - Non-CTF turns are ignored immediately.
+ * - Free-flag pickup with no movement left stops before spawn return.
+ * - Flag objective is ignored while another player is already carrying the flag.
+ */
 import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
 import { CtfObjectiveService } from '@app/services/virtual-player/ctf-objective.service';
 import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
@@ -91,6 +104,7 @@ describe('CtfObjectiveService', () => {
         game.hasFlagId = '';
         game.game.board.items = [{ itemType: ItemType.Flag, x: 2, y: 2, size: 1, isCarried: false }];
 
+        // Nominal chain: first move picks the flag, second move continues toward spawn.
         moveToPositionStub.onFirstCall().callsFake(async () => {
             game.hasFlagId = character.name;
             character.movementLeft = 1;
@@ -112,6 +126,7 @@ describe('CtfObjectiveService', () => {
         game.hasFlagId = '';
         game.game.board.items = [{ itemType: ItemType.Flag, x: 2, y: 2, size: 1, isCarried: false }];
 
+        // Edge case: after pickup, no remaining movement means no follow-up move to spawn.
         moveToPositionStub.callsFake(async () => {
             game.hasFlagId = character.name;
             character.movementLeft = 0;

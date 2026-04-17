@@ -2,10 +2,10 @@ import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Service } from 'typedi';
-import { AgressivePlayerService } from './agressive-player.service';
-import { VirtualPlayerSanctuaryService } from './virtual-player-sanctuary.service';
-import { VirtualPlayer } from './virtual-player.interface';
-import { VirtualPlayerUtilitiesService } from './virtual-player.utilities';
+import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
+import { VirtualPlayerSanctuaryService } from '@app/services/virtual-player/virtual-player-sanctuary.service';
+import { VirtualPlayer } from '@app/services/virtual-player/virtual-player.interface';
+import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
 
 @Service()
 export class DefensivePlayerService implements VirtualPlayer {

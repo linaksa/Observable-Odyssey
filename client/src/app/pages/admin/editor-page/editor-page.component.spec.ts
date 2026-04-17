@@ -28,7 +28,7 @@ import { ErrorCode } from '@common/error-codes';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
 import { of, Subject, Subscription } from 'rxjs';
-import { EditorPageComponent } from './editor-page.component';
+import { EditorPageComponent } from '@app/pages/admin/editor-page/editor-page.component';
 
 describe('EditorPageComponent', () => {
     let fixture: ComponentFixture<EditorPageComponent>;

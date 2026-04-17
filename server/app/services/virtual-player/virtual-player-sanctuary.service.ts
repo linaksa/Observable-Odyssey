@@ -9,7 +9,7 @@ import { SanctuaryChoice } from '@common/info';
 import { IFightSanctuary, ILifeSanctuary, ItemType } from '@common/items';
 import { Namespaces } from '@common/namespaces';
 import { Service } from 'typedi';
-import { VirtualPlayerUtilitiesService } from './virtual-player.utilities';
+import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
 
 type SanctuaryTarget = {
     sanctuary: ILifeSanctuary | IFightSanctuary;

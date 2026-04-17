@@ -2,14 +2,14 @@
  * Testing strategy — Wait Page Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Drive route and socket subjects to verify waiting-room initialization, event wiring, and page navigation transitions.
+ * - Validate leave-room flows for organizer/non-organizer paths, including kick delegation and one-time execution guards.
+ * - Use spies and fake timers to assert active-game initialization helpers, fallback button timing, and cleanup logic.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Route re-emissions unsubscribe previous socket listeners before subscribing to the new game stream.
+ * - Missing local-player/game payloads and mismatched game-start ids avoid unintended side effects.
+ * - Destroy-time safeguards prevent duplicate leave calls and clear pending timeout handles.
  */
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -26,7 +26,7 @@ import { GameType, Visibility } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Observable, Subject } from 'rxjs';
-import { WaitPageComponent } from './wait-page.component';
+import { WaitPageComponent } from '@app/pages/lobby/wait-page/wait-page.component';
 
 const WAIT_BUTTON_TIMEOUT_MS = 3000;
 

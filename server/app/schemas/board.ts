@@ -1,6 +1,6 @@
 import { IBoard } from '@common/board';
 import { Schema } from 'mongoose';
-import { itemSchema } from './items';
+import { itemSchema } from '@app/schemas/items';
 
 export const gameBoard = new Schema<IBoard>(
     {

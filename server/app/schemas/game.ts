@@ -1,7 +1,7 @@
 import { dbServer } from '@app/database';
 import { GameType, IGame, Visibility } from '@common/game';
 import { Schema } from 'mongoose';
-import { gameBoard } from './board';
+import { gameBoard } from '@app/schemas/board';
 
 export const gameSchema = new Schema<IGame>({
     gameTitle: {

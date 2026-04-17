@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, HostListener, inject, signal, ViewChild } from '@angular/core';
-import { GameGridCellEvent, GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
+import { GameGridComponent } from '@app/components/common/game-grid/game-grid.component';
 import { GameCombatPopupComponent } from '@app/components/game/game-combat-popup/game-combat-popup.component';
 import { GameFlagTransferPopupComponent } from '@app/components/game/game-flag-transfer-popup/game-flag-transfer-popup.component';
 import { GameSanctuaryPopupComponent } from '@app/components/game/game-sanctuary-popup/game-sanctuary-popup.component';
 import { GameSanctuaryOutcomeComponent } from '@app/components/game/game-sanctuary-outcome/game-sanctuary-outcome.component';
 import { GameTileInspectionPopupComponent } from '@app/components/game/game-tile-inspection-popup/game-tile-inspection-popup.component';
 import { GAME_GRID_PANEL_HOST_BINDINGS } from '@app/constants/component-host-bindings';
+import { GameGridCellEvent } from '@app/interfaces/game-grid.interface';
+import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 import {
     GAME_GRID_PANEL_TOOLTIP_FALLBACK_WIDTH_PX,
     TOOLTIP_FALLBACK_HEIGHT_PX,
@@ -19,7 +21,7 @@ import { GameTurnService } from '@app/services/gameplay/game-turn.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { buildGraph } from '@app/utils/pathfinding';
-import { computeTooltipPosition, TooltipPosition } from '@app/utils/tooltip-position.utils';
+import { computeTooltipPosition } from '@app/utils/tooltip-position.utils';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { SanctuaryChoice, SanctuaryPopupData, TileInfoPopupData } from '@common/info';
@@ -235,12 +237,7 @@ export class GameGridPanelComponent {
         }
 
         this.totalColumns = board[0].length;
-        this.graph = buildGraph(
-            board,
-            this.activeGameService.getCurrentPlayer()?.actionsLeft,
-            this.activeGameService.activeGame.game.board.items,
-            this.activeGameService.activeGame.players,
-        );
+        this.graph = buildGraph(board, this.activeGameService.activeGame.game.board.items, this.activeGameService.activeGame.players);
     }
 
     private updateTitleTooltipPosition(event: MouseEvent): void {

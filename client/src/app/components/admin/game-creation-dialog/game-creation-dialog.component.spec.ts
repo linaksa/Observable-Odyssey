@@ -2,21 +2,21 @@
  * Testing strategy — Game Creation Dialog Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Exercise the reactive form lifecycle from default initialization through dimension and mode toggles.
+ * - Verify created game payloads (mode, board size, default cells) and editor navigation side effects.
+ * - Probe private update/teardown paths through controlled form mutations and destroy-time cleanup checks.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Unknown board dimensions fall back to the small-map metadata shown in the dialog.
+ * - Invalid forms and missing `isCTF` controls fail safely without creating incorrect game state.
+ * - The dimension subscription is released on destroy so later control updates no longer trigger recomputation.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { GameService } from '@app/services/admin/game.service';
 import { CellType } from '@common/board';
 import { GameType } from '@common/game';
-import { GameCreationDialogComponent } from './game-creation-dialog.component';
+import { GameCreationDialogComponent } from '@app/components/admin/game-creation-dialog/game-creation-dialog.component';
 
 const SMALL_GRID_SIZE = 10;
 

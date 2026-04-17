@@ -2,14 +2,14 @@
  * Testing strategy — Wait Game Grid Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Seed an active-game board fixture and verify component getters expose map metadata and mode labels.
+ * - Confirm object lookup behavior is delegated to `BoardSharedService` with the live item collection.
+ * - Validate lobby-capacity visuals by mutating player counts and checking computed lock-icon output.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Classic and CTF modes map to distinct user-facing labels (`Normal` vs `CTF`).
+ * - Lookup delegation keeps using the updated item array after runtime mutations.
+ * - Full lobbies switch from unlocked to locked icons once `maxPlayerCount` is reached.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
@@ -19,7 +19,7 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
-import { WaitGameGridComponent } from './wait-game-grid.component';
+import { WaitGameGridComponent } from '@app/components/wait/wait-game-grid/wait-game-grid.component';
 
 describe('WaitGameGridComponent', () => {
     let component: WaitGameGridComponent;
@@ -67,6 +67,7 @@ describe('WaitGameGridComponent', () => {
     });
 
     it('should expose board metadata through component getters', () => {
+        // Nominal case: getters mirror active game board metadata and mode label.
         const componentApi = component as unknown as WaitGameGridApi;
 
         expect(componentApi.table).toEqual(activeGameServiceStub.activeGame.game.board.cells);
@@ -91,6 +92,7 @@ describe('WaitGameGridComponent', () => {
     });
 
     it('should return lock icon according to player count', () => {
+        // Edge case: full lobbies switch from unlocked to locked icon.
         activeGameServiceStub.activeGame.players = [];
         activeGameServiceStub.activeGame.maxPlayerCount = 2;
 

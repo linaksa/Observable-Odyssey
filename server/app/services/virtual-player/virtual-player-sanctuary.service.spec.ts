@@ -1,3 +1,18 @@
+/**
+ * Testing strategy — VirtualPlayerSanctuaryService fallback behavior
+ *
+ * Approach:
+ * - Stub reachability, movement, sanctuary interaction, socket, and log dependencies.
+ * - Drive tryFallbackObjective() through health, sanctuary type, and action/movement scenarios.
+ * - Verify selected sanctuary coordinates, interaction dispatch, and log callback forwarding.
+ *
+ * Edge cases covered:
+ * - No reachable adjacent tile or failed move returns false.
+ * - Zero actions left returns true without triggering sanctuary interaction.
+ * - Undefined fight-sanctuary flags still allow fallback when the cooldown is clear.
+ * - Fight sanctuary targets are ignored once the bonus was already consumed.
+ * - Fight sanctuary cooldown turns also block fallback targeting.
+ */
 import { MovementService } from '@app/services/gameplay/movement-service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
@@ -75,6 +90,7 @@ describe('VirtualPlayerSanctuaryService', () => {
 
     it('should consider half health as low health and prioritize life sanctuary', async () => {
         const character = createCharacter('Bot');
+        // Edge threshold: exactly half health should still prioritize life sanctuaries.
         character.currentHealth = 3;
 
         const game = createGame([createSanctuary(ItemType.LifeSanctuary), createSanctuary(ItemType.FightSanctuary)]);
@@ -101,6 +117,124 @@ describe('VirtualPlayerSanctuaryService', () => {
         expect(gameplayActionService.handleSanctuaryInteraction.calledOnce).to.equal(true);
         const interactionData = gameplayActionService.handleSanctuaryInteraction.firstCall.args[0];
         expect(interactionData.position).to.deep.equal({ x: 1, y: 0 });
+    });
+
+    it('returns false when no active sanctuary target is reachable', async () => {
+        const character = createCharacter('Bot');
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary)]);
+        movementService.getReachablePositions.resolves([]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(false);
+        expect(gameplayActionService.handleSanctuaryInteraction.called).to.equal(false);
+    });
+
+    it('returns false when move to sanctuary target fails', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 2;
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+        virtualPlayerUtilities.moveToPosition.resolves(false);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(false);
+    });
+
+    it('returns true without interaction when no actions are left', async () => {
+        const character = createCharacter('Bot');
+        character.actionsLeft = 0;
+        character.currentHealth = 2;
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(gameplayActionService.handleSanctuaryInteraction.called).to.equal(false);
+    });
+
+    it('ignores fight sanctuaries when fight sanctuary was already used', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 5;
+        character.fightSanctuaryUsed = true;
+        const game = createGame([createSanctuary(ItemType.FightSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(false);
+    });
+
+    // Edge case: an ongoing fight sanctuary cooldown should block fight sanctuary fallback too.
+    it('ignores fight sanctuaries when cooldown turns remain', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 5;
+        character.fightSanctuaryTurnsRemaining = 2;
+        const game = createGame([createSanctuary(ItemType.FightSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(false);
+    });
+
+    it('should fallback to fight sanctuary when fight flags are undefined — Edge case', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 5;
+        delete character.fightSanctuaryUsed;
+        delete character.fightSanctuaryTurnsRemaining;
+
+        const game = createGame([createSanctuary(ItemType.FightSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(true);
+        expect(gameplayActionService.handleSanctuaryInteraction.calledOnce).to.equal(true);
+    });
+
+    it('does not move when already adjacent to sanctuary target', async () => {
+        const character = createCharacter('Bot');
+        character.currentPosition = { x: 0, y: 1 };
+        character.currentHealth = 2;
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+
+        await service.tryFallbackObjective(character, game);
+
+        expect(virtualPlayerUtilities.moveToPosition.called).to.equal(false);
+    });
+
+    it('forwards sanctuary interaction log callback to gameplay log service', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 2;
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary)]);
+        movementService.getReachablePositions.resolves([{ x: 0, y: 1 }]);
+        gameplayActionService.handleSanctuaryInteraction.callsFake(async (_data, _socket, _namespace, emitGameLog) => {
+            emitGameLog('game-1', 'sanctuary-log');
+        });
+
+        await service.tryFallbackObjective(character, game);
+
+        expect(gameplayLogService.emitGameLogToRoom.calledOnceWithExactly('game-1', 'sanctuary-log')).to.equal(true);
+    });
+
+    it('skips sanctuaries with no reachable adjacent tile and keeps scanning targets', async () => {
+        const character = createCharacter('Bot');
+        character.currentHealth = 2;
+        const game = createGame([createSanctuary(ItemType.LifeSanctuary, 1, 1), createSanctuary(ItemType.LifeSanctuary, 2, 2)]);
+        movementService.getReachablePositions.resolves([
+            { x: 1, y: 2 },
+            { x: 0, y: 0 },
+        ]);
+
+        const handled = await service.tryFallbackObjective(character, game);
+
+        expect(handled).to.equal(true);
+        const interactionData = gameplayActionService.handleSanctuaryInteraction.firstCall.args[0];
+        expect(interactionData.position).to.deep.equal({ x: 2, y: 2 });
     });
 });
 

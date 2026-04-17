@@ -1,22 +1,19 @@
 /**
- * Testing strategy — GameService (client)
+ * Testing strategy — GameService
  *
- * Approach: unit tests using Jasmine spies for the HTTP layer (HTTP_CLIENT).
- * The abstract HTTP interface is replaced by a spy object, allowing verification
- * of URLs and request bodies without real network calls.
- * Each public method is tested independently to ensure the correct
- * endpoint is constructed with the right parameters.
+ * Approach:
+ * - Replace `HTTP_CLIENT` with Jasmine spies and assert each public method's endpoint/payload.
+ * - Validate service-level URL composition for list, fetch, create, save, delete, and visibility operations.
  *
  * Edge cases covered:
- * - Network error (throwError): verifies getAllGames() falls back to an
- *   empty list instead of bubbling an unusable value to the caller.
+ * - `getAllGames` converts HTTP failures to an empty-array fallback.
+ * - Visibility changes preserve id/path mapping for both hidden and visible updates.
  */
 import { TestBed } from '@angular/core/testing';
-
-import { HTTP_CLIENT } from '@app/http/http-interface';
+import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { GameService } from '@app/services/admin/game.service';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { lastValueFrom, of, throwError } from 'rxjs';
-import { GameService } from './game.service';
 
 describe('GameService', () => {
     let service: GameService;

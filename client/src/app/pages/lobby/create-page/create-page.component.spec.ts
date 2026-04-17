@@ -2,21 +2,21 @@
  * Testing strategy — CreatePageComponent
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Verify init orchestration resets stale table data, fetches visible games, and opens admin socket listeners.
+ * - Use a controlled games-modified stream to assert refresh behavior after real-time updates.
+ * - Validate teardown responsibilities by checking socket disconnect on component destruction.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Preloaded stale rows are cleared before the first fetch call.
+ * - Post-init update notifications trigger a second fetch without reinitializing dependencies.
+ * - Destroying the page closes the admin socket even when no updates were received.
  */
 import { Component } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { AdminSocketService } from '@app/services/realtime/admin.socket.service';
 import { GameTableService } from '@app/services/tables/game-table.service';
 import { Subject } from 'rxjs';
-import { CreatePageComponent } from './create-page.component';
+import { CreatePageComponent } from '@app/pages/lobby/create-page/create-page.component';
 
 describe('CreatePageComponent', () => {
     let component: CreatePageComponent;

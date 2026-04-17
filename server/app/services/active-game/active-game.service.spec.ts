@@ -1,22 +1,22 @@
+/* eslint-disable max-lines -- ActiveGameService requires a broad scenario matrix (create/join/messages/combat/posture) in one cohesive suite. */
 /**
  * Testing strategy — ActiveGameService
  *
- * Approach: unit-test business rules with Sinon stubs over Mongoose model methods
- * (create/findById/findOneAndUpdate/findByIdAndUpdate/findByIdAndDelete).
- * Tests isolate service behavior from persistence by fully controlling DB responses,
- * then asserting returned values and thrown domain errors.
+ * Approach:
+ * - Isolate persistence with Sinon stubs for ActiveGame and Game model CRUD methods.
+ * - Validate creation, join, messaging, deletion, and combat-state updates through public service APIs.
  *
  * Edge cases covered:
- * - Missing game/active game records when creating, joining, or removing players.
- * - Full lobbies and avatar collisions when joining an active game.
- * - Duplicate player names (with and without numeric suffixes) and automatic renaming.
- * - Message retrieval for non-existent games and fallback empty-array behavior.
- * - Database write methods called with expected payloads during save/delete/remove flows.
+ * - Missing game/active-game records, full lobbies, started games, and avatar conflicts.
+ * - Duplicate names (including pre-suffixed names) resolved with deterministic renaming.
+ * - Message and player-removal fallback behavior when the target game is missing.
+ * - Combat initialization/posture branches when no game or no ongoing attack exists.
  */
 import { activeGameModel } from '@app/schemas/active-game';
 import { game } from '@app/schemas/game';
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
-import { IActiveGame } from '@common/active-game';
+import { IActiveGame, ICurrentAttack } from '@common/active-game';
+import { AttackPosture } from '@common/attack-result';
 import { CharacterFormData, ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
@@ -26,6 +26,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 describe('ActiveGameService', () => {
+    type ActiveGameDoc = IActiveGame & { save: sinon.SinonStub };
     let activeGameService: ActiveGameService;
 
     let activeGameCreateStub: sinon.SinonStub;
@@ -126,9 +127,6 @@ describe('ActiveGameService', () => {
 
     describe('test creation of a new IActiveGame', () => {
         it('should throw if game does not exist, async ()', async () => {
-            // Edge case:
-            // An error should be thrown if no game is found with the provided ID
-
             findGameByIdStub.resolves(null);
 
             try {
@@ -140,9 +138,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should create a new active game successfully', async () => {
-            // Nominal case:
-            // A new active game should be created successfully when valid data is provided
-
             findGameByIdStub.resolves(dummyGame);
             await activeGameService.createActiveGame('dummyGameId', dummyCharacterForm);
 
@@ -156,9 +151,6 @@ describe('ActiveGameService', () => {
 
     describe('test adding players to an existing IActiveGame', () => {
         it('should throw if activeGame doesnt exists', async () => {
-            // Edge case:
-            // An error should be thrown if no activeGame is found with the provided ID
-
             findActiveGameByIdStub.resolves(null);
 
             try {
@@ -170,9 +162,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should not allow adding a player if the active game is already full', async () => {
-            // Edge case:
-            // An error should be thrown if the active game's maximum player count has already been reached
-
             const fullActiveGame = dummyActiveGame;
             fullActiveGame.maxPlayerCount = 4;
             fullActiveGame.players = [dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter, dummyPlayerCharacter]; // Simulates an active game that is already full
@@ -187,10 +176,19 @@ describe('ActiveGameService', () => {
             }
         });
 
-        it('should not allow adding a player with an avatar that is already taken in the active game', async () => {
-            // Edge case:
-            // An error should be thrown if a player tries to join an active game with an avatar that is already used by another player in the same game
+        it('should not allow adding a player when active game has started', async () => {
+            const startedActiveGame = { ...dummyActiveGame, turnOrder: ['Dummy Organizer'] };
+            findActiveGameByIdStub.resolves(startedActiveGame);
 
+            try {
+                await activeGameService.addPlayerToActiveGame('startedActiveGameId', dummyCharacterForm);
+                throw new Error('Expected method to reject.');
+            } catch (err) {
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameAlreadyStarted]);
+            }
+        });
+
+        it('should not allow adding a player with an avatar that is already taken in the active game', async () => {
             const collisionedAvatar = Avatar.Avatar1;
 
             const inGamePlayer = dummyPlayerCharacter;
@@ -221,10 +219,6 @@ describe('ActiveGameService', () => {
         });
 
         it("should append a number to the player's name if another player in the active game has the same base name", async () => {
-            // Edge case:
-            // If a player tries to join an active game with a character name already used by another
-            //  player in the same game, the service should automatically append a number to the new player's name to differentiate it (e.g., "PlayerName - 2")
-
             const collisionedName = 'Robert Bourassa';
 
             const inGamePlayer = dummyPlayerCharacter;
@@ -249,8 +243,7 @@ describe('ActiveGameService', () => {
             updatedGame = await activeGameService.addPlayerToActiveGame('activeGameWithAvatarConflictId', characterForm);
             expect(updatedGame.players[updatedGame.players.length - 1].name).to.equal('Robert Bourassa-3');
 
-            // Edge case: If a player adds a character name that already ends with a -{number}
-            // Expected behavior: the system should remove the -{number} suffix before processing the name
+            // Names with an existing numeric suffix are normalized before collision handling.
             characterForm.avatar = Avatar.Avatar4; // Change avatar to avoid avatar conflict
             characterForm.name = 'Robert Bourassa-2'; // Same name as a player already in the active game, but with a -2 suffix
             updatedGame = await activeGameService.addPlayerToActiveGame('activeGameWithAvatarConflictId', characterForm);
@@ -259,8 +252,6 @@ describe('ActiveGameService', () => {
     });
 
     it('should append the player to the database ', async () => {
-        // Nominal case
-
         const testName = 'TestPlayer';
         const avatar = Avatar.Avatar8;
 
@@ -285,9 +276,6 @@ describe('ActiveGameService', () => {
 
     describe('test fetching an IActiveGame by ID', () => {
         it('should return the active game if it exists', async () => {
-            // Nominal case:
-            // The service should return the active game corresponding to the provided ID if it exists
-
             findActiveGameByIdStub.resolves(dummyActiveGame);
 
             const result = await activeGameService.getActiveGameById('dummyActiveGameId');
@@ -299,9 +287,6 @@ describe('ActiveGameService', () => {
 
     describe('test fetching joinable active games', () => {
         it('should return a list of joinable active games', async () => {
-            // Nominal case:
-            // The service should return a list of joinable active games by querying the database
-
             const findStub = sinon.stub(activeGameModel, 'find');
 
             await activeGameService.fetchJoinableActiveGames();
@@ -319,9 +304,6 @@ describe('ActiveGameService', () => {
 
     describe('test message management in the active game', () => {
         it('should add a message to the active game', async () => {
-            // Nominal case:
-            // The service should add a message to the active game matching the provided ID and return the updated active game
-
             const newMessage: INewMessage = {
                 roomId: 'dummyActiveGameId',
                 content: 'Hello, world!',
@@ -339,8 +321,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should return an empty array if the active game is not found', async () => {
-            // Edge case:
-            // The ActiveGame id passed to the function does not exist in the database
             const getActiveGameByIdStub = sinon.stub(activeGameService, 'getActiveGameById');
             getActiveGameByIdStub.resolves(null);
 
@@ -349,9 +329,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should return the messages of the active game', async () => {
-            // Nominal case:
-            // The service should return the list of messages for the active game corresponding to the provided ID
-
             const messages = [
                 {
                     content: 'Hello, world!',
@@ -367,9 +344,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should update the active game in the db when saveActiveGameById is called', () => {
-            // Nominal case:
-            // we test that the correct db query is done
-
             findByIdAndUpdateStub.returnsThis();
             activeGameService.saveActiveGameById('dummyActiveGameId', { isFinished: true });
 
@@ -380,9 +354,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should delete the active game in the db when deleteActiveGameById is called', () => {
-            // Nominal case:
-            // we test that the correct db query is done
-
             findByIdAndDeleteStub.returnsThis();
             activeGameService.deleteGameById('dummyActiveGameId');
 
@@ -391,8 +362,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should return null if removePlayer is called with a non-existent active game', async () => {
-            // Edge case:
-            // The ActiveGame id passed to the function does not exist in the database
             const getActiveGameByIdStub = sinon.stub(activeGameService, 'getActiveGameById');
             getActiveGameByIdStub.resolves(null);
 
@@ -402,9 +371,6 @@ describe('ActiveGameService', () => {
         });
 
         it('should remove the player from the active game and save the result in db when removePlayer is called', async () => {
-            // Nominal case:
-            // The service should remove the player from the active game and update the database accordingly
-
             const activeGameWithoutPlayer = { ...dummyActiveGame, players: [] as ICharacter[] };
             const playerToRemove = 'PlayerToRemove';
 
@@ -424,6 +390,86 @@ describe('ActiveGameService', () => {
             expect(saveActiveGameByIdStub.calledOnce).to.equal(true);
             expect(saveActiveGameByIdStub.firstCall.args[0]).to.equal('dummyActiveGameId');
             expect(saveActiveGameByIdStub.firstCall.args[1]).to.deep.equal(activeGameWithoutPlayer);
+        });
+    });
+
+    describe('combat state persistence', () => {
+        it('startCombat should throw when active game is missing', async () => {
+            findActiveGameByIdStub.resolves(null);
+
+            try {
+                await activeGameService.startCombat('missing-game', 'Alice', 'Bob');
+                throw new Error('Expected method to reject.');
+            } catch (err) {
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameNotFound]);
+            }
+        });
+
+        it('startCombat should persist a new currentAttack object', async () => {
+            const saveStub = sinon.stub().resolves(dummyActiveGame);
+            const activeGameWithSave: ActiveGameDoc = { ...dummyActiveGame, save: saveStub, currentAttack: null };
+            findActiveGameByIdStub.resolves(activeGameWithSave);
+
+            await activeGameService.startCombat('dummyActiveGameId', 'Alice', 'Bob');
+
+            expect(activeGameWithSave.currentAttack).to.deep.equal({
+                attacker: 'Alice',
+                defender: 'Bob',
+                turnCount: 1,
+                attackerPosture: null,
+                defenderPosture: null,
+                suspendedTurnTimer: 0,
+            });
+            expect(saveStub.calledOnce).to.equal(true);
+        });
+
+        it('choosePosture should throw when active game is missing', async () => {
+            findActiveGameByIdStub.resolves(null);
+
+            try {
+                await activeGameService.choosePosture('missing-game', 'Alice', AttackPosture.Offensive);
+                throw new Error('Expected method to reject.');
+            } catch (err) {
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameNotFound]);
+            }
+        });
+
+        it('choosePosture should throw when there is no ongoing attack', async () => {
+            const saveStub = sinon.stub().resolves(dummyActiveGame);
+            const activeGameWithNoAttack: ActiveGameDoc = { ...dummyActiveGame, save: saveStub, currentAttack: null };
+            findActiveGameByIdStub.resolves(activeGameWithNoAttack);
+
+            try {
+                await activeGameService.choosePosture('dummyActiveGameId', 'Alice', AttackPosture.Defensive);
+                throw new Error('Expected method to reject.');
+            } catch (err) {
+                expect((err as { errorCodes?: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.NoOngoingAttack]);
+            }
+        });
+
+        it('choosePosture should update attacker and defender postures', async () => {
+            const saveStub = sinon.stub().resolves(dummyActiveGame);
+            const currentAttack: ICurrentAttack = {
+                attacker: 'Alice',
+                defender: 'Bob',
+                turnCount: 1,
+                attackerPosture: null,
+                defenderPosture: null,
+                suspendedTurnTimer: 0,
+            };
+            const activeGameWithAttack: ActiveGameDoc = {
+                ...dummyActiveGame,
+                save: saveStub,
+                currentAttack,
+            };
+            findActiveGameByIdStub.resolves(activeGameWithAttack);
+
+            await activeGameService.choosePosture('dummyActiveGameId', 'Alice', AttackPosture.Offensive);
+            await activeGameService.choosePosture('dummyActiveGameId', 'Bob', AttackPosture.Defensive);
+
+            expect(activeGameWithAttack.currentAttack.attackerPosture).to.equal(AttackPosture.Offensive);
+            expect(activeGameWithAttack.currentAttack.defenderPosture).to.equal(AttackPosture.Defensive);
+            expect(saveStub.calledTwice).to.equal(true);
         });
     });
 });

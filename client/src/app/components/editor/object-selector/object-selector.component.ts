@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, ElementRef, ViewChild, afterEveryRender, computed, inject, output } from '@angular/core';
-import { CursorFollowingTooltipController } from '@app/components/common/tooltip/cursor-following-tooltip.controller';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, ViewChild, afterEveryRender, computed, inject, output } from '@angular/core';
 import { CELL_TYPE_PATHS, ITEM_TYPE_PATHS } from '@app/constants/backgrounds-mapping';
 import { SANCTUARY_PREVIEW_TILE_POSITIONS, SELECTED_OBJECT_PREVIEW_CLASS, SanctuaryPreviewTilePosition } from '@app/constants/object-selector';
+import { CursorFollowingTooltipController } from '@app/utils/cursor-following-tooltip.controller';
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
@@ -42,6 +42,11 @@ export class EditorItemSelectorObjectComponent {
         afterEveryRender({
             read: () => this.tooltipController.syncTooltipPosition(this.hoveredObject !== null),
         });
+    }
+
+    @HostListener('window:blur')
+    protected handleWindowBlur(): void {
+        this.hideTooltip();
     }
 
     protected selectObject(type: ItemType): void {

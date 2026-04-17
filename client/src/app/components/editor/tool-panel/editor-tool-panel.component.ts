@@ -3,7 +3,8 @@ import { EditorItemSelectorComponent } from '@app/components/editor/item-selecto
 import { ToolOption } from '@app/constants/grid-editor';
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
-import { ErrorCode, getErrorMessage } from '@app/utils/error-codes';
+import { getErrorMessage } from '@app/utils/error-codes';
+import { ErrorCode } from '@common/error-codes';
 import { CellType } from '@common/board';
 import { GameType } from '@common/game';
 import { ItemType } from '@common/items';
@@ -22,6 +23,7 @@ export class EditorToolPanelComponent {
     protected readonly gameEditFormService = inject(GameEditFormService);
 
     readonly toolDescriptions = input.required<Readonly<Record<ToolOption, string>>>();
+    readonly toolIcons = input.required<Readonly<Record<ToolOption, string>>>();
 
     readonly toolSelected = output<ToolOption>();
     readonly materialSelected = output<CellType>();
@@ -59,6 +61,6 @@ export class EditorToolPanelComponent {
     });
 
     protected toolButtonClass(tool: ToolOption): string {
-        return this.boardEditorService.activeTool === tool ? 'btn flex-1 btn-blue' : 'btn flex-1';
+        return this.boardEditorService.activeTool === tool ? 'btn btn-blue' : 'btn';
     }
 }

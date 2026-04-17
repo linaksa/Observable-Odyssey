@@ -1,3 +1,14 @@
+/**
+ * Testing strategy — DoorService
+ *
+ * Approach:
+ * - Exercise toggleDoor() with controlled active-game snapshots and adjacency stubs.
+ * - Assert both board-cell transitions and player action consumption after successful toggles.
+ *
+ * Edge cases covered:
+ * - Occupied target door tiles (player or flag) reject toggling.
+ * - Non-adjacent targets, zero-action players, and non-door terrain reject toggling.
+ */
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { DoorService } from '@app/services/gameplay/door-service';
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
@@ -5,6 +16,7 @@ import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { GameType, Visibility } from '@common/game';
 import { IItem, ItemType } from '@common/items';
 import { expect } from 'chai';
@@ -37,6 +49,56 @@ describe('DoorService', () => {
 
     afterEach(() => {
         sinon.restore();
+    });
+
+    it('should throw when active game is not found — Edge case', async () => {
+        activeGameService.getActiveGameById.resolves(null);
+
+        try {
+            await doorService.toggleDoor('Alice', 'missing-game', { x: 1, y: 1 });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.ActiveGameNotFound]);
+        }
+    });
+
+    it('should throw when player is not found in active game — Edge case', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await doorService.toggleDoor('Bob', activeGame._id, { x: 1, y: 1 });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.PlayerNotFound]);
+        }
+    });
+
+    it("should throw when it's not the player's turn — Edge case", async () => {
+        const activeGame = createActiveGame();
+        activeGame.players.push(createCharacter('Bob', 2, 1));
+        activeGame.turnOrder = ['Alice', 'Bob'];
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await doorService.toggleDoor('Bob', activeGame._id, { x: 1, y: 1 });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.NotYourTurn]);
+        }
+    });
+
+    it('should throw when turn is still in preparation — Edge case', async () => {
+        const activeGame = createActiveGame();
+        activeGame.turnIsInPreparation = true;
+        activeGameService.getActiveGameById.resolves(activeGame);
+
+        try {
+            await doorService.toggleDoor('Alice', activeGame._id, { x: 1, y: 1 });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.TurnNotStarted]);
+        }
     });
 
     it('should toggle a closed door to open and consume one action', async () => {
@@ -133,6 +195,19 @@ describe('DoorService', () => {
             throw new Error('Should have thrown');
         } catch (error) {
             expect((error as Error).message).to.contain("n'est pas une porte");
+        }
+    });
+
+    it('should reject out-of-bounds door targets — Edge case', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        positionValidatorService.isAdjacent.returns(true);
+
+        try {
+            await doorService.toggleDoor('Alice', activeGame._id, { x: 99, y: 99 });
+            throw new Error('Should have thrown');
+        } catch (error) {
+            expect((error as { errorCodes: ErrorCode[] }).errorCodes).to.deep.equal([ErrorCode.InvalidDoorTarget]);
         }
     });
 });

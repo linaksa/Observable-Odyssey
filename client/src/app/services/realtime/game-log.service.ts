@@ -3,7 +3,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IGameLogPayload } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 
 @Injectable({
     providedIn: 'root',

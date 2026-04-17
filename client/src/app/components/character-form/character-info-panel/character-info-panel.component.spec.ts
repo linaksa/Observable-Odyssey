@@ -2,19 +2,19 @@
  * Testing strategy — Character Info Panel Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Treat this suite as a composition smoke test for the info-panel container.
+ * - Replace nested widgets (name input, attributes grid, descriptions) with standalone mocks.
+ * - Validate TestBed override/import wiring for the panel's child structure.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Confirms the component instantiates when all child dependencies are mocked.
+ * - Protects against metadata regressions in overridden standalone imports.
+ * - Verifies no runtime template errors occur with minimal input setup.
  */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
-import { CharacterInfoPanelComponent } from './character-info-panel.component';
+import { CharacterInfoPanelComponent } from '@app/components/character-form/character-info-panel/character-info-panel.component';
 
 @Component({
     selector: 'app-player-name-input',

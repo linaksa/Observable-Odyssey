@@ -181,14 +181,8 @@
             </section>
         } @else {
             <section class="w-full max-w-120 overflow-hidden rounded-2xl border-[2.5px] border-[#4a7fd4] bg-[#1a3260] shadow-2xl">
-                <header class="flex items-center justify-between gap-3 border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
+                <header class="border-b-2 border-[#4a7fd4] bg-[#162b55] px-4 py-3">
                     <span class="text-[9px] font-bold uppercase tracking-widest text-[#a8c8ff]">⚔ Combat en cours</span>
-                    <div class="flex items-center gap-2 rounded-lg border-[1.5px] border-[#4a7fd4] bg-[#0d1f42] px-3 py-1.5">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span class="min-w-6 text-center font-bold tracking-wide text-[#e8f0ff] text-base">
-                            {{ combatTimeLeftDisplaySeconds() }}s
-                        </span>
-                    </div>
                 </header>
 
                 <div class="flex flex-col gap-3 p-5 text-center">
@@ -199,13 +193,6 @@
                     </p>
 
                     <p class="text-sm text-[#c8dcff]">Le combat est en cours. Les détails complets sont réservés aux deux combattants.</p>
-                </div>
-
-                <div class="h-[3px] bg-[#0d1f42]">
-                    <div
-                        class="h-full bg-linear-to-r from-[#4a7fd4] to-[#e8a832] transition-[width] duration-1000 ease-linear"
-                        [style.width.%]="combatTimerPercent"
-                    ></div>
                 </div>
             </section>
         }

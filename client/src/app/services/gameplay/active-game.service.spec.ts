@@ -1,25 +1,25 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines -- This spec covers creation, messaging, combat, and lifecycle flows in one suite. */
 /**
- * Testing strategy — Active Game Service
+ * Testing strategy — ActiveGameService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Instantiate the service with mocked socket/router/game dependencies and drive state through public methods.
+ * - Assert gameplay signals, emitted socket payloads, and active-game data transformations across lifecycle flows.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Reconnect and refresh paths preserve newer local chat data while resyncing active-game state.
+ * - Missing active game or unauthorized debug toggles are ignored without corrupting client state.
  */
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { GAME_CANCELED_DEFAULT_TOAST } from '@app/constants/game-cancellation';
 import { GameService } from '@app/services/admin/game.service';
+import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { ToastService } from '@app/services/ui/toast.service';
 import { IActiveGame } from '@common/active-game';
-import { CombatOutcome } from '@common/attack-result';
+import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -30,9 +30,9 @@ import { IMessage } from '@common/message';
 import { Namespaces } from '@common/namespaces';
 import { PlayerMovedResult } from '@common/player-moved-result';
 import { SocketEvent } from '@common/socket-events';
+import { IFlagActionData, ISanctuaryInteractedResult } from '@common/socket-payloads';
 import { of, Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ActiveGameService } from './active-game.service';
 
 const MOVE_TOTAL_COLUMNS = 3;
 const FAR_POSITION_INDEX = 3;
@@ -282,7 +282,20 @@ describe('ActiveGameService', () => {
         expect(service.activeGame.isFinished).toBeTrue();
         expect(service.activeGame.winner).toBe('Alice');
 
-        getEventStream<{ winner: string }>(SocketEvent.GameCanceled).next({ winner: '' });
+        getEventStream(SocketEvent.GameCanceled).next({ reason: 'insufficient-active-players' });
+        expect(service.activeGame.isFinished).toBeTrue();
+        expect(service.activeGame.winner).toBeNull();
+        expect(service.gameHasEnded()).toBeTrue();
+        expect(service.gameCanceledReason()).toBe('insufficient-active-players');
+        expect(localPlayerServiceSpy.clear).not.toHaveBeenCalled();
+        expect(routerSpy.navigate).not.toHaveBeenCalledWith(['/home']);
+    });
+
+    it('should redirect instantly on waiting-room cancellation', () => {
+        service.activeGame.turnOrder = [];
+
+        getEventStream(SocketEvent.GameCanceled).next({ reason: 'organizer-left-waiting-room' });
+
         expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
         expect(toastServiceSpy.show).toHaveBeenCalledWith("L'organiseur a annulé la partie.");
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
@@ -701,7 +714,7 @@ describe('ActiveGameService', () => {
     function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
         const turnOrder = players.map((player) => player.name);
         const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
-        const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
+        const selectedPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
 
         const game: IGame = {
             gameTitle: 'Arena',
@@ -723,7 +736,7 @@ describe('ActiveGameService', () => {
             _id: id,
             game,
             players,
-            currentPlayerIndex,
+            currentPlayerIndex: selectedPlayerIndex,
             turnOrder,
             isFinished: false,
             winner: null,
@@ -779,3 +792,499 @@ describe('ActiveGameService', () => {
         return { unsubscribe: jasmine.createSpy('unsubscribe') };
     }
 });
+/* Merged from active-game.service.extra.spec.ts */
+
+(() => {
+    const BOARD_SIZE = 3;
+    const UNMATCHED_COORDINATE = 9;
+
+    describe('ActiveGameService (extra)', () => {
+        let service: ActiveGameService;
+        let socketServiceSpy: jasmine.SpyObj<SocketService>;
+        let localPlayerServiceSpy: jasmine.SpyObj<LocalPlayerService>;
+        let toastServiceSpy: jasmine.SpyObj<ToastService>;
+        let routerSpy: jasmine.SpyObj<Router>;
+        let gameServiceSpy: jasmine.SpyObj<GameService>;
+
+        const eventStreams = new Map<string, Subject<unknown>>();
+
+        const getEventStream = <T>(event: string): Subject<T> => {
+            if (!eventStreams.has(event)) {
+                eventStreams.set(event, new Subject<unknown>());
+            }
+
+            return eventStreams.get(event) as Subject<T>;
+        };
+
+        const emitEvent = <T>(event: string, payload: T): void => {
+            getEventStream<T>(event).next(payload);
+        };
+
+        beforeEach(() => {
+            socketServiceSpy = jasmine.createSpyObj<SocketService>('SocketService', ['connect', 'on', 'emit']);
+            localPlayerServiceSpy = jasmine.createSpyObj<LocalPlayerService>('LocalPlayerService', ['getLocalPlayer', 'clear']);
+            toastServiceSpy = jasmine.createSpyObj<ToastService>('ToastService', ['show']);
+            routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate']);
+            routerSpy.navigate.and.resolveTo(true);
+            gameServiceSpy = jasmine.createSpyObj<GameService>('GameService', ['getActiveGameById']);
+
+            eventStreams.clear();
+            socketServiceSpy.on.and.callFake(<T>(_namespace: string, event: string) => getEventStream<T>(event).asObservable());
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+            gameServiceSpy.getActiveGameById.and.returnValue(of(createActiveGame([createCharacter('Alice')])));
+
+            TestBed.configureTestingModule({
+                providers: [
+                    ActiveGameService,
+                    { provide: SocketService, useValue: socketServiceSpy },
+                    { provide: LocalPlayerService, useValue: localPlayerServiceSpy },
+                    { provide: ToastService, useValue: toastServiceSpy },
+                    { provide: Router, useValue: routerSpy },
+                    { provide: GameService, useValue: gameServiceSpy },
+                ],
+            });
+
+            service = TestBed.inject(ActiveGameService);
+            service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+            socketServiceSpy.emit.calls.reset();
+        });
+
+        it('resets transient ui state and preserves the newest chat history', () => {
+            // Nominal case: transient gameplay flags reset while keeping most recent chat state.
+            service.pendingFlagRequest.set({
+                data: {
+                    gameId: service.activeGame._id,
+                    currentPlayerName: 'Alice',
+                    currentPlayerActionsLeft: 0,
+                    targetPlayerName: 'Bob',
+                },
+                acceptEvent: SocketEvent.TakeFlag,
+                question: 'Question',
+                canRespond: true,
+            });
+            service.combatOutcome.set({
+                updatedActiveGame: service.activeGame,
+                winner: 'Alice',
+                losers: ['Bob'],
+                cancelled: false,
+            });
+            service.sanctuaryOutcome.set({
+                playerId: 'Alice',
+                position: { x: 1, y: 1 },
+                itemType: ItemType.LifeSanctuary,
+                choice: SanctuaryChoice.Standard,
+                succeeded: true,
+                actionsLeft: 0,
+                currentHealth: 9,
+                attackPoints: 4,
+                defensePoints: 4,
+                sanctuaryActive: false,
+                sanctuaryInactiveTurnsRemaining: 2,
+            });
+            service.roundOutcome.set(createRoundOutcome(service.activeGame));
+            service.actionMode.set(true);
+            service.gameHasEnded.set(true);
+            service.gameCanceledReason.set('insufficient-active-players');
+
+            const newestMessage = createMessage('Alice', 'Message recent');
+            service.activeGame.messages = [createMessage('Alice', 'old-1'), createMessage('Bob', 'old-2')];
+            service.setChatMessages([createMessage('Alice', 'older')]);
+            expect(service.chatMessages()).toEqual(service.activeGame.messages);
+
+            service.appendChatMessage(newestMessage);
+            expect(service.chatMessages().at(-1)).toEqual(newestMessage);
+            expect(service.activeGame.messages.at(-1)).toEqual(newestMessage);
+
+            service.resetTransientUiState();
+            expect(service.pendingFlagRequest()).toBeNull();
+            expect(service.combatOutcome()).toBeNull();
+            expect(service.sanctuaryOutcome()).toBeNull();
+            expect(service.roundOutcome()).toBeNull();
+            expect(service.actionMode()).toBeFalse();
+            expect(service.gameHasEnded()).toBeFalse();
+            expect(service.gameCanceledReason()).toBeNull();
+        });
+
+        it('accepts incoming chat list when it is newer than local state', () => {
+            // Nominal case: newer incoming chat history replaces local snapshot.
+            const incoming = [createMessage('Alice', 'm1'), createMessage('Bob', 'm2')];
+            service.setChatMessages(incoming);
+
+            expect(service.chatMessages()).toEqual(incoming);
+            expect(service.activeGame.messages).toEqual(incoming);
+        });
+
+        it('updates chat signal when active game is unavailable', () => {
+            // Edge case: without active game, chat signal still mirrors incoming messages.
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+            const incoming = [createMessage('Alice', 'offline')];
+
+            service.setChatMessages(incoming);
+
+            expect(service.chatMessages()).toEqual(incoming);
+        });
+
+        it('falls back to empty chat list when incoming game snapshot has no messages field', () => {
+            // Edge case: undefined message list must normalize to an empty array.
+            const incoming = {
+                ...createActiveGame([createCharacter('Alice')], 'Alice'),
+                _id: 'new-room-id',
+                messages: undefined,
+            } as unknown as IActiveGame;
+
+            (service as unknown as { updateActiveGame: (game: IActiveGame) => void }).updateActiveGame(incoming);
+
+            expect(service.chatMessages()).toEqual([]);
+            expect(service.activeGame._id).toBe('new-room-id');
+        });
+
+        it('returns players by board position and resolves spawn owner names with guard paths', () => {
+            // Nominal case: occupied position returns non-abandoned players and spawn owners resolve by coordinates.
+            const alice = createCharacter('Alice', 1, 1);
+            const bob = createCharacter('Bob', 1, 1);
+            bob.hasAbandoned = true;
+            service.activeGame = createActiveGame([alice, bob], 'Alice');
+
+            expect(service.getPlayersAtPosition(1, 1).map((player) => player.name)).toEqual(['Alice']);
+            expect(service.getPlayersAtPosition(UNMATCHED_COORDINATE, UNMATCHED_COORDINATE)).toEqual([]);
+
+            expect(service.getSpawnPointOwnerName(null)).toBeNull();
+            expect(service.getSpawnPointOwnerName(createItem(ItemType.Flag, 1, 1))).toBeNull();
+
+            expect(service.getSpawnPointOwnerName(createItem(ItemType.StartingPosition, 1, 1))).toBe('Alice');
+            expect(service.getSpawnPointOwnerName(createItem(ItemType.StartingPosition, 0, 0))).toBeNull();
+
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+            expect(service.getSpawnPointOwnerName(createItem(ItemType.StartingPosition, 1, 1))).toBeNull();
+            expect(service.getPlayersAtPosition(1, 1)).toEqual([]);
+        });
+
+        it('guards socket wrapper actions when no active game is available', () => {
+            // Edge case: wrappers must not emit when active game context is missing.
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+            service.kickPlayer('Bob');
+            service.leaveWaitingRoom('Bob');
+            service.abandonGame('Alice');
+            service.toggleDoor(1, 1);
+            service.interactSanctuary(1, 1, SanctuaryChoice.Standard);
+
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+        });
+
+        it('does not rejoin room on reconnect when no active game is loaded', () => {
+            // Edge case: reconnect event should not attempt room join without active game.
+            Object.assign(service as unknown as Record<string, unknown>, { activeGame: undefined });
+
+            emitEvent<void>('connect', undefined);
+
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+        });
+
+        it('handles pending flag request expiry and give-flag acceptance/rejection guards', () => {
+            // Nominal case: give-flag prompt expires correctly and valid response emits transfer event.
+            service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+
+            const data: IFlagActionData = {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            };
+
+            service.handleFlagActionRequest(data, SocketEvent.GiveFlag);
+            expect(service.hasPendingFlagActionRequest()).toBeTrue();
+
+            service.closeFlagActionRequestIfExpired('Alice');
+            expect(service.hasPendingFlagActionRequest()).toBeTrue();
+
+            service.closeFlagActionRequestIfExpired('Bob');
+            expect(service.hasPendingFlagActionRequest()).toBeFalse();
+
+            service.pendingFlagRequest.set({ data, acceptEvent: SocketEvent.GiveFlag, question: 'Question', canRespond: false });
+            service.respondToFlagActionRequest(true);
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+
+            service.pendingFlagRequest.set({ data, acceptEvent: SocketEvent.GiveFlag, question: 'Question', canRespond: true });
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
+            service.respondToFlagActionRequest(false);
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+            expect(service.pendingFlagRequest()).toBeNull();
+
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Bob'));
+            service.handleFlagActionRequest(data, SocketEvent.GiveFlag);
+            service.respondToFlagActionRequest(true);
+
+            expect(service.activeGame.hasFlagId).toBe('Bob');
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.FlagGiven, {
+                gameId: data.gameId,
+                newFlagCarrierName: 'Bob',
+            });
+        });
+
+        it('ignores flag action requests when local player is absent or unrelated', () => {
+            // Edge case: no local player must short-circuit flag request creation.
+            const data: IFlagActionData = {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            };
+
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
+            service.handleFlagActionRequest(data, SocketEvent.TakeFlag);
+            expect(service.pendingFlagRequest()).toBeNull();
+
+            // Edge case: unrelated local player should not receive a pending request.
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Carol'));
+            service.handleFlagActionRequest(data, SocketEvent.TakeFlag);
+            expect(service.pendingFlagRequest()).toBeNull();
+        });
+
+        it('bridges socket events to sanctuary/round outcomes and flag request handlers', () => {
+            // Nominal case: mapped socket events propagate to service-managed gameplay signals.
+            service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+            service.activeGame.game.board.items = [createItem(ItemType.LifeSanctuary, 1, 1)];
+
+            const sanctuaryResult: ISanctuaryInteractedResult = {
+                playerId: 'Alice',
+                position: { x: 1, y: 1 },
+                itemType: ItemType.LifeSanctuary,
+                choice: SanctuaryChoice.Double,
+                succeeded: true,
+                actionsLeft: 0,
+                currentHealth: 8,
+                attackPoints: 4,
+                defensePoints: 4,
+                sanctuaryActive: false,
+                sanctuaryInactiveTurnsRemaining: 2,
+                fightSanctuaryUsed: false,
+                fightSanctuaryTurnsRemaining: 0,
+                fightSanctuaryBonus: 0,
+            };
+
+            emitEvent(SocketEvent.SanctuaryInteracted, sanctuaryResult);
+            expect(service.sanctuaryOutcome()).toEqual(sanctuaryResult);
+
+            const roundOutcome = createRoundOutcome(service.activeGame);
+            emitEvent(SocketEvent.CombatTurnApplied, roundOutcome);
+            expect(service.roundOutcome()).toEqual(roundOutcome);
+
+            const flagActionData: IFlagActionData = {
+                gameId: service.activeGame._id,
+                currentPlayerName: 'Alice',
+                currentPlayerActionsLeft: 0,
+                targetPlayerName: 'Bob',
+            };
+            emitEvent(SocketEvent.TakeFlag, flagActionData);
+            expect(service.pendingFlagRequest()).not.toBeNull();
+
+            emitEvent(SocketEvent.FlagTransferRejected, {
+                gameId: service.activeGame._id,
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+            });
+            expect(service.pendingFlagRequest()).toBeNull();
+            expect(toastServiceSpy.show).toHaveBeenCalledWith('Le transfert du drapeau a été refusé.');
+
+            // Edge case: turn lifecycle updates expire stale pending flag prompts.
+            service.pendingFlagRequest.set({ data: flagActionData, acceptEvent: SocketEvent.TakeFlag, question: 'Q', canRespond: true });
+            emitEvent(SocketEvent.TurnPreparing, { player: 'Bob' });
+            expect(service.pendingFlagRequest()).toBeNull();
+        });
+
+        it('chooses attack mode only when no posture is already locked for the current signal name', () => {
+            // Nominal case: emit posture only when neither attacker nor defender posture is already chosen.
+            const signalName = (service.currentPlayer as unknown as { name: string }).name;
+            service.activeGame = createActiveGame([createCharacter('Alice'), createCharacter('Bob')], 'Alice');
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(createCharacter('Alice'));
+
+            service.activeGame.currentAttack = {
+                attacker: signalName,
+                defender: 'Bob',
+                turnCount: 1,
+                suspendedTurnTimer: 0,
+                attackerPosture: AttackPosture.Offensive,
+                defenderPosture: null,
+            };
+            service.chooseAttackMode(AttackPosture.Defensive);
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+
+            service.activeGame.currentAttack = {
+                attacker: 'Alice',
+                defender: signalName,
+                turnCount: 1,
+                suspendedTurnTimer: 0,
+                attackerPosture: null,
+                defenderPosture: AttackPosture.Defensive,
+            };
+            service.chooseAttackMode(AttackPosture.Offensive);
+            expect(socketServiceSpy.emit).not.toHaveBeenCalled();
+
+            service.activeGame.currentAttack = {
+                attacker: 'Alice',
+                defender: 'Bob',
+                turnCount: 1,
+                suspendedTurnTimer: 0,
+                attackerPosture: null,
+                defenderPosture: null,
+            };
+            service.chooseAttackMode(AttackPosture.Offensive);
+
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.ChooseAttackPosture, {
+                gameId: service.activeGame._id,
+                playerName: 'Alice',
+                posture: AttackPosture.Offensive,
+            });
+        });
+
+        it('handles started-game cancellation without explicit reason by setting null cancellation reason', () => {
+            // Edge case: started game cancellation sets end state without clearing local player.
+            service.activeGame.turnOrder = ['Alice', 'Bob'];
+
+            emitEvent(SocketEvent.GameCanceled, {});
+
+            expect(service.activeGame.isFinished).toBeTrue();
+            expect(service.activeGame.winner).toBeNull();
+            expect(service.gameCanceledReason()).toBeNull();
+            expect(service.gameHasEnded()).toBeTrue();
+            expect(localPlayerServiceSpy.clear).not.toHaveBeenCalled();
+        });
+
+        it('handles waiting-room cancellation fallback toast in service-level listener wiring', () => {
+            // Edge case: pre-start cancellation clears local state and displays fallback toast.
+            service.activeGame.turnOrder = [];
+
+            emitEvent(SocketEvent.GameCanceled, {});
+
+            expect(localPlayerServiceSpy.clear).toHaveBeenCalled();
+            expect(toastServiceSpy.show).toHaveBeenCalledWith(GAME_CANCELED_DEFAULT_TOAST);
+            expect(routerSpy.navigate).toHaveBeenCalledWith(['/home']);
+        });
+
+        it('emits attack posture with empty player name when local player is unavailable', () => {
+            // Edge case: missing local player still emits posture with empty playerName payload.
+            service.activeGame.currentAttack = null;
+            localPlayerServiceSpy.getLocalPlayer.and.returnValue(undefined);
+
+            service.chooseAttackMode(AttackPosture.Offensive);
+
+            expect(socketServiceSpy.emit).toHaveBeenCalledWith(Namespaces.Game, SocketEvent.ChooseAttackPosture, {
+                gameId: service.activeGame._id,
+                playerName: '',
+                posture: AttackPosture.Offensive,
+            });
+        });
+    });
+
+    function createActiveGame(players: ICharacter[], currentPlayerName?: string, id = 'active-game-1'): IActiveGame {
+        const turnOrder = players.map((player) => player.name);
+        const selectedPlayerName = currentPlayerName ?? turnOrder[0] ?? '';
+        const currentPlayerIndex = Math.max(turnOrder.indexOf(selectedPlayerName), 0);
+
+        const game: IGame = {
+            gameTitle: 'Arena',
+            description: '',
+            gameMode: GameType.Classic,
+            dateCreated: new Date('2026-01-01T00:00:00.000Z'),
+            lastModifiedDate: new Date('2026-01-01T00:00:00.000Z'),
+            visibility: Visibility.Hidden,
+            board: {
+                cells: Array.from({ length: BOARD_SIZE }, () => Array.from({ length: BOARD_SIZE }, () => CellType.Empty)),
+                items: [],
+            },
+        };
+
+        return {
+            _id: id,
+            game,
+            players,
+            currentPlayerIndex,
+            turnOrder,
+            isFinished: false,
+            winner: null,
+            messages: [],
+            isDebugMode: false,
+            organizerName: 'Organizer',
+            maxPlayerCount: MAX_PLAYER_COUNT,
+            turnIsInPreparation: false,
+            hasFlagId: '',
+            turnStartTimeStamp: 0,
+            currentAttack: null,
+        };
+    }
+
+    function createCharacter(name: string, x = 0, y = 0, movementLeft = DEFAULT_MOVEMENT_LEFT): ICharacter {
+        return {
+            name,
+            avatar: Avatar.Avatar1,
+            initialHealth: 10,
+            currentHealth: 10,
+            attackBonusDiceType: DiceType.FourSided,
+            defenseBonusDiceType: DiceType.SixSided,
+            rapidityPoints: 4,
+            attackPoints: 4,
+            defensePoints: 4,
+            actionsLeft: 1,
+            movementLeft,
+            victories: 0,
+            hasAbandoned: false,
+            startingPosition: { x, y },
+            currentPosition: { x, y },
+            nCombats: 0,
+            nVictories: 0,
+            nDefeats: 0,
+            totalDamageDealt: 0,
+            totalDamageReceived: 0,
+            visitedCells: [],
+        };
+    }
+
+    function createItem(itemType: ItemType, x: number, y: number): IItem {
+        return {
+            itemType,
+            x,
+            y,
+            size: itemType === ItemType.Flag || itemType === ItemType.StartingPosition ? 1 : SANCTUARY_ITEM_SIZE,
+            active: true,
+            isCarried: false,
+        };
+    }
+
+    function createMessage(author: string, content: string): IMessage {
+        return {
+            author,
+            content,
+            postedAt: new Date('2026-01-01T00:00:00.000Z'),
+        };
+    }
+
+    function createRoundOutcome(updatedActiveGame: IActiveGame): CombatTurnOutcome {
+        return {
+            updatedActiveGame,
+            attackerStats: createEmptyStats(),
+            defenderStats: createEmptyStats(),
+            attackerDealtDamage: 1,
+            defenderDealtDamage: 0,
+            attackerReceivedDamage: 0,
+            defenderReceivedDamage: 1,
+        };
+    }
+
+    function createEmptyStats() {
+        return {
+            baseAttackPoints: 0,
+            baseDefensePoints: 0,
+            attackDiceBonus: 0,
+            defenseDiceBonus: 0,
+            postureAttackBonus: 0,
+            postureDefenseBonus: 0,
+            attackFightSanctuaryBonus: 0,
+            defenseFightSanctuaryBonus: 0,
+            attackIceMalus: 0,
+            defenseIceMalus: 0,
+            totalAttackPoints: 0,
+            totalDefensePoints: 0,
+        };
+    }
+})();

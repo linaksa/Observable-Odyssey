@@ -1,19 +1,17 @@
 /**
- * Testing strategy — Boardshared Service
+ * Testing strategy — BoardSharedService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Build board/item fixtures to exercise occupancy, adjacency, and lookup helpers directly.
+ * - Validate behavior for multi-cell sanctuaries, single-cell objects, and carried inventory items.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Carried items are excluded from tile occupancy checks.
+ * - Coordinate misses return null/false without throwing.
  */
 import { TestBed } from '@angular/core/testing';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
-import { BoardSharedService } from './board-shared.service';
+import { BoardSharedService } from '@app/services/shared/board-shared.service';
 
 const SANCTUARY_COLUMN = 3;
 const SANCTUARY_ROW = 5;
@@ -89,3 +87,30 @@ function createItem(itemType: ItemType, x: number, y: number): IItem {
         size: SMALL_ITEM_SIZE,
     };
 }
+/* Merged from board-shared.service.extra.spec.ts */
+
+(() => {
+    const ITEM_COLUMN = 2;
+    const ITEM_ROW = 4;
+
+    describe('BoardSharedService (extra)', () => {
+        let service: BoardSharedService;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({});
+            service = TestBed.inject(BoardSharedService);
+        });
+
+        it('returns false for carried items even when coordinates match', () => {
+            const carriedFlag: IItem = {
+                itemType: ItemType.Flag,
+                x: ITEM_COLUMN,
+                y: ITEM_ROW,
+                size: SMALL_ITEM_SIZE,
+                isCarried: true,
+            };
+
+            expect(service.cellBelongsToObject(carriedFlag, ITEM_ROW, ITEM_COLUMN)).toBeFalse();
+        });
+    });
+})();

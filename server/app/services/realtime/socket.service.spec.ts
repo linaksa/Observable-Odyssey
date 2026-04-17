@@ -1,22 +1,14 @@
 /**
  * Testing strategy — SocketService
  *
- * Approach: unit tests organized per method using nested describe blocks.
- * The service is instantiated directly (without DI container) and a mock HTTP server
- * is provided to initialize Socket.IO without opening a real network port.
- * Each beforeEach block resets state to ensure test independence.
+ * Approach:
+ * - Instantiate SocketService directly and validate each public method in isolated describe blocks.
+ * - Use a mock HTTP server reference to initialize Socket.IO without opening network ports.
  *
  * Edge cases covered:
- * - Double initialization: calling initialize() twice should throw an error
- *   to avoid silent server replacement in production.
- * - Use before initialization: calls to getServer(), createNamespace(), emit()
- *   before initialize() should all fail clearly with an explicit message.
- * - Nonexistent namespace: getNamespace() and emit() with an unknown name should
- *   throw an error describing the corrective action ("Call createNamespace() first").
- * - Existing namespace: createNamespace() called twice with the same name
- *   should return the existing instance instead of creating a new one.
- * - Proper close: after close(), all namespaces are removed and getServer() throws again.
- * - close without prior initialization: should not throw an exception.
+ * - Double initialization and pre-initialization usage produce explicit, actionable errors.
+ * - Unknown namespaces fail clearly while repeated createNamespace calls remain idempotent.
+ * - close() resets service state and remains safe when called before initialize().
  */
 import { expect } from 'chai';
 import { Server as HttpServer } from 'http';
@@ -41,8 +33,7 @@ describe('SocketService', () => {
             expect(() => service.getServer()).to.not.throw();
         });
 
-        // Edge case: calling initialize() a second time on an already initialized service.
-        // It should fail explicitly to avoid unexpected server replacement.
+        // Edge case: prevent accidental Socket.IO server replacement on re-initialize.
         it('should throw error if already initialized', () => {
             service.initialize(mockHttpServer);
             expect(() => service.initialize(mockHttpServer)).to.throw('Socket.IO server already initialized');
@@ -68,15 +59,13 @@ describe('SocketService', () => {
             expect(service.hasNamespace('test')).to.equal(true);
         });
 
-        // Edge case: attempt to create a namespace on a service that is not initialized.
-        // The error message should guide the developer toward the corrective action.
+        // Edge case: namespace creation before initialize should fail with guidance.
         it('should throw error if server not initialized', () => {
             const uninitializedService = new SocketService();
             expect(() => uninitializedService.createNamespace('test')).to.throw('Socket.IO server not initialized. Call initialize() first.');
         });
 
-        // Edge case: the requested namespace already exists — createNamespace() should return
-        // the existing instance instead of creating a new one (idempotence).
+        // Edge case: repeated namespace creation should remain idempotent.
         it('should return namespace if namespace already exists', () => {
             const namespace = service.createNamespace('test');
             expect(service.createNamespace('test')).to.equal(namespace);

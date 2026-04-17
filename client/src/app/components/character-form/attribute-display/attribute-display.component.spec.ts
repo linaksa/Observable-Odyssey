@@ -2,17 +2,17 @@
  * Testing strategy — Attribute Display Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Initialize the component with representative input values for label, number, and color class.
+ * - Verify rendered text reflects the provided attribute name/value pair.
+ * - Check host styling by asserting the dynamic Tailwind background class binding.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Ensures numeric values are rendered as text without custom formatting regressions.
+ * - Guards against dropped CSS binding by checking the exact configured class.
+ * - Confirms standalone creation with only direct @Input wiring.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AttributeDisplayComponent } from './attribute-display.component';
+import { AttributeDisplayComponent } from '@app/components/character-form/attribute-display/attribute-display.component';
 
 describe('AttributeDisplayComponent', () => {
     let component: AttributeDisplayComponent;

@@ -2,17 +2,17 @@
  * Testing strategy — Page Title Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Instantiate the standalone title component and drive it through the title input signal.
+ * - Validate the rendered heading text in the DOM after input updates.
+ * - Keep the suite lightweight as a presentation-component contract check.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Confirms component creation succeeds with only direct input configuration.
+ * - Ensures accented French title content is rendered correctly in the <h1>.
+ * - Protects against regressions where title input stops binding to the template.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PageTitleComponent } from './page-title.component';
+import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
 
 describe('PageTitleComponent', () => {
     let component: PageTitleComponent;

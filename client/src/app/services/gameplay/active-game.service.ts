@@ -1,5 +1,4 @@
-/* eslint-disable max-lines */
-// recheck this file after refactor to see if some functions can be moved to other services to take out some lines
+/* eslint-disable max-lines -- ActiveGameService still covers several gameplay flows and shared helpers in one file. */
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX, FLAG_TRANSFER_SELF_REJECTED_TOAST } from '@app/constants/gameplay';
@@ -20,6 +19,7 @@ import { SocketEvent } from '@common/socket-events';
 import {
     IActionData,
     IAttackPostureData,
+    type GameCanceledReason,
     IDebugTeleportData,
     IDebugToggleState,
     IDoorToggleData,
@@ -36,7 +36,7 @@ import { environment } from 'src/environments/environment';
 
 import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { IItem, ItemType } from '@common/items';
-import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
+import { registerActiveGameSocketListeners } from '@app/services/gameplay/active-game-socket-listeners';
 
 @Injectable({
     providedIn: 'root',
@@ -60,6 +60,7 @@ export class ActiveGameService implements OnDestroy {
     hasChangedLocation = signal(false);
     hasAbandoned = signal(false);
     gameHasEnded = signal(false);
+    gameCanceledReason = signal<GameCanceledReason | null>(null);
     actionMode = signal(false);
     pendingFlagRequest = signal<PendingFlagRequest | null>(null);
     combatOutcome = signal(null as CombatOutcome | null);
@@ -94,6 +95,7 @@ export class ActiveGameService implements OnDestroy {
                 hasChangedLocation: this.hasChangedLocation,
                 hasAbandoned: this.hasAbandoned,
                 gameHasEnded: this.gameHasEnded,
+                setGameCanceledReason: (reason: GameCanceledReason | null) => this.gameCanceledReason.set(reason),
                 handleFlagActionRequest: (data, acceptEvent) => this.handleFlagActionRequest(data, acceptEvent),
                 closeFlagActionRequestIfExpired: (currentTurnPlayerName) => this.closeFlagActionRequestIfExpired(currentTurnPlayerName),
                 hasPendingFlagActionRequest: () => this.hasPendingFlagActionRequest(),
@@ -109,6 +111,7 @@ export class ActiveGameService implements OnDestroy {
         this.roundOutcome.set(null);
         this.actionMode.set(false);
         this.gameHasEnded.set(false);
+        this.gameCanceledReason.set(null);
     }
 
     private toggle(signalRef: ToggleSignalRef): void {
@@ -173,6 +176,7 @@ export class ActiveGameService implements OnDestroy {
     setActiveGame(id: string): void {
         this.isLoading.set(true);
         this.gameHasEnded.set(false);
+        this.gameCanceledReason.set(null);
         this.setActiveGameSubscription?.unsubscribe();
 
         const subscription = this.gameService

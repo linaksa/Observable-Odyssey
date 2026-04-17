@@ -2,10 +2,10 @@ import { inMemoryDb } from '@app/database';
 import { IActiveGame } from '@common/active-game';
 import { MILLISECONDS_PER_SECOND } from '@common/constants';
 import { Schema } from 'mongoose';
-import { currentAttackSchema } from './attack';
-import { characterSchema } from './character';
-import { gameSchema } from './game';
-import { messageSchema } from './message';
+import { currentAttackSchema } from '@app/schemas/attack';
+import { characterSchema } from '@app/schemas/character';
+import { gameSchema } from '@app/schemas/game';
+import { messageSchema } from '@app/schemas/message';
 
 export const ACTIVE_GAME_TTL_SECONDS = Date.parse('1970-01-01T01:00:00.000Z') / MILLISECONDS_PER_SECOND;
 
