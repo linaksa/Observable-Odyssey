@@ -1,5 +1,10 @@
-import { DimensionSize } from '@app/components/admin/game-creation-dialog/game-creation-dialog.types';
 import { GridSize } from '@app/constants/grid-editor';
+
+export enum DimensionSize {
+    Small = 'small',
+    Medium = 'medium',
+    Large = 'large',
+}
 
 export interface DimensionConfig {
     label: string;

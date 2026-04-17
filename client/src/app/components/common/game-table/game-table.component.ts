@@ -8,8 +8,9 @@ import {
     TOOLTIP_HORIZONTAL_OFFSET_PX,
     TOOLTIP_VERTICAL_OFFSET_PX,
 } from '@app/constants/tooltip';
+import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
-import { computeTooltipPosition, TooltipPosition } from '@app/utils/tooltip-position.utils';
+import { computeTooltipPosition } from '@app/utils/tooltip-position.utils';
 import { IActiveGame } from '@common/active-game';
 import { IExistingGame, IGame } from '@common/game';
 import { IItem } from '@common/items';

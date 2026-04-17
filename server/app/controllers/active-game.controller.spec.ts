@@ -1,18 +1,18 @@
 /**
  * Testing strategy — ActiveGameController
  *
- * Approach: HTTP integration tests with supertest + Sinon stubs.
- * The controller is tested through the application's real Express HTTP interface,
- * allowing validation of the full chain (routing, middleware, error handling).
- * Dependencies (ActiveGameService, GameSocketsService, ActiveGameListSocketsService) are replaced by stubs
- * injected via the TypeDI container to isolate the controller.
+ * Approach:
+ * - Exercise `/api/activeGame` routes through the real Express app with supertest.
+ * - Stub ActiveGameService and socket broadcasters through TypeDI to isolate controller behavior.
+ * - Validate HTTP status mapping plus response payload shape for create, join, list, and fetch-by-id flows.
  *
  * Edge cases covered:
- * - Invalid POST/PATCH payloads (missing body fields): verifies 400 responses before service use.
- * - Missing referenced games/active games during create and join operations: verifies 404 responses.
- * - Unexpected service errors with/without message: verifies stable 500 responses.
- * - Join response assembly failures (joined player not found in updated game): verifies defensive 500 handling.
- * - Fetch route failures for joinable list and active-game-by-id endpoints: verifies error mapping.
+ * - Missing request payload fields on create/join return 400.
+ * - Missing game references and null service returns map to 404.
+ * - AppError failures map to their status codes for create/join/fetch routes.
+ * - Unexpected create/join/fetch failures map to 500 with `InternalServerError`.
+ * - Join succeeds only when the joined player can be recovered from returned players.
+ * - Virtual player joins emit the dedicated socket event.
  */
 import { Application } from '@app/app';
 import { AppError } from '@app/error-types/app-error';
@@ -21,7 +21,7 @@ import { ActiveGameService } from '@app/services/active-game/active-game.service
 import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
 import { IActiveGame } from '@common/active-game';
 import { IBoard } from '@common/board';
-import { CharacterFormData, ICharacter } from '@common/character';
+import { CharacterFormData, ICharacter, VirtualPlayerProfile } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
 import { GameType, IGame, Visibility } from '@common/game';
@@ -110,7 +110,6 @@ describe('ActiveGameController', () => {
         expressApp = app.app;
     });
 
-    // Edge case: POST /api/activeGame receives an empty payload and should fail with 400.
     it('post route should return BAD REQUEST if empty body', async () => {
         return supertest(expressApp)
             .post('/api/activeGame/')
@@ -121,7 +120,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: createActiveGame() reports GAME_NOT_FOUND, which should map to HTTP 404.
     it('post route should return 404 if game does not exists', async () => {
         activeGameService.createActiveGame.rejects(new AppError([ErrorCode.GameNotFound], StatusCodes.NOT_FOUND));
 
@@ -134,7 +132,18 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: an unexpected service error during POST should map to HTTP 500.
+    it('post route should return 404 if service returns no active game', async () => {
+        activeGameService.createActiveGame.resolves(null);
+
+        return supertest(expressApp)
+            .post('/api/activeGame/')
+            .send({ gameId: 'some-id', characterForm: {} as CharacterFormData })
+            .expect(StatusCodes.NOT_FOUND)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
+            });
+    });
+
     it('post route should return 500 if service throws unexpected error', async () => {
         activeGameService.createActiveGame.rejects(new Error('UNEXPECTED_ERROR'));
 
@@ -147,8 +156,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Nominal case
-    // Make sure that the controller returns the created active game and player with the correct status code
     it('post route should return 200 and return ', async () => {
         const createdActiveGame = { ...dummyActiveGame, players: [dummyPlayerCharacter] };
         activeGameService.createActiveGame.resolves(createdActiveGame);
@@ -165,7 +172,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: PATCH /join receives an empty body and should return 400.
     it('join route should return BAD REQUEST if empty body', async () => {
         return supertest(expressApp)
             .patch('/api/activeGame/join')
@@ -176,7 +182,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: addPlayerToActiveGame() reports ACTIVE_GAME_NOT_FOUND, so route returns 404.
     it('join route should return 404 if game does not exists', async () => {
         activeGameService.addPlayerToActiveGame.rejects(new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND));
 
@@ -189,7 +194,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: service returns null for join, meaning the target active game no longer exists.
     it('join route should return 404 if activeGameId reference an unexisting game', async () => {
         activeGameService.addPlayerToActiveGame.resolves(null);
 
@@ -202,7 +206,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: unexpected join error should propagate as HTTP 500.
     it('join route should return 500 if service throws unexpected error', async () => {
         activeGameService.addPlayerToActiveGame.rejects(new Error('UNEXPECTED_ERROR'));
 
@@ -215,21 +218,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: unexpected join error without message should still return a stable 500 response.
-    it('join route should return 500 if service throws unexpected error', async () => {
-        activeGameService.addPlayerToActiveGame.rejects(new Error());
-
-        return supertest(expressApp)
-            .patch('/api/activeGame/join')
-            .send({ activeGameId: 'non-existent-id', characterForm: {} as CharacterFormData })
-            .expect(StatusCodes.INTERNAL_SERVER_ERROR)
-            .then((response) => {
-                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.InternalServerError] });
-            });
-    });
-
-    // Edge case: service returns an updated game but the joined player is missing from players[].
-    // The controller should fail safely with HTTP 500.
     it('join route should return 500 if player added cannot be found in the updated active game', async () => {
         const updatedActiveGame = { ...dummyActiveGame, players: [] as ICharacter[] };
         activeGameService.addPlayerToActiveGame.resolves(updatedActiveGame);
@@ -243,8 +231,36 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Nominal case for join route
-    // Make sure that the controller returns the updated active game and joined player with the correct status code
+    it('join route should emit the virtual player joined event when needed', async () => {
+        const selectedAvatar = Avatar.Avatar1;
+        const virtualPlayer = { ...dummyPlayerCharacter, avatar: selectedAvatar, virtualPlayerProfile: VirtualPlayerProfile.Agressive };
+        const updatedActiveGame = { ...dummyActiveGame, players: [virtualPlayer] };
+        activeGameService.addPlayerToActiveGame.resolves(updatedActiveGame);
+        activeGameListSocketsService.emitJoinableGamesUpdated.returnsThis();
+        gameSocketService.emitVirtualPlayerJoined.returnsThis();
+
+        const dummyCharacterForm: CharacterFormData = {
+            name: 'Bot 1',
+            avatar: selectedAvatar,
+            initialHealth: 100,
+            attackBonusDiceType: DiceType.SixSided,
+            defenseBonusDiceType: DiceType.SixSided,
+            rapidityPoints: 3,
+            attackPoints: 2,
+            defensePoints: 2,
+            virtualPlayerProfile: VirtualPlayerProfile.Agressive,
+        };
+
+        return supertest(expressApp)
+            .patch('/api/activeGame/join')
+            .send({ activeGameId: 'some-id', characterForm: dummyCharacterForm })
+            .expect(StatusCodes.OK)
+            .then((response) => {
+                expect(response.body.player).to.deep.equal(updatedActiveGame.players[0]);
+                expect(gameSocketService.emitVirtualPlayerJoined.calledWith(updatedActiveGame)).to.be.equal(true);
+            });
+    });
+
     it('join route should return 200 and return the updated active game and joined player', async () => {
         const selectedAvatar = Avatar.Avatar1;
         const dummyPlayer = { ...dummyPlayerCharacter, avatar: selectedAvatar };
@@ -274,7 +290,28 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: joinable list retrieval fails in the service and should map to HTTP 500.
+    it('get active game by id route should return 404 if service returns null', async () => {
+        activeGameService.getActiveGameById.resolves(null);
+
+        return supertest(expressApp)
+            .get('/api/activeGame/some-id')
+            .expect(StatusCodes.NOT_FOUND)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
+            });
+    });
+
+    it('get active game by id route should return service status for AppError', async () => {
+        activeGameService.getActiveGameById.rejects(new AppError([ErrorCode.ActiveGameNotFound], StatusCodes.NOT_FOUND));
+
+        return supertest(expressApp)
+            .get('/api/activeGame/some-id')
+            .expect(StatusCodes.NOT_FOUND)
+            .then((response) => {
+                expect(response.body).to.deep.equal({ errorCodes: [ErrorCode.ActiveGameNotFound] });
+            });
+    });
+
     it('get joinable route should return 500 if the db call fails', async () => {
         activeGameService.fetchJoinableActiveGames.rejects(new Error('DB_ERROR'));
 
@@ -286,7 +323,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Nominal case: joinable route returns the service list with HTTP 200.
     it('get joinable route should return 200 and the list of joinable active games', async () => {
         const activeGame1 = { ...dummyActiveGame, _id: 'activeGame1' };
         const activeGame2 = { ...dummyActiveGame, _id: 'activeGame2' };
@@ -302,7 +338,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: requested active game id is unknown and should return HTTP 404.
     it('get active game by id route should return 404 if active game does not exist', async () => {
         activeGameService.getActiveGameById.resolves(null);
 
@@ -314,7 +349,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Edge case: getActiveGameById throws and the controller should return HTTP 500.
     it('get active game by id route should return 500 if the db call fails', async () => {
         activeGameService.getActiveGameById.rejects(new Error('DB_ERROR'));
 
@@ -326,8 +360,6 @@ describe('ActiveGameController', () => {
             });
     });
 
-    // Nominal case for get active game by id route
-    // Make sure that the controller returns the active game with the correct status code
     it('get active game by id route should return 200 and the active game', async () => {
         const activeGame = { ...dummyActiveGame, _id: 'activeGame1' };
         activeGameService.getActiveGameById.resolves(activeGame);

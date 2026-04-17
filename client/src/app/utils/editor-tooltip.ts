@@ -1,11 +1,10 @@
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE, UNKNOWN_ITEM_INFO, UNKNOWN_TILE_INFO } from '@app/constants/tile-info';
 import { EditorTooltipContext, EditorTooltipData } from '@app/interfaces/editor-tooltip.interface';
 import { buildEditorValidationHighlightedTiles } from '@app/utils/editor-validation';
-import { ErrorCode, getErrorMessage } from '@app/utils/error-codes';
+import { getErrorMessage } from '@app/utils/error-codes';
+import { ErrorCode } from '@common/error-codes';
 import { CellType } from '@common/board';
 import { IItem } from '@common/items';
-
-export type { EditorTooltipContext, EditorTooltipData };
 
 export function buildEditorTooltipText(
     context: EditorTooltipContext,

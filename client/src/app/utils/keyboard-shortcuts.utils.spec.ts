@@ -2,16 +2,16 @@
  * Testing strategy — keyboard-shortcuts utils
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Build synthetic keyboard events with controlled targets to isolate the utility's DOM-target predicate.
+ * - Cover both matching and non-matching input targets without involving component integration.
+ * - Keep assertions centered on the boolean contract returned by `isTypingInChatMessageInput`.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Inputs marked with `data-chat-message-input` are recognized as chat typing context.
+ * - Standard HTMLElements without that marker return `false`.
+ * - Non-HTMLElement event targets are safely rejected.
  */
-import { isTypingInChatMessageInput } from './keyboard-shortcuts.utils';
+import { isTypingInChatMessageInput } from '@app/utils/keyboard-shortcuts.utils';
 
 describe('isTypingInChatMessageInput', () => {
     it('should return true when event target is the chat message input', () => {

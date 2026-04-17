@@ -2,14 +2,14 @@
  * Testing strategy — Character Form Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Stub child panels/selectors so tests focus on CharacterFormComponent orchestration.
+ * - Mock CharacterFormService signals, form controls, and computed combat stats.
+ * - Assert ngOnInit, validation gating, and emitted CharacterFormData mapping end-to-end.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Prevents emission when the underlying reactive form is invalid.
+ * - Verifies valid submissions combine form fields with service-provided points and dice.
+ * - Checks initialization calls initializeForm exactly through lifecycle startup.
  */
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
@@ -18,7 +18,7 @@ import { BonusType, DiceSelectionType } from '@app/constants/character-form';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { CharacterFormData } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
-import { CharacterFormComponent } from './character-form.component';
+import { CharacterFormComponent } from '@app/components/character-form/character-form/character-form.component';
 
 @Component({
     selector: 'app-avatar-selector',

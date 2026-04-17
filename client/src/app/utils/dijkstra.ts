@@ -1,8 +1,7 @@
 import { Position } from '@common/character';
 import { DijkstraResult } from '@app/interfaces/dijkstra-result.interface';
-import { MinimumHeap } from './min-heap';
+import { MinimumHeap } from '@app/utils/min-heap';
 
-export type { DijkstraResult };
 export enum Direction {
     Up,
     Down,

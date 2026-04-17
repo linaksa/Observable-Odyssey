@@ -2,21 +2,21 @@
  * Testing strategy — Character Attributes Grid Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Stub CharacterFormService with deterministic point values for all four attributes.
+ * - Swap the child attribute card with a mock component and inspect bound inputs.
+ * - Assert both the number of rendered cards and the label/value ordering.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Enforces exactly four cards so accidental omissions or duplicates are caught.
+ * - Verifies French labels and numeric values are mapped to the matching card index.
+ * - Confirms standalone component setup works with overridden imports.
  */
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
-import { CharacterAttributesGridComponent } from './character-attributes-grid.component';
+import { CharacterAttributesGridComponent } from '@app/components/character-form/character-attributes-grid/character-attributes-grid.component';
 
 const ATTRIBUTE_CARD_COUNT = 4;
 const LIFE_POINTS = 8;

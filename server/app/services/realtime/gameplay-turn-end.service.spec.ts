@@ -1,8 +1,14 @@
 /**
  * Testing strategy — GameplayTurnEndService
  *
- * - Verify finished-game emission path also triggers GC mark reevaluation.
- * - Verify non-ended games do not trigger reevaluation.
+ * Approach:
+ * - Validate emitGameEndedIfNeeded across winner and cancellation outcomes, including emitted logs/events.
+ * - Exercise checkEndTurnIfNoMovesLeft with movement/action availability combinations.
+ *
+ * Edge cases covered:
+ * - Non-ended games avoid GameEnded emission and GC reevaluation side effects.
+ * - Cancellation completions include remaining players in GameEnded payloads.
+ * - Any remaining movement/action opportunity keeps the turn active.
  */
 import { ActiveGameGarbageCollectorService } from '@app/services/active-game/active-game-garbage-collector.service';
 import { ActionService } from '@app/services/gameplay/action-service';
@@ -17,6 +23,16 @@ import { Namespace } from 'socket.io';
 
 describe('GameplayTurnEndService', () => {
     let service: GameplayTurnEndService;
+    let movementService: {
+        getReachablePositions: sinon.SinonStub;
+    };
+    let actionService: {
+        canUseActionAnyPlayer: sinon.SinonStub;
+        canUseAnySanctuary: sinon.SinonStub;
+    };
+    let turnService: {
+        endTurn: sinon.SinonStub;
+    };
     let endGameService: {
         checkEndGame: sinon.SinonStub;
         getEndGameLogMessage: sinon.SinonStub;
@@ -28,6 +44,16 @@ describe('GameplayTurnEndService', () => {
     let namespace: Namespace;
 
     beforeEach(() => {
+        movementService = {
+            getReachablePositions: sinon.stub().resolves([]),
+        };
+        actionService = {
+            canUseActionAnyPlayer: sinon.stub().resolves(false),
+            canUseAnySanctuary: sinon.stub().resolves(false),
+        };
+        turnService = {
+            endTurn: sinon.stub().resolves(),
+        };
         endGameService = {
             checkEndGame: sinon.stub(),
             getEndGameLogMessage: sinon.stub().returns('Fin de partie.'),
@@ -41,12 +67,9 @@ describe('GameplayTurnEndService', () => {
         } as unknown as Namespace;
 
         service = new GameplayTurnEndService(
-            { getReachablePositions: sinon.stub().resolves([]) } as unknown as MovementService,
-            {
-                canUseActionAnyPlayer: sinon.stub().resolves(false),
-                canUseAnySanctuary: sinon.stub().resolves(false),
-            } as unknown as ActionService,
-            { endTurn: sinon.stub().resolves() } as unknown as TurnService,
+            movementService as unknown as MovementService,
+            actionService as unknown as ActionService,
+            turnService as unknown as TurnService,
             endGameService as unknown as EndGameService,
             activeGameGarbageCollectorService as unknown as ActiveGameGarbageCollectorService,
         );
@@ -75,5 +98,35 @@ describe('GameplayTurnEndService', () => {
 
         expect(hasEnded).to.equal(false);
         expect(activeGameGarbageCollectorService.reevaluateFinishedGameMark.called).to.equal(false);
+    });
+
+    it('emits canceled payload when game completion type is canceled', async () => {
+        endGameService.checkEndGame.resolves({
+            hasEnded: true,
+            winner: null,
+            reason: 'abandon',
+            completionType: 'canceled',
+            remainingPlayers: ['Alice'],
+        });
+
+        const hasEnded = await service.emitGameEndedIfNeeded('active-game-1', namespace);
+
+        expect(hasEnded).to.equal(true);
+        expect(emitStub.calledWithMatch(SocketEvent.GameCanceled, sinon.match.object)).to.equal(true);
+        expect(emitStub.calledWithExactly(SocketEvent.GameEnded, sinon.match.any)).to.equal(false);
+    });
+
+    it('ends turn when there are no moves and no available actions', async () => {
+        await service.checkEndTurnIfNoMovesLeft('active-game-1', 'Alice');
+
+        expect(turnService.endTurn.calledOnceWithExactly('active-game-1')).to.equal(true);
+    });
+
+    it('keeps turn active when movement is still available', async () => {
+        movementService.getReachablePositions.resolves([{ x: 1, y: 1 }]);
+
+        await service.checkEndTurnIfNoMovesLeft('active-game-1', 'Alice');
+
+        expect(turnService.endTurn.called).to.equal(false);
     });
 });

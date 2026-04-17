@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { ErrorHandler, inject, Injectable } from '@angular/core';
-import { HttpClientPort } from '@app/http/http-client-port';
-import { HTTP_CLIENT } from '@app/http/http-interface';
+import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { ResponseType } from '@app/http/http-model';
+import { HttpClientPort } from '@app/interfaces/http-client-port.interface';
 import { IActiveGame } from '@common/active-game';
 import { IExistingGame, Visibility } from '@common/game';
 import { Observable, of } from 'rxjs';

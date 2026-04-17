@@ -2,18 +2,18 @@
  * Testing strategy — Player Name Input Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Bind the component to a real reactive FormGroup containing playerName.
+ * - Assert two-way interaction between DOM input value and form control updates.
+ * - Verify template constraints such as maxlength and initial value rendering.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Confirms initial form state ("Alice") appears in the input on first render.
+ * - Ensures input events propagate new values back into the form control.
+ * - Guards against accidental maxlength regressions on the name field.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
-import { PlayerNameInputComponent } from './player-name-input.component';
+import { PlayerNameInputComponent } from '@app/components/character-form/player-name-input/player-name-input.component';
 
 describe('PlayerNameInputComponent', () => {
     let component: PlayerNameInputComponent;

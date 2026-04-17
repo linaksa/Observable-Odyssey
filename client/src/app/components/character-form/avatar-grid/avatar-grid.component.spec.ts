@@ -2,19 +2,19 @@
  * Testing strategy — Avatar Grid Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Drive the component through its reactive form input to validate avatar selection behavior.
+ * - Test both acceptance and rejection paths in selectAvatar based on unavailable avatars.
+ * - Validate UI-related helpers by checking portrait path generation and thumbnail CSS class.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Keeps the previous selection unchanged when the clicked avatar is unavailable.
+ * - Ensures selectedAvatar getter mirrors the current form control state.
+ * - Confirms rendered avatars keep pixelated styling to preserve intended visual output.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Avatar } from '@common/constants';
-import { AvatarGridComponent } from './avatar-grid.component';
+import { AvatarGridComponent } from '@app/components/character-form/avatar-grid/avatar-grid.component';
 
 describe('AvatarGridComponent', () => {
     let component: AvatarGridComponent;

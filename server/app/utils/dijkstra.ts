@@ -1,5 +1,5 @@
 import { Position } from '@common/character';
-import { MinimumHeap } from './min-heap';
+import { MinimumHeap } from '@app/utils/min-heap';
 
 export interface DijkstraResult {
     distances: number[];

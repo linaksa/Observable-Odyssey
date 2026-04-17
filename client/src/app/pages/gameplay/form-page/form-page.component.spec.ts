@@ -2,32 +2,29 @@
  * Testing strategy — Form Page Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Simulate route-param changes to validate game-id initialization and update behavior.
+ * - Mock character-creation responses to verify submit success side effects on player state and navigation.
+ * - Exercise failure branches to assert toast usage and error-signal updates from mapped backend codes.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Submissions with missing `gameId` stop early and notify the user.
+ * - Known backend error codes map to localized form error messages.
+ * - Empty backend error payloads still produce a safe non-empty error state.
  */
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-
-import { FormPageComponent } from './form-page.component';
-
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';
+import { FormPageComponent } from '@app/pages/gameplay/form-page/form-page.component';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
 import { ToastService } from '@app/services/ui/toast.service';
-import { ErrorCode } from '@common/error-codes';
-
 import { IActiveGame } from '@common/active-game';
 import { CharacterFormData, ICharacter } from '@common/character';
+import { ErrorCode } from '@common/error-codes';
 import { IGame } from '@common/game';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 
 @Component({
     selector: 'app-character-form',

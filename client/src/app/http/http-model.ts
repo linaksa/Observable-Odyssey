@@ -7,7 +7,6 @@ export enum ResponseType {
     ArrayBuffer = 'arraybuffer',
 }
 
-export type { HttpError };
 export function isHttpError(error: unknown): error is HttpError {
     if (typeof error !== 'object' || error === null) {
         return false;

@@ -1,3 +1,15 @@
+/**
+ * Testing strategy — GameplayFlagDecisionService
+ *
+ * Approach:
+ * - Model pending give/take transfer requests and apply accept/reject payloads through service handlers.
+ * - Verify action-service updates, namespace emissions, and post-action end-game checks.
+ *
+ * Edge cases covered:
+ * - Invalid responders, missing games, and inconsistent payloads clear or ignore pending requests safely.
+ * - Rejection and requester-turn-ended paths keep transfer state consistent.
+ * - Give transfers skip duplicate carrier logs when ownership does not actually change.
+ */
 import { ActiveGameService } from '@app/services/active-game/active-game.service';
 import { ActionService } from '@app/services/gameplay/action-service';
 import { CtfFlagActionService } from '@app/services/realtime/ctf-flag-action.service';
@@ -157,6 +169,175 @@ describe('GameplayFlagDecisionService', () => {
             }),
         ).to.equal(true);
         expect(emitGameLog.calledOnce).to.equal(true);
+    });
+
+    it('clears pending requests explicitly', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, sinon.stub());
+        service.clearPendingRequest(activeGame._id);
+        await service.handleFlagTaken({ gameId: activeGame._id, newFlagCarrierName: 'Alice' }, namespace, sinon.stub());
+
+        expect(actionService.takeFlag.called).to.equal(false);
+    });
+
+    it('ignores a transfer decision when there is no pending request', async () => {
+        await service.handleFlagTaken({ gameId: 'missing', newFlagCarrierName: 'Alice' }, namespace, sinon.stub());
+
+        expect(actionService.takeFlag.called).to.equal(false);
+        expect(gameplayTurnEndService.emitGameEndedIfNeeded.called).to.equal(false);
+    });
+
+    it('clears pending transfer when active game no longer exists', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.onFirstCall().resolves(activeGame);
+        activeGameService.getActiveGameById.onSecondCall().resolves(null);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, sinon.stub());
+        await service.handleFlagTaken({ gameId: activeGame._id, newFlagCarrierName: 'Alice' }, namespace, sinon.stub());
+
+        await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, sinon.stub());
+        expect(namespaceEmitStub.called).to.equal(false);
+    });
+
+    it('does not apply transfer when decision payload is inconsistent', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, sinon.stub());
+        await service.handleFlagTaken({ gameId: activeGame._id, newFlagCarrierName: 'Bob' }, namespace, sinon.stub());
+
+        expect(actionService.takeFlag.called).to.equal(false);
+    });
+
+    it('completes a take transfer and emits update payload', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+        const emitGameLog = sinon.stub();
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, emitGameLog);
+        await service.handleFlagTaken({ gameId: activeGame._id, newFlagCarrierName: 'Alice' }, namespace, emitGameLog);
+
+        expect(actionService.takeFlag.calledOnceWithExactly(activeGame._id, 'Alice')).to.equal(true);
+        expect(
+            namespaceEmitStub.calledWithExactly(SocketEvent.FlagPickedUp, {
+                playerName: 'Alice',
+                requesterName: 'Alice',
+                requesterActionsLeft: activeGame.players[0].actionsLeft,
+            }),
+        ).to.equal(true);
+        expect(gameplayTurnEndService.emitGameEndedIfNeeded.calledOnceWithExactly(activeGame._id, namespace)).to.equal(true);
+    });
+
+    it('completes a give transfer without transfer log when carrier stays the same', async () => {
+        const activeGame = createActiveGame();
+        activeGame.hasFlagId = 'Bob';
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'give',
+            });
+            return true;
+        });
+        const emitGameLog = sinon.stub();
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, emitGameLog);
+        await service.handleFlagGiven({ gameId: activeGame._id, newFlagCarrierName: 'Bob' }, namespace, emitGameLog);
+
+        expect(actionService.giveFlag.calledOnceWithExactly(activeGame._id, 'Bob')).to.equal(true);
+        expect(emitGameLog.called).to.equal(false);
+    });
+
+    it('invokes turn-end evaluation callback after handled flag action updates state', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            await callbacks.onFlagUpdated?.(data.gameId);
+            return true;
+        });
+
+        const handled = await service.handleFlagAction(
+            { gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' },
+            namespace,
+            sinon.stub(),
+        );
+
+        expect(handled).to.equal(true);
+        expect(gameplayTurnEndService.emitGameEndedIfNeeded.calledOnceWithExactly(activeGame._id, namespace)).to.equal(true);
+    });
+
+    it('clears pending rejection request when game is missing', async () => {
+        const activeGame = createActiveGame();
+        activeGameService.getActiveGameById.onFirstCall().resolves(activeGame);
+        activeGameService.getActiveGameById.onSecondCall().resolves(null);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, sinon.stub());
+        await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, sinon.stub());
+
+        await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, sinon.stub());
+        expect(namespaceEmitStub.called).to.equal(false);
+    });
+
+    it('clears pending rejection request when requester turn already ended', async () => {
+        const activeGame = createActiveGame();
+        activeGame.currentPlayerIndex = 1;
+        activeGameService.getActiveGameById.resolves(activeGame);
+        ctfFlagActionService.handleFlagAction.callsFake(async (_activeGame, data, _namespace, callbacks) => {
+            callbacks.setPendingFlagRequest(data.gameId, {
+                requesterName: 'Alice',
+                targetPlayerName: 'Bob',
+                transferMode: 'take',
+            });
+            return true;
+        });
+
+        await service.handleFlagAction({ gameId: activeGame._id, currentPlayerName: 'Alice', targetName: 'Bob' }, namespace, sinon.stub());
+        await service.handleFlagTransferRejected({ gameId: activeGame._id, responderName: 'Bob' }, namespace, sinon.stub());
+
+        expect(namespaceEmitStub.called).to.equal(false);
     });
 });
 

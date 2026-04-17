@@ -2,19 +2,19 @@
  * Testing strategy — Dice Selector Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Use a real FormGroup input to validate how enum choices are written to diceType.
+ * - Exercise both available dice combinations through the selectDice public API.
+ * - Assert selectedDiceType getter reflects current reactive form state.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Confirms successive selections replace the previous dice choice cleanly.
+ * - Verifies getter returns null when no dice option is selected.
+ * - Protects against enum mapping regressions for both D4/D6 assignment modes.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup } from '@angular/forms';
 import { DiceSelectionType } from '@app/constants/character-form';
-import { DiceSelectorComponent } from './dice-selector.component';
+import { DiceSelectorComponent } from '@app/components/character-form/dice-selector/dice-selector.component';
 
 describe('DiceSelectorComponent', () => {
     let component: DiceSelectorComponent;

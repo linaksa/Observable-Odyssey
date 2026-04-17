@@ -3,6 +3,7 @@ import { buildAvatarAssetPath } from '@app/utils/avatar-path';
 import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { IItem } from '@common/items';
+import { GameGridCellEvent, PlacementPreview } from '@app/interfaces/game-grid.interface';
 import {
     buildCellBackgroundClass,
     buildCellImagePath,
@@ -17,10 +18,8 @@ import {
     isPreviewCell,
     previewCellBackgroundClass,
     previewCellBackgroundPosition,
-} from './game-grid-layout';
-import { GameGridTooltipController } from './game-grid-tooltip.controller';
-import type { GameGridCellEvent, PlacementPreview } from './game-grid-types';
-export type { GameGridCellEvent, PlacementPreview, TooltipPosition } from './game-grid-types';
+} from '@app/utils/game-grid-layout';
+import { GameGridTooltipController } from '@app/utils/game-grid-tooltip.controller';
 
 @Component({
     selector: 'app-game-grid',

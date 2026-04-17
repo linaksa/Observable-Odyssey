@@ -1,15 +1,13 @@
 /**
- * Testing strategy — Debug Socket Service
+ * Testing strategy — DebugSocketService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Mock SocketService and verify connection plus subscription setup to debug-state events.
+ * - Assert emitted toggle payloads and cleanup behavior across reconnect and destroy flows.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Repeated `connect` calls unsubscribe prior streams to avoid duplicate handlers.
+ * - Destroy reliably disconnects namespace subscriptions even after multiple reconnects.
  */
 import { TestBed } from '@angular/core/testing';
 import { Namespaces } from '@common/namespaces';
@@ -17,8 +15,8 @@ import { SocketEvent } from '@common/socket-events';
 import { IDebugToggleState } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { DebugSocketService } from './debug.socket.service';
-import { SocketService } from './socket.service';
+import { DebugSocketService } from '@app/services/realtime/debug.socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 
 describe('DebugSocketService', () => {
     let service: DebugSocketService;

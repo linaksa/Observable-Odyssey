@@ -6,10 +6,10 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Service } from 'typedi';
 import { ErrorCode } from '@common/error-codes';
-import { HttpException } from './classes/http.exception';
-import { ActiveGameController } from './controllers/active-game.controller';
-import { GameController } from './controllers/game.controller';
-import { toErrorResponse } from './error-types/error-response';
+import { HttpException } from '@app/classes/http.exception';
+import { ActiveGameController } from '@app/controllers/active-game.controller';
+import { GameController } from '@app/controllers/game.controller';
+import { toErrorResponse } from '@app/error-types/error-response';
 
 @Service()
 export class Application {

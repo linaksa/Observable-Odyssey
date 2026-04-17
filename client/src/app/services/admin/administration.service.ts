@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Visibility } from '@common/game';
 import { HttpResponse } from 'node_modules/@angular/common/types/_module-chunk';
 import { Observable } from 'rxjs';
-import { GameService } from './game.service';
+import { GameService } from '@app/services/admin/game.service';
 
 @Injectable({
     providedIn: 'root',

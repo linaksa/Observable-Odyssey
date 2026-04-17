@@ -1,10 +1,10 @@
 import { IActiveGame } from '@common/active-game';
 import { ICharacter, VirtualPlayerProfile } from '@common/character';
 import { Service } from 'typedi';
-import { AgressivePlayerService } from './agressive-player.service';
-import { CtfObjectiveService } from './ctf-objective.service';
-import { DefensivePlayerService } from './defensive-player.service';
-import { VirtualPlayerTurnFinalizerService } from './virtual-player-turn-finalizer.service';
+import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
+import { CtfObjectiveService } from '@app/services/virtual-player/ctf-objective.service';
+import { DefensivePlayerService } from '@app/services/virtual-player/defensive-player.service';
+import { VirtualPlayerTurnFinalizerService } from '@app/services/virtual-player/virtual-player-turn-finalizer.service';
 
 @Service()
 export class VirtualPlayerService {

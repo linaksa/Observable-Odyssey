@@ -2,17 +2,17 @@
  * Testing strategy — Loading Overlay Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Instantiate the standalone overlay with a custom loading text input.
+ * - Assert both visual asset metadata and displayed status text from the template.
+ * - Keep checks focused on rendered DOM output for user-visible loading feedback.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Verifies the image alt text remains accessible and localized.
+ * - Confirms the component points to the expected cogwheel loading asset path.
+ * - Ensures custom loadingText input is rendered without additional setup.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LoadingOverlayComponent } from './loading-overlay.component';
+import { LoadingOverlayComponent } from '@app/components/common/loading-overlay/loading-overlay.component';
 
 describe('LoadingOverlayComponent', () => {
     let component: LoadingOverlayComponent;

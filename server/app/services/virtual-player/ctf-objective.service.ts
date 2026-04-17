@@ -3,8 +3,8 @@ import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
-import { AgressivePlayerService } from './agressive-player.service';
-import { VirtualPlayerUtilitiesService } from './virtual-player.utilities';
+import { AgressivePlayerService } from '@app/services/virtual-player/agressive-player.service';
+import { VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
 
 @Service()
 export class CtfObjectiveService {

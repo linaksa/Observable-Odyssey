@@ -1,22 +1,18 @@
 /**
  * Testing strategy — ActiveGameListSocketsService
  *
- * Approach: instantiate the real SocketService with an in-memory HTTP server
- * and verify namespace/event interactions through Sinon stubs.
- * This validates integration with the namespace registry while keeping tests
- * deterministic and isolated from real network traffic.
+ * Approach:
+ * - Initialize the shared SocketService against a real HTTP server and assert namespace-dependent behavior through public APIs.
+ * - Verify event forwarding by stubbing SocketService.emit after namespace creation.
  *
  * Edge cases covered:
- * - Emitting before initialize(): the namespace should be missing and the service
- *   must fail loudly with an explicit error.
- * - Emitting after initialize(): the service should publish the
- *   joinable-games-updated event on the active-game-admin namespace.
+ * - Emitting before initialize() throws the expected missing-namespace error.
  */
+import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { expect } from 'chai';
 import { createServer, Server as HttpServer } from 'http';
 import * as sinon from 'sinon';
-import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
-import { SocketService } from '@app/services/realtime/socket.service';
 
 describe('ActiveGameListSocketsService', () => {
     let service: ActiveGameListSocketsService;
@@ -46,8 +42,7 @@ describe('ActiveGameListSocketsService', () => {
     });
 
     describe('emitJoinableGamesUpdated', () => {
-        // Edge case: emitJoinableGamesUpdated() is called before initialize(),
-        // so the target namespace does not exist yet and an explicit error is expected.
+        // The admin namespace must exist before broadcasting joinable-game updates.
         it('should throw error if not initialized', () => {
             socketService.initialize(httpServer);
             expect(() => service.emitJoinableGamesUpdated('test-id')).to.throw(

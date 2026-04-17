@@ -1,9 +1,9 @@
+import { IBoardValidator } from '@app/services/interfaces/board-validator';
 import { IBoard } from '@common/board';
-import { ErrorCode } from '@common/error-codes';
 import { GameSize } from '@common/constants';
+import { ErrorCode } from '@common/error-codes';
 import { ItemType } from '@common/items';
 import { Service } from 'typedi';
-import { IBoardValidator } from './board-validator.interface';
 
 enum ExpectedSanctuaries {
     Small = 1,

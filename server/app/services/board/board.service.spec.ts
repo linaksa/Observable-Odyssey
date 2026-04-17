@@ -1,24 +1,15 @@
 /**
  * Testing strategy — BoardService
  *
- * Approach: unit tests parameterized by board constants defined
- * in board.service.spec.constants.ts. Each constant represents a different board case,
- * allowing exhaustive coverage of validation rules without duplicating board construction
- * code in tests. The service is obtained via the TypeDI container to respect
- * dependency injection used in production.
+ * Approach:
+ * - Validate BoardService through fixture boards from board.service.spec.constants.ts.
+ * - Assert complete error-code outcomes for size, accessibility, item, spawn, and door rules in both Classic and CTF modes.
  *
  * Edge cases covered:
- * - Fully walled board (allWallsBoard): extreme case where no cell is accessible,
- *   which should trigger an accessibility error.
- * - Less than 50% terrain (halfTerrainBoard): verifies the exact bound of the 50% terrain rule.
- * - Door on the edge of the map (edgeDoorBoard / topEdgeDoorBoard): a door placed
- *   on the border lacks sufficient neighbors to be valid.
- * - Door with only one wall neighbor (verticalDoorTopWallOnlyBoard): verifies that
- *   validation requires both opposite walls, not just one.
- * - CTF mode without a flag (ctfNoFlagSmallBoard / ctfNoFlagMediumBoard): verifies
- *   that validation depends on the provided game mode.
- * - Insufficient starting points according to size (small / large):
- *   verifies that the required threshold varies with board dimensions.
+ * - Invalid dimensions, all-wall boards, disconnected terrain, and <50% walkable terrain.
+ * - Spawn-count thresholds per board size and sanctuary-count constraints.
+ * - CTF-only flag requirement versus Classic-mode tolerance.
+ * - Door-placement branches: edge doors, wrong wall pairing, and valid vertical/horizontal setups.
  */
 import { CellType } from '@common/board';
 import { ErrorCode } from '@common/error-codes';
@@ -42,7 +33,7 @@ import {
     validClassicBoard,
     verticalDoorTopWallOnlyBoard,
     verticalDoorWithWallsBoard,
-} from './board.service.spec.constants';
+} from '@app/services/board/board.service.spec.constants';
 
 describe('Board Service', () => {
     let boardService: BoardService;

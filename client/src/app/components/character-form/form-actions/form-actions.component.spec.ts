@@ -2,14 +2,14 @@
  * Testing strategy — Form Actions Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Mock CharacterFormService to isolate button behavior from real random-data generation.
+ * - Verify public component actions delegate to output events and service calls.
+ * - Keep the reactive form scaffolded to mirror runtime dependencies without extra logic.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Ensures submit() always emits submitRequested for parent-driven form submission.
+ * - Confirms generateRandom() calls populateWithRandomData exactly through the service.
+ * - Validates component startup with loading/error signals present in the service mock.
  */
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -17,7 +17,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { BonusType, DiceSelectionType } from '@app/constants/character-form';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
 import { Avatar } from '@common/constants';
-import { FormActionsComponent } from './form-actions.component';
+import { FormActionsComponent } from '@app/components/character-form/form-actions/form-actions.component';
 
 describe('FormActionsComponent', () => {
     let component: FormActionsComponent;

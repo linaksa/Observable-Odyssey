@@ -1,19 +1,19 @@
 /**
- * Testing strategy — Chat Service
+ * Testing strategy — ChatService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Drive chat room lifecycle through mocked SocketService streams and LocalPlayerService values.
+ * - Assert join payload composition, history hydration, inbound message handling, and local message emission.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Reconnect unsubscribes previous listeners before attaching new streams.
+ * - Late events from an outdated active game id are ignored to prevent message leakage.
  */
 import { TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { LocalPlayerService } from '@app/services/player/local-player.service';
+import { ChatService } from '@app/services/realtime/chat.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/active-game';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
@@ -22,8 +22,6 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { IJoinChatPayload } from '@common/socket-payloads';
 import { Subject } from 'rxjs';
-import { ChatService } from './chat.service';
-import { SocketService } from './socket.service';
 
 describe('ChatService', () => {
     let service: ChatService;
@@ -113,6 +111,33 @@ describe('ChatService', () => {
         secondStream$.next(createMessage('New', 'Kept'));
 
         expect(activeGameServiceStub.activeGame.messages).toEqual([createMessage('New', 'Kept')]);
+    });
+
+    it('should ignore joined history callback when active game changed after connect', () => {
+        // Edge case: stale join callback must not overwrite another room state.
+        spyOn(activeGameServiceStub, 'setChatMessages').and.callThrough();
+
+        service.connect();
+        const joinCallback = socketServiceSpy.emit.calls.mostRecent().args[3] as (response: IMessage[]) => void;
+        activeGameServiceStub.activeGame = createActiveGame('other-room');
+
+        joinCallback([createMessage('System', 'Old room history')]);
+
+        expect(activeGameServiceStub.setChatMessages).not.toHaveBeenCalled();
+    });
+
+    it('should ignore incoming messages when active game changed after connect', () => {
+        // Edge case: stale message stream must be ignored after room switch.
+        const incomingMessages$ = new Subject<IMessage>();
+        socketServiceSpy.on.and.returnValue(incomingMessages$.asObservable());
+        spyOn(activeGameServiceStub, 'appendChatMessage').and.callThrough();
+
+        service.connect();
+        activeGameServiceStub.activeGame = createActiveGame('other-room');
+        incomingMessages$.next(createMessage('Bob', 'should be ignored'));
+
+        expect(activeGameServiceStub.appendChatMessage).not.toHaveBeenCalled();
+        expect(activeGameServiceStub.activeGame.messages).toEqual([]);
     });
 
     it('should emit new message payload and append local message', () => {

@@ -12,9 +12,11 @@
  * - Expired sanctuary bonus: the card should return to the base display.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GamePlayerCardComponent } from './game-player-card.component';
+import { GamePlayerCardComponent } from '@app/components/game/game-player-card/game-player-card.component';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
+
+const BASE_ATTACK_VALUE = 4;
 
 describe('GamePlayerCardComponent', () => {
     let component: GamePlayerCardComponent;
@@ -88,6 +90,30 @@ describe('GamePlayerCardComponent', () => {
         expect(atkValue?.classList.contains('text-green-400')).toBeFalse();
         expect(defValue?.classList.contains('text-green-400')).toBeFalse();
         expect(fixture.nativeElement.textContent).not.toContain('(+1)');
+    });
+
+    it('should use zero sanctuary bonus when bonus value is undefined', () => {
+        // Edge case: undefined sanctuary bonus falls back to zero without buff display.
+        fixture.componentRef.setInput(
+            'player',
+            createCharacter({
+                fightSanctuaryTurnsRemaining: 2,
+                fightSanctuaryBonus: undefined,
+            }),
+        );
+        fixture.detectChanges();
+
+        const exposed = component as unknown as {
+            fightSanctuaryBonus: () => number;
+            attackDisplay: () => { value: number | undefined; bonus: number; isBuffed: boolean };
+        };
+        const fightBonus = exposed.fightSanctuaryBonus();
+        const attackDisplay = exposed.attackDisplay();
+
+        expect(fightBonus).toBe(0);
+        expect(attackDisplay.bonus).toBe(0);
+        expect(attackDisplay.value).toBe(BASE_ATTACK_VALUE);
+        expect(attackDisplay.isBuffed).toBeFalse();
     });
 });
 

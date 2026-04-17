@@ -1,15 +1,14 @@
+/* eslint-disable max-lines -- This spec exercises editor setup, validation, and tooltip behavior in one suite. */
 /**
- * Testing strategy — Editor Service
+ * Testing strategy — BoardEditorService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Build deterministic boards to validate placement, erase, randomization, and save workflows.
+ * - Assert editor helpers around door placement, sanctuary limits, object conflicts, and tooltip metadata.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Invalid coordinates and unsupported edits leave board/object state unchanged.
+ * - Repeated or conflicting placements correctly toggle doors and remove blocked items.
  */
 import { TestBed } from '@angular/core/testing';
 import {
@@ -20,11 +19,11 @@ import {
     ToolOption,
 } from '@app/constants/grid-editor';
 import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
+import { BoardEditorService } from '@app/services/editor/editor.service';
 import { BoardSharedService } from '@app/services/shared/board-shared.service';
 import { CellType } from '@common/board';
 import { GameType, IExistingGame, Visibility } from '@common/game';
 import { IItem, ItemType, SANCTUARY_SIZE } from '@common/items';
-import { BoardEditorService } from './editor.service';
 
 const TEST_GRID_SIZE = 5;
 
@@ -389,3 +388,139 @@ function createItem(itemType: ItemType, x: number, y: number, size: number): IIt
         size,
     };
 }
+/* Merged from editor.service.extra.spec.ts */
+
+(() => {
+    const FIRST_MEDIUM_COORD = 10;
+    const SECOND_MEDIUM_COORD = 12;
+
+    describe('BoardEditorService (extra)', () => {
+        let service: BoardEditorService;
+        let boardSharedService: BoardSharedService;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                providers: [BoardEditorService, BoardSharedService],
+            });
+
+            service = TestBed.inject(BoardEditorService);
+            boardSharedService = TestBed.inject(BoardSharedService);
+        });
+
+        it('should expose reactive signals for game cells and objects', () => {
+            // Nominal case: signals mirror the latest mutable service state.
+            service.buildGrid(GridSize.SMALL);
+            service.objects = [createMergedItem(ItemType.Flag, 0, 0, 1)];
+
+            expect(service.gameCellsSignal()).toEqual(service.gameCells);
+            expect(service.objectsSignal()).toEqual(service.objects);
+        });
+
+        it('should delegate getObjectAt to BoardSharedService', () => {
+            // Nominal case: object lookup is delegated to the shared board helper.
+            const item = createMergedItem(ItemType.Flag, 1, 2, 1);
+            service.objects = [item];
+            const getObjectAtSpy = spyOn(boardSharedService, 'getObjectAt').and.returnValue(item);
+
+            const result = service.getObjectAt(2, 1);
+
+            expect(getObjectAtSpy).toHaveBeenCalledWith(2, 1, service.objects);
+            expect(result).toEqual(item);
+        });
+
+        it('should use medium sanctuary limits when computing remaining count', () => {
+            // Nominal case: medium grids apply the medium sanctuary cap.
+            service.buildGrid(GridSize.MEDIUM);
+
+            expect(service.getRemainingObjectCount(ItemType.LifeSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_MEDIUM);
+            expect(service.getRemainingObjectCount(ItemType.FightSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_MEDIUM);
+        });
+
+        it('should stop life sanctuary placement when medium max amount is reached', () => {
+            // Edge case: adding one more sanctuary must be ignored at the hard limit.
+            service.buildGrid(GridSize.MEDIUM);
+            service.selectedObject = ItemType.LifeSanctuary;
+            service.objects = [
+                createMergedItem(ItemType.LifeSanctuary, FIRST_MEDIUM_COORD, FIRST_MEDIUM_COORD, SANCTUARY_SIZE),
+                createMergedItem(ItemType.LifeSanctuary, SECOND_MEDIUM_COORD, SECOND_MEDIUM_COORD, SANCTUARY_SIZE),
+            ];
+
+            service.placeSanctuary(0, 0);
+
+            expect(service.getObjectCount(ItemType.LifeSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_MEDIUM);
+        });
+
+        it('should stop fight sanctuary placement when medium max amount is reached', () => {
+            // Edge case: fight sanctuaries also respect the same medium-size cap.
+            service.buildGrid(GridSize.MEDIUM);
+            service.selectedObject = ItemType.FightSanctuary;
+            service.objects = [
+                createMergedItem(ItemType.FightSanctuary, FIRST_MEDIUM_COORD, FIRST_MEDIUM_COORD, SANCTUARY_SIZE),
+                createMergedItem(ItemType.FightSanctuary, SECOND_MEDIUM_COORD, SECOND_MEDIUM_COORD, SANCTUARY_SIZE),
+            ];
+
+            service.placeSanctuary(0, 0);
+
+            expect(service.getObjectCount(ItemType.FightSanctuary)).toBe(MAX_SANCTUARY_AMOUNT_MEDIUM);
+        });
+
+        it('should report invalid placement when no object is selected', () => {
+            // Edge case: placement validation fails fast when no selection exists.
+            service.buildGrid(GridSize.SMALL);
+            service.selectedObject = null;
+
+            expect(service.isSelectedObjectPlacementPositionValid(0, 0)).toBeFalse();
+        });
+
+        it('should keep objects unchanged when eraseObject finds no match', () => {
+            // Edge case: erasing an empty cell must leave object state untouched.
+            const existingObjects = [createMergedItem(ItemType.StartingPosition, 0, 0, 1)];
+            service.objects = existingObjects;
+
+            service.eraseObject(2, 2);
+
+            expect(service.objects).toEqual(existingObjects);
+        });
+
+        it('should reject out-of-bounds placement for single-cell objects', () => {
+            // Edge case: negative coordinates are always rejected.
+            service.buildGrid(GridSize.SMALL);
+            service.selectedObject = ItemType.Flag;
+
+            expect(service.isSelectedObjectPlacementPositionValid(-1, 0)).toBeFalse();
+        });
+
+        it('should handle missing first row with nullish length fallbacks', () => {
+            // Edge case: malformed grids must not crash validation paths.
+            service.gameCells = [undefined as unknown as CellType[]];
+            service.selectedObject = ItemType.Flag;
+
+            expect(service.isSelectedObjectPlacementPositionValid(0, 0)).toBeFalse();
+
+            service.selectedObject = ItemType.LifeSanctuary;
+
+            expect(service.isSelectedObjectPlacementPositionValid(0, 0)).toBeFalse();
+        });
+
+        it('should toggle open door back to closed when applying a door material', () => {
+            // Nominal case: door placement toggles an open door to the selected closed state.
+            service.buildGrid(GridSize.SMALL);
+            service.activeTool = ToolOption.Placement;
+            service.selectedMaterial = CellType.ClosedDoor;
+            service.gameCells[1][1] = CellType.OpenDoor;
+
+            service.applyTile(1, 1);
+
+            expect(service.gameCells[1][1]).toBe(CellType.ClosedDoor);
+        });
+    });
+
+    function createMergedItem(itemType: ItemType, x: number, y: number, size: number): IItem {
+        return {
+            itemType,
+            x,
+            y,
+            size,
+        };
+    }
+})();

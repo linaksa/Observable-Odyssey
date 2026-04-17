@@ -2,14 +2,14 @@
  * Testing strategy — Wait Chat Sidebar Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Model organizer/guest lobby states to validate derived permissions for starting the game.
+ * - Assert `startGame` socket emissions with exact namespace, event, and active-game payload.
+ * - Feed server error events through the socket stream and verify the rendered waiting-room feedback.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Lobbies with fewer than two players keep start actions disabled.
+ * - Missing active game ids prevent start emissions entirely.
+ * - Rejected start requests surface the localized "minimum players" error text.
  */
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
@@ -23,7 +23,7 @@ import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Observable, Subject } from 'rxjs';
-import { WaitChatSidebarComponent } from './wait-chat-sidebar.component';
+import { WaitChatSidebarComponent } from '@app/components/wait/wait-chat-sidebar/wait-chat-sidebar.component';
 
 @Component({
     selector: 'app-chat-panel',

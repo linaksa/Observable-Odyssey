@@ -1,21 +1,19 @@
 /**
- * Testing strategy — Wait Grid Service
+ * Testing strategy — WaitGridService
  *
  * Approach:
- * - Validate board initialization from active-game payloads with deep-copy assertions.
- * - Validate grid construction behavior for valid and invalid sizes.
- * - Keep tests data-driven using small board fixtures and deterministic item factories.
+ * - Initialize the grid from active-game payloads and assert deep-copy behavior for cells/items.
+ * - Validate explicit build/clear operations with deterministic board-size fixtures.
  *
  * Edge cases covered:
- * - Missing game payload should keep prior state intact.
- * - Missing board/cells/items should safely fallback without throwing.
- * - Non-positive size should clear grid/object state.
+ * - Missing game or board data keeps existing state stable and avoids runtime errors.
+ * - Non-positive size input clears both cells and placed objects.
  */
 import { TestBed } from '@angular/core/testing';
 import { IActiveGame } from '@common/active-game';
 import { CellType } from '@common/board';
 import { IItem, ItemType, SMALL_ITEM_SIZE } from '@common/items';
-import { WaitGridService } from './wait-grid.service';
+import { WaitGridService } from '@app/services/lobby/wait-grid.service';
 
 describe('WaitGridService', () => {
     let service: WaitGridService;

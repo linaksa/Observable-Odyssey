@@ -1,8 +1,8 @@
+import { IBoardValidator } from '@app/services/interfaces/board-validator';
+import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 import { CellType, IBoard } from '@common/board';
 import { ErrorCode } from '@common/error-codes';
 import { Service } from 'typedi';
-import { IBoardValidator } from './board-validator.interface';
-import { sanctuaryCoversCell } from '@app/utils/sanctuary';
 
 @Service()
 export class ReachabilityValidator implements IBoardValidator {

@@ -24,8 +24,6 @@ import {
 } from '@common/socket-payloads';
 import { Subscription } from 'rxjs';
 
-export type { ActiveGameSocketContext };
-
 export function registerActiveGameSocketListeners(context: ActiveGameSocketContext): Subscription[] {
     return [
         context.socket.on<PlayerMovedResult>(Namespaces.Game, SocketEvent.PlayerMoved).subscribe((playerMove) => {

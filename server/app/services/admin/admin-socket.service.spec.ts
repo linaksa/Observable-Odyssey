@@ -1,17 +1,14 @@
 /**
- * Testing strategy — AdminSocketsService
+ * Testing strategy — AdminSocketsService namespace emission
  *
- * Approach: unit tests with Sinon for stubs/spies.
- * The real service is instantiated with a real SocketService, allowing
- * verification of integration between the two services without touching the network.
- * A helper HTTP server is created only to initialize Socket.IO.
+ * Approach:
+ * - Instantiate AdminSocketsService with a real SocketService and in-memory HTTP server.
+ * - Drive behavior through initialize() and emitNewData() instead of reaching into internals.
+ * - Stub SocketService.emit only in the initialized path to assert namespace/event payloads.
  *
  * Edge cases covered:
- * - Calling emitNewData before initialize: verifies that premature use
- *   of the service throws an explicit error rather than producing
- *   unexpected silent behavior.
- * - Calling emitNewData after initialize: verifies the nominal path and ensures
- *   the event is emitted on the correct namespace.
+ * - emitNewData() before initialize() must throw an explicit namespace error.
+ * - emitNewData() after initialize() emits exactly the expected admin event.
  */
 import { expect } from 'chai';
 import { createServer, Server as HttpServer } from 'http';
@@ -47,8 +44,7 @@ describe('AdminSocketsService', () => {
     });
 
     describe('emitNewData', () => {
-        // Edge case: call before namespace initialization. The absence of a namespace
-        // should be reported explicitly by throwing an exception to avoid silent failures.
+        // Edge case: using the service before namespace setup must fail loudly.
         it('should throw error if not initialized', () => {
             socketService.initialize(httpServer);
             expect(() => service.emitNewData()).to.throw("Namespace 'admin' not found. Call createNamespace() first.");

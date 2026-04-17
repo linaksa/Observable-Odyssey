@@ -2,20 +2,20 @@
  * Testing strategy — Avatar Selector Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Isolate the container by replacing preview and grid children with lightweight mocks.
+ * - Supply a reactive form with avatar validation to mirror production wiring.
+ * - Validate selectedAvatar as a direct projection of the form control value.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Starts with a null avatar control to ensure the component tolerates an unselected state.
+ * - Confirms the getter updates immediately after form patchValue changes.
+ * - Verifies no extra local state interferes with form-driven avatar selection.
  */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Avatar } from '@common/constants';
-import { AvatarSelectorComponent } from './avatar-selector.component';
+import { AvatarSelectorComponent } from '@app/components/character-form/avatar-selector/avatar-selector.component';
 
 @Component({
     selector: 'app-avatar-preview',

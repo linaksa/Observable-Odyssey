@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
-import { ErrorCode, getErrorMessage } from '@app/utils/error-codes';
+import { getErrorMessage } from '@app/utils/error-codes';
+import { ErrorCode } from '@common/error-codes';
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@common/constants';
 
 @Component({
