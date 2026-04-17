@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { ErrorCode } from '@common/error-codes';
-import { getErrorMessages } from './error-codes';
+import { getErrorMessages } from '@app/error-types/error-codes';
 
 export class AppError extends Error {
     readonly errorCodes: ErrorCode[];

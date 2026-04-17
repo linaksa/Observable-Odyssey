@@ -35,7 +35,7 @@ import { CellType } from '@common/board';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
 import { GameType, IExistingGame, IGame, Visibility } from '@common/game';
-import { GameTableComponent } from './game-table.component';
+import { GameTableComponent } from '@app/components/common/game-table/game-table.component';
 
 type GameTableRow = IExistingGame | IActiveGame;
 const TWO_PLAYERS = 2;

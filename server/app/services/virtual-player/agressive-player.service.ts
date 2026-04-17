@@ -6,9 +6,9 @@ import { ICharacter } from '@common/character';
 import { GameType } from '@common/game';
 import { Namespaces } from '@common/namespaces';
 import { Service } from 'typedi';
-import { VirtualPlayerSanctuaryService } from './virtual-player-sanctuary.service';
-import { VirtualPlayer } from './virtual-player.interface';
-import { sleep, VirtualPlayerUtilitiesService } from './virtual-player.utilities';
+import { VirtualPlayerSanctuaryService } from '@app/services/virtual-player/virtual-player-sanctuary.service';
+import { VirtualPlayer } from '@app/services/virtual-player/virtual-player.interface';
+import { sleep, VirtualPlayerUtilitiesService } from '@app/services/virtual-player/virtual-player.utilities';
 
 @Service()
 export class AgressivePlayerService implements VirtualPlayer {

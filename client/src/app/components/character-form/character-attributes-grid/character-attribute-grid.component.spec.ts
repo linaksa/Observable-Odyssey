@@ -2,19 +2,19 @@
  * Testing strategy — Character Attribute Grid Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Replace nested attribute cards with a mock component to isolate container setup.
+ * - Provide CharacterFormService as a spy object with fixed points values.
+ * - Keep this suite as a smoke test that validates TestBed composition.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Confirms the component instantiates with overridden imports and mocked service data.
+ * - Verifies no runtime dependency errors occur when child rendering is stubbed.
+ * - Protects against regressions in standalone metadata wiring.
  */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { CharacterFormService } from '@app/services/forms/character-form.service';
-import { CharacterAttributesGridComponent } from './character-attributes-grid.component';
+import { CharacterAttributesGridComponent } from '@app/components/character-form/character-attributes-grid/character-attributes-grid.component';
 
 @Component({
     selector: 'app-attribute-display',

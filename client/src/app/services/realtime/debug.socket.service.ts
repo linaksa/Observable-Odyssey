@@ -4,7 +4,7 @@ import { SocketEvent } from '@common/socket-events';
 import { IDebugToggleState } from '@common/socket-payloads';
 import { Observable, Subscription } from 'rxjs';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 
 @Injectable({
     providedIn: 'root',

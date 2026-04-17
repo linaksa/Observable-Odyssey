@@ -1,5 +1,5 @@
 import { ErrorCode, IErrorResponse } from '@common/error-codes';
-import { AppError } from './app-error';
+import { AppError } from '@app/error-types/app-error';
 
 export function toErrorResponse(error: unknown, fallbackCode: ErrorCode = ErrorCode.InternalServerError): IErrorResponse {
     if (error instanceof AppError) {

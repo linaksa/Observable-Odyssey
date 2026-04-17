@@ -1,3 +1,14 @@
+/**
+ * Testing strategy — GameSocketsService
+ *
+ * Approach:
+ * - Initialize the game namespace and capture the registered connection callback.
+ * - Assert socket connection delegation and room emission payloads for virtual-player updates.
+ *
+ * Edge cases covered:
+ * - Connection callback safely no-ops when namespace state becomes unavailable.
+ * - emitVirtualPlayerJoined called before initialize does not emit.
+ */
 import { GameSocketConnectionService } from '@app/services/realtime/game-socket-connection.service';
 import { SocketService } from '@app/services/realtime/socket.service';
 import { IActiveGame } from '@common/active-game';
@@ -5,7 +16,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { GameSocketsService } from './game-sockets.service';
+import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
 
 describe('GameSocketsService', () => {
     let service: GameSocketsService;
@@ -63,6 +74,16 @@ describe('GameSocketsService', () => {
         expect(gameSocketConnectionService.register.calledOnceWith(fakeSocket, namespace)).to.equal(true);
     });
 
+    it('ignores connection callback when namespace is unset after initialization', () => {
+        service.initialize();
+        const serviceState = service as unknown as { namespace?: unknown };
+        serviceState.namespace = undefined;
+
+        connectionHandler?.(fakeSocket as never);
+
+        expect(gameSocketConnectionService.register.called).to.equal(false);
+    });
+
     it('should emit players updated when a virtual player joins', () => {
         service.initialize();
 
@@ -75,5 +96,16 @@ describe('GameSocketsService', () => {
 
         expect(namespace.to.calledWith('game-1')).to.equal(true);
         expect(roomEmitSpy.calledWith(SocketEvent.PlayersUpdated, activeGame.players)).to.equal(true);
+    });
+
+    it('does nothing when emitVirtualPlayerJoined is called before initialize', () => {
+        const activeGame = {
+            _id: 'game-1',
+            players: [{ name: 'Alice' }],
+        } as unknown as IActiveGame;
+
+        service.emitVirtualPlayerJoined(activeGame);
+
+        expect(namespace.to.called).to.equal(false);
     });
 });

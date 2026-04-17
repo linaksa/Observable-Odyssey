@@ -4,13 +4,13 @@ import { ActiveGameGarbageCollectorService } from '@app/services/active-game/act
 import * as http from 'http';
 import { AddressInfo } from 'net';
 import { Container, Service } from 'typedi';
-import { ActiveGameListSocketsService } from './services/active-game/active-game-list-sockets.service';
-import { AdminSocketsService } from './services/admin/admin-sockets.service';
-import { TurnService } from './services/gameplay/turn-service';
-import { GameSocketsService } from './services/realtime/game-sockets.service';
-import { GameplayRealtimeFlowService } from './services/realtime/gameplay-realtime-flow.service';
-import { SocketService } from './services/realtime/socket.service';
-import { VirtualPlayerService } from './services/virtual-player/virtual-player.service';
+import { ActiveGameListSocketsService } from '@app/services/active-game/active-game-list-sockets.service';
+import { AdminSocketsService } from '@app/services/admin/admin-sockets.service';
+import { TurnService } from '@app/services/gameplay/turn-service';
+import { GameSocketsService } from '@app/services/realtime/game-sockets.service';
+import { GameplayRealtimeFlowService } from '@app/services/realtime/gameplay-realtime-flow.service';
+import { SocketService } from '@app/services/realtime/socket.service';
+import { VirtualPlayerService } from '@app/services/virtual-player/virtual-player.service';
 
 @Service()
 export class Server {

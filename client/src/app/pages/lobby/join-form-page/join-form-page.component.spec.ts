@@ -2,14 +2,14 @@
  * Testing strategy — Join Form Page Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Coordinate route, socket, and active-game service stubs to validate avatar availability refresh logic.
+ * - Assert join success side effects on local-player persistence and wait-page navigation.
+ * - Exercise join and fetch failure paths to verify toast signaling and `CharacterFormService` error updates.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Missing `activeGameId` blocks avatar fetches and join submissions safely.
+ * - Socket notifications for unrelated game ids are ignored.
+ * - Abandoned players are excluded from unavailable-avatar computation, and socket subscriptions are cleaned on destroy.
  */
 import { Component, EventEmitter, Output, signal } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
@@ -17,7 +17,7 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, Subject, Subscription, throwError } from 'rxjs';
 
 import { CharacterFormData, ICharacter } from '@common/character';
-import { JoinFormPageComponent } from './join-form-page.component';
+import { JoinFormPageComponent } from '@app/pages/lobby/join-form-page/join-form-page.component';
 
 import { NavButtonsComponent } from '@app/components/common/nav-buttons/nav-buttons.component';
 import { PageTitleComponent } from '@app/components/common/page-title/page-title.component';

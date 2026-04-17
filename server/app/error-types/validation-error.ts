@@ -1,6 +1,6 @@
 import { ErrorCode } from '@common/error-codes';
 import { StatusCodes } from 'http-status-codes';
-import { AppError } from './app-error';
+import { AppError } from '@app/error-types/app-error';
 
 export class ValidationError extends AppError {
     constructor(errorCodes: ErrorCode[] | ErrorCode) {

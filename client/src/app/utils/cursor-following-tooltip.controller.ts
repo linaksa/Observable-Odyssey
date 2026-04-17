@@ -4,9 +4,8 @@ import {
     TOOLTIP_CONTROLLER_FALLBACK_WIDTH_PX,
     TOOLTIP_CONTROLLER_VERTICAL_OFFSET_PX,
 } from '@app/constants/tooltip';
-import { CursorFollowingTooltipDependencies, TooltipPointer, TooltipPosition } from '@app/interfaces/cursor-following-tooltip.interface';
-
-export type { CursorFollowingTooltipDependencies, TooltipPosition };
+import { CursorFollowingTooltipDependencies, TooltipPointer } from '@app/interfaces/cursor-following-tooltip.interface';
+import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 
 export class CursorFollowingTooltipController {
     readonly tooltipPointer = signal<TooltipPointer | null>(null);

@@ -1,21 +1,20 @@
 /**
- * Testing strategy — Character Form Service
+ * Testing strategy — CharacterFormService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Exercise derived-stat helpers from controlled bonus/dice selections.
+ * - Assert life/speed bonuses plus attack/defense and dice mapping outputs from form state.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Missing bonus selection preserves default life and speed values.
+ * - Alternate dice combinations map to the expected attack/defense dice types.
  */
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { BONUS_VALUE, BonusType, DiceSelectionType } from '@app/constants/character-form';
 import { HTTP_CLIENT } from '@app/http/http-client-token';
-import { CharacterFormData } from '@common/character';
+import { IActiveGameWithPlayer } from '@common/active-game';
+import { CharacterFormData, VirtualPlayerProfile } from '@common/character';
 import {
     Avatar,
     DEFAULT_PLAYER_ATTACK_POINTS,
@@ -25,7 +24,7 @@ import {
     DiceType,
 } from '@common/constants';
 import { of } from 'rxjs';
-import { CharacterFormService } from './character-form.service';
+import { CharacterFormService } from '@app/services/forms/character-form.service';
 import SpyObj = jasmine.SpyObj;
 
 describe('CharacterFormService', () => {
@@ -161,3 +160,57 @@ describe('CharacterFormService', () => {
         expect(service.unavailableAvatars()).toEqual([]);
     });
 });
+/* Merged from character-form.service.extra.spec.ts */
+
+(() => {
+    describe('CharacterFormService (extra)', () => {
+        let service: CharacterFormService;
+        let httpClientSpy: SpyObj<HttpClient>;
+
+        beforeEach(() => {
+            httpClientSpy = jasmine.createSpyObj('HttpClient', ['post', 'patch']);
+
+            TestBed.configureTestingModule({
+                providers: [CharacterFormService, { provide: HTTP_CLIENT, useValue: httpClientSpy }],
+            });
+
+            service = TestBed.inject(CharacterFormService);
+        });
+
+        it('creates a virtual player payload and joins active game', () => {
+            // Nominal case: random form data is converted into a complete join payload.
+            const activeGameId = 'active-123';
+            const expectedAvatar = Avatar.Avatar2;
+            const expectedName = 'VirtualPlayer';
+
+            service.unavailableAvatars.set([Avatar.Avatar1]);
+            spyOn(service, 'populateWithRandomData').and.callFake(() => {
+                service.characterForm.patchValue({
+                    playerName: expectedName,
+                    avatar: expectedAvatar,
+                    bonusType: BonusType.Life,
+                    diceType: DiceSelectionType.D4AttackAndD6Defense,
+                });
+            });
+
+            const joinSpy = spyOn(service, 'joinActiveGameWithCharacter').and.returnValue(of({} as IActiveGameWithPlayer));
+
+            service.createVirtualPlayer(VirtualPlayerProfile.Defensive, activeGameId).subscribe();
+
+            const expectedData: CharacterFormData = {
+                name: expectedName,
+                avatar: expectedAvatar,
+                initialHealth: DEFAULT_PLAYER_LIFE_POINTS + 2,
+                rapidityPoints: DEFAULT_PLAYER_SPEED_POINTS,
+                attackPoints: DEFAULT_PLAYER_ATTACK_POINTS,
+                defensePoints: DEFAULT_PLAYER_DEFENSE_POINTS,
+                attackBonusDiceType: DiceType.FourSided,
+                defenseBonusDiceType: DiceType.SixSided,
+                virtualPlayerProfile: VirtualPlayerProfile.Defensive,
+            };
+
+            expect(joinSpy).toHaveBeenCalledWith(activeGameId, expectedData);
+            expect(service.unavailableAvatars()).toEqual([Avatar.Avatar1, expectedAvatar]);
+        });
+    });
+})();

@@ -10,7 +10,8 @@ import {
     RANDOM_NUMBER_SCALE,
     RANDOM_PLAYER_NAME_PREFIX,
 } from '@app/constants/character-form';
-import { HTTP_CLIENT, HttpClientPort } from '@app/http/http-interface';
+import { HTTP_CLIENT } from '@app/http/http-client-token';
+import { HttpClientPort } from '@app/interfaces/http-client-port.interface';
 import { ResponseType } from '@app/http/http-model';
 import { RandomCharacterData } from '@app/interfaces/random-character-data.interface';
 import { IActiveGameWithPlayer } from '@common/active-game';

@@ -2,19 +2,19 @@
  * Testing strategy — Character Modifier Panel Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Isolate the panel by mocking bonus, dice, and form-action child components.
+ * - Provide an explicit empty FormGroup input to satisfy the panel contract.
+ * - Focus assertions on the submitForm output event emitted by the container.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Ensures submitForm delegates to formSubmitted.emit without child interaction.
+ * - Verifies output emission works even when the bound form has no controls.
+ * - Confirms standalone override wiring does not break component creation.
  */
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, MetadataOverride, TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
-import { CharacterModifierPanelComponent } from './character-modifier-panel.component';
+import { CharacterModifierPanelComponent } from '@app/components/character-form/character-modifier-panel/character-modifier-panel.component';
 
 @Component({
     selector: 'app-bonus-selector',

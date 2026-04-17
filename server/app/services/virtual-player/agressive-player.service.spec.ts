@@ -1,3 +1,17 @@
+/**
+ * Testing strategy — AgressivePlayerService target selection
+ *
+ * Approach:
+ * - Replace movement, combat, sanctuary, socket, and adjacency dependencies with Sinon stubs.
+ * - Exercise play() with CTF and classic game states to verify target-priority decisions.
+ * - Assert when fallback sanctuary logic short-circuits versus when pursuit/combat continues.
+ *
+ * Edge cases covered:
+ * - No reachable target in classic mode triggers sanctuary fallback with no combat.
+ * - No reachable target in CTF mode skips sanctuary fallback.
+ * - Far targets in CTF still pursue instead of consulting sanctuary fallback.
+ * - Missing refreshed player or non-adjacent targets prevent combatManager execution.
+ */
 import { PositionValidatorService } from '@app/services/gameplay/position-validator.service';
 import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { SocketService } from '@app/services/realtime/socket.service';
@@ -87,6 +101,145 @@ describe('AgressivePlayerService', () => {
         expect(sanctuaryService.tryFallbackObjective.calledOnceWithExactly(bot, game)).to.equal(true);
         expect(virtualPlayerUtilities.moveToPlayer.called).to.equal(false);
         expect(gameplayActionService.combatManager.called).to.equal(false);
+    });
+
+    it('uses forced target when provided', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Classic);
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: 1,
+            bestAdjacentIndex: 1,
+        });
+
+        await service.play(bot, game, enemy.name);
+
+        const [, candidateTargets] = virtualPlayerUtilities.findClosestReachablePlayer.firstCall.args as [ICharacter, ICharacter[]];
+        expect(candidateTargets).to.deep.equal([enemy]);
+    });
+
+    it('does not try fallback objective in ctf when no reachable target exists', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const ally = createCharacter('Ally', Team.RED);
+        const game = createGame([bot, ally], GameType.Ctf);
+        virtualPlayerUtilities.findClosestReachablePlayer.returns(null);
+
+        await service.play(bot, game);
+
+        expect(sanctuaryService.tryFallbackObjective.called).to.equal(false);
+    });
+
+    // Edge case: CTF pathing should keep pursuing even when the target is farther than movement points.
+    it('continues pursuit in ctf when the target is too far', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Ctf);
+        bot.movementLeft = 1;
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: 3,
+            bestAdjacentIndex: 1,
+        });
+
+        await service.play(bot, game);
+
+        expect(sanctuaryService.tryFallbackObjective.called).to.equal(false);
+        expect(virtualPlayerUtilities.moveToPlayer.calledOnce).to.equal(true);
+    });
+
+    // Edge case: a malformed distance value should still fall through to pursuit instead of fallback.
+    it('continues pursuit when the reported distance is missing', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Classic);
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: undefined as never,
+            bestAdjacentIndex: 1,
+        });
+
+        await service.play(bot, game);
+
+        expect(sanctuaryService.tryFallbackObjective.called).to.equal(false);
+        expect(virtualPlayerUtilities.moveToPlayer.calledOnce).to.equal(true);
+    });
+
+    it('returns early after successful fallback when target is too far in classic mode', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Classic);
+        bot.movementLeft = 1;
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: 3,
+            bestAdjacentIndex: 1,
+        });
+        sanctuaryService.tryFallbackObjective.resolves(true);
+
+        await service.play(bot, game);
+
+        expect(virtualPlayerUtilities.moveToPlayer.called).to.equal(false);
+    });
+
+    it('returns when refreshed player is missing after movement', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Classic);
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: 1,
+            bestAdjacentIndex: 1,
+        });
+        // Edge case: refreshed bot lookup fails after movement state changes.
+        game.players = [enemy];
+
+        await service.play(bot, game);
+
+        expect(gameplayActionService.combatManager.called).to.equal(false);
+    });
+
+    it('attackTargetIfPossible returns when target is missing or not adjacent', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy]);
+
+        // Edge cases: unknown target name and non-adjacent target both skip combat.
+        await service.attackTargetIfPossible(bot, game, 'Missing');
+        positionValidatorService.isAdjacent.returns(false);
+        await service.attackTargetIfPossible(bot, game, enemy.name);
+
+        expect(gameplayActionService.combatManager.called).to.equal(false);
+    });
+
+    it('returns immediately when fallback objective succeeds and no target is reachable', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const ally = createCharacter('Ally', Team.RED);
+        const game = createGame([bot, ally], GameType.Classic);
+        virtualPlayerUtilities.findClosestReachablePlayer.returns(null);
+        sanctuaryService.tryFallbackObjective.resolves(true);
+
+        await service.play(bot, game);
+
+        expect(virtualPlayerUtilities.moveToPlayer.called).to.equal(false);
+        expect(gameplayActionService.combatManager.called).to.equal(false);
+    });
+
+    it('continues toward enemy when fallback objective fails for far target', async () => {
+        const bot = createCharacter('Bot', Team.RED);
+        const enemy = createCharacter('Enemy', Team.BLUE);
+        const game = createGame([bot, enemy], GameType.Classic);
+        bot.movementLeft = 1;
+        virtualPlayerUtilities.findClosestReachablePlayer.returns({
+            player: enemy,
+            distance: 4,
+            bestAdjacentIndex: 1,
+        });
+        sanctuaryService.tryFallbackObjective.resolves(false);
+
+        await service.play(bot, game);
+
+        expect(virtualPlayerUtilities.moveToPlayer.calledOnce).to.equal(true);
     });
 });
 

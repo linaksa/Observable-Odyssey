@@ -19,7 +19,7 @@ import { ITEM_INFO_BY_TYPE, TILE_INFO_BY_TYPE } from '@app/constants/tile-info';
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { CellType } from '@common/board';
 import { ItemType } from '@common/items';
-import { EditorItemSelectorComponent } from './editor-item-selector.component';
+import { EditorItemSelectorComponent } from '@app/components/editor/item-selector/editor-item-selector.component';
 
 describe('EditorItemSelectorComponent', () => {
     let component: EditorItemSelectorComponent;
@@ -49,6 +49,7 @@ describe('EditorItemSelectorComponent', () => {
     });
 
     it('should render the material selector in placement mode and forward its output', () => {
+        // Nominal case: placement mode shows material selector and forwards selection events.
         const materialSelectedSpy = jasmine.createSpy('materialSelected');
         component.materialSelected.subscribe(materialSelectedSpy);
 
@@ -63,6 +64,7 @@ describe('EditorItemSelectorComponent', () => {
     });
 
     it('should render the object selector in object mode and forward its output', () => {
+        // Edge case: tool switch to object mode swaps child selector and keeps output forwarding.
         boardEditorServiceStub.activeTool = ToolOption.Objects;
         const objectFixture = TestBed.createComponent(EditorItemSelectorComponent);
         objectFixture.detectChanges();

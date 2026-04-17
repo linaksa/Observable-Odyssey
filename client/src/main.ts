@@ -5,7 +5,7 @@ import { Routes, provideRouter, withComponentInputBinding, withHashLocation } fr
 import { activePlayerGuard } from '@app/guards/active-player.guard';
 import { waitPageGuard } from '@app/guards/wait-page.guard';
 import { AngularHttpClientAdapter } from '@app/http/angular-http-client-adapter';
-import { HTTP_CLIENT } from '@app/http/http-interface';
+import { HTTP_CLIENT } from '@app/http/http-client-token';
 import { AdministrationPageComponent } from '@app/pages/admin/administration-page/administration-page.component';
 import { EditorPageComponent } from '@app/pages/admin/editor-page/editor-page.component';
 import { AppComponent } from '@app/pages/core/app/app.component';

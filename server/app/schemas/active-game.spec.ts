@@ -2,15 +2,15 @@
  * Testing strategy — ActiveGame schema
  *
  * Approach:
- * - Inspect the schema metadata directly instead of going through MongoDB.
- * - Assert that the TTL index targets the active-game creation timestamp.
+ * - Inspect mongoose schema metadata directly (no DB round trip).
+ * - Assert index/path metadata for lifecycle cleanup and optional deletion markers.
  *
  * Edge cases covered:
- * - The TTL must stay attached to the active-game collection only.
- * - The expiration window should remain one hour.
+ * - TTL expiration stays bound to `createdAt` with configured one-hour retention.
+ * - `markedForDeletionAt` remains a nullable Date field by default.
  */
 import { expect } from 'chai';
-import { ACTIVE_GAME_TTL_SECONDS, activeGameModel } from './active-game';
+import { ACTIVE_GAME_TTL_SECONDS, activeGameModel } from '@app/schemas/active-game';
 
 describe('ActiveGame schema', () => {
     it('should define a TTL index on createdAt for one hour', () => {

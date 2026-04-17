@@ -2,19 +2,19 @@
  * Testing strategy — Bonus Selector Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Use a reactive form stub with required bonusType to mirror real selection flow.
+ * - Validate selectedBonus getter as a read-through of the form control state.
+ * - Verify selectBonus writes the chosen enum value back into the form.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Covers the initial null state enforced by validators before any user choice.
+ * - Confirms enum changes are preserved exactly when switching bonus type.
+ * - Ensures component logic stays form-driven instead of storing duplicate state.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { BonusType } from '@app/constants/character-form';
-import { BonusSelectorComponent } from './bonus-selector.component';
+import { BonusSelectorComponent } from '@app/components/character-form/bonus-selector/bonus-selector.component';
 
 describe('BonusSelectorComponent', () => {
     let component: BonusSelectorComponent;

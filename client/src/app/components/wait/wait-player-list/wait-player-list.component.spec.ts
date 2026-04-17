@@ -2,20 +2,20 @@
  * Testing strategy — Wait Player List Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Drive organizer/local-player permutations to validate computed lists and player-management permissions.
+ * - Assert avatar rendering helpers and organizer predicates that power waiting-room UI badges and portraits.
+ * - Verify action delegation (`kickPlayer`, virtual-player dialog trigger) with strict permission guards.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - `otherPlayers` excludes the local player while preserving the rest of the lobby order.
+ * - Virtual-player creation is blocked for non-organizers, full rooms, or missing active-game data.
+ * - Kick actions are ignored when the local user is not the organizer.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActiveGameService } from '@app/services/gameplay/active-game.service';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
-import { WaitPlayerListComponent } from './wait-player-list.component';
+import { WaitPlayerListComponent } from '@app/components/wait/wait-player-list/wait-player-list.component';
 
 describe('WaitPlayerListComponent', () => {
     let component: WaitPlayerListComponent;
@@ -27,6 +27,7 @@ describe('WaitPlayerListComponent', () => {
 
     beforeEach(async () => {
         activeGameServiceMock = jasmine.createSpyObj<ActiveGameService>('ActiveGameService', ['kickPlayer']);
+        activeGameServiceMock.activeGame = { maxPlayerCount: 4 } as never;
 
         await TestBed.configureTestingModule({
             imports: [WaitPlayerListComponent],
@@ -82,6 +83,39 @@ describe('WaitPlayerListComponent', () => {
 
         component.kickPlayer(organizer.name);
         expect(activeGameServiceMock.kickPlayer).not.toHaveBeenCalled();
+    });
+
+    it('should allow adding virtual players only when organizer and room is not full', () => {
+        // Nominal case: organizer with free slots can add virtual players.
+        expect(component.canAddVirtualPlayer).toBeTrue();
+
+        // Edge case: non-organizer cannot add virtual players.
+        fixture.componentRef.setInput('localPlayer', player2);
+        fixture.detectChanges();
+        expect(component.canAddVirtualPlayer).toBeFalse();
+
+        fixture.componentRef.setInput('localPlayer', organizer);
+        fixture.componentRef.setInput('players', [organizer, player2, createCharacter('Player3'), createCharacter('Player4')]);
+        fixture.detectChanges();
+        expect(component.canAddVirtualPlayer).toBeFalse();
+    });
+
+    it('should emit open virtual player dialog request and build avatar url', () => {
+        const emitSpy = jasmine.createSpy('openVirtualPlayerDialog');
+        component.openVirtualPlayerDialog.subscribe(emitSpy);
+
+        component.emitOpenVirtualPlayerDialog();
+
+        expect(emitSpy).toHaveBeenCalled();
+        expect(component.buildPlayerAvatarUrl(Avatar.Avatar1)).toContain('-portrait.png');
+    });
+
+    it('should disable virtual-player add guard when active game is unavailable', () => {
+        // Edge case: undefined active game forces conservative player-management guards.
+        activeGameServiceMock.activeGame = undefined as never;
+
+        expect(component.canManagePlayers).toBeTrue();
+        expect(component.canAddVirtualPlayer).toBeFalse();
     });
 });
 

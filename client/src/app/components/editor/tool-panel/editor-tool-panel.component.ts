@@ -3,7 +3,8 @@ import { EditorItemSelectorComponent } from '@app/components/editor/item-selecto
 import { ToolOption } from '@app/constants/grid-editor';
 import { BoardEditorService } from '@app/services/editor/editor.service';
 import { GameEditFormService } from '@app/services/forms/game-edit-form.service';
-import { ErrorCode, getErrorMessage } from '@app/utils/error-codes';
+import { getErrorMessage } from '@app/utils/error-codes';
+import { ErrorCode } from '@common/error-codes';
 import { CellType } from '@common/board';
 import { GameType } from '@common/game';
 import { ItemType } from '@common/items';

@@ -1,18 +1,16 @@
 /**
- * Testing strategy — Socket Service
+ * Testing strategy — SocketService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Mock `socket.io-client` factory output and assert namespace socket caching behavior.
+ * - Validate default-namespace helper methods (`connectDefault`, `onDefault`, `emitDefault`) delegate correctly.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Repeated connect requests reuse an existing namespace socket instead of recreating it.
+ * - Missing namespaces report disconnected state safely.
  */
 import { Socket } from 'socket.io-client';
-import { SocketService } from './socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 
 const GAME_NAMESPACE = 'game';
 

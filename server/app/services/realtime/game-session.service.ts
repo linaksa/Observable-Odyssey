@@ -18,7 +18,7 @@ import {
 } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Container, Service } from 'typedi';
-import { GameplayActionService } from './gameplay-action.service';
+import { GameplayActionService } from '@app/services/realtime/gameplay-action.service';
 import { toGameCanceledReason } from '@app/utils/game-cancellation';
 
 @Service()

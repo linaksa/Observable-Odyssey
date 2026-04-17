@@ -4,8 +4,8 @@ import { IAbandonData, IJoinGamePayload } from '@common/socket-payloads';
 import { SocketEvent } from '@common/socket-events';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
-import { GameSessionService } from './game-session.service';
-import { GameplayLogService } from './gameplay-log.service';
+import { GameSessionService } from '@app/services/realtime/game-session.service';
+import { GameplayLogService } from '@app/services/realtime/gameplay-log.service';
 
 @Service()
 export class GameSocketSessionEventsService {

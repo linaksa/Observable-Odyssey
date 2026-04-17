@@ -1,8 +1,6 @@
 import { TooltipPositionOptions } from '@app/interfaces/tooltip-position-options.interface';
 import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 
-export type { TooltipPosition };
-
 export function computeTooltipPosition({
     event,
     containerRect,

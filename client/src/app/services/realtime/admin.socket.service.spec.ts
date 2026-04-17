@@ -1,22 +1,20 @@
 /**
- * Testing strategy — Admin Socket Service
+ * Testing strategy — AdminSocketService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Mock SocketService and validate namespace connection reference-count behavior.
+ * - Assert lifecycle methods (`connect`, `disconnect`, `listenToGameModifications`, `ngOnDestroy`) orchestrate socket usage.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Repeated connect calls do not recreate an already-connected namespace socket.
+ * - Disconnect remains idempotent and only tears down when the last consumer leaves.
  */
 import { TestBed } from '@angular/core/testing';
 import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { Subject } from 'rxjs';
-import { AdminSocketService } from './admin.socket.service';
-import { SocketService } from './socket.service';
+import { AdminSocketService } from '@app/services/realtime/admin.socket.service';
+import { SocketService } from '@app/services/realtime/socket.service';
 
 describe('AdminSocketService', () => {
     let service: AdminSocketService;

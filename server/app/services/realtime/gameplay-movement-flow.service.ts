@@ -6,7 +6,7 @@ import { SocketEvent } from '@common/socket-events';
 import { IPlayerMoveData } from '@common/socket-payloads';
 import { Namespace, Socket } from 'socket.io';
 import { Service } from 'typedi';
-import { toSocketError } from './socket-error';
+import { toSocketError } from '@app/services/realtime/socket-error';
 
 @Service()
 export class GameplayMovementFlowService {

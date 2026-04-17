@@ -1,9 +1,6 @@
 import { ErrorCode, IErrorResponse } from '@common/error-codes';
 import { ERROR_CODE_MESSAGES } from '@common/error-code-messages';
 
-export { ErrorCode } from '@common/error-codes';
-export { ERROR_CODE_MESSAGES } from '@common/error-code-messages';
-
 export function getErrorMessage(errorCode: ErrorCode): string {
     return ERROR_CODE_MESSAGES[errorCode] ?? 'Erreur inconnue';
 }

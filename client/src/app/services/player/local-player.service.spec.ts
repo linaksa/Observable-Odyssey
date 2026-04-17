@@ -1,20 +1,18 @@
 /**
- * Testing strategy — Local Player Service
+ * Testing strategy — LocalPlayerService
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic setup.
- * - Assert state transitions directly through the public API.
- * - Cover nominal storage flow and guard-style empty-state behavior.
+ * - Exercise the service as an in-memory state holder via set/get/clear public methods.
+ * - Assert transitions directly without framework mocks to keep behavior deterministic.
  *
  * Edge cases covered:
- * - Reading before initialization should return `undefined`.
- * - Re-setting a player should overwrite previous state.
- * - Clearing state should always reset the local player.
+ * - Reading before initialization returns `undefined`.
+ * - Setting a second player overwrites previous data, and clear resets state fully.
  */
 import { TestBed } from '@angular/core/testing';
 import { ICharacter } from '@common/character';
 import { Avatar, DiceType } from '@common/constants';
-import { LocalPlayerService } from './local-player.service';
+import { LocalPlayerService } from '@app/services/player/local-player.service';
 
 describe('LocalPlayerService', () => {
     let service: LocalPlayerService;

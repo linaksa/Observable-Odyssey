@@ -2,18 +2,18 @@
  * Testing strategy — Avatar Preview Component
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Verify pure mapping logic by asserting getImageForAvatar returns the expected portrait path.
+ * - Exercise template branching for both selected-avatar and no-avatar states.
+ * - Assert rendered img attributes (src, alt, class) to protect preview accessibility and styling.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Shows placeholder guidance text and no <img> element when avatar is null.
+ * - Ensures selected avatars map to the correct portrait asset file.
+ * - Confirms pixelated rendering class stays applied to the displayed portrait.
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Avatar } from '@common/constants';
-import { AvatarPreviewComponent } from './avatar-preview.component';
+import { AvatarPreviewComponent } from '@app/components/character-form/avatar-preview/avatar-preview.component';
 
 describe('AvatarPreviewComponent', () => {
     let component: AvatarPreviewComponent;

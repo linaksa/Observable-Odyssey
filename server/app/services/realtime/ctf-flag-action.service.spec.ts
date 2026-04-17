@@ -1,3 +1,14 @@
+/**
+ * Testing strategy — CtfFlagActionService
+ *
+ * Approach:
+ * - Drive handleFlagAction with explicit team/flag eligibility stubs for give/take branches.
+ * - Capture pending-request callbacks and assert emitted socket events and transfer logs.
+ *
+ * Edge cases covered:
+ * - Non-CTF games and cross-team targets are rejected immediately.
+ * - Virtual-target flows auto-complete transfer logic without creating pending human prompts.
+ */
 import { ActionService } from '@app/services/gameplay/action-service';
 import { CtfFlagActionService, type PendingFlagRequest } from '@app/services/realtime/ctf-flag-action.service';
 import { IActiveGame } from '@common/active-game';
@@ -54,6 +65,137 @@ describe('CtfFlagActionService', () => {
 
     afterEach(() => {
         sinon.restore();
+    });
+
+    it('returns false when game mode is not ctf', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const target = createCharacter('Target', Team.RED);
+        const game = createActiveGame([requester, target]);
+        game.game.gameMode = GameType.Classic;
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: target.name },
+            namespace,
+            { setPendingFlagRequest: sinon.stub() },
+        );
+
+        expect(handled).to.equal(false);
+        expect(actionService.isOnSameTeam.called).to.equal(false);
+    });
+
+    it('returns false when players are not on the same team', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const target = createCharacter('Target', Team.BLUE);
+        const game = createActiveGame([requester, target]);
+        actionService.isOnSameTeam.resolves(false);
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: target.name },
+            namespace,
+            { setPendingFlagRequest: sinon.stub() },
+        );
+
+        expect(handled).to.equal(false);
+        expect(actionService.canGiveFlag.called).to.equal(false);
+    });
+
+    it('creates a pending give request and emits GiveFlag for human target', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const target = createCharacter('Target', Team.RED);
+        const game = createActiveGame([requester, target]);
+        actionService.canGiveFlag.resolves(true);
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: target.name },
+            namespace,
+            {
+                setPendingFlagRequest: (gameId, request) => {
+                    pendingGameId = gameId;
+                    pendingRequest = request;
+                },
+            },
+        );
+
+        expect(handled).to.equal(true);
+        expect(pendingGameId).to.equal(game._id);
+        expect(pendingRequest).to.deep.equal({
+            requesterName: requester.name,
+            targetPlayerName: target.name,
+            transferMode: 'give',
+        });
+        expect(namespaceEmitStub.calledWithExactly(SocketEvent.GiveFlag, sinon.match.object)).to.equal(true);
+    });
+
+    it('auto-gives flag to virtual teammate and emits transfer log', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const virtualTarget = createCharacter('VirtualTarget', Team.RED, VirtualPlayerProfile.Defensive);
+        const game = createActiveGame([requester, virtualTarget]);
+        actionService.canGiveFlag.resolves(true);
+        const emitGameLog = sinon.stub();
+        const onFlagUpdated = sinon.stub().resolves();
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: virtualTarget.name },
+            namespace,
+            {
+                setPendingFlagRequest: sinon.stub(),
+                emitGameLog,
+                onFlagUpdated,
+            },
+        );
+
+        expect(handled).to.equal(true);
+        expect(actionService.giveFlag.calledOnceWithExactly(game._id, virtualTarget.name)).to.equal(true);
+        expect(emitGameLog.calledOnceWithExactly(game._id, `Transfert du drapeau de ${requester.name} à ${virtualTarget.name}.`)).to.equal(true);
+        expect(onFlagUpdated.calledOnceWithExactly(game._id)).to.equal(true);
+    });
+
+    it('creates a pending take request and emits TakeFlag for human target', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const target = createCharacter('Target', Team.RED);
+        const game = createActiveGame([requester, target]);
+        actionService.canTakeFlag.resolves(true);
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: target.name },
+            namespace,
+            {
+                setPendingFlagRequest: (gameId, request) => {
+                    pendingGameId = gameId;
+                    pendingRequest = request;
+                },
+            },
+        );
+
+        expect(handled).to.equal(true);
+        expect(pendingGameId).to.equal(game._id);
+        expect(pendingRequest).to.deep.equal({
+            requesterName: requester.name,
+            targetPlayerName: target.name,
+            transferMode: 'take',
+        });
+        expect(namespaceEmitStub.calledWithExactly(SocketEvent.TakeFlag, sinon.match.object)).to.equal(true);
+    });
+
+    it('returns true without request when neither give nor take is possible', async () => {
+        const requester = createCharacter('Requester', Team.RED);
+        const target = createCharacter('Target', Team.RED);
+        const game = createActiveGame([requester, target]);
+
+        const handled = await service.handleFlagAction(
+            game,
+            { gameId: game._id, currentPlayerName: requester.name, targetName: target.name },
+            namespace,
+            { setPendingFlagRequest: sinon.stub() },
+        );
+
+        expect(handled).to.equal(true);
+        expect(namespaceEmitStub.called).to.equal(false);
     });
 
     it('should auto-accept taking the flag from a virtual teammate', async () => {

@@ -23,7 +23,7 @@ import { Namespaces } from '@common/namespaces';
 import { SocketEvent } from '@common/socket-events';
 import { StatusCodes } from 'http-status-codes';
 import { Service } from 'typedi';
-import { TurnService } from './turn-service';
+import { TurnService } from '@app/services/gameplay/turn-service';
 
 @Service()
 export class CombatService {

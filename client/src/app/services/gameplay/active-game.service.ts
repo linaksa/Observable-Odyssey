@@ -1,5 +1,4 @@
-/* eslint-disable max-lines */
-// recheck this file after refactor to see if some functions can be moved to other services to take out some lines
+/* eslint-disable max-lines -- ActiveGameService still covers several gameplay flows and shared helpers in one file. */
 import { inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FLAG_TRANSFER_POPUP_WAITING_MESSAGE_PREFIX, FLAG_TRANSFER_SELF_REJECTED_TOAST } from '@app/constants/gameplay';
@@ -37,7 +36,7 @@ import { environment } from 'src/environments/environment';
 
 import { AttackPosture, CombatOutcome, CombatTurnOutcome } from '@common/attack-result';
 import { IItem, ItemType } from '@common/items';
-import { registerActiveGameSocketListeners } from './active-game-socket-listeners';
+import { registerActiveGameSocketListeners } from '@app/services/gameplay/active-game-socket-listeners';
 
 @Injectable({
     providedIn: 'root',

@@ -1,30 +1,21 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines -- This spec covers multiple interaction branches and edge cases in one suite. */
 /**
  * Testing strategy — GameService
  *
- * Approach: unit tests with Sinon stubs on Mongoose methods
- * (create, findById, find, findByIdAndUpdate, findByIdAndDelete, findOne).
- * No real database is used; stubs allow precise control over returned values or thrown errors for
- * each scenario. BoardService is replaced by a stub to isolate
- * board validation from the GameService business logic.
+ * Approach:
+ * - Stub Mongoose CRUD/query methods and BoardService validation to isolate GameService branching.
+ * - Assert both returned payloads and domain error messages across get/create/delete/visibility/update flows.
  *
  * Edge cases covered:
- * - No games in DB (empty array): getAllGames() should return [] without error.
- * - Nonexistent id: getGame() / deleteGame() / changeVisibility() /
- *   updateGame() should handle null without throwing an uncontrolled exception.
- * - Missing fields (title, description, board): createGame() should
- *   reject each missing field independently with a clear message.
- * - Field containing only whitespace: title or description with only whitespace
- *   should be rejected as empty.
- * - Exceeding maximum lengths (BAD_TITLE_LENGTH / BAD_DESCRIPTION_LENGTH):
- *   exact bounds defined in constants are tested.
- * - Invalid game mode: an out-of-enum value should be rejected.
- * - Duplicate title: creation or update with an existing title should be rejected.
- * - Game deleted during update (race condition): updateGame() should
- *   create a new game and signal creation (created: true).
+ * - Empty catalog and missing-ID reads/deletes/visibility updates.
+ * - Validation matrix for missing fields, whitespace-only inputs, max-length boundaries, invalid enum values, and invalid boards.
+ * - Duplicate-title handling on creation and update.
+ * - Update race branch where the game disappears and a replacement is created.
  */
 
 import { game } from '@app/schemas/game';
+import { BoardService } from '@app/services/board/board.service';
+import { GameService } from '@app/services/game/game.service';
 import { CellType, IBoard } from '@common/board';
 import { BAD_DESCRIPTION_LENGTH, BAD_TITLE_LENGTH, GameSize } from '@common/constants';
 import { ErrorCode } from '@common/error-codes';
@@ -32,8 +23,6 @@ import { GameType, IGame, Visibility } from '@common/game';
 import { ItemType } from '@common/items';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { BoardService } from '@app/services/board/board.service';
-import { GameService } from '@app/services/game/game.service';
 
 describe('Game Service', () => {
     let gameService: GameService;

@@ -2,16 +2,15 @@
  * Testing strategy — http-model
  *
  * Approach:
- * - Keep each test focused on one behavior with deterministic mocks/spies.
- * - Validate both nominal flows and failure paths that could break UX/state.
- * - Assert side effects explicitly (state changes, emitted events, and service calls).
+ * - Exercise `isHttpError` with plain runtime values to validate the type-guard contract.
+ * - Keep assertions focused on structural validation (`status` and `message`) instead of framework behavior.
  *
  * Edge cases covered:
- * - Missing or invalid input guards and safe early returns.
- * - Error handling paths and fallback user-facing messaging.
- * - Cleanup/teardown behavior (unsubscribe/reset/disconnect) when applicable.
+ * - Non-object values (including `null`) are rejected safely.
+ * - Objects missing required keys are not treated as `HttpError` instances.
  */
-import { HttpError, isHttpError } from './http-model';
+import { isHttpError } from '@app/http/http-model';
+import { HttpError } from '@app/interfaces/http-error.interface';
 
 const INVALID_NON_OBJECT_VALUE = 123;
 

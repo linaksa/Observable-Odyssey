@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, input, ViewChild } from '@angular/core';
+import { TooltipPosition } from '@app/interfaces/tooltip-position.interface';
 import { TileInfoPopupData } from '@common/info';
-import type { TooltipPosition } from '@app/utils/tooltip-position.utils';
 
 @Component({
     selector: 'app-game-tile-inspection-popup',
